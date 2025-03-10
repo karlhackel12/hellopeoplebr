@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define the form schemas
 const loginSchema = z.object({
@@ -27,6 +29,9 @@ const registerSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  role: z.enum(['student', 'teacher'], {
+    required_error: 'Please select a role',
+  }),
 });
 
 const forgotPasswordSchema = z.object({
@@ -56,6 +61,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
       name: '',
       email: '',
       password: '',
+      role: 'student',
     },
   });
 
@@ -64,39 +70,63 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (type === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
 
-      switch (type) {
-        case 'login':
-          toast({
-            title: "Login successful",
-            description: "Welcome back! Redirecting to your dashboard...",
-          });
-          navigate('/dashboard');
-          break;
+        if (error) throw error;
 
-        case 'register':
-          toast({
-            title: "Registration successful",
-            description: "Your account has been created. Welcome to HelloPeople!",
-          });
-          navigate('/dashboard');
-          break;
+        toast({
+          title: "Login successful",
+          description: "Welcome back! Redirecting to your dashboard...",
+        });
+        navigate('/dashboard');
+      } 
+      else if (type === 'register') {
+        // Split the name into first and last name
+        const nameParts = values.name.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ');
 
-        case 'forgotPassword':
-          toast({
-            title: "Reset link sent",
-            description: "Check your email for password reset instructions.",
-          });
-          navigate('/login');
-          break;
+        // Register with Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              role: values.role,
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created. Welcome to HelloPeople!",
+        });
+        navigate('/dashboard');
+      } 
+      else if (type === 'forgotPassword') {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(values.email);
+        
+        if (error) throw error;
+
+        toast({
+          title: "Reset link sent",
+          description: "Check your email for password reset instructions.",
+        });
+        navigate('/login');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Authentication error",
-        description: "An error occurred during authentication. Please try again.",
+        description: error.message || "An error occurred during authentication. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -181,6 +211,36 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {/* Role selection (only for register) */}
+          {type === 'register' && (
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>I am a</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="student" id="student" />
+                        <FormLabel htmlFor="student" className="cursor-pointer">Student</FormLabel>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="teacher" id="teacher" />
+                        <FormLabel htmlFor="teacher" className="cursor-pointer">Teacher</FormLabel>
+                      </div>
+                    </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
