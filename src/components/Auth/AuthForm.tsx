@@ -38,6 +38,12 @@ const forgotPasswordSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
 });
 
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+
+type FormValues = LoginFormValues | RegisterFormValues | ForgotPasswordFormValues;
+
 type AuthFormProps = {
   type: 'login' | 'register' | 'forgotPassword';
 };
@@ -54,26 +60,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     type === 'register' ? registerSchema : 
     forgotPasswordSchema;
 
-  // Initialize the form
-  const form = useForm<z.infer<typeof schema>>({
+  // Initialize the form with the correct default values based on form type
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      role: 'student',
-    },
+    defaultValues: 
+      type === 'login' ? { 
+        email: '',
+        password: '',
+      } : 
+      type === 'register' ? {
+        name: '',
+        email: '',
+        password: '',
+        role: 'student',
+      } : {
+        email: '',
+      },
   });
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof schema>) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
 
     try {
       if (type === 'login') {
+        const loginValues = values as LoginFormValues;
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
+          email: loginValues.email,
+          password: loginValues.password,
         });
 
         if (error) throw error;
@@ -85,20 +99,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         navigate('/dashboard');
       } 
       else if (type === 'register') {
+        const registerValues = values as RegisterFormValues;
         // Split the name into first and last name
-        const nameParts = values.name.split(' ');
+        const nameParts = registerValues.name.split(' ');
         const firstName = nameParts[0];
         const lastName = nameParts.slice(1).join(' ');
 
         // Register with Supabase
         const { data, error } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
+          email: registerValues.email,
+          password: registerValues.password,
           options: {
             data: {
               first_name: firstName,
               last_name: lastName,
-              role: values.role,
+              role: registerValues.role,
             }
           }
         });
@@ -112,7 +127,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         navigate('/dashboard');
       } 
       else if (type === 'forgotPassword') {
-        const { data, error } = await supabase.auth.resetPasswordForEmail(values.email);
+        const forgotValues = values as ForgotPasswordFormValues;
+        const { data, error } = await supabase.auth.resetPasswordForEmail(forgotValues.email);
         
         if (error) throw error;
 
