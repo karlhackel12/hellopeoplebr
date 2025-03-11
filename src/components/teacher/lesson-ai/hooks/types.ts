@@ -1,4 +1,3 @@
-
 import { GeneratedLessonContent } from '../types';
 
 export interface GenerationParams {
@@ -11,12 +10,8 @@ export interface GenerationParams {
 
 export interface PredictionResponse {
   id: string;
-  status: 'pending' | 'processing' | 'succeeded' | 'failed';
+  status: 'succeeded' | 'failed';
   output?: any;
-  urls?: {
-    get: string;
-    cancel: string;
-  };
 }
 
 export interface GenerationState {
@@ -26,11 +21,6 @@ export interface GenerationState {
   instructions: string;
   error: string | null;
   retryCount: number;
-  generationId?: string; 
-  pollingInterval: number;
-  lastPollTime?: number;
-  pollCount: number;
-  maxPollCount: number;
   generationStatus: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
   isCancelled: boolean;
 }
