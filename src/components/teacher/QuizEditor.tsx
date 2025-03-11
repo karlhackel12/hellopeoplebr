@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,9 +118,8 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
       }
     } catch (error) {
       console.error('Error fetching quiz data:', error);
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to load quiz data',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -149,7 +147,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
         
         if (updateError) throw updateError;
         
-        toast('Quiz updated', {
+        toast.success('Quiz updated', {
           description: 'Your quiz has been successfully updated',
         });
       } else {
@@ -170,7 +168,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
         
         setQuiz(quizData[0]);
         
-        toast('Quiz created', {
+        toast.success('Quiz created', {
           description: 'Your quiz has been successfully created',
         });
       }
@@ -178,9 +176,8 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
       fetchQuizData(); // Reload quiz data
     } catch (error) {
       console.error('Error saving quiz:', error);
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to save quiz',
-        variant: 'destructive',
       });
     } finally {
       setSaving(false);
@@ -268,9 +265,8 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
   const removeOption = (index: number) => {
     if (!currentQuestion || !currentQuestion.options) return;
     if (currentQuestion.options.length <= 2) {
-      toast('Error', {
+      toast.error('Error', {
         description: 'A question must have at least 2 options',
-        variant: 'destructive',
       });
       return;
     }
@@ -329,7 +325,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
           if (insertError) throw insertError;
         }
         
-        toast('Question updated', {
+        toast.success('Question updated', {
           description: 'Your question has been successfully updated',
         });
       } else {
@@ -365,7 +361,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
           if (insertError) throw insertError;
         }
         
-        toast('Question added', {
+        toast.success('Question added', {
           description: 'Your question has been successfully added to the quiz',
         });
       }
@@ -378,9 +374,8 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
       
     } catch (error) {
       console.error('Error saving question:', error);
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to save question',
-        variant: 'destructive',
       });
     } finally {
       setSaving(false);
@@ -408,16 +403,15 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
         
         if (questionError) throw questionError;
         
-        toast('Question deleted', {
+        toast.success('Question deleted', {
           description: 'The question has been successfully deleted',
         });
         
         fetchQuizData();
       } catch (error) {
         console.error('Error deleting question:', error);
-        toast('Error', {
+        toast.error('Error', {
           description: 'Failed to delete question',
-          variant: 'destructive',
         });
       }
     }

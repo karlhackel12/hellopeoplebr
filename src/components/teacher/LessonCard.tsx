@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,16 +34,15 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
         
         if (error) throw error;
         
-        toast('Lesson deleted', {
+        toast.success('Lesson deleted', {
           description: 'The lesson has been successfully deleted'
         });
         
         onUpdate();
       } catch (error) {
         console.error('Error deleting lesson:', error);
-        toast('Error', {
-          description: 'Failed to delete lesson',
-          variant: 'destructive'
+        toast.error('Error', {
+          description: 'Failed to delete lesson'
         });
       }
     }

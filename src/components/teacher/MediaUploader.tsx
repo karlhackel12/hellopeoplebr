@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,9 +54,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
       setMedia(data || []);
     } catch (error) {
       console.error('Error fetching media:', error);
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to load media attachments',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -74,9 +72,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
     e.preventDefault();
     
     if (!file) {
-      toast('Error', {
+      toast.error('Error', {
         description: 'Please select a file to upload',
-        variant: 'destructive',
       });
       return;
     }
@@ -116,7 +113,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
 
       if (insertError) throw insertError;
 
-      toast('Media uploaded', {
+      toast.success('Media uploaded', {
         description: 'Your media has been successfully uploaded',
       });
 
@@ -129,9 +126,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
 
     } catch (error) {
       console.error('Error uploading media:', error);
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to upload media',
-        variant: 'destructive',
       });
     } finally {
       setUploading(false);
@@ -150,16 +146,15 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
         
         if (error) throw error;
         
-        toast('Media deleted', {
+        toast.success('Media deleted', {
           description: 'The media has been successfully deleted',
         });
         
         fetchMedia();
       } catch (error) {
         console.error('Error deleting media:', error);
-        toast('Error', {
+        toast.error('Error', {
           description: 'Failed to delete media',
-          variant: 'destructive',
         });
       }
     }

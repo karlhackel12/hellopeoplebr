@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -84,16 +83,15 @@ const LessonEditor: React.FC = () => {
         
         // If no courses available, redirect to course creation
         if ((data || []).length === 0) {
-          toast('No courses found', { 
+          toast.info('No courses found', { 
             description: 'Please create a course first before creating lessons.',
           });
           navigate('/teacher/courses/create');
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
-        toast('Error', {
+        toast.error('Error', {
           description: 'Failed to load courses',
-          variant: 'destructive',
         });
       }
     };
@@ -122,9 +120,8 @@ const LessonEditor: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching lesson:', error);
-        toast('Error', {
+        toast.error('Error', {
           description: 'Failed to load lesson',
-          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -161,7 +158,7 @@ const LessonEditor: React.FC = () => {
 
         if (error) throw error;
         
-        toast('Lesson updated', {
+        toast.success('Lesson updated', {
           description: 'Your lesson has been successfully updated',
         });
       } else {
@@ -181,7 +178,7 @@ const LessonEditor: React.FC = () => {
 
         if (error) throw error;
         
-        toast('Lesson created', {
+        toast.success('Lesson created', {
           description: 'Your lesson has been successfully created',
         });
 
@@ -194,9 +191,8 @@ const LessonEditor: React.FC = () => {
       }
     } catch (error) {
       console.error('Error saving lesson:', error);
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to save lesson',
-        variant: 'destructive',
       });
     } finally {
       setSaving(false);

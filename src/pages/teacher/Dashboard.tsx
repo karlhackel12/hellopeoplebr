@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,9 +24,8 @@ const TeacherDashboard: React.FC = () => {
     const checkTeacherRole = async () => {
       const userIsTeacher = await isTeacher();
       if (!userIsTeacher) {
-        toast('Access Denied', {
+        toast.error('Access Denied', {
           description: 'You need teacher privileges to access this page',
-          variant: 'destructive',
         });
         navigate('/');
       } else {
@@ -57,9 +55,8 @@ const TeacherDashboard: React.FC = () => {
       if (error) throw error;
       setLessons(data || []);
     } catch (error) {
-      toast('Error', {
+      toast.error('Error', {
         description: 'Failed to load lessons',
-        variant: 'destructive',
       });
       console.error('Error fetching lessons:', error);
     } finally {

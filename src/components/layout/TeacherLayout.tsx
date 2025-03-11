@@ -20,9 +20,8 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
       try {
         const userIsTeacher = await isTeacher();
         if (!userIsTeacher) {
-          toast('Access Denied', {
+          toast.error('Access Denied', {
             description: 'Only teachers can access this page',
-            variant: 'destructive',
           });
           navigate('/');
           return;
