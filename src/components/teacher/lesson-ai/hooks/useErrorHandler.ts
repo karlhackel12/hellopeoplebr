@@ -18,8 +18,16 @@ export const useErrorHandler = (setError: (error: string | null) => void, setGen
     throw new Error(`Failed to process the generated content: ${error.message}`);
   };
 
+  const handleContentUpdateError = (error: any) => {
+    console.error("Error updating content:", error);
+    toast.error("Update failed", {
+      description: error?.message || "Failed to update lesson content",
+    });
+  };
+
   return {
     handleGenerationError,
-    handleParsingError
+    handleParsingError,
+    handleContentUpdateError
   };
 };

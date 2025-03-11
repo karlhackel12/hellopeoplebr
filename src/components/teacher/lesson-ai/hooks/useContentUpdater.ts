@@ -28,7 +28,21 @@ export const useContentUpdater = (form: UseFormReturn<LessonFormValues>) => {
     return formattedContent;
   };
 
+  const updateModifiedContent = (
+    structuredContent: GeneratedLessonContent, 
+    title: string
+  ) => {
+    const formattedContent = formatContent(structuredContent, title);
+    
+    form.setValue('content', formattedContent);
+    form.setValue('contentSource', 'mixed');
+    form.setValue('structuredContent', structuredContent);
+    
+    return formattedContent;
+  };
+
   return {
-    updateFormContent
+    updateFormContent,
+    updateModifiedContent
   };
 };

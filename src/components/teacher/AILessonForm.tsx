@@ -55,6 +55,13 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
     }
   };
 
+  // When clicking student view tab, ensure edit mode is off
+  useEffect(() => {
+    if (activeTab === 'edit') {
+      setEditMode(false);
+    }
+  }, [activeTab]);
+
   return (
     <div className="space-y-6">
       {!import.meta.env.VITE_REPLICATE_API_KEY && (
@@ -70,7 +77,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="generate" disabled={generating && generationStatus !== 'failed'}>Generation Settings</TabsTrigger>
-          <TabsTrigger value="preview" disabled={!generatedContent}>Content Preview</TabsTrigger>
+          <TabsTrigger value="preview" disabled={!generatedContent}>Content Editor</TabsTrigger>
           <TabsTrigger value="edit" disabled={!generatedContent}>Student View</TabsTrigger>
         </TabsList>
         <TabsContent value="generate" className="pt-4">
@@ -100,7 +107,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         </TabsContent>
         <TabsContent value="edit" className="pt-4">
           {generatedContent ? (
-            <LessonPreview content={form.watch('content')} />
+            <LessonPreview content={form.watch('content')} title={form.watch('title')} />
           ) : (
             <div className="text-center py-12 border rounded-md bg-muted">
               <p className="text-muted-foreground">Generate content first to see student view</p>
