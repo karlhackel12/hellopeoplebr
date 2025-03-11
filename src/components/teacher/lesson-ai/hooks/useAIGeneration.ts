@@ -1,9 +1,9 @@
-
 import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from '../../lesson-editor/useLessonForm';
 import { useGenerationState } from './useGenerationState';
 import { useGenerationHandler } from './useGenerationHandler';
+import { GeneratedLessonContent } from '../types';
 
 export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: string) => {
   // Get all generation state and state updaters
@@ -32,6 +32,29 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     resetGenerationState,
     cancelGeneration
   } = generationState;
+
+  // Initialize generatedContent from form's structuredContent if available
+  useEffect(() => {
+    const structuredContent = form.watch('structuredContent') as GeneratedLessonContent | null;
+    if (structuredContent && !generatedContent) {
+      setGeneratedContent(structuredContent);
+      setGenerationStatus('completed');
+    }
+  }, [form.watch('structuredContent')]);
+
+  // Keep generatedContent in sync with form's structuredContent
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'structuredContent') {
+        const newContent = value.structuredContent as GeneratedLessonContent | null;
+        if (newContent) {
+          setGeneratedContent(newContent);
+        }
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
 
   // Create the state updater object
   const stateUpdaters = {
