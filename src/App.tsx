@@ -9,6 +9,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
+import TeacherDashboard from "./pages/teacher/Dashboard";
+import LessonEditor from "./components/teacher/LessonEditor";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +25,12 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          
+          {/* Teacher Routes */}
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/teacher/lessons/create" element={<LessonEditor />} />
+          <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
