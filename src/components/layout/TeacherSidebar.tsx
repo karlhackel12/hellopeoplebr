@@ -111,7 +111,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed = false }) =>
           </div>
           {collapsed ? (
             <div className="mx-auto">
-              <Logo iconOnly size="xs" />
+              <Logo iconOnly size="sm" />
             </div>
           ) : null}
         </div>
