@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -16,14 +15,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
-import MediaUploader from '@/components/teacher/MediaUploader';
-import QuizEditor from '@/components/teacher/QuizEditor';
 import { ArrowLeft, Clock, Save } from 'lucide-react';
+import LessonContentForm from './LessonContentForm';
+import MediaAttachmentsTab from './MediaAttachmentsTab';
+import QuizTab from './QuizTab';
 
 // Define form validation schema
 const lessonFormSchema = z.object({
@@ -33,7 +32,7 @@ const lessonFormSchema = z.object({
   is_published: z.boolean().default(false),
 });
 
-type LessonFormValues = z.infer<typeof lessonFormSchema>;
+export type LessonFormValues = z.infer<typeof lessonFormSchema>;
 
 const LessonEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -244,41 +243,13 @@ const LessonEditor: React.FC = () => {
                 <TabsTrigger value="quiz">Quiz</TabsTrigger>
               </TabsList>
               <TabsContent value="content" className="mt-6">
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Lesson Content</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Enter lesson content here..." 
-                          className="min-h-[300px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <LessonContentForm form={form} />
               </TabsContent>
               <TabsContent value="media" className="mt-6">
-                {isEditMode ? (
-                  <MediaUploader lessonId={id} />
-                ) : (
-                  <div className="p-8 text-center border rounded-md bg-muted">
-                    <p>Save the lesson first before adding media attachments</p>
-                  </div>
-                )}
+                <MediaAttachmentsTab lessonId={id} isEditMode={isEditMode} />
               </TabsContent>
               <TabsContent value="quiz" className="mt-6">
-                {isEditMode ? (
-                  <QuizEditor lessonId={id} />
-                ) : (
-                  <div className="p-8 text-center border rounded-md bg-muted">
-                    <p>Save the lesson first before creating a quiz</p>
-                  </div>
-                )}
+                <QuizTab lessonId={id} isEditMode={isEditMode} />
               </TabsContent>
             </Tabs>
               
