@@ -352,6 +352,124 @@ export type Database = {
           },
         ]
       }
+      student_assignments: {
+        Row: {
+          assigned_by: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          lesson_id: string | null
+          quiz_id: string | null
+          started_at: string | null
+          status: string
+          student_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lesson_id?: string | null
+          quiz_id?: string | null
+          started_at?: string | null
+          status?: string
+          student_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lesson_id?: string | null
+          quiz_id?: string | null
+          started_at?: string | null
+          status?: string
+          student_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_assignments_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_assignments_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invitation_code: string
+          invited_by: string
+          status: Database["public"]["Enums"]["invitation_status"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invitation_code: string
+          invited_by: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_code?: string
+          invited_by?: string
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_course_progress: {
         Row: {
           completed_at: string | null
@@ -541,6 +659,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invitation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: {
           user_id: string
@@ -551,6 +673,7 @@ export type Database = {
     Enums: {
       app_role: "student" | "teacher"
       difficulty_level: "beginner" | "intermediate" | "advanced"
+      invitation_status: "pending" | "accepted" | "expired" | "rejected"
       media_type: "image" | "audio" | "video" | "document"
       question_type:
         | "multiple_choice"

@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Users, ClipboardList } from 'lucide-react';
 import { supabase, isTeacher } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LessonCard from '@/components/teacher/LessonCard';
@@ -68,17 +69,68 @@ const TeacherDashboard: React.FC = () => {
     navigate('/teacher/lessons/create');
   };
 
+  const handleManageStudents = () => {
+    navigate('/teacher/invitations');
+  };
+
+  const handleManageAssignments = () => {
+    navigate('/teacher/assignments');
+  };
+
   return (
     <TeacherLayout>
       <div className="container mx-auto py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Lessons</h1>
-          <Button onClick={handleCreateLesson} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Create Lesson
-          </Button>
+          <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleManageStudents} className="gap-2">
+              <Users className="h-4 w-4" />
+              Manage Students
+            </Button>
+            <Button variant="outline" onClick={handleManageAssignments} className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Assignments
+            </Button>
+            <Button onClick={handleCreateLesson} className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Create Lesson
+            </Button>
+          </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-green-50 border border-green-100 rounded-lg p-6 flex flex-col">
+            <h3 className="font-semibold text-green-800 mb-1">Students</h3>
+            <p className="text-green-600 mb-4 text-sm">Invite and manage your students</p>
+            <p className="mt-auto">
+              <Button variant="outline" className="w-full" onClick={handleManageStudents}>
+                Manage Students
+              </Button>
+            </p>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 flex flex-col">
+            <h3 className="font-semibold text-blue-800 mb-1">Lessons</h3>
+            <p className="text-blue-600 mb-4 text-sm">Create and manage your teaching materials</p>
+            <p className="mt-auto">
+              <Button variant="outline" className="w-full" onClick={handleCreateLesson}>
+                Create Lesson
+              </Button>
+            </p>
+          </div>
+          
+          <div className="bg-purple-50 border border-purple-100 rounded-lg p-6 flex flex-col">
+            <h3 className="font-semibold text-purple-800 mb-1">Assignments</h3>
+            <p className="text-purple-600 mb-4 text-sm">Assign lessons and quizzes to students</p>
+            <p className="mt-auto">
+              <Button variant="outline" className="w-full" onClick={handleManageAssignments}>
+                Manage Assignments
+              </Button>
+            </p>
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-semibold mb-4">My Lessons</h2>
         {loading ? (
           <div className="flex justify-center my-12">
             <p>Loading lessons...</p>
