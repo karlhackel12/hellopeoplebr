@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from './LessonEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LessonFormValues } from './lesson-editor/useLessonForm';
 import { LessonPreview } from './LessonPreview';
 import GenerationSettingsForm from './lesson-ai/GenerationSettingsForm';
 import ContentPreview from './lesson-ai/ContentPreview';

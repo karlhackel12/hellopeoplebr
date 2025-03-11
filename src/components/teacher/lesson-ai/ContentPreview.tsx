@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from '../LessonEditor';
 import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
+import { LessonFormValues } from '../lesson-editor/useLessonForm';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

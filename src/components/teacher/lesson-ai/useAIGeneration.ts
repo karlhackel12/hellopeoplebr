@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from '../LessonEditor';
 import { supabase } from '@/integrations/supabase/client';
+import { LessonFormValues } from '../lesson-editor/useLessonForm';
 import { toast } from 'sonner';
 import { GeneratedLessonContent } from './types';
 import { formatContent } from './contentUtils';

@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from './LessonEditor';
+import { LessonFormValues } from './lesson-editor/useLessonForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bold, Italic, List, ListOrdered, Heading2, Image, FileText } from 'lucide-react';
