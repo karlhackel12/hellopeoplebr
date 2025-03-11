@@ -16,11 +16,13 @@ export const useGenerationState = () => {
     error: null,
     retryCount: 0,
     generationStatus: 'idle',
+    isCancelled: false,
+    // Add the missing properties with their default values
     generationId: undefined,
     pollingInterval: DEFAULT_POLLING_INTERVAL,
     pollCount: 0,
     maxPollCount: MAX_POLL_COUNT,
-    isCancelled: false
+    lastPollTime: undefined
   });
 
   const setGenerating = (generating: boolean) => {

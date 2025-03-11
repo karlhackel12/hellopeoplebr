@@ -1,3 +1,4 @@
+
 import { GeneratedLessonContent } from '../types';
 
 export interface GenerationParams {
@@ -23,4 +24,10 @@ export interface GenerationState {
   retryCount: number;
   generationStatus: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
   isCancelled: boolean;
+  // Add the missing properties that are causing TypeScript errors
+  generationId?: string;
+  pollingInterval: number;
+  pollCount: number;
+  maxPollCount: number;
+  lastPollTime?: number;
 }
