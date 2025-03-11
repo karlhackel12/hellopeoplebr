@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from './LessonEditor';
@@ -8,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 
-// Define the structure of our AI-generated content
 interface GeneratedLessonContent {
   description: string;
   objectives: string[];
@@ -53,7 +53,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         return;
       }
       
-      // Store generation parameters to save with the lesson
       const generationParams = {
         timestamp: new Date().toISOString(),
         title,
@@ -65,7 +64,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         body: {
           title,
           level,
-          language: 'english', // Could be made dynamic in the future
+          language: 'english',
         },
       });
       
@@ -79,7 +78,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         throw new Error("Failed to start content generation");
       }
       
-      // Start polling for results
       startPolling(predictionData.id, generationParams);
       
     } catch (error) {
@@ -92,7 +90,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
   };
   
   const startPolling = (predictionId: string, generationParams: any) => {
-    // Clear any existing polling interval
     if (pollInterval) {
       clearInterval(pollInterval);
     }
@@ -116,13 +113,9 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
           clearInterval(interval);
           setPollInterval(null);
           
-          // Process the output
           try {
-            // The output from this model is a string, try to parse it as JSON
             let output = prediction.output;
             
-            // Sometimes the model might return a string with extra characters
-            // Try to find and extract just the JSON part
             const jsonStart = output.indexOf('{');
             const jsonEnd = output.lastIndexOf('}') + 1;
             
@@ -133,7 +126,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             const parsedContent = JSON.parse(output) as GeneratedLessonContent;
             setGeneratedContent(parsedContent);
             
-            // Store metadata about the generation
             const metadata = {
               ...generationParams,
               model: prediction.model,
@@ -142,7 +134,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
               status: prediction.status
             };
             
-            // Format and set the content values
             const formattedContent = formatContent(parsedContent);
             form.setValue('content', formattedContent);
             form.setValue('contentSource', 'ai_generated');
@@ -151,7 +142,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             
             setActiveTab('preview');
             
-            // Toast notification for success
             toast.success("Content generated", {
               description: "AI-generated content is ready for review",
             });
@@ -169,7 +159,9 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
           throw new Error(prediction.error || "Generation failed");
         }
         
-        // For 'starting' or 'processing' statuses, we continue polling
+        if (prediction.status === "starting" || prediction.status === "processing") {
+          // For 'starting' or 'processing' statuses, we continue polling
+        }
         
       } catch (error) {
         clearInterval(interval);
@@ -180,7 +172,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         });
         setGenerating(false);
       }
-    }, 2000); // Check every 2 seconds
+    }, 2000);
     
     setPollInterval(interval as unknown as number);
   };
@@ -188,44 +180,37 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
   const formatContent = (content: GeneratedLessonContent): string => {
     let formattedContent = `# ${title}\n\n`;
     
-    // Description
     formattedContent += `## Description\n${content.description}\n\n`;
     
-    // Objectives
     formattedContent += `## Learning Objectives\n`;
     content.objectives.forEach(objective => {
       formattedContent += `- ${objective}\n`;
     });
     formattedContent += '\n';
     
-    // Practical Situations
     formattedContent += `## Practical Situations\n`;
     content.practicalSituations.forEach(situation => {
       formattedContent += `- ${situation}\n`;
     });
     formattedContent += '\n';
     
-    // Key Phrases
     formattedContent += `## Key Phrases\n`;
     content.keyPhrases.forEach(phrase => {
       formattedContent += `- **${phrase.phrase}** - ${phrase.translation}\n  *Usage: ${phrase.usage}*\n`;
     });
     formattedContent += '\n';
     
-    // Vocabulary
     formattedContent += `## Vocabulary\n`;
     content.vocabulary.forEach(word => {
       formattedContent += `- **${word.word}** (${word.partOfSpeech}) - ${word.translation}\n`;
     });
     formattedContent += '\n';
     
-    // Explanations
     formattedContent += `## Explanations\n`;
     content.explanations.forEach(explanation => {
       formattedContent += `${explanation}\n\n`;
     });
     
-    // Tips
     formattedContent += `## Tips\n`;
     content.tips.forEach(tip => {
       formattedContent += `- ${tip}\n`;
@@ -237,7 +222,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
   const toggleEditMode = () => {
     setEditMode(!editMode);
     if (!editMode) {
-      // If entering edit mode, update the content source to mixed
       form.setValue('contentSource', 'mixed');
     }
   };
