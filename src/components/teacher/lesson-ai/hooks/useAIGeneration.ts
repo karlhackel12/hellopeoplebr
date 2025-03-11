@@ -6,6 +6,9 @@ import { useGenerationState } from './useGenerationState';
 import { useGenerationHandler } from './useGenerationHandler';
 
 export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: string) => {
+  // Get all generation state and state updaters
+  const generationState = useGenerationState();
+  
   const {
     generating,
     generatedContent,
@@ -16,6 +19,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     generationStatus,
     generationId,
     pollingInterval,
+    pollCount,
+    maxPollCount,
     setGenerating,
     setGeneratedContent,
     setLevel,
@@ -24,29 +29,52 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     clearErrors,
     setGenerationStatus,
     setGenerationId,
-    setPollingInterval
-  } = useGenerationState();
+    resetGenerationState,
+    cancelGeneration
+  } = generationState;
 
-  const { handleGenerate: generateHandler } = useGenerationHandler(
-    form,
+  // Create the state updater object
+  const stateUpdaters = {
     setGenerating,
     setGeneratedContent,
+    setLevel,
+    setInstructions,
     setError,
     clearErrors,
     setGenerationStatus,
-    setGenerationId
+    setGenerationId,
+    incrementPollCount: generationState.incrementPollCount,
+    resetPollCount: generationState.resetPollCount,
+    incrementRetryCount: generationState.incrementRetryCount,
+    resetRetryCount: generationState.resetRetryCount
+  };
+
+  // Get the generation handler
+  const { handleGenerate: generateHandler, cancelGeneration: cancelGenerationHandler } = useGenerationHandler(
+    form,
+    generationState,
+    stateUpdaters
   );
 
+  // Function to start generation
   const handleGenerate = async () => {
     await generateHandler(title, level, instructions);
+  };
+
+  // Function to cancel generation
+  const handleCancelGeneration = () => {
+    cancelGeneration();
+    cancelGenerationHandler();
   };
 
   // Clean up any polling or resources when component unmounts
   useEffect(() => {
     return () => {
-      // Any cleanup needed
+      if (generating) {
+        cancelGeneration();
+      }
     };
-  }, []);
+  }, [generating]);
 
   return {
     generating,
@@ -56,10 +84,14 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     instructions,
     setInstructions,
     handleGenerate,
+    handleCancelGeneration,
     error,
     clearErrors,
     retryCount,
     generationStatus,
-    generationId
+    generationId,
+    pollCount,
+    maxPollCount,
+    progress: Math.min(Math.floor((pollCount / maxPollCount) * 100), 95) // Cap at 95% until complete
   };
 };

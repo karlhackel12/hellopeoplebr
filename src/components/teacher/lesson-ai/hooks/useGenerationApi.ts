@@ -3,9 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GenerationParams, PredictionResponse } from './types';
 
-const MAX_POLL_ATTEMPTS = 20; // Maximum number of times to check status
-
 export const useGenerationApi = () => {
+  // Function to start lesson generation
   const invokeLessonGeneration = async (generationParams: GenerationParams): Promise<PredictionResponse> => {
     console.log("Invoking generate-lesson-content function with params:", generationParams);
       
@@ -16,35 +15,17 @@ export const useGenerationApi = () => {
       
       if (response.error || !response.data) {
         console.error("Edge function error:", response.error);
-        
         const errorMsg = response.error?.message || "Failed to start content generation";
-        
-        // Handle specific error cases
-        if (errorMsg.includes("REPLICATE_API_KEY is not set")) {
-          toast.error("API key not configured", {
-            description: "The Replicate API key is not set in the Supabase Edge Function secrets.",
-          });
-        }
-        
         throw new Error(errorMsg);
       }
 
       const resultData = response.data;
       console.log("Edge function response:", resultData);
       
-      // If the response indicates the process is still running, return the ID
-      if (resultData.status === 'pending' || resultData.status === 'processing') {
-        return {
-          id: resultData.id || 'pending',
-          status: resultData.status,
-          output: null
-        };
-      }
-      
-      // Handle direct output from the edge function
+      // Return a properly formatted response
       return {
-        id: resultData.id || 'direct',
-        status: resultData.status || 'succeeded',
+        id: resultData.id || 'unknown',
+        status: resultData.status || 'pending',
         output: resultData.lesson || resultData.output
       };
     } catch (error: any) {
@@ -53,6 +34,7 @@ export const useGenerationApi = () => {
     }
   };
 
+  // Function to check the status of an ongoing generation process
   const checkPredictionStatus = async (predictionId: string): Promise<PredictionResponse> => {
     console.log("Checking status for prediction:", predictionId);
     
@@ -69,9 +51,21 @@ export const useGenerationApi = () => {
       const resultData = response.data;
       console.log("Status check response:", resultData);
       
+      // Normalize the status to one of our expected types
+      let status: PredictionResponse['status'];
+      if (resultData.status === 'succeeded') {
+        status = 'succeeded';
+      } else if (resultData.status === 'failed') {
+        status = 'failed';
+      } else if (resultData.status === 'processing') {
+        status = 'processing';
+      } else {
+        status = 'pending';
+      }
+      
       return {
         id: predictionId,
-        status: resultData.status || 'processing',
+        status: status,
         output: resultData.lesson || resultData.output
       };
     } catch (error: any) {

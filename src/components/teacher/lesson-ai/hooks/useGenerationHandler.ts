@@ -7,25 +7,42 @@ import { useGenerationApi } from './useGenerationApi';
 import { useResponseParser } from './useResponseParser';
 import { useContentUpdater } from './useContentUpdater';
 
-const MAX_RETRY_ATTEMPTS = 3;
-const MAX_POLL_COUNT = 20;
-const POLL_INTERVAL_MS = 3000;
+// Constants
+const MAX_RETRY_ATTEMPTS = 2;
 
 export const useGenerationHandler = (
   form: UseFormReturn<LessonFormValues>,
-  setGenerating: (value: boolean) => void,
-  setGeneratedContent: (content: any) => void,
-  setError: (error: string | null) => void,
-  clearErrors: () => void,
-  setGenerationStatus: (status: 'idle' | 'pending' | 'processing' | 'completed' | 'failed') => void,
-  setGenerationId: (id: string | undefined) => void
+  generationState: any,
+  updateState: any
 ) => {
   const { invokeLessonGeneration, checkPredictionStatus } = useGenerationApi();
   const { parseAIResponse } = useResponseParser();
   const { updateFormContent } = useContentUpdater(form);
+  
+  // Destructure state and state updaters for cleaner code
+  const {
+    setGenerating,
+    setGeneratedContent,
+    setError,
+    clearErrors,
+    setGenerationStatus,
+    setGenerationId,
+    incrementPollCount,
+    resetPollCount,
+    incrementRetryCount,
+    resetRetryCount
+  } = updateState;
 
+  const {
+    pollingInterval,
+    pollCount,
+    maxPollCount,
+    isCancelled
+  } = generationState;
+
+  // Function to validate the title input
   const validateTitleInput = (title: string): boolean => {
-    if (!title.trim()) {
+    if (!title?.trim()) {
       toast.error("Title required", {
         description: "Please provide a lesson title before generating content",
       });
@@ -36,14 +53,20 @@ export const useGenerationHandler = (
     return true;
   };
 
+  // Function to poll for the completion of a generation process
   const pollForCompletion = async (
     predictionId: string, 
     generationParams: GenerationParams,
-    title: string,
-    pollCount = 0
+    title: string
   ): Promise<void> => {
-    // Give up after too many attempts
-    if (pollCount >= MAX_POLL_COUNT) {
+    // If generation was cancelled, stop polling
+    if (isCancelled) {
+      console.log("Generation cancelled, stopping polling");
+      return;
+    }
+
+    // If we've exceeded the maximum poll count, give up
+    if (pollCount >= maxPollCount) {
       setGenerating(false);
       setGenerationStatus('failed');
       setError("Generation timed out. Please try again later.");
@@ -54,9 +77,13 @@ export const useGenerationHandler = (
     }
 
     try {
+      // Increment the poll count
+      incrementPollCount();
+      console.log(`Poll attempt ${pollCount + 1}/${maxPollCount}`);
+      
       // Check the current status
       const statusResponse = await checkPredictionStatus(predictionId);
-      console.log(`Poll attempt ${pollCount}: Status = ${statusResponse.status}`);
+      console.log(`Status check result: ${statusResponse.status}`);
 
       if (statusResponse.status === 'succeeded' && statusResponse.output) {
         // Generation completed successfully
@@ -70,8 +97,12 @@ export const useGenerationHandler = (
             description: "AI-generated English lesson content is ready for review",
           });
           
+          // Reset states
           setGenerating(false);
           setGenerationStatus('completed');
+          resetPollCount();
+          
+          console.log("Generation completed successfully");
         } catch (parseError: any) {
           console.error("Error parsing AI response:", parseError);
           console.log("Problem with output:", statusResponse.output);
@@ -89,44 +120,60 @@ export const useGenerationHandler = (
         setError("The content generation process failed. Please try again.");
         setGenerating(false);
         setGenerationStatus('failed');
+        resetPollCount();
         
         toast.error("Generation failed", {
           description: "The AI model failed to generate content. Please try again.",
         });
       } else {
-        // Still processing, schedule another check
+        // Still processing, schedule another check after the polling interval
         setTimeout(() => {
-          pollForCompletion(predictionId, generationParams, title, pollCount + 1);
-        }, POLL_INTERVAL_MS);
+          pollForCompletion(predictionId, generationParams, title);
+        }, pollingInterval);
       }
     } catch (pollError: any) {
       console.error("Error polling for generation status:", pollError);
       
-      setError(`Error checking generation status: ${pollError.message}`);
-      setGenerating(false);
-      setGenerationStatus('failed');
-      
-      toast.error("Status check failed", {
-        description: "Failed to check generation status. Please try again.",
-      });
+      // If we get an error while polling, try again after a delay (unless we've exceeded the max poll count)
+      if (pollCount < maxPollCount - 1) {
+        setTimeout(() => {
+          pollForCompletion(predictionId, generationParams, title);
+        }, pollingInterval * 2); // Use a longer delay after an error
+      } else {
+        setError(`Error checking generation status: ${pollError.message}`);
+        setGenerating(false);
+        setGenerationStatus('failed');
+        resetPollCount();
+        
+        toast.error("Status check failed", {
+          description: "Failed to check generation status. Please try again.",
+        });
+      }
     }
   };
 
+  // Main function to handle the generation process
   const handleGenerate = async (
     title: string,
     level: 'beginner' | 'intermediate' | 'advanced',
-    instructions: string,
-    retryAttempt = 0
+    instructions: string
   ) => {
     try {
+      // Reset error state
       clearErrors();
+      
+      // Set generating state to true
       setGenerating(true);
       setGenerationStatus('pending');
+      resetRetryCount();
+      resetPollCount();
       
+      // Validate input
       if (!validateTitleInput(title)) {
         return;
       }
       
+      // Prepare generation parameters
       const generationParams: GenerationParams = {
         timestamp: new Date().toISOString(),
         title,
@@ -135,16 +182,18 @@ export const useGenerationHandler = (
         instructions: instructions.trim() || undefined,
       };
       
+      // Show toast to indicate generation has started
+      toast.info("Content generation started", {
+        description: "AI is working on your lesson content. This may take a minute...",
+      });
+      
       try {
-        toast.info("Content generation started", {
-          description: "AI is working on your lesson content. This may take a minute...",
-        });
-        
         // Start the generation process
         const response = await invokeLessonGeneration(generationParams);
+        console.log("Generation response:", response);
         
         if (response.status === "succeeded" && response.output) {
-          // If we got an immediate response
+          // If we got an immediate response with output
           try {
             const parsedContent = parseAIResponse(response.output);
             setGeneratedContent(parsedContent);
@@ -183,22 +232,6 @@ export const useGenerationHandler = (
       } catch (invokeError: any) {
         console.error("Error generating lesson content:", invokeError);
         
-        // Try again for specific errors, up to MAX_RETRY_ATTEMPTS
-        if (retryAttempt < MAX_RETRY_ATTEMPTS) {
-          console.log(`Retrying generation (attempt ${retryAttempt + 1} of ${MAX_RETRY_ATTEMPTS})`);
-          
-          toast.info("Retrying generation", {
-            description: "Encountered an issue, retrying the generation process...",
-          });
-          
-          // Wait a moment before retrying
-          setTimeout(() => {
-            handleGenerate(title, level, instructions, retryAttempt + 1);
-          }, 1000);
-          
-          return;
-        }
-        
         // Handle specific error cases
         const errorMessage = invokeError?.message || "Failed to call the generation service";
         setError(errorMessage);
@@ -210,7 +243,7 @@ export const useGenerationHandler = (
         });
       }
     } catch (error: any) {
-      console.error("Error generating lesson content:", error);
+      console.error("Error in handleGenerate:", error);
       setError(error?.message || "Unknown error");
       setGenerating(false);
       setGenerationStatus('failed');
@@ -221,7 +254,26 @@ export const useGenerationHandler = (
     }
   };
 
+  // Function to cancel an ongoing generation
+  const cancelGeneration = async () => {
+    if (generationState.generationId) {
+      console.log("Cancelling generation:", generationState.generationId);
+      // We would implement actual cancellation here if the API supported it
+      // For now, just update the UI state
+      toast.info("Generation cancelled", {
+        description: "The lesson generation process has been cancelled.",
+      });
+    }
+    
+    // Reset all generation-related state
+    setGenerating(false);
+    setGenerationStatus('idle');
+    resetPollCount();
+    setGenerationId(undefined);
+  };
+
   return {
-    handleGenerate
+    handleGenerate,
+    cancelGeneration
   };
 };

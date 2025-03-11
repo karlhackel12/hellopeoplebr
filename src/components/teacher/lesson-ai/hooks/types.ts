@@ -11,7 +11,7 @@ export interface GenerationParams {
 
 export interface PredictionResponse {
   id: string;
-  status: string;
+  status: 'pending' | 'processing' | 'succeeded' | 'failed';
   output?: any;
   urls?: {
     get: string;
@@ -26,7 +26,11 @@ export interface GenerationState {
   instructions: string;
   error: string | null;
   retryCount: number;
-  generationId?: string; // Added to track the generation process
-  pollingInterval?: number; // Controls how often we check for updates
+  generationId?: string; 
+  pollingInterval: number;
+  lastPollTime?: number;
+  pollCount: number;
+  maxPollCount: number;
   generationStatus: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
+  isCancelled: boolean;
 }
