@@ -12,6 +12,7 @@ export interface GenerationParams {
 export interface PredictionResponse {
   id: string;
   status: string;
+  output?: any;
   urls?: {
     get: string;
     cancel: string;

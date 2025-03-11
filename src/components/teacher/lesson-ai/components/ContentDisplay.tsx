@@ -20,6 +20,14 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ content, error }) => {
     );
   }
   
+  if (!content || content.trim() === '') {
+    return (
+      <div className="border rounded-md p-4 bg-muted text-center">
+        <p>No content generated yet.</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="border rounded-md p-4 max-h-[500px] overflow-y-auto">
       <div 

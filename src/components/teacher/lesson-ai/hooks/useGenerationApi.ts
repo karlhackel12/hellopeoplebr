@@ -27,45 +27,26 @@ export const useGenerationApi = () => {
         throw new Error(errorMsg);
       }
 
-      const predictionData = response.data;
-      console.log("Edge function response:", predictionData);
+      const resultData = response.data;
+      console.log("Edge function response:", resultData);
       
-      if (!predictionData?.id) {
-        throw new Error("No prediction ID returned from generation service");
-      }
-      
-      return predictionData;
+      // Handle direct output from the edge function
+      return {
+        id: 'direct', // Not using an actual prediction ID anymore
+        status: resultData.status || 'succeeded',
+        output: resultData.output
+      };
     } catch (error: any) {
       console.error("Error invoking edge function:", error);
       throw error;
     }
   };
 
+  // This method is no longer needed with direct responses, but kept for compatibility
   const checkPredictionStatus = async (predictionId: string): Promise<any> => {
-    try {
-      const apiKey = import.meta.env.VITE_REPLICATE_API_KEY || '';
-      if (!apiKey) {
-        throw new Error("Replicate API key is not configured");
-      }
-      
-      const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-        headers: {
-          "Authorization": `Token ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Failed to check prediction status: ${response.status} ${response.statusText}`, errorText);
-        throw new Error(`Failed to check prediction status: ${response.status} ${response.statusText}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error("Error checking prediction status:", error);
-      throw error;
-    }
+    // This is a placeholder since we're not using polling anymore
+    console.log("checkPredictionStatus is deprecated, using direct responses now");
+    return { status: "succeeded" };
   };
 
   return {

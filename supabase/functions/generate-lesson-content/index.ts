@@ -93,36 +93,30 @@ serve(async (req) => {
 
 Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
-    console.log("Creating prediction on Replicate API with Deepseek R1 model");
+    console.log("Creating prediction with Deepseek R1 model using run method");
     
     try {
-      // Create input parameters
-      const input = {
-        prompt: prompt,
-        max_new_tokens: 2048,
-        temperature: 0.7,
-      };
+      // Use the run method instead of predictions.create
+      const output = await replicate.run(
+        MODEL_ID,
+        {
+          input: {
+            prompt: prompt,
+            max_new_tokens: 2048,
+            temperature: 0.7,
+          }
+        }
+      );
 
-      console.log("Input to Replicate API:", JSON.stringify(input, null, 2));
-      
-      // Start the prediction
-      const prediction = await replicate.predictions.create({
-        version: MODEL_ID,
-        input: input,
-      });
+      console.log("Generation completed successfully");
+      console.log("Output type:", typeof output);
+      console.log("Output preview:", Array.isArray(output) ? output.slice(0, 100).join('') : output.toString().substring(0, 100) + "...");
 
-      console.log("Prediction created successfully. ID:", prediction.id);
-      console.log("Prediction status:", prediction.status);
-
-      // Return the prediction ID and URLs for the client to poll
+      // Return the output directly
       return new Response(
         JSON.stringify({
-          id: prediction.id,
-          status: prediction.status,
-          urls: {
-            get: `https://api.replicate.com/v1/predictions/${prediction.id}`,
-            cancel: prediction.urls?.cancel,
-          }
+          output: output,
+          status: "succeeded"
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
