@@ -17,6 +17,7 @@ import Assignments from "./pages/teacher/Assignments";
 import Lessons from "./pages/teacher/Lessons";
 import Settings from "./pages/teacher/Settings";
 import LessonPreviewPage from "./pages/teacher/LessonPreviewPage";
+import SidebarDemoPage from "./pages/SidebarDemo";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
           
           {/* Teacher Routes */}
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
