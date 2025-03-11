@@ -23,9 +23,18 @@ serve(async (req) => {
     }
 
     const requestData = await req.json();
-    const { title, level = "beginner", language = "english", sections = [] } = requestData;
+    const { 
+      title, 
+      level = "beginner", 
+      language = "english", 
+      sections = [],
+      instructions = "" 
+    } = requestData;
 
     console.log(`Generating lesson content for "${title}" at ${level} level in ${language}`);
+    if (instructions) {
+      console.log(`With instructions: ${instructions}`);
+    }
 
     if (!title) {
       return new Response(
@@ -47,6 +56,11 @@ Create educational content for a language lesson with the title "${title}" for $
       userPrompt += ` Only generate the following sections: ${sections.join(", ")}.`;
     } else {
       userPrompt += ` Generate all sections.`;
+    }
+    
+    // Add any additional instructions from the user
+    if (instructions) {
+      userPrompt += `\n\nAdditional instructions to follow: ${instructions}`;
     }
     
     userPrompt += `

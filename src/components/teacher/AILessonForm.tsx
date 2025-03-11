@@ -1,14 +1,18 @@
+
 import React, { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from './LessonEditor';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Save, Edit, Check, Loader2 } from 'lucide-react';
+import { Sparkles, Save, Edit, Check, Loader2, Book, FileText, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LessonPreview } from './LessonPreview';
 
 interface GeneratedLessonContent {
   description: string;
@@ -40,6 +44,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   const [pollInterval, setPollInterval] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [instructions, setInstructions] = useState('');
 
   const handleGenerate = async () => {
     try {
@@ -58,6 +63,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         title,
         level,
         language: 'english',
+        instructions: instructions.trim() || undefined,
       };
       
       const response = await supabase.functions.invoke('generate-lesson-content', {
@@ -65,6 +71,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
           title,
           level,
           language: 'english',
+          instructions: instructions.trim() || undefined,
         },
       });
       
@@ -251,6 +258,21 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
           </div>
         </div>
         
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium mb-2">Instructions (Optional)</h3>
+          <div className="relative">
+            <Textarea
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Add specific instructions for the AI, e.g., 'Focus on conversational phrases' or 'Include cultural context'"
+              className="min-h-[120px] resize-y"
+            />
+            <div className="text-xs text-muted-foreground mt-1">
+              Provide any specific requirements or focus areas for this lesson
+            </div>
+          </div>
+        </div>
+        
         <Button 
           onClick={handleGenerate} 
           className="w-full"
@@ -268,6 +290,27 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             </>
           )}
         </Button>
+
+        {generating && (
+          <div className="p-4 border rounded-md bg-muted">
+            <p className="text-sm text-center">Generating your lesson content. This may take up to a minute...</p>
+            <div className="mt-2 w-full bg-secondary rounded-full h-1.5">
+              <div className="bg-primary h-1.5 rounded-full animate-pulse w-1/3"></div>
+            </div>
+          </div>
+        )}
+
+        <div className="p-4 border rounded-md bg-muted">
+          <h4 className="font-medium mb-2 flex items-center">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Tips for Good Results
+          </h4>
+          <ul className="text-sm space-y-1 text-muted-foreground">
+            <li>• Be specific in your title (e.g., "Past Tense Verbs in Spanish" instead of "Spanish Grammar")</li>
+            <li>• Use the instructions field to specify teaching approach or content focus</li>
+            <li>• Include any cultural contexts or specific examples you want covered</li>
+          </ul>
+        </div>
       </div>
     );
   };
@@ -319,6 +362,48 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: form.watch('content').replace(/\n/g, '<br/>') }} />
           </div>
         )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Book className="h-4 w-4 mr-2" />
+                Vocabulary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">
+                {generatedContent.vocabulary.length} words included
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Key Phrases
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">
+                {generatedContent.keyPhrases.length} phrases included
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <FileText className="h-4 w-4 mr-2" />
+                Contents
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">
+                {generatedContent.objectives.length} objectives, {generatedContent.explanations.length} explanations
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   };
@@ -326,15 +411,25 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-        <TabsList className="w-full grid grid-cols-2">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="generate" disabled={generating}>Generation Settings</TabsTrigger>
           <TabsTrigger value="preview" disabled={!generatedContent}>Content Preview</TabsTrigger>
+          <TabsTrigger value="edit" disabled={!generatedContent}>Student View</TabsTrigger>
         </TabsList>
         <TabsContent value="generate" className="pt-4">
           {renderGenerationForm()}
         </TabsContent>
         <TabsContent value="preview" className="pt-4">
           {renderPreview()}
+        </TabsContent>
+        <TabsContent value="edit" className="pt-4">
+          {generatedContent ? (
+            <LessonPreview content={form.watch('content')} />
+          ) : (
+            <div className="text-center py-12 border rounded-md bg-muted">
+              <p className="text-muted-foreground">Generate content first to see student view</p>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
