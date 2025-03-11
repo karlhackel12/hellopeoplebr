@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -5,8 +6,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 3
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -168,6 +169,42 @@ function toast({ ...props }: Toast) {
   }
 }
 
+// Helper functions for common toast types
+function success(title: string, description?: string) {
+  return toast({
+    title,
+    description,
+    variant: "default",
+    className: "bg-green-50 border-green-200 text-green-900",
+  });
+}
+
+function error(title: string, description?: string) {
+  return toast({
+    title,
+    description,
+    variant: "destructive",
+  });
+}
+
+function info(title: string, description?: string) {
+  return toast({
+    title,
+    description,
+    variant: "default",
+    className: "bg-blue-50 border-blue-200 text-blue-900",
+  });
+}
+
+function warning(title: string, description?: string) {
+  return toast({
+    title,
+    description,
+    variant: "default",
+    className: "bg-yellow-50 border-yellow-200 text-yellow-900",
+  });
+}
+
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
@@ -185,6 +222,10 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    success,
+    error,
+    info,
+    warning
   }
 }
 
