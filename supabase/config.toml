@@ -71,6 +71,6 @@ redirect_uri = ""
 url = ""
 
 [functions]
-# Port to use for Functions API.
-port = 54321
-
+# Functions configuration as a map instead of a simple port number
+# Remove the port to avoid conflict with [api] port
+serve_dir = "supabase/functions"
