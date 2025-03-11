@@ -7,6 +7,8 @@ import { LessonPreview } from './LessonPreview';
 import GenerationSettingsForm from './lesson-ai/GenerationSettingsForm';
 import ContentPreview from './lesson-ai/ContentPreview';
 import { useAIGeneration } from './lesson-ai/useAIGeneration';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AILessonFormProps {
   form: UseFormReturn<LessonFormValues>;
@@ -43,6 +45,16 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
 
   return (
     <div className="space-y-6">
+      {!import.meta.env.VITE_REPLICATE_API_KEY && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            The AI generation feature requires a Replicate API key which has been now configured in Supabase.
+            Generation should now work correctly.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="generate" disabled={generating}>Generation Settings</TabsTrigger>

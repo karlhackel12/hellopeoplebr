@@ -78,6 +78,7 @@ Format the response as JSON with the following structure:
 
 The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
+    console.log("Sending request to Replicate API");
     // Call Replicate API
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
