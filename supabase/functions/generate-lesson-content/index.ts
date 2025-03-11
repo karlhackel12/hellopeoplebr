@@ -45,10 +45,8 @@ serve(async (req) => {
       instructions = "" 
     } = requestData;
 
-    console.log(`Generating English lesson content for "${title}" at ${level} level`);
-    if (instructions) {
-      console.log(`With instructions: ${instructions}`);
-    }
+    console.log(`Generating lesson content for "${title}" at ${level} level`);
+    console.log(`Input parameters:`, JSON.stringify(requestData, null, 2));
 
     if (!title) {
       return new Response(
@@ -92,54 +90,62 @@ serve(async (req) => {
 
 Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
-    console.log("Creating prediction with Deepseek R1 model using run method");
+    console.log("Prompt:", prompt);
+    console.log("Calling Replicate API with model:", MODEL_ID);
     
     try {
-      // Use the run method instead of predictions.create
+      // Create proper model input based on DeepSeek R1 requirements
+      const modelInput = {
+        prompt: prompt,
+        max_new_tokens: 2048,
+        temperature: 0.3,
+        top_p: 0.9,
+        top_k: 50
+      };
+      
+      console.log("Model input:", JSON.stringify(modelInput, null, 2));
+      
+      // Use the run method
       const output = await replicate.run(
         MODEL_ID,
-        {
-          input: {
-            prompt: prompt,
-            max_new_tokens: 2048,
-            temperature: 0.3,
-          }
-        }
+        { input: modelInput }
       );
 
-      console.log("Generation completed successfully");
+      console.log("Replicate API response type:", typeof output);
+      console.log("Replicate API response sample:", Array.isArray(output) ? output.slice(0, 3) : output);
+      
+      let processedOutput;
+      
+      // Process the output based on its type
       if (Array.isArray(output)) {
-        console.log("Output is an array, joining content");
-        const joinedOutput = output.join("");
-        console.log("Joined output preview:", joinedOutput.substring(0, 100) + "...");
-        
-        return new Response(
-          JSON.stringify({
-            output: joinedOutput,
-            status: "succeeded"
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
+        processedOutput = output.join("");
+        console.log("Joined array output (first 100 chars):", processedOutput.substring(0, 100));
+      } else if (typeof output === 'string') {
+        processedOutput = output;
+        console.log("String output (first 100 chars):", processedOutput.substring(0, 100));
       } else {
-        console.log("Output is not an array:", typeof output);
-        return new Response(
-          JSON.stringify({
-            output: output,
-            status: "succeeded"
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
+        console.log("Unexpected output format:", output);
+        processedOutput = JSON.stringify(output);
       }
+      
+      return new Response(
+        JSON.stringify({
+          output: processedOutput,
+          status: "succeeded"
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     } catch (apiError) {
-      console.error("Error when calling Replicate API:", apiError);
+      console.error("Error calling Replicate API:", apiError);
+      console.error("Error details:", JSON.stringify(apiError, Object.getOwnPropertyNames(apiError)));
+      
       return new Response(
         JSON.stringify({ 
           error: "Failed to generate content", 
-          details: apiError.message,
+          details: apiError.message || "Unknown API error",
+          stack: apiError.stack
         }),
         {
           status: 502,
@@ -149,10 +155,13 @@ Make sure the entire response is valid JSON. The content should be appropriate f
     }
   } catch (error) {
     console.error("Error in generate-lesson-content function:", error);
+    console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
     return new Response(
       JSON.stringify({ 
         error: "Internal server error", 
-        details: error.message,
+        details: error.message || "Unknown error",
+        stack: error.stack
       }),
       {
         status: 500,
