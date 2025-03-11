@@ -13,9 +13,17 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   const [pollInterval, setPollInterval] = useState<number | null>(null);
   const [instructions, setInstructions] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
+  const clearErrors = () => {
+    setError(null);
+  };
 
   const handleGenerate = async () => {
     try {
+      clearErrors();
       setGenerating(true);
       
       if (!title.trim()) {
@@ -41,51 +49,64 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
         response = await supabase.functions.invoke('generate-lesson-content', {
           body: generationParams,
         });
-      } catch (invokeError) {
+      } catch (invokeError: any) {
         console.error("Error invoking edge function:", invokeError);
         
-        // Check if Replicate API key is potentially missing
-        if (!import.meta.env.VITE_REPLICATE_API_KEY) {
-          toast.error("API key missing", {
-            description: "The Replicate API key needs to be configured in Supabase Edge Function secrets",
-          });
-          setGenerating(false);
-          return;
-        }
+        // Handle specific error cases
+        const errorMessage = invokeError?.message || "Failed to call the generation service";
+        setError(errorMessage);
         
-        throw new Error("Failed to call the generation service. Please try again later.");
+        toast.error("Generation failed", {
+          description: "Failed to call the AI generation service. Please try again later.",
+        });
+        
+        setGenerating(false);
+        return;
       }
       
-      if (response.error) {
+      if (response.error || !response.data) {
         console.error("Edge function error:", response.error);
         
-        // Handle specific errors
-        if (response.error.message?.includes("REPLICATE_API_KEY is not set")) {
+        const errorMsg = response.error?.message || "Failed to start content generation";
+        setError(errorMsg);
+        
+        // Handle specific error cases
+        if (errorMsg.includes("REPLICATE_API_KEY is not set")) {
           toast.error("API key not configured", {
-            description: "Please add the Replicate API key in the Supabase Edge Function secrets",
+            description: "The Replicate API key is not set in the Supabase Edge Function secrets.",
           });
-          setGenerating(false);
-          return;
+        } else {
+          toast.error("Generation failed", {
+            description: errorMsg,
+          });
         }
         
-        throw new Error(response.error.message || "Failed to start content generation");
+        setGenerating(false);
+        return;
       }
 
       const predictionData = response.data;
       console.log("Edge function response:", predictionData);
       
       if (!predictionData?.id) {
-        throw new Error("Failed to start content generation - no prediction ID returned");
+        setError("No prediction ID returned from generation service");
+        toast.error("Generation failed", {
+          description: "Failed to start content generation - no prediction ID returned",
+        });
+        setGenerating(false);
+        return;
       }
       
       toast.info("Content generation started", {
         description: "AI is working on your lesson content. This may take a minute...",
       });
       
+      // Start polling for results
       startPolling(predictionData.id, generationParams);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating lesson content:", error);
+      setError(error?.message || "Unknown error");
       toast.error("Generation failed", {
         description: error instanceof Error ? error.message : "Failed to generate lesson content",
       });
@@ -99,7 +120,7 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     }
     
     let attemptCount = 0;
-    const maxAttempts = 30; // ~1 minute with 2 second intervals
+    const maxAttempts = 60; // ~2 minutes with 2 second intervals
     
     const interval = setInterval(async () => {
       try {
@@ -109,14 +130,24 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
         if (attemptCount >= maxAttempts) {
           clearInterval(interval);
           setPollInterval(null);
-          throw new Error("Generation timed out. Please try again later.");
+          setError("Generation timed out");
+          toast.error("Generation timed out", {
+            description: "The AI generation is taking longer than expected. Please try again.",
+          });
+          setGenerating(false);
+          return;
         }
         
         const apiKey = import.meta.env.VITE_REPLICATE_API_KEY || '';
         if (!apiKey) {
           clearInterval(interval);
           setPollInterval(null);
-          throw new Error("Replicate API key is not configured");
+          setError("Replicate API key is not configured");
+          toast.error("Configuration error", {
+            description: "Replicate API key is not configured in your environment.",
+          });
+          setGenerating(false);
+          return;
         }
         
         const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
@@ -129,7 +160,20 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`Failed to check prediction status: ${response.status} ${response.statusText}`, errorText);
+          
+          // If we get an error but have retries left, we'll continue polling
+          if (retryCount < maxRetries) {
+            setRetryCount(retryCount + 1);
+            console.log(`Retry ${retryCount + 1}/${maxRetries} for prediction status check`);
+            return; // Continue polling
+          }
+          
           throw new Error(`Failed to check prediction status: ${response.status} ${response.statusText}`);
+        }
+        
+        // Reset retry count on successful response
+        if (retryCount > 0) {
+          setRetryCount(0);
         }
         
         const prediction = await response.json();
@@ -143,16 +187,36 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
             let output = prediction.output;
             console.log("Raw output:", output);
             
-            const jsonStart = output.indexOf('{');
-            const jsonEnd = output.lastIndexOf('}') + 1;
-            
-            if (jsonStart >= 0 && jsonEnd > jsonStart) {
-              output = output.substring(jsonStart, jsonEnd);
+            // Try to extract JSON from the output
+            let parsedContent;
+            if (typeof output === 'string') {
+              const jsonStart = output.indexOf('{');
+              const jsonEnd = output.lastIndexOf('}') + 1;
+              
+              if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                output = output.substring(jsonStart, jsonEnd);
+              }
+              
+              console.log("Extracted JSON:", output);
+              parsedContent = JSON.parse(output) as GeneratedLessonContent;
+            } else if (Array.isArray(output) && output.length > 0) {
+              // Some models return an array of strings
+              const fullText = output.join('');
+              const jsonStart = fullText.indexOf('{');
+              const jsonEnd = fullText.lastIndexOf('}') + 1;
+              
+              if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                const jsonText = fullText.substring(jsonStart, jsonEnd);
+                console.log("Extracted JSON from array:", jsonText);
+                parsedContent = JSON.parse(jsonText) as GeneratedLessonContent;
+              } else {
+                throw new Error("Could not extract valid JSON from array output");
+              }
+            } else {
+              // Direct object output
+              parsedContent = output as GeneratedLessonContent;
             }
             
-            console.log("Extracted JSON:", output);
-            
-            const parsedContent = JSON.parse(output) as GeneratedLessonContent;
             setGeneratedContent(parsedContent);
             
             const metadata = {
@@ -172,9 +236,10 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
             toast.success("Content generated", {
               description: "AI-generated English lesson content is ready for review",
             });
-          } catch (parseError) {
+          } catch (parseError: any) {
             console.error("Error parsing AI response:", parseError);
             console.log("Problem with output:", prediction.output);
+            setError(`Failed to process the generated content: ${parseError.message}`);
             toast.error("Processing error", {
               description: "Failed to process the generated content. Check console for details.",
             });
@@ -185,14 +250,19 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
           clearInterval(interval);
           setPollInterval(null);
           console.error("Prediction failed:", prediction.error);
-          throw new Error(prediction.error || "Generation failed");
+          setError(prediction.error || "Generation failed");
+          toast.error("Generation failed", {
+            description: prediction.error || "The AI generation process failed. Please try again.",
+          });
+          setGenerating(false);
         }
         // Continue polling for "starting" or "processing" statuses
         
-      } catch (error) {
+      } catch (error: any) {
         clearInterval(interval);
         setPollInterval(null);
         console.error("Error checking prediction status:", error);
+        setError(error?.message || "Unknown error checking generation status");
         toast.error("Generation failed", {
           description: error instanceof Error ? error.message : "Failed to check generation status",
         });
@@ -210,6 +280,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setLevel,
     instructions,
     setInstructions,
-    handleGenerate
+    handleGenerate,
+    error,
+    clearErrors
   };
 };

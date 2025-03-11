@@ -26,7 +26,9 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
     setLevel,
     instructions,
     setInstructions,
-    handleGenerate
+    handleGenerate,
+    error,
+    clearErrors
   } = useAIGeneration(form, title);
 
   // When generation completes, switch to preview tab
@@ -35,6 +37,13 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
       setActiveTab('preview');
     }
   }, [generatedContent]);
+
+  // Reset errors when changing tabs
+  useEffect(() => {
+    if (clearErrors) {
+      clearErrors();
+    }
+  }, [activeTab, clearErrors]);
 
   const toggleEditMode = () => {
     setEditMode(!editMode);
@@ -49,8 +58,8 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            The AI generation feature requires a Replicate API key which has been now configured in Supabase.
-            Generation should now work correctly.
+            The AI generation feature requires a Replicate API key to be configured in Supabase Edge Function secrets.
+            Please contact your administrator to set this up.
           </AlertDescription>
         </Alert>
       )}
@@ -70,6 +79,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             setInstructions={setInstructions}
             handleGenerate={handleGenerate}
             generating={generating}
+            error={error}
           />
         </TabsContent>
         <TabsContent value="preview" className="pt-4">

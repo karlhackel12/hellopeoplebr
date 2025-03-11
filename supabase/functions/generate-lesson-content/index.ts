@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
-const MODEL_ID = "deepseek-ai/deepseek-r1";
+const MODEL_ID = "anthropic/claude-3-opus:20240307"; // Updated model
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,8 +12,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("Edge function invoked: generate-lesson-content");
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -89,9 +92,22 @@ Format the response as JSON with the following structure:
 
 The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
-    console.log("Sending request to Replicate API");
+    console.log("Creating prediction on Replicate API");
     
     try {
+      // Build the request body
+      const requestBody = {
+        version: MODEL_ID,
+        input: {
+          prompt: userPrompt,
+          system_prompt: systemPrompt,
+          max_tokens: 2048,
+          temperature: 0.7,
+        },
+      };
+      
+      console.log("Request to Replicate API:", JSON.stringify(requestBody, null, 2));
+      
       // Call Replicate API
       const response = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
@@ -99,25 +115,19 @@ The content should be appropriate for ${level} level English students and focus 
           "Authorization": `Token ${REPLICATE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          version: MODEL_ID,
-          input: {
-            prompt: userPrompt,
-            system_prompt: systemPrompt,
-            max_tokens: 2048,
-            temperature: 0.7,
-          },
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      // Check response status
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Replicate API error:", errorData);
+        console.error("Replicate API error:", JSON.stringify(errorData, null, 2));
         throw new Error(`Replicate API error: ${JSON.stringify(errorData)}`);
       }
 
       const prediction = await response.json();
-      console.log("Prediction created:", prediction.id);
+      console.log("Prediction created successfully. ID:", prediction.id);
+      console.log("Prediction status:", prediction.status);
 
       // Return the prediction ID and URLs for the client to poll
       return new Response(
@@ -135,10 +145,12 @@ The content should be appropriate for ${level} level English students and focus 
       );
     } catch (fetchError) {
       console.error("Fetch error when calling Replicate API:", fetchError);
+      console.error("Stack trace:", fetchError.stack);
       return new Response(
         JSON.stringify({ 
           error: "Failed to communicate with Replicate API", 
-          details: fetchError.message 
+          details: fetchError.message,
+          stack: fetchError.stack
         }),
         {
           status: 502,
@@ -148,10 +160,12 @@ The content should be appropriate for ${level} level English students and focus 
     }
   } catch (error) {
     console.error("Error in generate-lesson-content function:", error);
+    console.error("Stack trace:", error.stack);
     return new Response(
       JSON.stringify({ 
         error: "Internal server error", 
-        details: error.message 
+        details: error.message,
+        stack: error.stack
       }),
       {
         status: 500,

@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, MessageSquare } from 'lucide-react';
+import { Sparkles, Loader2, MessageSquare, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface GenerationSettingsFormProps {
   title: string;
@@ -12,6 +13,7 @@ interface GenerationSettingsFormProps {
   setInstructions: (instructions: string) => void;
   handleGenerate: () => Promise<void>;
   generating: boolean;
+  error?: string | null;
 }
 
 const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
@@ -22,9 +24,19 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
   setInstructions,
   handleGenerate,
   generating,
+  error,
 }) => {
   return (
     <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div>
         <h3 className="text-lg font-medium mb-2">English Lesson Title</h3>
         <p className="p-3 bg-muted rounded-md">{title || "Untitled English Lesson"}</p>
