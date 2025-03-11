@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Users, ClipboardList } from 'lucide-react';
+import { PlusCircle, Users, ClipboardList, Columns2, Columns3, Columns4 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LessonCard from '@/components/teacher/LessonCard';
@@ -19,6 +19,7 @@ type Lesson = {
 const TeacherDashboard: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [columns, setColumns] = useState(3);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -70,11 +71,25 @@ const TeacherDashboard: React.FC = () => {
     navigate('/teacher/lessons');
   };
 
+  const setColumnLayout = (numColumns: number) => {
+    setColumns(numColumns);
+  };
+
+  // Helper function to get the grid columns class based on current selection
+  const getGridClass = () => {
+    switch (columns) {
+      case 2: return "grid-cols-1 sm:grid-cols-2";
+      case 3: return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+      case 4: return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+      default: return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+    }
+  };
+
   return (
     <TeacherLayout>
-      <div>
+      <div className="animate-fade-in">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gradient">Teacher Dashboard</h1>
           <Button onClick={handleCreateLesson} className="gap-2">
             <PlusCircle className="h-4 w-4" />
             Create Lesson
@@ -82,54 +97,88 @@ const TeacherDashboard: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-green-50 border border-green-100 rounded-lg p-6 flex flex-col">
-            <h3 className="font-semibold text-green-800 mb-1">Students</h3>
-            <p className="text-green-600 mb-4 text-sm">Invite and manage your students</p>
+          <div className="glass hover:shadow-md transition-all duration-300 rounded-lg p-6 flex flex-col">
+            <h3 className="font-semibold text-primary mb-1">Students</h3>
+            <p className="text-muted-foreground mb-4 text-sm">Invite and manage your students</p>
             <p className="mt-auto">
-              <Button variant="outline" className="w-full" onClick={handleManageStudents}>
+              <Button variant="outline" className="w-full hover-scale" onClick={handleManageStudents}>
+                <Users className="h-4 w-4 mr-2" />
                 Manage Students
               </Button>
             </p>
           </div>
           
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 flex flex-col">
-            <h3 className="font-semibold text-blue-800 mb-1">Lessons</h3>
-            <p className="text-blue-600 mb-4 text-sm">Create and manage your teaching materials</p>
+          <div className="glass hover:shadow-md transition-all duration-300 rounded-lg p-6 flex flex-col">
+            <h3 className="font-semibold text-primary mb-1">Lessons</h3>
+            <p className="text-muted-foreground mb-4 text-sm">Create and manage your teaching materials</p>
             <p className="mt-auto">
-              <Button variant="outline" className="w-full" onClick={handleCreateLesson}>
+              <Button variant="outline" className="w-full hover-scale" onClick={handleCreateLesson}>
+                <PlusCircle className="h-4 w-4 mr-2" />
                 Create Lesson
               </Button>
             </p>
           </div>
           
-          <div className="bg-purple-50 border border-purple-100 rounded-lg p-6 flex flex-col">
-            <h3 className="font-semibold text-purple-800 mb-1">Assignments</h3>
-            <p className="text-purple-600 mb-4 text-sm">Assign lessons and quizzes to students</p>
+          <div className="glass hover:shadow-md transition-all duration-300 rounded-lg p-6 flex flex-col">
+            <h3 className="font-semibold text-primary mb-1">Assignments</h3>
+            <p className="text-muted-foreground mb-4 text-sm">Assign lessons and quizzes to students</p>
             <p className="mt-auto">
-              <Button variant="outline" className="w-full" onClick={handleManageAssignments}>
+              <Button variant="outline" className="w-full hover-scale" onClick={handleManageAssignments}>
+                <ClipboardList className="h-4 w-4 mr-2" />
                 Manage Assignments
               </Button>
             </p>
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
           <h2 className="text-2xl font-semibold">Recent Lessons</h2>
-          <Button variant="link" onClick={handleViewAllLessons}>View All</Button>
+          <div className="flex items-center gap-2">
+            <div className="flex bg-muted rounded-md p-1">
+              <Button 
+                variant={columns === 2 ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setColumnLayout(2)}
+                className="h-8 w-8 p-0"
+              >
+                <Columns2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant={columns === 3 ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setColumnLayout(3)}
+                className="h-8 w-8 p-0"
+              >
+                <Columns3 className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant={columns === 4 ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setColumnLayout(4)}
+                className="h-8 w-8 p-0"
+              >
+                <Columns4 className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button variant="link" onClick={handleViewAllLessons} className="story-link">View All</Button>
+          </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center my-12">
-            <p>Loading lessons...</p>
+            <div className="animate-pulse-light rounded-lg bg-muted h-48 w-full max-w-md"></div>
           </div>
         ) : lessons.length === 0 ? (
-          <div className="bg-muted p-8 rounded-lg text-center">
+          <div className="glass p-8 rounded-lg text-center animate-fade-in">
             <h3 className="text-xl font-medium mb-2">No lessons created yet</h3>
             <p className="text-muted-foreground mb-4">Start creating your first lesson to help students learn.</p>
-            <Button onClick={handleCreateLesson}>Create Your First Lesson</Button>
+            <Button onClick={handleCreateLesson} className="hover-scale">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Create Your First Lesson
+            </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={`grid ${getGridClass()} gap-6 animate-fade-in`}>
             {lessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} onUpdate={fetchLessons} />
             ))}

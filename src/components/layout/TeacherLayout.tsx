@@ -39,8 +39,10 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Checking authorization...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse-light rounded-md bg-muted p-4">
+          <p>Checking authorization...</p>
+        </div>
       </div>
     );
   }
@@ -52,7 +54,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex bg-background">
       <TeacherSidebar />
-      <main className="flex-grow ml-64 pt-4 px-6 pb-8">
+      <main className="flex-grow transition-all duration-300 ml-64 pt-6 px-8 pb-10 overflow-x-hidden">
         {children}
       </main>
     </div>

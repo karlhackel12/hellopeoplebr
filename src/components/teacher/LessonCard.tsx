@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,11 +54,11 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
   };
   
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col glass transition-all hover:shadow-md duration-300 animate-fade-in">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="mr-2">{lesson.title}</CardTitle>
-          <Badge variant={lesson.is_published ? "default" : "outline"}>
+          <CardTitle className="mr-2 text-gradient">{lesson.title}</CardTitle>
+          <Badge variant={lesson.is_published ? "default" : "outline"} className={lesson.is_published ? "bg-primary/10" : ""}>
             {lesson.is_published ? "Published" : "Draft"}
           </Badge>
         </div>
@@ -68,14 +69,14 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
         </p>
       </CardContent>
       <CardFooter className="flex justify-between gap-2">
-        <Button variant="outline" size="sm" onClick={handleView}>
+        <Button variant="outline" size="sm" onClick={handleView} className="hover-scale">
           <Eye className="h-4 w-4 mr-1" /> Preview
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Button variant="outline" size="sm" onClick={handleEdit} className="hover-scale">
             <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
+          <Button variant="outline" size="sm" onClick={handleDelete} className="hover-scale text-destructive hover:bg-destructive hover:text-destructive-foreground">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
