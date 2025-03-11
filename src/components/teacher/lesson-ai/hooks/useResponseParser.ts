@@ -1,4 +1,6 @@
 
+import { GeneratedLessonContent } from '../types';
+
 export const useResponseParser = () => {
   const parseAIResponse = (output: any): GeneratedLessonContent => {
     try {
