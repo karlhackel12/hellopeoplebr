@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -7,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { BookOpenIcon, ClipboardListIcon, FilterIcon, SearchIcon, SortIcon, TrashIcon, UsersIcon } from 'lucide-react';
+import { BookOpenIcon, ClipboardListIcon, FilterIcon, SearchIcon, ArrowUpDown, TrashIcon, UsersIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AssignmentsListProps {
@@ -26,18 +25,14 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
   const [contentTypeFilter, setContentTypeFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Apply filters and sorting
   const filteredAssignments = initialAssignments.filter(assignment => {
-    // Search by title, description, or student name
     const matchesSearch = 
       assignment.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       assignment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       `${assignment.student?.first_name} ${assignment.student?.last_name}`.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter by status
     const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
     
-    // Filter by content type
     const matchesContentType = 
       contentTypeFilter === 'all' || 
       (contentTypeFilter === 'lesson' && assignment.lesson_id) || 
@@ -46,7 +41,6 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
     return matchesSearch && matchesStatus && matchesContentType;
   });
 
-  // Sort assignments
   const sortedAssignments = [...filteredAssignments].sort((a, b) => {
     const dateA = new Date(a.created_at).getTime();
     const dateB = new Date(b.created_at).getTime();
@@ -129,7 +123,6 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Filters and search */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -178,12 +171,11 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             title={`Sort by date ${sortOrder === 'asc' ? 'newest first' : 'oldest first'}`}
           >
-            <SortIcon className="h-4 w-4" />
+            <ArrowUpDown className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
-      {/* Assignments table */}
       <div className="bg-card rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -281,7 +273,6 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
         </div>
       </div>
       
-      {/* Summary section */}
       <div className="flex items-center justify-between bg-muted/50 p-4 rounded-lg text-sm">
         <div className="flex items-center gap-2">
           <UsersIcon className="h-4 w-4 text-muted-foreground" />
