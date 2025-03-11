@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,13 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -35,7 +29,6 @@ import { ArrowLeft, Clock, Save } from 'lucide-react';
 const lessonFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
-  course_id: z.string().uuid({ message: "Please select a course" }),
   estimated_minutes: z.coerce.number().int().min(1).optional(),
   is_published: z.boolean().default(false),
 });
@@ -47,7 +40,6 @@ const LessonEditor: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [courses, setCourses] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('content');
   const isEditMode = !!id;
 
@@ -57,7 +49,6 @@ const LessonEditor: React.FC = () => {
     defaultValues: {
       title: '',
       content: '',
-      course_id: '',
       estimated_minutes: 15,
       is_published: false,
     },
@@ -65,37 +56,6 @@ const LessonEditor: React.FC = () => {
 
   // Load existing lesson if in edit mode
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user.user) {
-          navigate('/login');
-          return;
-        }
-        
-        const { data, error } = await supabase
-          .from('courses')
-          .select('id, title')
-          .eq('created_by', user.user.id);
-        
-        if (error) throw error;
-        setCourses(data || []);
-        
-        // If no courses available, redirect to course creation
-        if ((data || []).length === 0) {
-          toast.info('No courses found', { 
-            description: 'Please create a course first before creating lessons.',
-          });
-          navigate('/teacher/courses/create');
-        }
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        toast.error('Error', {
-          description: 'Failed to load courses',
-        });
-      }
-    };
-
     const fetchLesson = async () => {
       if (!isEditMode) return;
       
@@ -113,7 +73,6 @@ const LessonEditor: React.FC = () => {
           form.reset({
             title: data.title,
             content: data.content || '',
-            course_id: data.course_id,
             estimated_minutes: data.estimated_minutes || 15,
             is_published: data.is_published,
           });
@@ -128,7 +87,6 @@ const LessonEditor: React.FC = () => {
       }
     };
 
-    fetchCourses();
     fetchLesson();
   }, [id, navigate, form, isEditMode]);
 
@@ -149,7 +107,6 @@ const LessonEditor: React.FC = () => {
           .update({
             title: values.title,
             content: values.content,
-            course_id: values.course_id,
             estimated_minutes: values.estimated_minutes,
             is_published: values.is_published,
             updated_at: new Date().toISOString(),
@@ -168,7 +125,6 @@ const LessonEditor: React.FC = () => {
           .insert({
             title: values.title,
             content: values.content,
-            course_id: values.course_id,
             estimated_minutes: values.estimated_minutes,
             is_published: values.is_published,
             created_by: user.user.id,
@@ -200,7 +156,7 @@ const LessonEditor: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate('/teacher/dashboard');
+    navigate('/teacher/lessons');
   };
 
   if (loading) {
@@ -218,7 +174,7 @@ const LessonEditor: React.FC = () => {
       <div className="container mx-auto p-4 md:p-8">
         <Button variant="ghost" className="mb-4" onClick={handleBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
+          Back to Lessons
         </Button>
         
         <h1 className="text-3xl font-bold mb-6">
@@ -244,36 +200,6 @@ const LessonEditor: React.FC = () => {
                 
               <FormField
                 control={form.control}
-                name="course_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Course</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a course" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {courses.map((course) => (
-                          <SelectItem key={course.id} value={course.id}>
-                            {course.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
                 name="estimated_minutes"
                 render={({ field }) => (
                   <FormItem>
@@ -288,28 +214,28 @@ const LessonEditor: React.FC = () => {
                   </FormItem>
                 )}
               />
-                
-              <FormField
-                control={form.control}
-                name="is_published"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-end space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1">
-                      <FormLabel>Publish Lesson</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Make this lesson visible to students
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="is_published"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1">
+                    <FormLabel>Publish Lesson</FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Make this lesson visible to students
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
               
             <Tabs defaultValue="content" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3">

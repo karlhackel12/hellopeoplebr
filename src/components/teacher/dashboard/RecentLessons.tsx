@@ -12,7 +12,6 @@ type Lesson = {
   title: string;
   is_published: boolean;
   created_at: string;
-  course_id: string;
 };
 
 const RecentLessons: React.FC = () => {
