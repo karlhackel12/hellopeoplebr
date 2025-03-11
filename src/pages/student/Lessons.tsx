@@ -1,4 +1,3 @@
-
 import React from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -218,7 +217,7 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({ assignment, progress })
       statusBadge = <Badge variant="secondary">In Progress</Badge>;
       break;
     case 'completed':
-      statusBadge = <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>;
+      statusBadge = <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>;
       break;
     default:
       statusBadge = <Badge variant="outline">Pending</Badge>;

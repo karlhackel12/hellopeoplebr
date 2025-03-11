@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
@@ -189,7 +188,7 @@ const LessonView: React.FC = () => {
           .update({
             status: completed ? 'completed' : 'in_progress',
             completed_at: completed ? new Date().toISOString() : null,
-            started_at: assignment.started_at || new Date().toISOString()
+            started_at: new Date().toISOString()
           })
           .eq('id', assignment.id);
         
