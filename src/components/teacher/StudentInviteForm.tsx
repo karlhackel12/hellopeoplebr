@@ -39,6 +39,13 @@ const StudentInviteForm: React.FC<StudentInviteFormProps> = ({ onSuccess }) => {
         return;
       }
 
+      // Get user profile to get the teacher's name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', userData.user.id)
+        .single();
+
       // Set expiration date (7 days from now)
       const expiresAt = addDays(new Date(), 7).toISOString();
 
@@ -65,9 +72,33 @@ const StudentInviteForm: React.FC<StudentInviteFormProps> = ({ onSuccess }) => {
         return;
       }
 
-      toast.success('Invitation sent', {
-        description: `An invitation has been sent to ${values.email}`,
+      // Get the generated invitation code from the returned data
+      const invitation = data[0];
+      
+      // Format teacher name for the email
+      const teacherName = profileData
+        ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
+        : 'Your teacher';
+
+      // Send the invitation email using our edge function
+      const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          email: values.email,
+          invitation_code: invitation.invitation_code,
+          teacher_name: teacherName
+        }
       });
+
+      if (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        toast.warning('Invitation created but email delivery failed', {
+          description: 'The invitation was created but we could not send the email. The student can still use the invitation code.',
+        });
+      } else {
+        toast.success('Invitation sent', {
+          description: `An invitation has been sent to ${values.email}`,
+        });
+      }
       
       form.reset();
       onSuccess();
