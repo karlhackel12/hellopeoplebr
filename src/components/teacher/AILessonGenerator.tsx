@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -17,35 +18,52 @@ interface AILessonGeneratorProps {
     isLoading: boolean;
 }
 
-const formSchema = z.object({
+// Local form schema just for the generator, with additional fields
+const generatorFormSchema = z.object({
     title: z.string().min(3, {
         message: "Title must be at least 3 characters.",
     }),
-    description: z.string().min(10, {
-        message: "Description must be at least 10 characters.",
-    }),
+    content: z.string().optional(),
     level: z.enum(['beginner', 'intermediate', 'advanced']),
     topic: z.string().optional(),
     keywords: z.string().optional(),
-    content: z.string().optional(),
+    instructions: z.string().optional(),
 });
+
+type GeneratorFormValues = z.infer<typeof generatorFormSchema>;
 
 const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({ onSubmit, isLoading }) => {
     const navigate = useNavigate();
-    const form = useForm<LessonFormValues>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<GeneratorFormValues>({
+        resolver: zodResolver(generatorFormSchema),
         defaultValues: {
             title: "",
-            description: "",
+            content: "",
             level: "beginner",
             topic: "",
             keywords: "",
-            content: "",
+            instructions: "",
         },
     });
 
-    const handleSubmit = (values: LessonFormValues) => {
-        onSubmit(values);
+    const handleSubmit = (values: GeneratorFormValues) => {
+        // Convert to LessonFormValues for the parent component
+        const lessonFormValues: LessonFormValues = {
+            title: values.title,
+            content: values.content || '',
+            estimated_minutes: 15, // Default value
+            is_published: false,
+            contentSource: 'ai_generated',
+            // Store additional generator values in metadata
+            generationMetadata: {
+                level: values.level,
+                topic: values.topic,
+                keywords: values.keywords,
+                instructions: values.instructions,
+            }
+        };
+        
+        onSubmit(lessonFormValues);
     };
 
     return (
@@ -73,7 +91,7 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({ onSubmit, isLoadi
 
                         <FormField
                             control={form.control}
-                            name="description"
+                            name="instructions"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
