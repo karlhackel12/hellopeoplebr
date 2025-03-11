@@ -35,13 +35,15 @@ interface AssignmentFormProps {
   lessons: any[];
   quizzes: any[];
   onSuccess: () => void;
+  initialStudentId?: string; // Added initialStudentId prop as optional
 }
 
 const AssignmentForm: React.FC<AssignmentFormProps> = ({ 
   students, 
   lessons, 
   quizzes, 
-  onSuccess 
+  onSuccess,
+  initialStudentId
 }) => {
   const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
   const [open, setOpen] = useState(false);
@@ -53,6 +55,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       description: '',
       content_type: 'lesson',
       content_ids: [],
+      student_id: initialStudentId || '', // Use initialStudentId if provided
     },
   });
 
@@ -67,6 +70,16 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       form.setValue('content_ids', []);
     }
   }, [watchedContentType, form]);
+
+  // Set initialStudentId when it changes
+  React.useEffect(() => {
+    if (initialStudentId) {
+      form.setValue('student_id', initialStudentId, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+    }
+  }, [initialStudentId, form]);
 
   const onSubmit = async (values: AssignmentFormValues) => {
     try {
