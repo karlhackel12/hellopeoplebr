@@ -36,12 +36,38 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
       
       console.log("Invoking generate-lesson-content function with params:", generationParams);
       
-      const response = await supabase.functions.invoke('generate-lesson-content', {
-        body: generationParams,
-      });
+      let response;
+      try {
+        response = await supabase.functions.invoke('generate-lesson-content', {
+          body: generationParams,
+        });
+      } catch (invokeError) {
+        console.error("Error invoking edge function:", invokeError);
+        
+        // Check if Replicate API key is potentially missing
+        if (!import.meta.env.VITE_REPLICATE_API_KEY) {
+          toast.error("API key missing", {
+            description: "The Replicate API key needs to be configured in Supabase Edge Function secrets",
+          });
+          setGenerating(false);
+          return;
+        }
+        
+        throw new Error("Failed to call the generation service. Please try again later.");
+      }
       
       if (response.error) {
         console.error("Edge function error:", response.error);
+        
+        // Handle specific errors
+        if (response.error.message?.includes("REPLICATE_API_KEY is not set")) {
+          toast.error("API key not configured", {
+            description: "Please add the Replicate API key in the Supabase Edge Function secrets",
+          });
+          setGenerating(false);
+          return;
+        }
+        
         throw new Error(response.error.message || "Failed to start content generation");
       }
 
@@ -72,18 +98,37 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
       clearInterval(pollInterval);
     }
     
+    let attemptCount = 0;
+    const maxAttempts = 30; // ~1 minute with 2 second intervals
+    
     const interval = setInterval(async () => {
       try {
-        console.log("Checking prediction status for:", predictionId);
+        attemptCount++;
+        console.log(`Checking prediction status for ${predictionId} (attempt ${attemptCount}/${maxAttempts})`);
+        
+        if (attemptCount >= maxAttempts) {
+          clearInterval(interval);
+          setPollInterval(null);
+          throw new Error("Generation timed out. Please try again later.");
+        }
+        
+        const apiKey = import.meta.env.VITE_REPLICATE_API_KEY || '';
+        if (!apiKey) {
+          clearInterval(interval);
+          setPollInterval(null);
+          throw new Error("Replicate API key is not configured");
+        }
         
         const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
           headers: {
-            "Authorization": `Token ${import.meta.env.VITE_REPLICATE_API_KEY || ''}`,
+            "Authorization": `Token ${apiKey}`,
             "Content-Type": "application/json",
           },
         });
         
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Failed to check prediction status: ${response.status} ${response.statusText}`, errorText);
           throw new Error(`Failed to check prediction status: ${response.status} ${response.statusText}`);
         }
         
@@ -142,6 +187,7 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
           console.error("Prediction failed:", prediction.error);
           throw new Error(prediction.error || "Generation failed");
         }
+        // Continue polling for "starting" or "processing" statuses
         
       } catch (error) {
         clearInterval(interval);

@@ -18,8 +18,19 @@ serve(async (req) => {
   }
 
   try {
+    // Check if the Replicate API key is set
     if (!REPLICATE_API_KEY) {
-      throw new Error("REPLICATE_API_KEY is not set");
+      console.error("REPLICATE_API_KEY is not set in the environment");
+      return new Response(
+        JSON.stringify({ 
+          error: "REPLICATE_API_KEY is not set", 
+          details: "Please add the Replicate API key in the Supabase Edge Function secrets"
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const requestData = await req.json();
@@ -79,51 +90,69 @@ Format the response as JSON with the following structure:
 The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
     console.log("Sending request to Replicate API");
-    // Call Replicate API
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Token ${REPLICATE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: MODEL_ID,
-        input: {
-          prompt: userPrompt,
-          system_prompt: systemPrompt,
-          max_tokens: 2048,
-          temperature: 0.7,
+    
+    try {
+      // Call Replicate API
+      const response = await fetch("https://api.replicate.com/v1/predictions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Token ${REPLICATE_API_KEY}`,
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          version: MODEL_ID,
+          input: {
+            prompt: userPrompt,
+            system_prompt: systemPrompt,
+            max_tokens: 2048,
+            temperature: 0.7,
+          },
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Replicate API error:", errorData);
-      throw new Error(`Replicate API error: ${JSON.stringify(errorData)}`);
-    }
-
-    const prediction = await response.json();
-    console.log("Prediction created:", prediction.id);
-
-    // Return the prediction ID and URLs for the client to poll
-    return new Response(
-      JSON.stringify({
-        id: prediction.id,
-        status: prediction.status,
-        urls: {
-          get: `https://api.replicate.com/v1/predictions/${prediction.id}`,
-          cancel: prediction.urls?.cancel,
-        }
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Replicate API error:", errorData);
+        throw new Error(`Replicate API error: ${JSON.stringify(errorData)}`);
       }
-    );
+
+      const prediction = await response.json();
+      console.log("Prediction created:", prediction.id);
+
+      // Return the prediction ID and URLs for the client to poll
+      return new Response(
+        JSON.stringify({
+          id: prediction.id,
+          status: prediction.status,
+          urls: {
+            get: `https://api.replicate.com/v1/predictions/${prediction.id}`,
+            cancel: prediction.urls?.cancel,
+          }
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    } catch (fetchError) {
+      console.error("Fetch error when calling Replicate API:", fetchError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to communicate with Replicate API", 
+          details: fetchError.message 
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
   } catch (error) {
     console.error("Error in generate-lesson-content function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: "Internal server error", 
+        details: error.message 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
