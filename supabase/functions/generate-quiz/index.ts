@@ -1,11 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import OpenAI from "https://esm.sh/openai@4.20.1";
+import Replicate from "https://esm.sh/replicate@0.25.2";
 
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY'),
-});
+const MODEL_ID = "deepseek-ai/deepseek-r1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +49,15 @@ serve(async (req) => {
   }
 
   try {
+    const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY');
+    if (!REPLICATE_API_KEY) {
+      throw new Error('REPLICATE_API_KEY is not set');
+    }
+
+    const replicate = new Replicate({
+      auth: REPLICATE_API_KEY,
+    });
+
     const { lessonContent, numQuestions = 5 } = await req.json();
     console.log("Generating quiz for content length:", lessonContent?.length);
     console.log("Number of questions requested:", numQuestions);
@@ -60,62 +67,75 @@ serve(async (req) => {
     }
 
     const prompt = buildPrompt(lessonContent, numQuestions);
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a professional educator specialized in creating effective multiple choice quiz questions."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-    });
+    console.log("Generated prompt:", prompt);
 
-    const response = completion.choices[0].message.content;
-    console.log("Generated response:", response);
-
-    let parsedOutput;
     try {
-      parsedOutput = JSON.parse(response);
-      
-      // Validate the structure
-      if (!parsedOutput.questions || !Array.isArray(parsedOutput.questions)) {
-        throw new Error("Invalid response structure");
-      }
+      const output = await replicate.run(
+        MODEL_ID,
+        {
+          input: {
+            prompt: prompt,
+            max_new_tokens: 2048,
+            temperature: 0.3,
+            top_p: 0.9,
+            top_k: 50
+          }
+        }
+      );
 
-      // Validate each question
-      parsedOutput.questions.forEach((q: any, index: number) => {
-        if (!q.question_text || !q.options || !Array.isArray(q.options)) {
-          throw new Error(`Invalid question structure at index ${index}`);
+      console.log("Generation response:", output);
+
+      let parsedOutput;
+      try {
+        // If output is an array, join it
+        const outputText = Array.isArray(output) ? output.join("") : output;
+        
+        // Try to find JSON in markdown code blocks first
+        const jsonMatch = outputText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (jsonMatch && jsonMatch[1]) {
+          parsedOutput = JSON.parse(jsonMatch[1]);
+        } else {
+          // Try to parse the entire output as JSON
+          parsedOutput = JSON.parse(outputText);
         }
         
-        // Ensure exactly one correct answer
-        const correctAnswers = q.options.filter((o: any) => o.is_correct).length;
-        if (correctAnswers !== 1) {
-          throw new Error(`Question ${index + 1} must have exactly one correct answer`);
+        // Validate the structure
+        if (!parsedOutput.questions || !Array.isArray(parsedOutput.questions)) {
+          throw new Error("Invalid response structure");
         }
-      });
 
-    } catch (error) {
-      console.error("Error parsing AI response:", error);
-      throw new Error(`Failed to parse quiz content: ${error.message}`);
-    }
+        // Validate each question
+        parsedOutput.questions.forEach((q: any, index: number) => {
+          if (!q.question_text || !q.options || !Array.isArray(q.options)) {
+            throw new Error(`Invalid question structure at index ${index}`);
+          }
+          
+          // Ensure exactly one correct answer
+          const correctAnswers = q.options.filter((o: any) => o.is_correct).length;
+          if (correctAnswers !== 1) {
+            throw new Error(`Question ${index + 1} must have exactly one correct answer`);
+          }
+        });
 
-    return new Response(
-      JSON.stringify({
-        status: "succeeded",
-        questions: parsedOutput.questions
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      } catch (error) {
+        console.error("Error parsing AI response:", error);
+        throw new Error(`Failed to parse quiz content: ${error.message}`);
       }
-    );
 
+      return new Response(
+        JSON.stringify({
+          status: "succeeded",
+          questions: parsedOutput.questions
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+
+    } catch (modelError) {
+      console.error("Error running model:", modelError);
+      throw new Error(`Model execution failed: ${modelError.message}`);
+    }
   } catch (error) {
     console.error("Error in generate-quiz function:", error);
     
