@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import MediaUploader from './MediaUploader';
-import MediaHeader from './media/MediaHeader';
-import MediaGrid from './media/MediaGrid';
-import useMediaFetch from './media/useMediaFetch';
+import MediaUploader from '../../MediaUploader';
+import MediaHeader from './MediaHeader';
+import MediaGrid from './MediaGrid';
+import useMediaFetch from './useMediaFetch';
 import { toast } from 'sonner';
 
 interface MediaAttachmentsTabProps {
@@ -55,8 +55,8 @@ const MediaAttachmentsTab: React.FC<MediaAttachmentsTabProps> = ({ lessonId, isE
         <MediaGrid 
           media={media}
           loading={loading}
-          onAddMedia={() => setShowUploader(true)}
           onMediaUpdated={handleMediaUpdated}
+          onAddMedia={() => setShowUploader(true)}
         />
       )}
     </div>

@@ -5,8 +5,8 @@ import { LessonFormValues } from './useLessonForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ManualLessonForm from '../ManualLessonForm';
 import AILessonForm from '../AILessonForm';
-import MediaAttachmentsTab from '../MediaAttachmentsTab';
-import QuizTab from '../QuizTab';
+import MediaAttachmentsTab from '../lesson/media/MediaAttachmentsTab';
+import QuizTab from '../lesson/quiz/QuizTab';
 
 interface LessonContentTabsProps {
   form: UseFormReturn<LessonFormValues>;
