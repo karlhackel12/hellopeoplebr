@@ -1,22 +1,23 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import Replicate from "https://esm.sh/replicate@0.25.2";
+import OpenAI from "https://esm.sh/openai@4.20.1";
 
-const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
-const MODEL_ID = "deepseek-ai/deepseek-r1";
+const openai = new OpenAI({
+  apiKey: Deno.env.get('OPENAI_API_KEY'),
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function buildPrompt(lessonContent: string): string {
+function buildPrompt(lessonContent: string, numQuestions: number = 5): string {
   return `Generate a multiple choice quiz based on this lesson content:
 
 ${lessonContent}
 
-Format the response as JSON with the following structure:
+Create exactly ${numQuestions} multiple choice questions. Format the response as JSON with this structure:
 {
   "questions": [
     {
@@ -34,11 +35,12 @@ Format the response as JSON with the following structure:
 }
 
 Rules:
-1. Generate 3-5 questions
-2. Each question must have 4 options with exactly one correct answer
-3. Questions should test understanding, not just memorization
-4. All content must be relevant to the lesson
-5. Make sure the entire response is valid JSON
+1. Each question must have 4 options with exactly one correct answer
+2. Questions should test understanding, not just memorization
+3. All content must be relevant to the lesson
+4. Make the options sound plausible but clearly distinguish correct from incorrect
+5. Ensure questions are diverse and cover different aspects of the content
+6. Points should be assigned based on question complexity (1-5)
 `;
 }
 
@@ -49,88 +51,77 @@ serve(async (req) => {
   }
 
   try {
-    // Validate API key
-    if (!REPLICATE_API_KEY) {
-      throw new Error("REPLICATE_API_KEY is not set");
+    const { lessonContent, numQuestions = 5 } = await req.json();
+    console.log("Generating quiz for content length:", lessonContent?.length);
+    console.log("Number of questions requested:", numQuestions);
+
+    if (!lessonContent) {
+      throw new Error("Lesson content is required");
     }
 
-    const replicate = new Replicate({
-      auth: REPLICATE_API_KEY,
+    const prompt = buildPrompt(lessonContent, numQuestions);
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional educator specialized in creating effective multiple choice quiz questions."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
     });
 
-    const requestData = await req.json();
-    console.log("Request data:", requestData);
+    const response = completion.choices[0].message.content;
+    console.log("Generated response:", response);
 
-    // Validate lesson content
-    if (!requestData.lessonContent) {
-      return new Response(
-        JSON.stringify({ error: "Lesson content is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Build the prompt
-    const prompt = buildPrompt(requestData.lessonContent);
-    console.log("Generated prompt:", prompt);
-
+    let parsedOutput;
     try {
-      // Set up model parameters
-      const modelInput = {
-        prompt: prompt,
-        max_new_tokens: 2048,
-        temperature: 0.3,
-        top_p: 0.9,
-        top_k: 50
-      };
+      parsedOutput = JSON.parse(response);
       
-      console.log("Calling Replicate with model:", MODEL_ID);
-      
-      // Run the model
-      const output = await replicate.run(MODEL_ID, {
-        input: modelInput
-      });
-      
-      console.log("Model output received:", output);
-      
-      // Parse the output
-      let parsedOutput;
-      if (typeof output === 'string') {
-        // Try to find JSON in markdown code blocks first
-        const jsonMatch = output.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-          parsedOutput = JSON.parse(jsonMatch[1]);
-        } else {
-          // Try to parse the entire output as JSON
-          parsedOutput = JSON.parse(output);
-        }
-      } else if (Array.isArray(output)) {
-        parsedOutput = JSON.parse(output.join(''));
-      } else {
-        parsedOutput = output;
+      // Validate the structure
+      if (!parsedOutput.questions || !Array.isArray(parsedOutput.questions)) {
+        throw new Error("Invalid response structure");
       }
-      
-      return new Response(
-        JSON.stringify({
-          status: "succeeded",
-          questions: parsedOutput.questions
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+      // Validate each question
+      parsedOutput.questions.forEach((q: any, index: number) => {
+        if (!q.question_text || !q.options || !Array.isArray(q.options)) {
+          throw new Error(`Invalid question structure at index ${index}`);
         }
-      );
-    } catch (modelError) {
-      console.error("Error running model:", modelError);
-      throw new Error(`Model execution failed: ${modelError.message}`);
+        
+        // Ensure exactly one correct answer
+        const correctAnswers = q.options.filter((o: any) => o.is_correct).length;
+        if (correctAnswers !== 1) {
+          throw new Error(`Question ${index + 1} must have exactly one correct answer`);
+        }
+      });
+
+    } catch (error) {
+      console.error("Error parsing AI response:", error);
+      throw new Error(`Failed to parse quiz content: ${error.message}`);
     }
+
+    return new Response(
+      JSON.stringify({
+        status: "succeeded",
+        questions: parsedOutput.questions
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+
   } catch (error) {
     console.error("Error in generate-quiz function:", error);
     
     return new Response(
       JSON.stringify({ 
-        error: "Failed to generate quiz", 
+        error: "Failed to generate quiz",
         details: error.message 
       }),
       {
