@@ -141,7 +141,7 @@ export type Database = {
       lessons: {
         Row: {
           content: string | null
-          course_id: string
+          course_id: string | null
           created_at: string
           created_by: string
           estimated_minutes: number | null
@@ -153,7 +153,7 @@ export type Database = {
         }
         Insert: {
           content?: string | null
-          course_id: string
+          course_id?: string | null
           created_at?: string
           created_by: string
           estimated_minutes?: number | null
@@ -165,7 +165,7 @@ export type Database = {
         }
         Update: {
           content?: string | null
-          course_id?: string
+          course_id?: string | null
           created_at?: string
           created_by?: string
           estimated_minutes?: number | null

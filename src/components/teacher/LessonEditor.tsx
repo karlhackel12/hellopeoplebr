@@ -142,7 +142,7 @@ const LessonEditor: React.FC = () => {
         if (data && data.length > 0) {
           navigate(`/teacher/lessons/edit/${data[0].id}`);
         } else {
-          navigate('/teacher/dashboard');
+          navigate('/teacher/lessons');
         }
       }
     } catch (error) {
