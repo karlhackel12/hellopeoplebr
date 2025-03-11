@@ -71,14 +71,20 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId, onMediaUpdated,
         return;
       }
 
+      // Set up a progress tracking function
+      const trackProgress = (event: ProgressEvent) => {
+        const percent = event.loaded / (event.total || 1) * 100;
+        setProgress(Math.round(percent));
+      };
+
+      // Create an XMLHttpRequest to track upload progress
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', trackProgress);
+      
+      // Perform the upload without onUploadProgress option
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
-        .upload(filePath, file, {
-          onUploadProgress: (progress) => {
-            const percent = progress.loaded / (progress.total || 1) * 100;
-            setProgress(Math.round(percent));
-          }
-        });
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
