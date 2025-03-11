@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   Form,
   FormControl,
@@ -18,6 +18,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
+
+// Define interface for invitation data
+interface InvitationData {
+  email: string | null;
+  code: string | null;
+  isInvited: boolean;
+}
 
 // Define the form schemas
 const loginSchema = z.object({
@@ -46,12 +53,12 @@ type FormValues = LoginFormValues | RegisterFormValues | ForgotPasswordFormValue
 
 type AuthFormProps = {
   type: 'login' | 'register' | 'forgotPassword';
+  invitationData?: InvitationData;
 };
 
-const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
+const AuthForm: React.FC<AuthFormProps> = ({ type, invitationData }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Select the appropriate schema based on form type
@@ -70,13 +77,64 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
       } : 
       type === 'register' ? {
         name: '',
-        email: '',
+        email: invitationData?.email || '',
         password: '',
-        role: 'student',
+        role: invitationData?.isInvited ? 'student' : 'student',
       } : {
         email: '',
       },
   });
+
+  // Update form values if invitation data changes
+  useEffect(() => {
+    if (type === 'register' && invitationData?.email) {
+      form.setValue('email', invitationData.email);
+      
+      // If coming from invitation, set role to student
+      if (invitationData.isInvited) {
+        form.setValue('role', 'student');
+      }
+    }
+  }, [invitationData, form, type]);
+
+  // Create user onboarding record
+  const createOnboardingRecord = async (userId: string) => {
+    try {
+      // Create onboarding record with first step completed
+      const { error } = await supabase
+        .from('user_onboarding')
+        .insert({
+          user_id: userId,
+          completed_steps: ['Create Account'],
+          current_step_index: 1
+        });
+
+      if (error) {
+        console.error('Error creating onboarding record:', error);
+      }
+    } catch (error) {
+      console.error('Error creating onboarding record:', error);
+    }
+  };
+
+  // Update invitation status
+  const updateInvitationStatus = async (code: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('student_invitations')
+        .update({
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('invitation_code', code);
+
+      if (error) {
+        console.error('Error updating invitation status:', error);
+      }
+    } catch (error) {
+      console.error('Error updating invitation status:', error);
+    }
+  };
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
@@ -92,8 +150,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
 
         if (error) throw error;
 
-        toast({
-          title: "Login successful",
+        toast.success("Login successful", {
           description: "Welcome back! Redirecting to your dashboard...",
         });
         navigate('/dashboard');
@@ -120,11 +177,30 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
 
         if (error) throw error;
 
-        toast({
-          title: "Registration successful",
+        if (data.user) {
+          // Create onboarding record for the new user
+          await createOnboardingRecord(data.user.id);
+
+          // If user registered through invitation, update invitation status
+          if (invitationData?.isInvited && invitationData.code) {
+            await updateInvitationStatus(invitationData.code, data.user.id);
+          }
+        }
+
+        toast.success("Registration successful", {
           description: "Your account has been created. Welcome to HelloPeople!",
         });
-        navigate('/dashboard');
+        
+        // Redirect to the appropriate dashboard based on role
+        if (registerValues.role === 'teacher') {
+          navigate('/teacher/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+
+        // Clear invitation data from session storage
+        sessionStorage.removeItem('invitationCode');
+        sessionStorage.removeItem('invitedEmail');
       } 
       else if (type === 'forgotPassword') {
         const forgotValues = values as ForgotPasswordFormValues;
@@ -132,16 +208,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         
         if (error) throw error;
 
-        toast({
-          title: "Reset link sent",
+        toast.success("Reset link sent", {
           description: "Check your email for password reset instructions.",
         });
         navigate('/login');
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Authentication error",
+      toast.error("Authentication error", {
         description: error.message || "An error occurred during authentication. Please try again.",
       });
     } finally {
@@ -192,7 +265,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                     {...field}
                     type="email"
                     placeholder="Enter your email"
-                    disabled={isLoading}
+                    disabled={isLoading || (type === 'register' && !!invitationData?.email)}
                     className="h-11"
                   />
                 </FormControl>
@@ -235,7 +308,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           )}
 
           {/* Role selection (only for register) */}
-          {type === 'register' && (
+          {type === 'register' && !invitationData?.isInvited && (
             <FormField
               control={form.control}
               name="role"
@@ -262,6 +335,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                 </FormItem>
               )}
             />
+          )}
+
+          {/* Show readonly role for invited users */}
+          {type === 'register' && invitationData?.isInvited && (
+            <div className="space-y-3">
+              <FormLabel>Role</FormLabel>
+              <div className="flex items-center h-11 px-4 rounded-md border bg-muted/50">
+                <span className="text-muted-foreground">Student (Invited)</span>
+              </div>
+            </div>
           )}
 
           {/* Login-specific actions */}

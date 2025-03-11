@@ -1,11 +1,25 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
 import Logo from '@/components/ui/Logo';
 import { CheckCircle2 } from 'lucide-react';
 
 const Register: React.FC = () => {
+  const [invitationEmail, setInvitationEmail] = useState<string | null>(null);
+  const [invitationCode, setInvitationCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if user is coming from invitation page
+    const storedInvitationCode = sessionStorage.getItem('invitationCode');
+    const storedEmail = sessionStorage.getItem('invitedEmail');
+
+    if (storedInvitationCode && storedEmail) {
+      setInvitationCode(storedInvitationCode);
+      setInvitationEmail(storedEmail);
+    }
+  }, []);
+
   const studentBenefits = [
     "Access to AI-powered conversation practice",
     "Personalized learning path based on your goals",
@@ -31,12 +45,25 @@ const Register: React.FC = () => {
         <div className="w-full max-w-md mx-auto mt-16 md:mt-0">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-3">Create your account</h1>
-            <p className="text-muted-foreground">
-              Join thousands of language learners achieving fluency faster
-            </p>
+            {invitationCode ? (
+              <p className="text-muted-foreground">
+                You've been invited to join HelloPeople!
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                Join thousands of language learners achieving fluency faster
+              </p>
+            )}
           </div>
           
-          <AuthForm type="register" />
+          <AuthForm 
+            type="register" 
+            invitationData={{
+              email: invitationEmail,
+              code: invitationCode,
+              isInvited: !!invitationCode
+            }}
+          />
         </div>
       </div>
       
