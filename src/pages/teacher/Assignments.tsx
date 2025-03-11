@@ -6,19 +6,21 @@ import TeacherLayout from '@/components/layout/TeacherLayout';
 import AssignmentForm from '@/components/teacher/AssignmentForm';
 import AssignmentsList from '@/components/teacher/AssignmentsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
 
 const Assignments = () => {
-  const [loading, setLoading] = useState(false);
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
-  const [lessons, setLessons] = useState<any[]>([]);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('create');
 
-  const fetchAssignments = async () => {
-    setLoading(true);
-    try {
+  // Fetch assignments with React Query
+  const { 
+    data: assignments = [], 
+    isLoading: loadingAssignments,
+    refetch: refetchAssignments
+  } = useQuery({
+    queryKey: ['assignments'],
+    queryFn: async () => {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user) return [];
 
       const { data, error } = await supabase
         .from('student_assignments')
@@ -32,77 +34,73 @@ const Assignments = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAssignments(data || []);
-    } catch (error: any) {
-      console.error('Error fetching assignments:', error);
-      toast.error('Failed to load assignments', {
-        description: error.message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data || [];
+    },
+  });
 
-  const fetchStudents = async () => {
-    try {
-      // Fetch student profiles (role = 'student')
+  // Fetch students with React Query
+  const { 
+    data: students = [],
+    isLoading: loadingStudents
+  } = useQuery({
+    queryKey: ['students'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url')
         .eq('role', 'student');
 
       if (error) throw error;
-      setStudents(data || []);
-    } catch (error: any) {
-      console.error('Error fetching students:', error);
-      toast.error('Failed to load students', {
-        description: error.message,
-      });
+      return data || [];
     }
-  };
+  });
 
-  const fetchLessonsAndQuizzes = async () => {
-    try {
+  // Fetch lessons and quizzes with React Query
+  const { 
+    data: contentData = { lessons: [], quizzes: [] },
+    isLoading: loadingContent
+  } = useQuery({
+    queryKey: ['lessons-quizzes'],
+    queryFn: async () => {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user) return { lessons: [], quizzes: [] };
 
-      // Fetch lessons created by the teacher
-      const { data: lessonsData, error: lessonsError } = await supabase
-        .from('lessons')
-        .select('id, title')
-        .eq('created_by', user.user.id);
+      // Parallel requests for better performance
+      const [lessonsResponse, quizzesResponse] = await Promise.all([
+        supabase
+          .from('lessons')
+          .select('id, title')
+          .eq('created_by', user.user.id),
+        
+        supabase
+          .from('quizzes')
+          .select('id, title')
+          .eq('created_by', user.user.id)
+      ]);
 
-      if (lessonsError) throw lessonsError;
-      setLessons(lessonsData || []);
+      if (lessonsResponse.error) throw lessonsResponse.error;
+      if (quizzesResponse.error) throw quizzesResponse.error;
 
-      // Fetch quizzes created by the teacher
-      const { data: quizzesData, error: quizzesError } = await supabase
-        .from('quizzes')
-        .select('id, title')
-        .eq('created_by', user.user.id);
-
-      if (quizzesError) throw quizzesError;
-      setQuizzes(quizzesData || []);
-    } catch (error: any) {
-      console.error('Error fetching content:', error);
-      toast.error('Failed to load lessons and quizzes', {
-        description: error.message,
-      });
+      return { 
+        lessons: lessonsResponse.data || [],
+        quizzes: quizzesResponse.data || []
+      };
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchAssignments();
-    fetchStudents();
-    fetchLessonsAndQuizzes();
-  }, []);
+  // Handle successful assignment creation
+  const handleAssignmentSuccess = () => {
+    refetchAssignments();
+    // Switch to the view tab after creating
+    setActiveTab('view');
+  };
 
   return (
     <TeacherLayout>
       <div>
         <h1 className="text-3xl font-bold mb-6">Student Assignments</h1>
         
-        <Tabs defaultValue="create" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="create">Create Assignment</TabsTrigger>
             <TabsTrigger value="view">View Assignments</TabsTrigger>
@@ -113,9 +111,9 @@ const Assignments = () => {
               <h2 className="text-xl font-semibold mb-4">Assign Lesson or Quiz</h2>
               <AssignmentForm 
                 students={students}
-                lessons={lessons}
-                quizzes={quizzes}
-                onSuccess={fetchAssignments} 
+                lessons={contentData.lessons}
+                quizzes={contentData.quizzes}
+                onSuccess={handleAssignmentSuccess} 
               />
             </div>
           </TabsContent>
@@ -123,8 +121,8 @@ const Assignments = () => {
           <TabsContent value="view">
             <AssignmentsList 
               assignments={assignments} 
-              loading={loading} 
-              onUpdate={fetchAssignments} 
+              loading={loadingAssignments} 
+              onUpdate={refetchAssignments} 
             />
           </TabsContent>
         </Tabs>

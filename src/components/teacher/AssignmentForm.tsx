@@ -12,17 +12,19 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 
 const assignmentSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
   description: z.string().optional(),
   student_id: z.string().uuid({ message: 'Please select a student' }),
   content_type: z.enum(['lesson', 'quiz']),
-  content_id: z.string().uuid({ message: 'Please select content to assign' }),
+  content_ids: z.array(z.string().uuid()).min(1, { message: 'Please select at least one item to assign' }),
   due_date: z.date().optional(),
 });
 
@@ -42,6 +44,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   onSuccess 
 }) => {
   const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
+  const [open, setOpen] = useState(false);
 
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
@@ -49,6 +52,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       title: '',
       description: '',
       content_type: 'lesson',
+      content_ids: [],
     },
   });
 
@@ -59,8 +63,10 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   React.useEffect(() => {
     if (watchedContentType) {
       setContentType(watchedContentType);
+      // Reset content selections when changing type
+      form.setValue('content_ids', []);
     }
-  }, [watchedContentType]);
+  }, [watchedContentType, form]);
 
   const onSubmit = async (values: AssignmentFormValues) => {
     try {
@@ -73,8 +79,8 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         return;
       }
 
-      // Prepare assignment data
-      const assignmentData = {
+      // Create multiple assignments (one per selected content)
+      const assignments = values.content_ids.map(contentId => ({
         title: values.title,
         description: values.description || null,
         student_id: values.student_id,
@@ -82,30 +88,32 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         due_date: values.due_date ? values.due_date.toISOString() : null,
         // Set either lesson_id or quiz_id based on content type
         ...(values.content_type === 'lesson' 
-          ? { lesson_id: values.content_id, quiz_id: null } 
-          : { quiz_id: values.content_id, lesson_id: null })
-      };
+          ? { lesson_id: contentId, quiz_id: null } 
+          : { quiz_id: contentId, lesson_id: null })
+      }));
 
-      // Insert assignment
+      // Insert assignments
       const { error } = await supabase
         .from('student_assignments')
-        .insert(assignmentData);
+        .insert(assignments);
 
       if (error) throw error;
 
-      toast.success('Assignment created', {
-        description: 'The assignment has been successfully created',
+      toast.success('Assignments created', {
+        description: `${assignments.length} assignment(s) have been successfully created`,
       });
       
       form.reset();
       onSuccess();
     } catch (error: any) {
-      console.error('Error creating assignment:', error);
-      toast.error('Failed to create assignment', {
+      console.error('Error creating assignments:', error);
+      toast.error('Failed to create assignments', {
         description: error.message,
       });
     }
   };
+
+  const availableContent = contentType === 'lesson' ? lessons : quizzes;
 
   return (
     <Form {...form}>
@@ -180,85 +188,119 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
           )}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="content_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Content Type</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-1"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="lesson" id="lesson" />
-                      <label htmlFor="lesson" className="cursor-pointer text-sm font-medium">
-                        Lesson
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="quiz" id="quiz" />
-                      <label htmlFor="quiz" className="cursor-pointer text-sm font-medium">
-                        Quiz
-                      </label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="content_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content Type</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="lesson" id="lesson" />
+                    <label htmlFor="lesson" className="cursor-pointer text-sm font-medium">
+                      Lesson
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="quiz" id="quiz" />
+                    <label htmlFor="quiz" className="cursor-pointer text-sm font-medium">
+                      Quiz
+                    </label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
           
-          <FormField
-            control={form.control}
-            name="content_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{contentType === 'lesson' ? 'Lesson' : 'Quiz'}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <FormField
+          control={form.control}
+          name="content_ids"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{contentType === 'lesson' ? 'Lessons' : 'Quizzes'} (multiple selection)</FormLabel>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={`Select a ${contentType}`} />
-                    </SelectTrigger>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="w-full justify-between"
+                    >
+                      {field.value.length > 0
+                        ? `${field.value.length} item(s) selected`
+                        : `Select ${contentType === 'lesson' ? 'lessons' : 'quizzes'}`}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
                   </FormControl>
-                  <SelectContent>
-                    {contentType === 'lesson' ? (
-                      <>
-                        {lessons.length === 0 && (
-                          <SelectItem value="no-lessons" disabled>
-                            No lessons available
-                          </SelectItem>
-                        )}
-                        {lessons.map((lesson) => (
-                          <SelectItem key={lesson.id} value={lesson.id}>
-                            {lesson.title}
-                          </SelectItem>
-                        ))}
-                      </>
-                    ) : (
-                      <>
-                        {quizzes.length === 0 && (
-                          <SelectItem value="no-quizzes" disabled>
-                            No quizzes available
-                          </SelectItem>
-                        )}
-                        {quizzes.map((quiz) => (
-                          <SelectItem key={quiz.id} value={quiz.id}>
-                            {quiz.title}
-                          </SelectItem>
-                        ))}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder={`Search ${contentType === 'lesson' ? 'lessons' : 'quizzes'}...`} />
+                    <CommandEmpty>No {contentType} found.</CommandEmpty>
+                    <CommandGroup className="max-h-64 overflow-auto">
+                      {availableContent.length === 0 ? (
+                        <CommandItem disabled>
+                          No {contentType === 'lesson' ? 'lessons' : 'quizzes'} available
+                        </CommandItem>
+                      ) : (
+                        availableContent.map((item) => (
+                          <CommandItem
+                            key={item.id}
+                            onSelect={() => {
+                              const selected = field.value.includes(item.id)
+                                ? field.value.filter(id => id !== item.id)
+                                : [...field.value, item.id];
+                              form.setValue('content_ids', selected, { 
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Checkbox 
+                                checked={field.value.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  const selected = checked
+                                    ? [...field.value, item.id]
+                                    : field.value.filter(id => id !== item.id);
+                                  form.setValue('content_ids', selected, { 
+                                    shouldValidate: true,
+                                    shouldDirty: true
+                                  });
+                                }}
+                              />
+                              <span>{item.title}</span>
+                            </div>
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                field.value.includes(item.id) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))
+                      )}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {availableContent.length === 0 && (
+                <FormDescription>
+                  You need to create {contentType === 'lesson' ? 'lessons' : 'quizzes'} first
+                </FormDescription>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <FormField
           control={form.control}
