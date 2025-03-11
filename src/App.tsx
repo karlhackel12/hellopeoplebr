@@ -14,7 +14,7 @@ import TeacherDashboard from "./pages/teacher/Dashboard";
 import LessonEditor from "./components/teacher/LessonEditor";
 import Invitations from "./pages/teacher/Invitations";
 import Assignments from "./pages/teacher/Assignments";
-import Lessons from "./pages/Lessons";
+import Lessons from "./pages/teacher/Lessons";
 import Settings from "./pages/teacher/Settings";
 
 const queryClient = new QueryClient();

@@ -108,13 +108,30 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     }
   ];
 
+  // Helper function to check if a route is active, including nested routes
+  const isRouteActive = (href: string) => {
+    if (href === '/teacher/lessons') {
+      return location.pathname === href || 
+             location.pathname.startsWith('/teacher/lessons/create') || 
+             location.pathname.startsWith('/teacher/lessons/edit/');
+    }
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+  };
+
   // Combined classes for mobile and desktop
   const sidebarClasses = cn(
-    "fixed top-0 left-0 z-40 h-screen bg-sidebar-background border-r border-sidebar-border transition-all duration-300 shadow-md",
+    "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
+    // Use glass morphism for mobile sidebar with solid background
     collapsed ? "w-20" : "w-64",
     // Mobile visibility
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
+
+  // Mobile background styles
+  const sidebarStyles = {
+    backgroundColor: "var(--sidebar-background)",
+    backdropFilter: "blur(8px)"
+  };
 
   return (
     <>
@@ -128,7 +145,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      <aside className={sidebarClasses}>
+      <aside className={sidebarClasses} style={sidebarStyles}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
@@ -164,7 +181,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
                   key={link.name}
                   href={link.href}
                   icon={link.icon}
-                  active={location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)}
+                  active={isRouteActive(link.href)}
                   collapsed={collapsed}
                 >
                   {link.name}
