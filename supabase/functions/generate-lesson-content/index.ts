@@ -31,7 +31,7 @@ serve(async (req) => {
       instructions = "" 
     } = requestData;
 
-    console.log(`Generating lesson content for "${title}" at ${level} level in ${language}`);
+    console.log(`Generating English lesson content for "${title}" at ${level} level`);
     if (instructions) {
       console.log(`With instructions: ${instructions}`);
     }
@@ -46,10 +46,10 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an experienced language teacher and curriculum designer. 
-Create educational content for a language lesson with the title "${title}" for ${level} level students of ${language}.`;
+    const systemPrompt = `You are an experienced English language teacher with expertise in creating EFL (English as a Foreign Language) content. 
+Create educational content for an English lesson with the title "${title}" for ${level} level students.`;
 
-    let userPrompt = `Generate a well-structured language lesson with the following components:`;
+    let userPrompt = `Generate a well-structured English language lesson with the following components:`;
     
     // If specific sections are requested, only generate those
     if (sections.length > 0) {
@@ -67,16 +67,16 @@ Create educational content for a language lesson with the title "${title}" for $
 
 Format the response as JSON with the following structure:
 {
-  "description": "A brief overview of the lesson (2-3 sentences)",
-  "objectives": ["List of 3-5 learning objectives"],
-  "practicalSituations": ["List of 2-3 real-world scenarios where this language would be used"],
-  "keyPhrases": [{"phrase": "phrase in ${language}", "translation": "translation in English", "usage": "brief context"}],
-  "vocabulary": [{"word": "word in ${language}", "translation": "translation in English", "partOfSpeech": "noun/verb/etc"}],
-  "explanations": ["2-3 paragraphs explaining key concepts"],
-  "tips": ["3-5 tips for practicing or remembering this content"]
+  "description": "A brief overview of the English lesson (2-3 sentences)",
+  "objectives": ["List of 3-5 learning objectives for English learners"],
+  "practicalSituations": ["List of 2-3 real-world scenarios where this English would be used"],
+  "keyPhrases": [{"phrase": "English phrase", "translation": "translation in student's language if needed", "usage": "brief context"}],
+  "vocabulary": [{"word": "English word", "translation": "translation if needed", "partOfSpeech": "noun/verb/etc"}],
+  "explanations": ["2-3 paragraphs explaining key English language concepts"],
+  "tips": ["3-5 tips for practicing or remembering this English content"]
 }
 
-The content should be appropriate for ${level} level students and focus specifically on the title topic.`;
+The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
     // Call Replicate API
     const response = await fetch("https://api.replicate.com/v1/predictions", {

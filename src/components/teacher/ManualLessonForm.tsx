@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,12 +28,10 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
     
     let newText;
     if (selectedText) {
-      // If text is selected, wrap it with the markdown syntax
       newText = text.substring(0, start) + 
                 markdownSyntax.replace('$1', selectedText) + 
                 text.substring(end);
     } else {
-      // If no text is selected, insert markdown with placeholder
       newText = text.substring(0, start) + 
                 markdownSyntax.replace('$1', placeholder) + 
                 text.substring(end);
@@ -42,7 +39,6 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
     
     form.setValue('content', newText, { shouldDirty: true });
     
-    // Set cursor position after update
     setTimeout(() => {
       if (textarea) {
         const newCursorPos = selectedText 
@@ -66,30 +62,36 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
     
     switch(templateType) {
       case 'vocabulary':
-        template = '\n## Vocabulary\n\n' +
+        template = '\n## English Vocabulary\n\n' +
                   '- **word1** - definition or translation\n' +
                   '- **word2** - definition or translation\n' +
                   '- **word3** - definition or translation\n';
         break;
       case 'grammar':
-        template = '\n## Grammar Rule\n\n' +
+        template = '\n## English Grammar Rule\n\n' +
                   '### Structure\n' +
                   'Explain the grammar structure here\n\n' +
                   '### Examples\n' +
                   '1. Example sentence one\n' +
                   '2. Example sentence two\n';
         break;
+      case 'conversation':
+        template = '\n## English Conversation Practice\n\n' +
+                  '**Person A**: First line of dialogue\n\n' +
+                  '**Person B**: Response to first line\n\n' +
+                  '**Person A**: Another line of dialogue\n';
+        break;
+      case 'pronunciation':
+        template = '\n## Pronunciation Guide\n\n' +
+                  '- **Word**: How to pronounce it\n' +
+                  '- **Word**: How to pronounce it\n' +
+                  '- **Difficult sounds**: Tips for producing these sounds\n';
+        break;
       case 'exercise':
         template = '\n## Practice Exercise\n\n' +
                   '1. Question one\n' +
                   '2. Question two\n' +
                   '3. Question three\n';
-        break;
-      case 'dialogue':
-        template = '\n## Dialogue\n\n' +
-                  '**Person A**: First line of dialogue\n\n' +
-                  '**Person B**: Response to first line\n\n' +
-                  '**Person A**: Another line of dialogue\n';
         break;
     }
     
@@ -133,7 +135,7 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
               </Button>
               
               <div className="ml-auto flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Templates:</span>
+                <span className="text-xs text-muted-foreground">English Templates:</span>
                 <select 
                   className="text-xs py-1 px-2 rounded border bg-background" 
                   onChange={(e) => {
@@ -145,10 +147,11 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
                   defaultValue=""
                 >
                   <option value="" disabled>Insert template</option>
-                  <option value="vocabulary">Vocabulary List</option>
-                  <option value="grammar">Grammar Rule</option>
+                  <option value="vocabulary">English Vocabulary List</option>
+                  <option value="grammar">English Grammar Rule</option>
+                  <option value="conversation">English Conversation</option>
+                  <option value="pronunciation">Pronunciation Guide</option>
                   <option value="exercise">Practice Exercise</option>
-                  <option value="dialogue">Dialogue</option>
                 </select>
               </div>
             </div>
@@ -158,10 +161,10 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lesson Content</FormLabel>
+                  <FormLabel>English Lesson Content</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Enter lesson content here..." 
+                      placeholder="Enter English lesson content here..." 
                       className="min-h-[400px] font-mono resize-y"
                       {...field} 
                       ref={textareaRef}
@@ -190,7 +193,7 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({ form }) => {
               <Card>
                 <CardContent className="p-4">
                   <h3 className="font-medium text-sm mb-2">Connect Media</h3>
-                  <p className="text-xs text-muted-foreground mb-3">Add media from your library directly into your lesson</p>
+                  <p className="text-xs text-muted-foreground mb-3">Add English audio and images from your library into your lesson</p>
                   <Button type="button" variant="outline" className="w-full" size="sm" disabled>
                     <Image className="h-4 w-4 mr-2" /> Select Media
                   </Button>
