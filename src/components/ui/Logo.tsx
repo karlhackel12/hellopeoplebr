@@ -5,9 +5,10 @@ import { Link } from 'react-router-dom';
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   colored?: boolean;
+  iconOnly?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'md', colored = true }) => {
+const Logo: React.FC<LogoProps> = ({ size = 'md', colored = true, iconOnly = false }) => {
   const sizeClasses = {
     sm: 'text-xl',
     md: 'text-2xl',
@@ -25,7 +26,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', colored = true }) => {
           <span className="absolute -inset-1 rounded-full bg-primary/10 animate-pulse-light"></span>
           hello
         </span>
-        <span className="relative">people</span>
+        {!iconOnly && <span className="relative">people</span>}
       </span>
     </Link>
   );
