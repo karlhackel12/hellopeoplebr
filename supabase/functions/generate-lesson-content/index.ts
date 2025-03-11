@@ -4,7 +4,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import Replicate from "https://esm.sh/replicate@0.25.2";
 
 const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
-const MODEL_ID = "deepseek-ai/deepseek-r1:0767acf1502dd42cf295033525cdfc2ceb3d9b80d15585c472b420085f2e1fad"; 
+const MODEL_ID = "deepseek-ai/deepseek-r1"; 
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,7 +102,7 @@ Make sure the entire response is valid JSON. The content should be appropriate f
           input: {
             prompt: prompt,
             max_new_tokens: 2048,
-            temperature: 0.7,
+            temperature: 0.3,
           }
         }
       );
