@@ -42,25 +42,30 @@ export const useGenerationApi = () => {
   };
 
   const checkPredictionStatus = async (predictionId: string): Promise<any> => {
-    const apiKey = import.meta.env.VITE_REPLICATE_API_KEY || '';
-    if (!apiKey) {
-      throw new Error("Replicate API key is not configured");
+    try {
+      const apiKey = import.meta.env.VITE_REPLICATE_API_KEY || '';
+      if (!apiKey) {
+        throw new Error("Replicate API key is not configured");
+      }
+      
+      const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+        headers: {
+          "Authorization": `Token ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Failed to check prediction status: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`Failed to check prediction status: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Error checking prediction status:", error);
+      throw error;
     }
-    
-    const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-      headers: {
-        "Authorization": `Token ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Failed to check prediction status: ${response.status} ${response.statusText}`, errorText);
-      throw new Error(`Failed to check prediction status: ${response.status} ${response.statusText}`);
-    }
-    
-    return await response.json();
   };
 
   return {

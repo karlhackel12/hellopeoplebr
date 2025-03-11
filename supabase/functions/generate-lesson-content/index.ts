@@ -1,9 +1,10 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import Replicate from "https://esm.sh/replicate@0.25.2";
 
 const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
-const MODEL_ID = "anthropic/claude-3-opus:20240307"; // Updated model
+const MODEL_ID = "deepseek-ai/deepseek-r1:0767acf1502dd42cf295033525cdfc2ceb3d9b80d15585c472b420085f2e1fad"; 
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,26 +61,26 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an experienced English language teacher with expertise in creating EFL (English as a Foreign Language) content. 
-Create educational content for an English lesson with the title "${title}" for ${level} level students.`;
+    // Initialize Replicate client
+    const replicate = new Replicate({
+      auth: REPLICATE_API_KEY,
+    });
 
-    let userPrompt = `Generate a well-structured English language lesson with the following components:`;
+    // Build the prompt for the AI model
+    let prompt = `Create an English language lesson with the title "${title}" for ${level} level students.`;
     
     // If specific sections are requested, only generate those
     if (sections.length > 0) {
-      userPrompt += ` Only generate the following sections: ${sections.join(", ")}.`;
-    } else {
-      userPrompt += ` Generate all sections.`;
+      prompt += ` Only include these sections: ${sections.join(", ")}.`;
     }
     
     // Add any additional instructions from the user
     if (instructions) {
-      userPrompt += `\n\nAdditional instructions to follow: ${instructions}`;
+      prompt += `\n\nAdditional instructions: ${instructions}`;
     }
     
-    userPrompt += `
-
-Format the response as JSON with the following structure:
+    // Add format instructions
+    prompt += `\n\nFormat the response as JSON with the following structure:
 {
   "description": "A brief overview of the English lesson (2-3 sentences)",
   "objectives": ["List of 3-5 learning objectives for English learners"],
@@ -90,42 +91,26 @@ Format the response as JSON with the following structure:
   "tips": ["3-5 tips for practicing or remembering this English content"]
 }
 
-The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
+Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
-    console.log("Creating prediction on Replicate API");
+    console.log("Creating prediction on Replicate API with Deepseek R1 model");
     
     try {
-      // Build the request body
-      const requestBody = {
-        version: MODEL_ID,
-        input: {
-          prompt: userPrompt,
-          system_prompt: systemPrompt,
-          max_tokens: 2048,
-          temperature: 0.7,
-        },
+      // Create input parameters
+      const input = {
+        prompt: prompt,
+        max_new_tokens: 2048,
+        temperature: 0.7,
       };
+
+      console.log("Input to Replicate API:", JSON.stringify(input, null, 2));
       
-      console.log("Request to Replicate API:", JSON.stringify(requestBody, null, 2));
-      
-      // Call Replicate API
-      const response = await fetch("https://api.replicate.com/v1/predictions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Token ${REPLICATE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
+      // Start the prediction
+      const prediction = await replicate.predictions.create({
+        version: MODEL_ID,
+        input: input,
       });
 
-      // Check response status
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Replicate API error:", JSON.stringify(errorData, null, 2));
-        throw new Error(`Replicate API error: ${JSON.stringify(errorData)}`);
-      }
-
-      const prediction = await response.json();
       console.log("Prediction created successfully. ID:", prediction.id);
       console.log("Prediction status:", prediction.status);
 
@@ -144,7 +129,7 @@ The content should be appropriate for ${level} level English students and focus 
         }
       );
     } catch (fetchError) {
-      console.error("Fetch error when calling Replicate API:", fetchError);
+      console.error("Error when calling Replicate API:", fetchError);
       console.error("Stack trace:", fetchError.stack);
       return new Response(
         JSON.stringify({ 

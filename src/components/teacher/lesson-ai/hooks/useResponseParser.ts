@@ -6,37 +6,48 @@ export const useResponseParser = () => {
     try {
       let parsedContent;
       
+      // Handle different output formats
       if (typeof output === 'string') {
-        const jsonStart = output.indexOf('{');
-        const jsonEnd = output.lastIndexOf('}') + 1;
+        // Try to find JSON in the string response
+        const jsonRegex = /{[\s\S]*}/;
+        const match = output.match(jsonRegex);
         
-        if (jsonStart >= 0 && jsonEnd > jsonStart) {
-          output = output.substring(jsonStart, jsonEnd);
+        if (match) {
+          const jsonString = match[0];
+          console.log("Extracted JSON:", jsonString);
+          parsedContent = JSON.parse(jsonString) as GeneratedLessonContent;
+        } else {
+          throw new Error("Could not extract valid JSON from string output");
         }
-        
-        console.log("Extracted JSON:", output);
-        parsedContent = JSON.parse(output) as GeneratedLessonContent;
       } else if (Array.isArray(output) && output.length > 0) {
-        // Some models return an array of strings
+        // Join array elements and extract JSON
         const fullText = output.join('');
-        const jsonStart = fullText.indexOf('{');
-        const jsonEnd = fullText.lastIndexOf('}') + 1;
+        const jsonRegex = /{[\s\S]*}/;
+        const match = fullText.match(jsonRegex);
         
-        if (jsonStart >= 0 && jsonEnd > jsonStart) {
-          const jsonText = fullText.substring(jsonStart, jsonEnd);
-          console.log("Extracted JSON from array:", jsonText);
-          parsedContent = JSON.parse(jsonText) as GeneratedLessonContent;
+        if (match) {
+          const jsonString = match[0];
+          console.log("Extracted JSON from array:", jsonString);
+          parsedContent = JSON.parse(jsonString) as GeneratedLessonContent;
         } else {
           throw new Error("Could not extract valid JSON from array output");
         }
-      } else {
+      } else if (typeof output === 'object' && output !== null) {
         // Direct object output
         parsedContent = output as GeneratedLessonContent;
+      } else {
+        throw new Error(`Unsupported output format: ${typeof output}`);
+      }
+      
+      // Validate that we have the required fields
+      if (!parsedContent.description || !Array.isArray(parsedContent.objectives)) {
+        throw new Error("Generated content is missing required fields");
       }
       
       return parsedContent;
     } catch (error: any) {
       console.error("Error parsing AI response:", error);
+      console.error("Raw output:", output);
       throw new Error(`Failed to process the generated content: ${error.message}`);
     }
   };

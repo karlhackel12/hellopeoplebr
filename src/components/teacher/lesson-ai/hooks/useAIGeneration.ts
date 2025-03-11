@@ -138,7 +138,7 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
               
               const metadata = {
                 ...generationParams,
-                model: prediction.model,
+                model: "deepseek-r1",
                 predictionId: predictionId,
                 completed: prediction.completed_at,
                 status: prediction.status
