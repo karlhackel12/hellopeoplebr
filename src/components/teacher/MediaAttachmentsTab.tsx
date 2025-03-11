@@ -8,10 +8,16 @@ interface MediaAttachmentsTabProps {
 }
 
 const MediaAttachmentsTab: React.FC<MediaAttachmentsTabProps> = ({ lessonId, isEditMode }) => {
+  // This function will be triggered when media is added or deleted
+  const handleMediaUpdated = () => {
+    // We could add additional logic here if needed
+    console.log('Media updated');
+  };
+
   return (
     <>
       {isEditMode && lessonId ? (
-        <MediaUploader lessonId={lessonId} />
+        <MediaUploader lessonId={lessonId} onMediaUpdated={handleMediaUpdated} />
       ) : (
         <div className="p-8 text-center border rounded-md bg-muted">
           <p>Save the lesson first before adding media attachments</p>

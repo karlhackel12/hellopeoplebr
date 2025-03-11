@@ -14,7 +14,7 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content }) => {
 
   const formatMarkdownToHtml = (markdown: string): string => {
     // Simple markdown to HTML conversion
-    return markdown
+    let html = markdown
       .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
       .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold my-3">$1</h2>')
       .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold my-2">$1</h3>')
@@ -22,7 +22,13 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content }) => {
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/^- (.*$)/gm, '<li class="ml-6 list-disc">$1</li>')
       .replace(/^([0-9]+)\. (.*$)/gm, '<li class="ml-6 list-decimal">$2</li>')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="my-2 max-w-full rounded" />')
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">$1</a>')
       .replace(/\n\n/g, '<br/><br/>');
+    
+    // Preserve HTML tags for audio and video
+    // We're making sure audio and video tags stay intact
+    return html;
   };
 
   return (
@@ -80,7 +86,10 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content }) => {
                   <CardTitle className="text-xl">Lesson Content</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0 prose">
-                  <div dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(content) }} />
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(content) }} 
+                    className="media-content"
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

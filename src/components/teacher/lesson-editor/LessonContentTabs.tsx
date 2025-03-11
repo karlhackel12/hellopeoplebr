@@ -32,7 +32,7 @@ const LessonContentTabs: React.FC<LessonContentTabsProps> = ({
       </TabsList>
       <TabsContent value="content" className="mt-6">
         {lessonType === 'manual' ? (
-          <ManualLessonForm form={form} />
+          <ManualLessonForm form={form} lessonId={lessonId} />
         ) : (
           <AILessonForm 
             form={form}

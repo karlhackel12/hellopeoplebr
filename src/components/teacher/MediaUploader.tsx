@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +14,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PlusCircle, Trash2, Image, FileAudio, FileVideo, File } from 'lucide-react';
+import { PlusCircle, Trash2, Image, FileAudio, FileVideo, File, Paperclip } from 'lucide-react';
 
 interface MediaUploaderProps {
   lessonId: string;
+  onMediaUpdated?: () => void;
 }
 
 type Media = {
@@ -27,7 +29,7 @@ type Media = {
   media_type: 'image' | 'audio' | 'video' | 'document';
 };
 
-const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
+const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId, onMediaUpdated }) => {
   const [media, setMedia] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -64,7 +66,26 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Auto-set title if not already set
+      if (!title) {
+        // Remove file extension from name
+        const fileNameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
+        setTitle(fileNameWithoutExt);
+      }
+      
+      // Auto-detect media type based on file
+      if (selectedFile.type.startsWith('image/')) {
+        setMediaType('image');
+      } else if (selectedFile.type.startsWith('audio/')) {
+        setMediaType('audio');
+      } else if (selectedFile.type.startsWith('video/')) {
+        setMediaType('video');
+      } else {
+        setMediaType('document');
+      }
     }
   };
 
@@ -122,7 +143,14 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
       setTitle('');
       setDescription('');
       setAddingMedia(false);
+      
+      // Refresh media list
       fetchMedia();
+      
+      // Notify parent if callback provided
+      if (onMediaUpdated) {
+        onMediaUpdated();
+      }
 
     } catch (error) {
       console.error('Error uploading media:', error);
@@ -151,6 +179,11 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
         });
         
         fetchMedia();
+        
+        // Notify parent if callback provided
+        if (onMediaUpdated) {
+          onMediaUpdated();
+        }
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Error', {
@@ -305,7 +338,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
                   <video src={item.url} controls className="w-full mt-2" />
                 )}
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex justify-between">
                 <a
                   href={item.url}
                   target="_blank"
@@ -314,6 +347,17 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId }) => {
                 >
                   View full size
                 </a>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-sm flex items-center" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(item.url);
+                    toast.success('URL copied to clipboard');
+                  }}
+                >
+                  <Paperclip className="h-3 w-3 mr-1" /> Copy URL
+                </Button>
               </CardFooter>
             </Card>
           ))}
