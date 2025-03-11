@@ -6,8 +6,20 @@ import { Question } from '../quiz/types';
 
 export const useQuizHandler = (lessonId: string) => {
   const { generateQuiz, loading: generationLoading, error: generationError } = useQuizGeneration(lessonId);
-  const { fetchQuizQuestions, fetchQuizDetails, loading: fetchLoading, error: fetchError } = useQuizFetching(lessonId);
-  const { saveQuizTitle, deleteQuiz, saving, error: managementError } = useQuizManagement(lessonId);
+  const { 
+    fetchQuizQuestions, 
+    fetchQuizDetails, 
+    loading: fetchLoading, 
+    error: fetchError 
+  } = useQuizFetching(lessonId);
+  const { 
+    saveQuizTitle, 
+    deleteQuiz, 
+    publishQuiz,
+    unpublishQuiz,
+    saving, 
+    error: managementError 
+  } = useQuizManagement(lessonId);
 
   // Re-export the functions and combine the loading/error states
   return {
@@ -21,6 +33,8 @@ export const useQuizHandler = (lessonId: string) => {
     // Management
     saveQuizTitle,
     deleteQuiz,
+    publishQuiz,
+    unpublishQuiz,
     
     // Combined states
     loading: generationLoading || fetchLoading,

@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Smartphone, Monitor, Bookmark, Book, BookOpen, CheckCircle, Loader2 } from 'lucide-react';
+import { Smartphone, Monitor, Bookmark, Book, BookOpen, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Question } from './quiz/types';
 import QuizPreview from './quiz/QuizPreview';
+import { Badge } from '@/components/ui/badge';
 
 interface LessonPreviewProps {
   content: string;
@@ -22,6 +22,7 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
   const [quizPassPercent, setQuizPassPercent] = useState<number>(70);
   const [loadingQuiz, setLoadingQuiz] = useState<boolean>(false);
   const [quizExists, setQuizExists] = useState<boolean>(false);
+  const [isQuizPublished, setIsQuizPublished] = useState<boolean>(false);
   
   const toggleSectionCompletion = (section: string) => {
     if (completedSections.includes(section)) {
@@ -42,7 +43,7 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
         // First check if there's a quiz for this lesson
         const { data: quiz, error: quizError } = await supabase
           .from('quizzes')
-          .select('id, title, pass_percent')
+          .select('id, title, pass_percent, is_published')
           .eq('lesson_id', lessonId)
           .maybeSingle();
         
@@ -59,6 +60,7 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
         setQuizExists(true);
         setQuizTitle(quiz.title);
         setQuizPassPercent(quiz.pass_percent);
+        setIsQuizPublished(quiz.is_published);
         
         // Fetch questions for this quiz
         const { data: questions, error: questionsError } = await supabase
@@ -257,12 +259,27 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
                   <p className="text-muted-foreground">This lesson has a quiz, but no questions have been added yet</p>
                 </div>
               ) : (
-                <QuizPreview 
-                  questions={quizQuestions} 
-                  title={quizTitle}
-                  passPercent={quizPassPercent}
-                  isPreview={true}
-                />
+                <div>
+                  {!isQuizPublished && (
+                    <div className="mb-4 p-2 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+                          Draft
+                        </Badge>
+                        <p className="text-sm text-amber-700">
+                          This quiz is in draft mode and would not be visible to students until published
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <QuizPreview 
+                    questions={quizQuestions} 
+                    title={quizTitle}
+                    passPercent={quizPassPercent}
+                    isPreview={true}
+                  />
+                </div>
               )}
             </TabsContent>
           </Tabs>

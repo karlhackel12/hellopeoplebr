@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -37,6 +36,80 @@ export const useQuizManagement = (lessonId: string) => {
       setError(error.message);
       toast.error('Save failed', {
         description: 'Failed to save quiz. Please try again.',
+      });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publishQuiz = async (): Promise<boolean> => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      if (!lessonId) {
+        throw new Error('Lesson ID is required');
+      }
+      
+      // Update the quiz to published
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ 
+          is_published: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('lesson_id', lessonId);
+        
+      if (error) throw error;
+      
+      toast.success('Quiz published', {
+        description: 'Your quiz is now published and visible to students',
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error publishing quiz:", error);
+      setError(error.message);
+      toast.error('Publish failed', {
+        description: 'Failed to publish quiz. Please try again.',
+      });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const unpublishQuiz = async (): Promise<boolean> => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      if (!lessonId) {
+        throw new Error('Lesson ID is required');
+      }
+      
+      // Update the quiz to unpublished
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ 
+          is_published: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('lesson_id', lessonId);
+        
+      if (error) throw error;
+      
+      toast.success('Quiz unpublished', {
+        description: 'Your quiz is now unpublished and hidden from students',
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error unpublishing quiz:", error);
+      setError(error.message);
+      toast.error('Unpublish failed', {
+        description: 'Failed to unpublish quiz. Please try again.',
       });
       return false;
     } finally {
@@ -101,6 +174,8 @@ export const useQuizManagement = (lessonId: string) => {
   return {
     saveQuizTitle,
     deleteQuiz,
+    publishQuiz,
+    unpublishQuiz,
     saving,
     error
   };
