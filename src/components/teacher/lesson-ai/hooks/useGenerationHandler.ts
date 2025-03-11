@@ -6,6 +6,9 @@ import { GenerationParams } from './types';
 import { useGenerationApi } from './useGenerationApi';
 import { useResponseParser } from './useResponseParser';
 import { useContentUpdater } from './useContentUpdater';
+import { useValidation } from './useValidation';
+import { useErrorHandler } from './useErrorHandler';
+import { useGenerationProcess } from './useGenerationProcess';
 
 export const useGenerationHandler = (
   form: UseFormReturn<LessonFormValues>,
@@ -25,17 +28,16 @@ export const useGenerationHandler = (
     resetGenerationState
   } = updateState;
 
-  const validateTitleInput = (title: string): boolean => {
-    if (!title?.trim()) {
-      toast.error("Title required", {
-        description: "Please provide a lesson title before generating content",
-      });
-      setGenerating(false);
-      setGenerationStatus('failed');
-      return false;
-    }
-    return true;
-  };
+  // Use our new focused hooks
+  const { validateTitleInput } = useValidation(setGenerating, setGenerationStatus);
+  const { handleGenerationError, handleParsingError } = useErrorHandler(setError, setGenerating, setGenerationStatus);
+  const { processGeneration } = useGenerationProcess(
+    invokeLessonGeneration, 
+    parseAIResponse, 
+    updateFormContent, 
+    setGeneratedContent, 
+    handleParsingError
+  );
 
   const handleGenerate = async (
     title: string,
@@ -59,41 +61,12 @@ export const useGenerationHandler = (
         instructions: instructions.trim() || undefined,
       };
       
-      toast.info("Content generation started", {
-        description: "AI is working on your lesson content. This may take a minute...",
-      });
-      
       try {
-        const response = await invokeLessonGeneration(generationParams);
-        
-        if (response.status === "succeeded" && response.output) {
-          try {
-            const parsedContent = parseAIResponse(response.output);
-            setGeneratedContent(parsedContent);
-            updateFormContent(parsedContent, title, generationParams);
-            
-            toast.success("Content generated", {
-              description: "AI-generated English lesson content is ready for review",
-            });
-            
-            setGenerating(false);
-            setGenerationStatus('completed');
-          } catch (parseError: any) {
-            console.error("Error parsing AI response:", parseError);
-            throw new Error(`Failed to process the generated content: ${parseError.message}`);
-          }
-        } else {
-          throw new Error("Failed to generate content");
-        }
-      } catch (error: any) {
-        console.error("Error generating lesson content:", error);
-        setError(error?.message || "Failed to generate content");
+        await processGeneration(generationParams);
         setGenerating(false);
-        setGenerationStatus('failed');
-        
-        toast.error("Generation failed", {
-          description: error?.message || "Failed to generate lesson content",
-        });
+        setGenerationStatus('completed');
+      } catch (error: any) {
+        handleGenerationError(error);
       }
     } catch (error: any) {
       console.error("Error in handleGenerate:", error);
