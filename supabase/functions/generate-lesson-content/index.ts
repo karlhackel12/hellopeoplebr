@@ -8,8 +8,7 @@ const MODEL_ID = "deepseek-ai/deepseek-r1:0767acf1502dd42cf295033525cdfc2ceb3d9b
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
@@ -109,27 +108,38 @@ Make sure the entire response is valid JSON. The content should be appropriate f
       );
 
       console.log("Generation completed successfully");
-      console.log("Output type:", typeof output);
-      console.log("Output preview:", Array.isArray(output) ? output.slice(0, 100).join('') : output.toString().substring(0, 100) + "...");
-
-      // Return the output directly
-      return new Response(
-        JSON.stringify({
-          output: output,
-          status: "succeeded"
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    } catch (fetchError) {
-      console.error("Error when calling Replicate API:", fetchError);
-      console.error("Stack trace:", fetchError.stack);
+      if (Array.isArray(output)) {
+        console.log("Output is an array, joining content");
+        const joinedOutput = output.join("");
+        console.log("Joined output preview:", joinedOutput.substring(0, 100) + "...");
+        
+        return new Response(
+          JSON.stringify({
+            output: joinedOutput,
+            status: "succeeded"
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      } else {
+        console.log("Output is not an array:", typeof output);
+        return new Response(
+          JSON.stringify({
+            output: output,
+            status: "succeeded"
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    } catch (apiError) {
+      console.error("Error when calling Replicate API:", apiError);
       return new Response(
         JSON.stringify({ 
-          error: "Failed to communicate with Replicate API", 
-          details: fetchError.message,
-          stack: fetchError.stack
+          error: "Failed to generate content", 
+          details: apiError.message,
         }),
         {
           status: 502,
@@ -139,12 +149,10 @@ Make sure the entire response is valid JSON. The content should be appropriate f
     }
   } catch (error) {
     console.error("Error in generate-lesson-content function:", error);
-    console.error("Stack trace:", error.stack);
     return new Response(
       JSON.stringify({ 
         error: "Internal server error", 
         details: error.message,
-        stack: error.stack
       }),
       {
         status: 500,
