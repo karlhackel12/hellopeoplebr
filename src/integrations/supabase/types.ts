@@ -563,6 +563,30 @@ export type Database = {
           },
         ]
       }
+      user_onboarding: {
+        Row: {
+          completed_steps: string[] | null
+          current_step_index: number | null
+          id: string
+          last_updated: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: string[] | null
+          current_step_index?: number | null
+          id?: string
+          last_updated?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_steps?: string[] | null
+          current_step_index?: number | null
+          id?: string
+          last_updated?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_quiz_answers: {
         Row: {
           answer_text: string | null

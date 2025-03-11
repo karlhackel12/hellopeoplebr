@@ -47,7 +47,7 @@ const InvitationAcceptance: React.FC = () => {
       // Verify invitation code
       const { data: invitation, error } = await supabase
         .from('student_invitations')
-        .select('*, profiles:invited_by(first_name, last_name, email)')
+        .select('*, invited_by(first_name, last_name, email)')
         .eq('invitation_code', values.invitationCode.toUpperCase())
         .eq('status', 'pending')
         .single();
@@ -61,8 +61,9 @@ const InvitationAcceptance: React.FC = () => {
       }
       
       // Get teacher information
-      const teacherName = invitation.profiles ? 
-        `${invitation.profiles.first_name || ''} ${invitation.profiles.last_name || ''}`.trim() : 
+      const teacherProfile = invitation.invited_by;
+      const teacherName = teacherProfile ? 
+        `${teacherProfile.first_name || ''} ${teacherProfile.last_name || ''}`.trim() : 
         'Your teacher';
       
       setTeacherEmail(invitation.email);

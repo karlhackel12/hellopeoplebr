@@ -30,6 +30,15 @@ const defaultSteps: OnboardingStep[] = [
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
+// Define type for user onboarding data
+interface UserOnboardingData {
+  id: string;
+  user_id: string;
+  completed_steps: string[];
+  current_step_index: number;
+  last_updated: string;
+}
+
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [steps, setSteps] = useState<OnboardingStep[]>(defaultSteps);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -111,6 +120,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             completed_steps: completedStepIds,
             current_step_index: currentStepIndex,
             last_updated: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
           });
         
         if (error) throw error;
