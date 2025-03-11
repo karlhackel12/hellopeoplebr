@@ -20,9 +20,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import { ArrowLeft, Clock, Save } from 'lucide-react';
-import LessonContentForm from './LessonContentForm';
 import MediaAttachmentsTab from './MediaAttachmentsTab';
 import QuizTab from './QuizTab';
+import LessonTypeSelector from './LessonTypeSelector';
+import ManualLessonForm from './ManualLessonForm';
+import AILessonForm from './AILessonForm';
 
 // Define form validation schema
 const lessonFormSchema = z.object({
@@ -43,6 +45,7 @@ const LessonEditor: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
+  const [lessonType, setLessonType] = useState<'manual' | 'ai'>('manual');
   const isEditMode = !!id;
 
   // Initialize form
@@ -58,6 +61,16 @@ const LessonEditor: React.FC = () => {
       generationMetadata: null,
     },
   });
+
+  // Detect if content was AI-generated when loading an existing lesson
+  useEffect(() => {
+    const contentSource = form.watch('contentSource');
+    if (contentSource === 'ai_generated' || contentSource === 'mixed') {
+      setLessonType('ai');
+    } else {
+      setLessonType('manual');
+    }
+  }, [form.watch('contentSource')]);
 
   // Load existing lesson if in edit mode
   useEffect(() => {
@@ -92,6 +105,11 @@ const LessonEditor: React.FC = () => {
             structuredContent: data.structured_content,
             generationMetadata: data.generation_metadata,
           });
+          
+          // Set the lesson type based on the content source
+          if (validContentSource === 'ai_generated' || validContentSource === 'mixed') {
+            setLessonType('ai');
+          }
         }
       } catch (error) {
         console.error('Error fetching lesson:', error);
@@ -105,6 +123,17 @@ const LessonEditor: React.FC = () => {
 
     fetchLesson();
   }, [id, navigate, form, isEditMode]);
+
+  // Handle lesson type change
+  const handleLessonTypeChange = (type: 'manual' | 'ai') => {
+    setLessonType(type);
+    
+    // Update content source based on type
+    if (type === 'manual') {
+      form.setValue('contentSource', 'manual');
+    }
+    // For AI type, the content source will be set when content is actually generated
+  };
 
   // Save lesson
   const onSubmit = async (values: LessonFormValues) => {
@@ -258,6 +287,16 @@ const LessonEditor: React.FC = () => {
                 </FormItem>
               )}
             />
+            
+            {!isEditMode && (
+              <div className="mt-6">
+                <h2 className="text-lg font-medium mb-4">How would you like to create this lesson?</h2>
+                <LessonTypeSelector 
+                  selectedType={lessonType} 
+                  onSelectType={handleLessonTypeChange} 
+                />
+              </div>
+            )}
               
             <Tabs defaultValue="content" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3">
@@ -266,7 +305,14 @@ const LessonEditor: React.FC = () => {
                 <TabsTrigger value="quiz">Quiz</TabsTrigger>
               </TabsList>
               <TabsContent value="content" className="mt-6">
-                <LessonContentForm form={form} />
+                {lessonType === 'manual' ? (
+                  <ManualLessonForm form={form} />
+                ) : (
+                  <AILessonForm 
+                    form={form}
+                    title={form.watch('title')}
+                  />
+                )}
               </TabsContent>
               <TabsContent value="media" className="mt-6">
                 <MediaAttachmentsTab lessonId={id} isEditMode={isEditMode} />

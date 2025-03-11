@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +15,9 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UseFormSetValue } from 'react-hook-form';
 import { LessonFormValues } from './LessonEditor';
+
+// This component is kept for backward compatibility but is not used in the new UI
+// It may be fully removed in the future
 
 interface AILessonGeneratorProps {
   title: string;
@@ -360,7 +364,7 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({
         onClick={() => setOpen(true)}
       >
         <Sparkles className="h-4 w-4" />
-        Generate with AI
+        Legacy AI Generator
       </Button>
       
       <Dialog open={open} onOpenChange={setOpen}>
