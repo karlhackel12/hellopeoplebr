@@ -141,37 +141,46 @@ export type Database = {
       lessons: {
         Row: {
           content: string | null
+          content_source: string | null
           course_id: string | null
           created_at: string
           created_by: string
           estimated_minutes: number | null
+          generation_metadata: Json | null
           id: string
           is_published: boolean
           order_index: number
+          structured_content: Json | null
           title: string
           updated_at: string
         }
         Insert: {
           content?: string | null
+          content_source?: string | null
           course_id?: string | null
           created_at?: string
           created_by: string
           estimated_minutes?: number | null
+          generation_metadata?: Json | null
           id?: string
           is_published?: boolean
           order_index?: number
+          structured_content?: Json | null
           title: string
           updated_at?: string
         }
         Update: {
           content?: string | null
+          content_source?: string | null
           course_id?: string | null
           created_at?: string
           created_by?: string
           estimated_minutes?: number | null
+          generation_metadata?: Json | null
           id?: string
           is_published?: boolean
           order_index?: number
+          structured_content?: Json | null
           title?: string
           updated_at?: string
         }
@@ -672,6 +681,7 @@ export type Database = {
     }
     Enums: {
       app_role: "student" | "teacher"
+      content_source_type: "manual" | "ai_generated" | "mixed"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       invitation_status: "pending" | "accepted" | "expired" | "rejected"
       media_type: "image" | "audio" | "video" | "document"

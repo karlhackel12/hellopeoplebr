@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +29,9 @@ const lessonFormSchema = z.object({
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
   estimated_minutes: z.coerce.number().int().min(1).optional(),
   is_published: z.boolean().default(false),
+  contentSource: z.enum(['manual', 'ai_generated', 'mixed']).default('manual'),
+  structuredContent: z.any().optional(),
+  generationMetadata: z.any().optional(),
 });
 
 export type LessonFormValues = z.infer<typeof lessonFormSchema>;
@@ -50,6 +52,9 @@ const LessonEditor: React.FC = () => {
       content: '',
       estimated_minutes: 15,
       is_published: false,
+      contentSource: 'manual',
+      structuredContent: null,
+      generationMetadata: null,
     },
   });
 
@@ -74,6 +79,9 @@ const LessonEditor: React.FC = () => {
             content: data.content || '',
             estimated_minutes: data.estimated_minutes || 15,
             is_published: data.is_published,
+            contentSource: data.content_source || 'manual',
+            structuredContent: data.structured_content,
+            generationMetadata: data.generation_metadata,
           });
         }
       } catch (error) {
@@ -108,6 +116,9 @@ const LessonEditor: React.FC = () => {
             content: values.content,
             estimated_minutes: values.estimated_minutes,
             is_published: values.is_published,
+            content_source: values.contentSource,
+            structured_content: values.structuredContent,
+            generation_metadata: values.generationMetadata,
             updated_at: new Date().toISOString(),
           })
           .eq('id', id);
@@ -126,6 +137,9 @@ const LessonEditor: React.FC = () => {
             content: values.content,
             estimated_minutes: values.estimated_minutes,
             is_published: values.is_published,
+            content_source: values.contentSource,
+            structured_content: values.structuredContent,
+            generation_metadata: values.generationMetadata,
             created_by: user.user.id,
             order_index: 0, // Default order, can be adjusted later
           })

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +18,7 @@ import { LessonFormValues } from './LessonEditor';
 interface AILessonGeneratorProps {
   title: string;
   setValue: UseFormSetValue<LessonFormValues>;
-  onContentGenerated?: (content: string) => void;
+  onContentGenerated?: (formattedContent: string, structuredContent: any, generationParams: any) => void;
 }
 
 // Define the structure of our AI-generated content
@@ -65,6 +64,14 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({
         return;
       }
       
+      // Store generation parameters to save with the lesson
+      const generationParams = {
+        timestamp: new Date().toISOString(),
+        title,
+        level,
+        language: 'english',
+      };
+      
       const response = await supabase.functions.invoke('generate-lesson-content', {
         body: {
           title,
@@ -84,7 +91,7 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({
       }
       
       // Start polling for results
-      startPolling(predictionData.id);
+      startPolling(predictionData.id, generationParams);
       
     } catch (error) {
       console.error("Error generating lesson content:", error);
@@ -95,7 +102,7 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({
     }
   };
   
-  const startPolling = (predictionId: string) => {
+  const startPolling = (predictionId: string, generationParams: any) => {
     // Clear any existing polling interval
     if (pollInterval) {
       clearInterval(pollInterval);
@@ -136,6 +143,15 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({
             
             const parsedContent = JSON.parse(output) as GeneratedLessonContent;
             setGeneratedContent(parsedContent);
+            
+            // Store metadata about the generation
+            const metadata = {
+              ...generationParams,
+              model: prediction.model,
+              predictionId: predictionId,
+              completed: prediction.completed_at,
+              status: prediction.status
+            };
             
             // Toast notification for success
             toast.success("Content generated", {
@@ -222,11 +238,25 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({
   
   const handleApply = () => {
     if (generatedContent) {
+      // Format the content for display in the editor
       const formattedContent = formatContent(generatedContent);
-      setValue('content', formattedContent);
+      
+      // Generate metadata to store with the lesson
+      const metadata = {
+        timestamp: new Date().toISOString(),
+        title,
+        level,
+        language: 'english',
+      };
+      
+      // Use the callback if provided
       if (onContentGenerated) {
-        onContentGenerated(formattedContent);
+        onContentGenerated(formattedContent, generatedContent, metadata);
+      } else {
+        // Legacy direct setValue approach as fallback
+        setValue('content', formattedContent);
       }
+      
       setOpen(false);
       toast.success("Content applied", {
         description: "AI-generated content has been added to your lesson",
