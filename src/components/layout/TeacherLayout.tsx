@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherSidebar from './TeacherSidebar';
-import { Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -56,6 +54,10 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
     checkAccess();
   }, [navigate]);
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -71,30 +73,19 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
     return null; // Will redirect in the useEffect
   }
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      <TeacherSidebar collapsed={sidebarCollapsed} />
+    <div className="min-h-screen flex bg-background">
+      <TeacherSidebar 
+        collapsed={sidebarCollapsed} 
+        onToggle={toggleSidebar}
+      />
       
       <main 
-        className={`flex-grow transition-all duration-300 pt-4 px-4 md:pt-6 md:px-6 lg:px-8 pb-16 md:pb-10 overflow-x-hidden ${
+        className={`flex-grow transition-all duration-300 pt-16 md:pt-6 px-4 md:px-6 lg:px-8 pb-16 md:pb-10 overflow-x-hidden ${
           sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}
       >
-        <div className="mb-6 flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="md:hidden mr-2" 
-            onClick={toggleSidebar}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          {children}
-        </div>
+        <div className="w-full">{children}</div>
       </main>
     </div>
   );

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Users, ClipboardList, Columns2, Columns3, Columns4, BookOpen } from 'lucide-react';
+import { PlusCircle, Users, ClipboardList, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LessonCard from '@/components/teacher/LessonCard';
@@ -19,31 +19,10 @@ type Lesson = {
 const TeacherDashboard: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
-  const [columns, setColumns] = useState(3);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchLessons();
-    
-    // Set initial column count based on screen size
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setColumns(1);
-      } else if (window.innerWidth < 1024) {
-        setColumns(2);
-      } else {
-        setColumns(3);
-      }
-    };
-    
-    // Set initial state
-    handleResize();
-    
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const fetchLessons = async () => {
@@ -91,27 +70,12 @@ const TeacherDashboard: React.FC = () => {
     navigate('/teacher/lessons');
   };
 
-  const setColumnLayout = (numColumns: number) => {
-    setColumns(numColumns);
-  };
-
-  // Helper function to get the grid columns class based on current selection
-  const getGridClass = () => {
-    switch (columns) {
-      case 1: return "grid-cols-1";
-      case 2: return "grid-cols-1 sm:grid-cols-2";
-      case 3: return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-      case 4: return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
-      default: return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-    }
-  };
-
   return (
     <TeacherLayout>
       <div className="w-full animate-fade-in">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gradient">Teacher Dashboard</h1>
-          <Button onClick={handleCreateLesson} className="gap-2 whitespace-nowrap">
+          <Button onClick={handleCreateLesson} className="gap-2 whitespace-nowrap transition-all duration-300 hover:scale-105">
             <PlusCircle className="h-4 w-4" />
             <span className="hidden sm:inline">Create Lesson</span>
             <span className="sm:hidden">New Lesson</span>
@@ -159,60 +123,18 @@ const TeacherDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold flex items-center">
             <BookOpen className="h-4 w-4 mr-2" />
             Recent Lessons
           </h2>
-          <div className="flex items-center gap-2">
-            <div className="flex bg-muted rounded-md p-1">
-              <Button 
-                variant={columns === 1 ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setColumnLayout(1)}
-                className="h-8 w-8 p-0"
-                title="1 column"
-              >
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <div className="w-2 bg-current h-2"></div>
-                </div>
-              </Button>
-              <Button 
-                variant={columns === 2 ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setColumnLayout(2)}
-                className="h-8 w-8 p-0"
-                title="2 columns"
-              >
-                <Columns2 className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant={columns === 3 ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setColumnLayout(3)}
-                className="h-8 w-8 p-0"
-                title="3 columns"
-              >
-                <Columns3 className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant={columns === 4 ? "default" : "ghost"} 
-                size="sm" 
-                onClick={() => setColumnLayout(4)}
-                className="h-8 w-8 p-0" 
-                title="4 columns"
-              >
-                <Columns4 className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button variant="link" onClick={handleViewAllLessons} className="story-link text-primary">
-              View All
-            </Button>
-          </div>
+          <Button variant="link" onClick={handleViewAllLessons} className="story-link text-primary">
+            View All
+          </Button>
         </div>
 
         {loading ? (
-          <div className="grid ${getGridClass()} gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="glass animate-pulse-light rounded-lg p-6 h-[180px]">
                 <div className="h-6 bg-muted/50 rounded w-3/4 mb-4"></div>
@@ -237,7 +159,7 @@ const TeacherDashboard: React.FC = () => {
             </Button>
           </div>
         ) : (
-          <div className={`grid ${getGridClass()} gap-4 md:gap-6 animate-fade-in`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fade-in">
             {lessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} onUpdate={fetchLessons} />
             ))}

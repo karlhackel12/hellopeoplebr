@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/ui/Logo';
@@ -10,7 +10,9 @@ import {
   ClipboardList, 
   Settings,
   LogOut,
-  ChevronLeft
+  ChevronLeft,
+  Menu,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +40,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
         variant="ghost"
         className={cn(
           "w-full justify-start gap-3 px-3 py-2 mb-1 transition-all duration-200",
-          active ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-secondary",
+          active ? "bg-primary/15 text-primary hover:bg-primary/20" : "hover:bg-secondary",
           collapsed ? "justify-center px-2" : ""
         )}
       >
@@ -51,11 +53,21 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
 
 interface TeacherSidebarProps {
   collapsed?: boolean;
+  onToggle?: () => void;
 }
 
-const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed = false }) => {
+const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ 
+  collapsed = false, 
+  onToggle 
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -96,67 +108,96 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed = false }) =>
     }
   ];
 
+  // Combined classes for mobile and desktop
+  const sidebarClasses = cn(
+    "fixed top-0 left-0 z-40 h-screen bg-sidebar-background border-r border-sidebar-border transition-all duration-300 shadow-md",
+    collapsed ? "w-20" : "w-64",
+    // Mobile visibility
+    mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+  );
+
   return (
-    <aside className={cn(
-      "fixed top-0 left-0 z-40 h-screen bg-sidebar-background border-r border-sidebar-border transition-all duration-300 shadow-sm",
-      collapsed ? "w-20" : "w-64",
-      // Mobile handling - off canvas when collapsed
-      collapsed ? "-translate-x-full md:translate-x-0" : "translate-x-0"
-    )}>
-      <div className="flex flex-col h-full">
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
-          <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
-            <Logo size="sm" />
-          </div>
-          {collapsed ? (
-            <div className="mx-auto">
-              <Logo iconOnly size="sm" />
+    <>
+      {/* Mobile menu toggle - always visible on mobile */}
+      <Button 
+        variant="outline" 
+        size="icon" 
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="fixed top-4 left-4 z-50 md:hidden shadow-md"
+      >
+        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      <aside className={sidebarClasses}>
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
+            <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
+              <Logo size="sm" />
             </div>
-          ) : null}
-        </div>
-        
-        {/* Sidebar Navigation */}
-        <nav className="flex-grow p-3 overflow-y-auto">
-          <div className="space-y-1">
-            {navigationLinks.map((link) => (
-              <SidebarLink
-                key={link.name}
-                href={link.href}
-                icon={link.icon}
-                active={location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)}
-                collapsed={collapsed}
-              >
-                {link.name}
-              </SidebarLink>
-            ))}
+            {collapsed ? (
+              <div className="mx-auto">
+                <Logo iconOnly size="sm" />
+              </div>
+            ) : null}
+            
+            {/* Desktop collapse button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="hidden md:flex"
+            >
+              <ChevronLeft
+                className={cn("h-5 w-5 transition-transform", 
+                  collapsed ? "rotate-180" : ""
+                )}
+              />
+            </Button>
           </div>
-        </nav>
-        
-        {/* Sidebar Footer */}
-        <div className="p-3 border-t border-sidebar-border">
-          <Button 
-            variant="ghost" 
-            className={cn(
-              "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
-              collapsed ? "justify-center" : "justify-start gap-3"
-            )}
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5" />
-            {!collapsed && <span className="font-medium">Logout</span>}
-          </Button>
+          
+          {/* Sidebar Navigation */}
+          <nav className="flex-grow p-3 overflow-y-auto">
+            <div className="space-y-1">
+              {navigationLinks.map((link) => (
+                <SidebarLink
+                  key={link.name}
+                  href={link.href}
+                  icon={link.icon}
+                  active={location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)}
+                  collapsed={collapsed}
+                >
+                  {link.name}
+                </SidebarLink>
+              ))}
+            </div>
+          </nav>
+          
+          {/* Sidebar Footer */}
+          <div className="p-3 border-t border-sidebar-border">
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
+                collapsed ? "justify-center" : "justify-start gap-3"
+              )}
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              {!collapsed && <span className="font-medium">Logout</span>}
+            </Button>
+          </div>
         </div>
-      </div>
+      </aside>
       
       {/* Mobile overlay */}
-      {!collapsed && (
+      {mobileOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => navigate('/')} // This will trigger a re-render and collapse the sidebar on mobile
+          className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
         />
       )}
-    </aside>
+    </>
   );
 };
 
