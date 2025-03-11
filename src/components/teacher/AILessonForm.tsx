@@ -16,7 +16,7 @@ interface AILessonFormProps {
 }
 
 const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
-  const [activeTab, setActiveTab] = useState<'generate' | 'preview' | 'edit'>('generate');
+  const [activeTab, setActiveTab] = useState<'generate' | 'preview' | 'student'>('generate');
   const [editMode, setEditMode] = useState(false);
   
   const {
@@ -55,9 +55,9 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
     }
   };
 
-  // When clicking student view tab, ensure edit mode is off
+  // When clicking student tab, ensure edit mode is off
   useEffect(() => {
-    if (activeTab === 'edit') {
+    if (activeTab === 'student') {
       setEditMode(false);
     }
   }, [activeTab]);
@@ -76,10 +76,17 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="generate" disabled={generating && generationStatus !== 'failed'}>Generation Settings</TabsTrigger>
-          <TabsTrigger value="preview" disabled={!generatedContent}>Content Editor</TabsTrigger>
-          <TabsTrigger value="edit" disabled={!generatedContent}>Student View</TabsTrigger>
+          <TabsTrigger value="generate" disabled={generating && generationStatus !== 'failed'}>
+            Generation Settings
+          </TabsTrigger>
+          <TabsTrigger value="preview" disabled={!generatedContent}>
+            Content Editor
+          </TabsTrigger>
+          <TabsTrigger value="student" disabled={!generatedContent}>
+            Student View
+          </TabsTrigger>
         </TabsList>
+        
         <TabsContent value="generate" className="pt-4">
           <GenerationSettingsForm
             title={title}
@@ -95,6 +102,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             progress={progress}
           />
         </TabsContent>
+        
         <TabsContent value="preview" className="pt-4">
           {generatedContent && (
             <ContentPreview
@@ -105,7 +113,8 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             />
           )}
         </TabsContent>
-        <TabsContent value="edit" className="pt-4">
+        
+        <TabsContent value="student" className="pt-4">
           {generatedContent ? (
             <LessonPreview content={form.watch('content')} title={form.watch('title')} />
           ) : (
