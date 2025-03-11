@@ -136,6 +136,7 @@ const MediaItem: React.FC<MediaItemProps> = ({ media, onMediaUpdated }) => {
     
     if (confirm) {
       try {
+        // 1. Delete the database record
         const { error } = await supabase
           .from('lesson_media')
           .delete()
@@ -143,19 +144,29 @@ const MediaItem: React.FC<MediaItemProps> = ({ media, onMediaUpdated }) => {
         
         if (error) throw error;
         
-        // Extract file path from URL to delete from storage
+        // 2. Extract file path from URL to delete from storage
+        // Example URL: https://.../media/lessons/lessonId/filename.jpg
         const urlParts = media.url.split('/');
-        const filePath = urlParts[urlParts.length - 1];
+        const storagePathIndex = urlParts.indexOf('media') + 1;
+        let storagePath = '';
         
-        // Delete from storage bucket if possible
-        try {
-          await supabase.storage.from('media').remove([`lessons/${filePath}`]);
-        } catch (storageError) {
-          console.error('Storage delete error:', storageError);
-          // Continue anyway as the database record is deleted
+        if (storagePathIndex > 0 && storagePathIndex < urlParts.length) {
+          // Combine all parts after 'media' to form the storage path
+          storagePath = urlParts.slice(storagePathIndex).join('/');
+          
+          // Try to delete from storage
+          const { error: storageError } = await supabase.storage
+            .from('media')
+            .remove([storagePath]);
+          
+          if (storageError) {
+            console.warn('Storage delete warning:', storageError);
+            // Continue anyway as the database record is deleted
+          }
         }
         
         onMediaUpdated();
+        toast.success('Media deleted successfully');
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Failed to delete media');

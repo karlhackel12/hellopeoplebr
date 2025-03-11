@@ -59,41 +59,55 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId, onMediaUpdated,
     setProgress(0);
     
     try {
-      // 1. Upload file to Supabase Storage
+      // 1. Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        throw new Error('User not authenticated');
+      }
+      
+      // 2. Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `lessons/${lessonId}/${fileName}`;
       
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) {
-        toast.error('User not authenticated');
-        setUploading(false);
-        return;
-      }
-
-      // Set up a progress tracking function
-      const trackProgress = (event: ProgressEvent) => {
-        const percent = event.loaded / (event.total || 1) * 100;
-        setProgress(Math.round(percent));
-      };
-
+      // Create a FormData object and append the file
+      const formData = new FormData();
+      formData.append('file', file);
+      
       // Create an XMLHttpRequest to track upload progress
       const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener('progress', trackProgress);
       
-      // Perform the upload without onUploadProgress option
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percent = (event.loaded / event.total) * 100;
+          setProgress(Math.round(percent));
+        }
+      });
+      
+      // Upload with the Supabase SDK
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('media')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
 
-      // 2. Get public URL
+      // 3. Get public URL
       const { data: publicURLData } = supabase.storage
         .from('media')
         .getPublicUrl(filePath);
 
-      // 3. Save media details to database
+      if (!publicURLData.publicUrl) {
+        throw new Error('Failed to get public URL');
+      }
+
+      // 4. Save media details to database
       const { error: insertError } = await supabase
         .from('lesson_media')
         .insert({
@@ -102,10 +116,13 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId, onMediaUpdated,
           description: description,
           url: publicURLData.publicUrl,
           media_type: mediaType,
-          created_by: user.user.id,
+          created_by: userData.user.id,
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Database error:', insertError);
+        throw new Error(`Database insert failed: ${insertError.message}`);
+      }
 
       toast.success('Media uploaded successfully');
 
@@ -125,9 +142,9 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ lessonId, onMediaUpdated,
         onCancel();
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading media:', error);
-      toast.error('Failed to upload media');
+      toast.error(error.message || 'Failed to upload media');
     } finally {
       setUploading(false);
     }
