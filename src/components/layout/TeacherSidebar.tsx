@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -64,7 +63,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile sidebar when route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -93,7 +91,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     },
     { 
       name: 'Students', 
-      href: '/teacher/invitations', 
+      href: '/teacher/students', 
       icon: Users 
     },
     { 
@@ -108,7 +106,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     }
   ];
 
-  // Helper function to check if a route is active, including nested routes
   const isRouteActive = (href: string) => {
     if (href === '/teacher/lessons') {
       return location.pathname === href || 
@@ -118,16 +115,12 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
-  // Combined classes for mobile and desktop
   const sidebarClasses = cn(
     "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
-    // Use glass morphism for mobile sidebar with solid background
     collapsed ? "w-20" : "w-64",
-    // Mobile visibility
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
 
-  // Mobile background styles
   const sidebarStyles = {
     backgroundColor: "var(--sidebar-background)",
     backdropFilter: "blur(8px)"
@@ -135,7 +128,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
 
   return (
     <>
-      {/* Mobile menu toggle - always visible on mobile */}
       <Button 
         variant="outline" 
         size="icon" 
@@ -147,7 +139,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
 
       <aside className={sidebarClasses} style={sidebarStyles}>
         <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
           <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
             <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
               <Logo size="sm" />
@@ -158,7 +149,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
               </div>
             ) : null}
             
-            {/* Desktop collapse button */}
             <Button
               variant="ghost"
               size="icon"
@@ -173,7 +163,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
             </Button>
           </div>
           
-          {/* Sidebar Navigation */}
           <nav className="flex-grow p-3 overflow-y-auto">
             <div className="space-y-1">
               {navigationLinks.map((link) => (
@@ -190,7 +179,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
             </div>
           </nav>
           
-          {/* Sidebar Footer */}
           <div className="p-3 border-t border-sidebar-border">
             <Button 
               variant="ghost" 
@@ -207,7 +195,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
         </div>
       </aside>
       
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"

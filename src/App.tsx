@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import LessonEditor from "./components/teacher/LessonEditor";
 import Invitations from "./pages/teacher/Invitations";
+import Students from "./pages/teacher/Students";
 import Assignments from "./pages/teacher/Assignments";
 import Lessons from "./pages/teacher/Lessons";
 import Settings from "./pages/teacher/Settings";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
             <Route path="/teacher/lessons/preview/:id" element={<LessonPreviewPage />} />
             <Route path="/teacher/invitations" element={<Invitations />} />
+            <Route path="/teacher/students" element={<Students />} />
             <Route path="/teacher/assignments" element={<Assignments />} />
             <Route path="/teacher/settings" element={<Settings />} />
             

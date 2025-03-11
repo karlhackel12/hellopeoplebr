@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
@@ -9,7 +10,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 
 const Assignments = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('create');
+  const initialStudentId = location.state?.studentId;
+  const studentName = location.state?.studentName;
+  const initialTab = location.state?.initialTab;
+
+  // Set initial tab based on navigation state
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Fetch assignments with React Query
   const { 
@@ -17,12 +29,13 @@ const Assignments = () => {
     isLoading: loadingAssignments,
     refetch: refetchAssignments
   } = useQuery({
-    queryKey: ['assignments'],
+    queryKey: ['assignments', initialStudentId],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return [];
 
-      const { data, error } = await supabase
+      // Base query
+      let query = supabase
         .from('student_assignments')
         .select(`
           *,
@@ -30,8 +43,14 @@ const Assignments = () => {
           lesson:lesson_id(id, title),
           quiz:quiz_id(id, title)
         `)
-        .eq('assigned_by', user.user.id)
-        .order('created_at', { ascending: false });
+        .eq('assigned_by', user.user.id);
+      
+      // Add student filter if provided
+      if (initialStudentId) {
+        query = query.eq('student_id', initialStudentId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -97,8 +116,10 @@ const Assignments = () => {
 
   return (
     <TeacherLayout>
-      <div>
-        <h1 className="text-3xl font-bold mb-6">Student Assignments</h1>
+      <div className="animate-fade-in">
+        <h1 className="text-3xl font-bold mb-6">
+          {studentName ? `Assignments for ${studentName}` : 'Student Assignments'}
+        </h1>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
@@ -111,9 +132,10 @@ const Assignments = () => {
               <h2 className="text-xl font-semibold mb-4">Assign Lesson or Quiz</h2>
               <AssignmentForm 
                 students={students}
-                lessons={contentData.lessons}
-                quizzes={contentData.quizzes}
-                onSuccess={handleAssignmentSuccess} 
+                lessons={contentData?.lessons || []}
+                quizzes={contentData?.quizzes || []}
+                onSuccess={handleAssignmentSuccess}
+                preselectedStudentId={initialStudentId}
               />
             </div>
           </TabsContent>

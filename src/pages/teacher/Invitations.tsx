@@ -1,66 +1,32 @@
 
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
-import StudentInviteForm from '@/components/teacher/StudentInviteForm';
-import InvitationsList from '@/components/teacher/InvitationsList';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const Invitations = () => {
-  const [loading, setLoading] = useState(false);
-  const [invitations, setInvitations] = useState<any[]>([]);
-
-  const fetchInvitations = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('student_invitations')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setInvitations(data || []);
-    } catch (error: any) {
-      console.error('Error fetching invitations:', error);
-      toast.error('Failed to load invitations', {
-        description: error.message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
-    fetchInvitations();
-  }, []);
+    // Redirect to the new Students page when this page is accessed
+    navigate('/teacher/students', { state: { initialTab: 'invitations' } });
+  }, [navigate]);
 
   return (
     <TeacherLayout>
-      <div>
-        <h1 className="text-3xl font-bold mb-6">Student Management</h1>
-        
-        <Tabs defaultValue="invite" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="invite">Invite Students</TabsTrigger>
-            <TabsTrigger value="pending">Pending Invitations</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="invite" className="space-y-4">
-            <div className="bg-card rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Invite a New Student</h2>
-              <StudentInviteForm onSuccess={fetchInvitations} />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="pending">
-            <InvitationsList 
-              invitations={invitations} 
-              loading={loading} 
-              onUpdate={fetchInvitations} 
-            />
-          </TabsContent>
-        </Tabs>
+      <div className="animate-fade-in">
+        <h1 className="text-3xl font-bold mb-6">Redirecting...</h1>
+        <p className="mb-4">
+          The invitations page has been moved to the new Students management page.
+        </p>
+        <Button
+          onClick={() => navigate('/teacher/students')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Go to Students</span>
+        </Button>
       </div>
     </TeacherLayout>
   );
