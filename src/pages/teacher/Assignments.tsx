@@ -1,14 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import AssignmentForm from '@/components/teacher/AssignmentForm';
 import AssignmentsList from '@/components/teacher/AssignmentsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 
 const Assignments = () => {
   const [loading, setLoading] = useState(false);
@@ -16,7 +13,6 @@ const Assignments = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
-  const navigate = useNavigate();
 
   const fetchAssignments = async () => {
     setLoading(true);
@@ -101,18 +97,9 @@ const Assignments = () => {
     fetchLessonsAndQuizzes();
   }, []);
 
-  const handleBack = () => {
-    navigate('/teacher/dashboard');
-  };
-
   return (
     <TeacherLayout>
-      <div className="container mx-auto p-4 md:p-8">
-        <Button variant="ghost" className="mb-4" onClick={handleBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Button>
-        
+      <div>
         <h1 className="text-3xl font-bold mb-6">Student Assignments</h1>
         
         <Tabs defaultValue="create" className="w-full">

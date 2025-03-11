@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Users, ClipboardList } from 'lucide-react';
-import { supabase, isTeacher } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LessonCard from '@/components/teacher/LessonCard';
 import TeacherLayout from '@/components/layout/TeacherLayout';
@@ -22,20 +22,8 @@ const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkTeacherRole = async () => {
-      const userIsTeacher = await isTeacher();
-      if (!userIsTeacher) {
-        toast.error('Access Denied', {
-          description: 'You need teacher privileges to access this page',
-        });
-        navigate('/');
-      } else {
-        fetchLessons();
-      }
-    };
-
-    checkTeacherRole();
-  }, [navigate]);
+    fetchLessons();
+  }, []);
 
   const fetchLessons = async () => {
     try {
@@ -51,7 +39,8 @@ const TeacherDashboard: React.FC = () => {
         .from('lessons')
         .select('*')
         .eq('created_by', user.user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(3);
 
       if (error) throw error;
       setLessons(data || []);
@@ -77,25 +66,19 @@ const TeacherDashboard: React.FC = () => {
     navigate('/teacher/assignments');
   };
 
+  const handleViewAllLessons = () => {
+    navigate('/teacher/lessons');
+  };
+
   return (
     <TeacherLayout>
-      <div className="container mx-auto py-8">
+      <div>
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleManageStudents} className="gap-2">
-              <Users className="h-4 w-4" />
-              Manage Students
-            </Button>
-            <Button variant="outline" onClick={handleManageAssignments} className="gap-2">
-              <ClipboardList className="h-4 w-4" />
-              Assignments
-            </Button>
-            <Button onClick={handleCreateLesson} className="gap-2">
-              <PlusCircle className="h-4 w-4" />
-              Create Lesson
-            </Button>
-          </div>
+          <Button onClick={handleCreateLesson} className="gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Create Lesson
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -130,7 +113,11 @@ const TeacherDashboard: React.FC = () => {
           </div>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-4">My Lessons</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold">Recent Lessons</h2>
+          <Button variant="link" onClick={handleViewAllLessons}>View All</Button>
+        </div>
+
         {loading ? (
           <div className="flex justify-center my-12">
             <p>Loading lessons...</p>
@@ -142,7 +129,7 @@ const TeacherDashboard: React.FC = () => {
             <Button onClick={handleCreateLesson}>Create Your First Lesson</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {lessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} onUpdate={fetchLessons} />
             ))}

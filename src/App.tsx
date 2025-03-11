@@ -14,6 +14,8 @@ import TeacherDashboard from "./pages/teacher/Dashboard";
 import LessonEditor from "./components/teacher/LessonEditor";
 import Invitations from "./pages/teacher/Invitations";
 import Assignments from "./pages/teacher/Assignments";
+import Lessons from "./pages/teacher/Lessons";
+import Settings from "./pages/teacher/Settings";
 
 const queryClient = new QueryClient();
 
@@ -32,10 +34,12 @@ const App = () => (
           
           {/* Teacher Routes */}
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/teacher/lessons" element={<Lessons />} />
           <Route path="/teacher/lessons/create" element={<LessonEditor />} />
           <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
           <Route path="/teacher/invitations" element={<Invitations />} />
           <Route path="/teacher/assignments" element={<Assignments />} />
+          <Route path="/teacher/settings" element={<Settings />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -1,19 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import StudentInviteForm from '@/components/teacher/StudentInviteForm';
 import InvitationsList from '@/components/teacher/InvitationsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 
 const Invitations = () => {
   const [loading, setLoading] = useState(false);
   const [invitations, setInvitations] = useState<any[]>([]);
-  const navigate = useNavigate();
 
   const fetchInvitations = async () => {
     setLoading(true);
@@ -39,18 +35,9 @@ const Invitations = () => {
     fetchInvitations();
   }, []);
 
-  const handleBack = () => {
-    navigate('/teacher/dashboard');
-  };
-
   return (
     <TeacherLayout>
-      <div className="container mx-auto p-4 md:p-8">
-        <Button variant="ghost" className="mb-4" onClick={handleBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Button>
-        
+      <div>
         <h1 className="text-3xl font-bold mb-6">Student Management</h1>
         
         <Tabs defaultValue="invite" className="w-full">

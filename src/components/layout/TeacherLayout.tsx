@@ -1,10 +1,9 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { isTeacher } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import TeacherSidebar from './TeacherSidebar';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -40,12 +39,8 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <p>Checking authorization...</p>
-        </main>
-        <Footer />
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Checking authorization...</p>
       </div>
     );
   }
@@ -55,10 +50,11 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow">{children}</main>
-      <Footer />
+    <div className="min-h-screen flex bg-background">
+      <TeacherSidebar />
+      <main className="flex-grow ml-64 pt-4 px-6 pb-8">
+        {children}
+      </main>
     </div>
   );
 };
