@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Loader2, Save, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
             .from('quizzes')
             .select('id, title')
             .eq('lesson_id', lessonId)
-            .single();
+            .maybeSingle();
           
           if (data) {
             setExistingQuiz(true);
@@ -47,7 +46,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
             
             // Fetch existing questions
             const questions = await fetchQuizQuestions();
-            if (questions) {
+            if (questions && questions.length > 0) {
               setPreviewQuestions(questions);
               setShowPreview(true);
             }
@@ -59,7 +58,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       
       checkExistingQuiz();
     }
-  }, [lessonId]);
+  }, [lessonId, fetchQuizQuestions]);
 
   const handleGenerateQuiz = async () => {
     try {
@@ -68,9 +67,10 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       if (result) {
         // Fetch the newly generated questions
         const questions = await fetchQuizQuestions();
-        if (questions) {
+        if (questions && questions.length > 0) {
           setPreviewQuestions(questions);
           setShowPreview(true);
+          setExistingQuiz(true); // Since we've now created a quiz
           toast.success('Quiz generated', {
             description: 'Your quiz questions have been generated. Review them below.',
           });
@@ -88,44 +88,24 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     try {
       setSaving(true);
       
-      // Create or update the quiz
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
-      
-      if (existingQuiz) {
-        // Update existing quiz title if changed
-        const { error } = await supabase
-          .from('quizzes')
-          .update({ 
-            title: quizTitle,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('lesson_id', lessonId);
-          
-        if (error) throw error;
-        
-        toast.success('Quiz updated', {
-          description: 'Your quiz has been updated successfully',
-        });
-      } else {
-        // Create new quiz
-        const { error } = await supabase
-          .from('quizzes')
-          .insert({
-            lesson_id: lessonId,
-            title: quizTitle,
-            created_by: user.user.id,
-            pass_percent: 70,
-            is_published: false,
-          });
-          
-        if (error) throw error;
-        
-        setExistingQuiz(true);
-        toast.success('Quiz saved', {
-          description: 'Your quiz has been saved successfully',
-        });
+      if (!lessonId) {
+        throw new Error('Lesson ID is required');
       }
+      
+      // Update the quiz title
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ 
+          title: quizTitle,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('lesson_id', lessonId);
+        
+      if (error) throw error;
+      
+      toast.success('Quiz updated', {
+        description: 'Your quiz has been updated successfully',
+      });
     } catch (error) {
       console.error("Error saving quiz:", error);
       toast.error('Save failed', {
@@ -141,11 +121,31 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       try {
         setSaving(true);
         
-        // Delete the quiz questions first
+        if (!lessonId) {
+          throw new Error('Lesson ID is required');
+        }
+        
+        // First get the quiz ID
+        const { data: quiz, error: fetchError } = await supabase
+          .from('quizzes')
+          .select('id')
+          .eq('lesson_id', lessonId)
+          .maybeSingle();
+          
+        if (fetchError) throw fetchError;
+        if (!quiz) {
+          setExistingQuiz(false);
+          setShowPreview(false);
+          setPreviewQuestions([]);
+          setSaving(false);
+          return;
+        }
+        
+        // Delete the quiz questions first (cascade will delete options)
         const { error: deleteQuestionsError } = await supabase
           .from('quiz_questions')
           .delete()
-          .eq('quiz_id', lessonId);
+          .eq('quiz_id', quiz.id);
           
         if (deleteQuestionsError) throw deleteQuestionsError;
         
@@ -153,7 +153,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         const { error: deleteQuizError } = await supabase
           .from('quizzes')
           .delete()
-          .eq('lesson_id', lessonId);
+          .eq('id', quiz.id);
           
         if (deleteQuizError) throw deleteQuizError;
         
