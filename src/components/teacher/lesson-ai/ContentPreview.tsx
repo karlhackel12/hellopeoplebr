@@ -8,8 +8,6 @@ import ContentEditor from './components/ContentEditor';
 import ContentDisplay from './components/ContentDisplay';
 import LessonMetricsCards from './components/LessonMetricsCards';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ContentPreviewProps {
   form: UseFormReturn<LessonFormValues>;
@@ -24,8 +22,6 @@ const ContentPreview: React.FC<ContentPreviewProps> = ({
   editMode,
   toggleEditMode,
 }) => {
-  const [activeView, setActiveView] = React.useState<'edit' | 'preview'>('edit');
-
   const handleResetToAI = () => {
     if (window.confirm('Are you sure you want to reset to the original AI-generated content? All your edits will be lost.')) {
       // Reset content to original AI-generated content
@@ -105,26 +101,7 @@ const ContentPreview: React.FC<ContentPreviewProps> = ({
       {editMode ? (
         <ContentEditor form={form} />
       ) : (
-        <Tabs defaultValue="content" className="w-full">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="student-view">
-              <Eye className="h-4 w-4 mr-1" /> Student View
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="content" className="mt-4">
-            <ContentDisplay content={form.watch('content')} />
-          </TabsContent>
-          
-          <TabsContent value="student-view" className="mt-4">
-            <iframe 
-              src={`/teacher/lessons/preview?content=${encodeURIComponent(form.watch('content'))}&title=${encodeURIComponent(form.watch('title'))}`}
-              className="w-full h-[600px] border rounded-md"
-              title="Student View"
-            />
-          </TabsContent>
-        </Tabs>
+        <ContentDisplay content={form.watch('content')} />
       )}
 
       <LessonMetricsCards generatedContent={generatedContent} />
