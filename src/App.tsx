@@ -18,38 +18,43 @@ import Lessons from "./pages/teacher/Lessons";
 import Settings from "./pages/teacher/Settings";
 import LessonPreviewPage from "./pages/teacher/LessonPreviewPage";
 import SidebarDemoPage from "./pages/SidebarDemo";
+import InvitationAcceptancePage from "./pages/InvitationAcceptance";
+import { OnboardingProvider } from "./components/student/OnboardingContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
-          
-          {/* Teacher Routes */}
-          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-          <Route path="/teacher/lessons" element={<Lessons />} />
-          <Route path="/teacher/lessons/create" element={<LessonEditor />} />
-          <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
-          <Route path="/teacher/lessons/preview/:id" element={<LessonPreviewPage />} />
-          <Route path="/teacher/invitations" element={<Invitations />} />
-          <Route path="/teacher/assignments" element={<Assignments />} />
-          <Route path="/teacher/settings" element={<Settings />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <OnboardingProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
+            <Route path="/invitation/:code?" element={<InvitationAcceptancePage />} />
+            
+            {/* Teacher Routes */}
+            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+            <Route path="/teacher/lessons" element={<Lessons />} />
+            <Route path="/teacher/lessons/create" element={<LessonEditor />} />
+            <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
+            <Route path="/teacher/lessons/preview/:id" element={<LessonPreviewPage />} />
+            <Route path="/teacher/invitations" element={<Invitations />} />
+            <Route path="/teacher/assignments" element={<Assignments />} />
+            <Route path="/teacher/settings" element={<Settings />} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </OnboardingProvider>
   </QueryClientProvider>
 );
 

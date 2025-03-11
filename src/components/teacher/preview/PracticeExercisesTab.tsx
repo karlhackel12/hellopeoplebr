@@ -2,8 +2,9 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Lightbulb, Book, Award } from 'lucide-react';
+import { ArrowRight, Lightbulb, Book, Award, CheckCircle } from 'lucide-react';
 import ProgressTracker from './ProgressTracker';
+import { cn } from '@/lib/utils';
 
 interface PracticeExercisesTabProps {
   isOnboarding?: boolean;
