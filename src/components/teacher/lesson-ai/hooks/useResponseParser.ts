@@ -10,24 +10,43 @@ export const useResponseParser = () => {
       if (typeof output === 'string') {
         // First, try to extract JSON from the string
         try {
-          // Use a regex to find JSON objects in the text
-          const jsonRegex = /{[\s\S]*}/;
-          const match = output.match(jsonRegex);
+          // Try to find JSON in markdown code blocks first
+          const jsonMatch = output.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (jsonMatch && jsonMatch[1]) {
+            try {
+              parsedContent = JSON.parse(jsonMatch[1]);
+              console.log("Extracted JSON from code block");
+            } catch (e) {
+              console.log("Failed to parse JSON from code block");
+            }
+          }
           
-          if (match) {
-            const jsonString = match[0];
-            console.log("Extracted JSON:", jsonString.substring(0, 100) + "...");
-            parsedContent = JSON.parse(jsonString);
-          } else {
-            throw new Error("Could not extract valid JSON from string output");
+          // If no code block match, try to extract using regex for JSON objects
+          if (!parsedContent) {
+            const jsonRegex = /{[\s\S]*}/;
+            const match = output.match(jsonRegex);
+            
+            if (match) {
+              const jsonString = match[0];
+              console.log("Extracted JSON:", jsonString.substring(0, 100) + "...");
+              parsedContent = JSON.parse(jsonString);
+            } else {
+              throw new Error("Could not extract valid JSON from string output");
+            }
           }
         } catch (jsonError) {
           console.error("JSON extraction error:", jsonError);
           throw new Error(`Failed to extract JSON: ${jsonError.message}`);
         }
       } else if (typeof output === 'object' && output !== null) {
-        // Direct object output
-        parsedContent = output;
+        // Check if the lesson property exists in response
+        if (output.lesson) {
+          parsedContent = output.lesson;
+          console.log("Using lesson property from response");
+        } else {
+          // Direct object output
+          parsedContent = output;
+        }
       } else {
         throw new Error(`Unsupported output format: ${typeof output}`);
       }

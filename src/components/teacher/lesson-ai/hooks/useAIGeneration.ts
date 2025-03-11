@@ -13,12 +13,18 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     instructions,
     error,
     retryCount,
+    generationStatus,
+    generationId,
+    pollingInterval,
     setGenerating,
     setGeneratedContent,
     setLevel,
     setInstructions,
     setError,
-    clearErrors
+    clearErrors,
+    setGenerationStatus,
+    setGenerationId,
+    setPollingInterval
   } = useGenerationState();
 
   const { handleGenerate: generateHandler } = useGenerationHandler(
@@ -26,12 +32,21 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setGenerating,
     setGeneratedContent,
     setError,
-    clearErrors
+    clearErrors,
+    setGenerationStatus,
+    setGenerationId
   );
 
   const handleGenerate = async () => {
     await generateHandler(title, level, instructions);
   };
+
+  // Clean up any polling or resources when component unmounts
+  useEffect(() => {
+    return () => {
+      // Any cleanup needed
+    };
+  }, []);
 
   return {
     generating,
@@ -43,6 +58,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     handleGenerate,
     error,
     clearErrors,
-    retryCount
+    retryCount,
+    generationStatus,
+    generationId
   };
 };

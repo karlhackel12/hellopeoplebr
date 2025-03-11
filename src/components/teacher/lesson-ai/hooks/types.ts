@@ -26,4 +26,7 @@ export interface GenerationState {
   instructions: string;
   error: string | null;
   retryCount: number;
+  generationId?: string; // Added to track the generation process
+  pollingInterval?: number; // Controls how often we check for updates
+  generationStatus: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
 }

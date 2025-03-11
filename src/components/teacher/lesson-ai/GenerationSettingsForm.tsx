@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, MessageSquare, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress'; 
 
 interface GenerationSettingsFormProps {
   title: string;
@@ -14,6 +15,7 @@ interface GenerationSettingsFormProps {
   handleGenerate: () => Promise<void>;
   generating: boolean;
   error?: string | null;
+  generationStatus?: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
@@ -25,7 +27,32 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
   handleGenerate,
   generating,
   error,
+  generationStatus = 'idle',
 }) => {
+  const getProgressValue = () => {
+    switch (generationStatus) {
+      case 'pending': return 25;
+      case 'processing': return 65;
+      case 'completed': return 100;
+      default: return 0;
+    }
+  };
+
+  const getStatusMessage = () => {
+    switch (generationStatus) {
+      case 'pending': 
+        return "Starting content generation...";
+      case 'processing': 
+        return "AI is generating your English lesson content. This typically takes 30-60 seconds...";
+      case 'completed':
+        return "Generation complete! Content ready for review.";
+      case 'failed':
+        return "Generation failed. Please try again.";
+      default:
+        return "Generate content to see status here.";
+    }
+  };
+
   return (
     <div className="space-y-6">
       {error && (
@@ -52,6 +79,7 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
               variant={level === l ? "default" : "outline"}
               onClick={() => setLevel(l as 'beginner' | 'intermediate' | 'advanced')}
               className="capitalize"
+              disabled={generating}
             >
               {l}
             </Button>
@@ -67,6 +95,7 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
             onChange={(e) => setInstructions(e.target.value)}
             placeholder="Add specific instructions for the English lesson, e.g., 'Focus on business vocabulary' or 'Include pronunciation tips'"
             className="min-h-[120px] resize-y"
+            disabled={generating}
           />
           <div className="text-xs text-muted-foreground mt-1">
             Provide any specific requirements or focus areas for this English lesson
@@ -94,10 +123,8 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
 
       {generating && (
         <div className="p-4 border rounded-md bg-muted">
-          <p className="text-sm text-center">Generating your English lesson content. This may take up to a minute...</p>
-          <div className="mt-2 w-full bg-secondary rounded-full h-1.5">
-            <div className="bg-primary h-1.5 rounded-full animate-pulse w-1/3"></div>
-          </div>
+          <p className="text-sm text-center mb-2">{getStatusMessage()}</p>
+          <Progress value={getProgressValue()} className="h-2 w-full" />
         </div>
       )}
 

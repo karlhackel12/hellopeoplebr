@@ -28,15 +28,16 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
     setInstructions,
     handleGenerate,
     error,
-    clearErrors
+    clearErrors,
+    generationStatus
   } = useAIGeneration(form, title);
 
   // When generation completes, switch to preview tab
   useEffect(() => {
-    if (generatedContent && activeTab === 'generate') {
+    if (generatedContent && activeTab === 'generate' && generationStatus === 'completed') {
       setActiveTab('preview');
     }
-  }, [generatedContent]);
+  }, [generatedContent, generationStatus, activeTab]);
 
   // Reset errors when changing tabs
   useEffect(() => {
@@ -80,6 +81,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({ form, title }) => {
             handleGenerate={handleGenerate}
             generating={generating}
             error={error}
+            generationStatus={generationStatus}
           />
         </TabsContent>
         <TabsContent value="preview" className="pt-4">

@@ -10,7 +10,10 @@ export const useGenerationState = () => {
     level: 'beginner',
     instructions: '',
     error: null,
-    retryCount: 0
+    retryCount: 0,
+    generationStatus: 'idle',
+    generationId: undefined,
+    pollingInterval: 3000 // Default to 3 seconds
   });
 
   const setGenerating = (generating: boolean) => {
@@ -41,6 +44,18 @@ export const useGenerationState = () => {
     setState(prev => ({ ...prev, error: null }));
   };
 
+  const setGenerationStatus = (status: GenerationState['generationStatus']) => {
+    setState(prev => ({ ...prev, generationStatus: status }));
+  };
+
+  const setGenerationId = (id: string | undefined) => {
+    setState(prev => ({ ...prev, generationId: id }));
+  };
+
+  const setPollingInterval = (interval: number) => {
+    setState(prev => ({ ...prev, pollingInterval: interval }));
+  };
+
   return {
     ...state,
     setGenerating,
@@ -49,6 +64,9 @@ export const useGenerationState = () => {
     setInstructions,
     setError,
     incrementRetryCount,
-    clearErrors
+    clearErrors,
+    setGenerationStatus,
+    setGenerationId,
+    setPollingInterval
   };
 };
