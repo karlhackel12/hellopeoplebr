@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,12 +75,20 @@ const LessonEditor: React.FC = () => {
         if (error) throw error;
         
         if (data) {
+          // Fix for type error: ensure contentSource is one of the expected values
+          const contentSource = data.content_source as string;
+          let validContentSource: 'manual' | 'ai_generated' | 'mixed' = 'manual';
+          
+          if (contentSource === 'ai_generated' || contentSource === 'mixed') {
+            validContentSource = contentSource;
+          }
+          
           form.reset({
             title: data.title,
             content: data.content || '',
             estimated_minutes: data.estimated_minutes || 15,
             is_published: data.is_published,
-            contentSource: data.content_source || 'manual',
+            contentSource: validContentSource,
             structuredContent: data.structured_content,
             generationMetadata: data.generation_metadata,
           });
