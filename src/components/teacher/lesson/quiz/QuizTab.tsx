@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -29,36 +30,46 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
   return (
     <>
       {isEditMode && lessonId ? (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <QuizEditor lessonId={lessonId} />
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="num-questions">Questions:</Label>
-                <Select
-                  value={numQuestions}
-                  onValueChange={setNumQuestions}
+        <div className="space-y-8">
+          {/* Quiz Editor Section */}
+          <QuizEditor lessonId={lessonId} />
+          
+          {/* AI Generation Section */}
+          <Card className="p-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">AI Quiz Generation</h3>
+              <p className="text-sm text-muted-foreground">
+                Generate quiz questions automatically based on the lesson content
+              </p>
+              
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="num-questions">Number of Questions:</Label>
+                  <Select
+                    value={numQuestions}
+                    onValueChange={setNumQuestions}
+                  >
+                    <SelectTrigger id="num-questions" className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="7">7</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  onClick={handleGenerateQuiz} 
+                  variant="secondary"
+                  disabled={loading}
                 >
-                  <SelectTrigger id="num-questions" className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">3</SelectItem>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="7">7</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                  </SelectContent>
-                </Select>
+                  {loading ? 'Generating...' : 'Generate Quiz with AI'}
+                </Button>
               </div>
-              <Button 
-                onClick={handleGenerateQuiz} 
-                variant="secondary"
-                disabled={loading}
-              >
-                {loading ? 'Generating...' : 'Generate Quiz with AI'}
-              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       ) : (
         <div className="p-8 text-center border rounded-md bg-muted flex flex-col items-center gap-2">
