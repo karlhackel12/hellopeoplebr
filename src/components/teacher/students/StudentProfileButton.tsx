@@ -29,42 +29,48 @@ const StudentProfileButton: React.FC<StudentProfileButtonProps> = ({
   studentId
 }) => {
   // Fetch detailed student profile data
-  const { data: student, isLoading } = useQuery({
+  const { data: student, isLoading, refetch } = useQuery({
     queryKey: ['student-profile', studentId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get student profile
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          avatar_url,
-          created_at,
-          user_onboarding (
-            current_step_index,
-            completed_steps,
-            last_updated
-          ),
-          user_lesson_progress:user_lesson_progress(
-            id,
-            lesson_id,
-            completed,
-            completed_at,
-            last_accessed_at
-          ),
-          user_quiz_attempts:user_quiz_attempts(
-            id,
-            quiz_id,
-            score,
-            passed,
-            completed_at
-          )
-        `)
+        .select('id, first_name, last_name, avatar_url, created_at')
         .eq('id', studentId)
         .single();
       
-      if (error) throw error;
-      return data;
+      if (profileError) throw profileError;
+      
+      // Get onboarding data
+      const { data: onboardingData, error: onboardingError } = await supabase
+        .from('user_onboarding')
+        .select('current_step_index, completed_steps, last_updated')
+        .eq('user_id', studentId)
+        .maybeSingle();
+      
+      // Get lesson progress
+      const { data: lessonProgress, error: lessonError } = await supabase
+        .from('user_lesson_progress')
+        .select('id, lesson_id, completed, completed_at, last_accessed_at')
+        .eq('user_id', studentId);
+      
+      if (lessonError) throw lessonError;
+      
+      // Get quiz attempts
+      const { data: quizAttempts, error: quizError } = await supabase
+        .from('user_quiz_attempts')
+        .select('id, quiz_id, score, passed, completed_at')
+        .eq('user_id', studentId);
+      
+      if (quizError) throw quizError;
+      
+      // Combine all data
+      return {
+        ...profile,
+        user_onboarding: onboardingData || null,
+        user_lesson_progress: lessonProgress || [],
+        user_quiz_attempts: quizAttempts || []
+      };
     },
     enabled: false // Only load when dialog is opened
   });
@@ -86,8 +92,14 @@ const StudentProfileButton: React.FC<StudentProfileButtonProps> = ({
     ? Math.round((student.user_quiz_attempts.filter(qa => qa.passed).length / student.user_quiz_attempts.length) * 100) 
     : 0;
 
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      refetch();
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog onOpenChange={handleOpenChange}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

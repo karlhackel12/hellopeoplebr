@@ -135,7 +135,7 @@ const Assignments = () => {
                 lessons={contentData?.lessons || []}
                 quizzes={contentData?.quizzes || []}
                 onSuccess={handleAssignmentSuccess}
-                preselectedStudentId={initialStudentId}
+                initialStudentId={initialStudentId}
               />
             </div>
           </TabsContent>

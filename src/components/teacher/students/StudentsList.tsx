@@ -59,6 +59,14 @@ const StudentsList: React.FC<StudentsListProps> = ({
     return Math.round((currentStep / totalSteps) * 100);
   };
 
+  const handleNavigateToInvite = () => {
+    // Find the tab trigger and programmatically navigate to it
+    const inviteTab = document.querySelector('[data-value="invite"]') as HTMLElement;
+    if (inviteTab) {
+      inviteTab.click();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center my-12">
@@ -79,7 +87,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
             You don't have any students yet. Use the "Invite Students" tab to send invitations.
           </p>
           <Button
-            onClick={() => document.querySelector('[data-value="invite"]')?.click()}
+            onClick={handleNavigateToInvite}
             variant="default"
           >
             Invite Students

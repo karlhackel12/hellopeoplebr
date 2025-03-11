@@ -10,44 +10,67 @@ const OnboardingProgress: React.FC = () => {
   const { data: onboardingData, isLoading } = useQuery({
     queryKey: ['student-onboarding-progress'],
     queryFn: async () => {
-      // Get students with their onboarding status
-      const { data: students, error } = await supabase
+      // First get all students
+      const { data: students, error: studentsError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          user_onboarding (
-            current_step_index,
-            completed_steps
-          )
-        `)
+        .select('id, first_name, last_name')
         .eq('role', 'student');
 
-      if (error) throw error;
+      if (studentsError) throw studentsError;
+      if (!students || students.length === 0) {
+        return {
+          totalStudents: 0,
+          completedOnboarding: 0,
+          inProgressOnboarding: 0,
+          notStartedOnboarding: 0,
+          averageProgress: 0
+        };
+      }
+
+      // Then get onboarding data for these students
+      const studentIds = students.map(s => s.id);
+      const { data: onboardingData, error: onboardingError } = await supabase
+        .from('user_onboarding')
+        .select('user_id, current_step_index, completed_steps')
+        .in('user_id', studentIds);
+
+      if (onboardingError) throw onboardingError;
 
       // Process the data
       const totalStudents = students.length;
-      const completedOnboarding = students.filter(
-        s => s.user_onboarding && s.user_onboarding.current_step_index >= 6
+      const studentOnboarding = onboardingData || [];
+      
+      // Map onboarding data to students
+      const studentsWithOnboarding = students.map(student => {
+        const onboarding = studentOnboarding.find(o => o.user_id === student.id);
+        return {
+          ...student,
+          onboarding: onboarding || null
+        };
+      });
+      
+      const completedOnboarding = studentsWithOnboarding.filter(
+        s => s.onboarding && s.onboarding.current_step_index >= 6
       ).length;
-      const inProgressOnboarding = students.filter(
-        s => s.user_onboarding && s.user_onboarding.current_step_index > 0 && s.user_onboarding.current_step_index < 6
+      
+      const inProgressOnboarding = studentsWithOnboarding.filter(
+        s => s.onboarding && s.onboarding.current_step_index > 0 && s.onboarding.current_step_index < 6
       ).length;
+      
       const notStartedOnboarding = totalStudents - completedOnboarding - inProgressOnboarding;
 
       // Calculate average progress
       let totalSteps = 0;
       let completedSteps = 0;
       
-      students.forEach(student => {
-        if (student.user_onboarding) {
+      studentsWithOnboarding.forEach(student => {
+        if (student.onboarding) {
           totalSteps += 7; // Total 7 onboarding steps
-          completedSteps += student.user_onboarding.completed_steps?.length || 0;
+          completedSteps += student.onboarding.completed_steps?.length || 0;
         }
       });
       
-      const averageProgress = totalStudents > 0 
+      const averageProgress = totalSteps > 0 
         ? Math.round((completedSteps / totalSteps) * 100) 
         : 0;
 
