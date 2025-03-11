@@ -145,8 +145,3 @@ const PracticeExercisesTab: React.FC<PracticeExercisesTabProps> = ({
 };
 
 export default PracticeExercisesTab;
-
-// Helper function for conditional classnames
-const cn = (...classes: string[]) => {
-  return classes.filter(Boolean).join(' ');
-};
