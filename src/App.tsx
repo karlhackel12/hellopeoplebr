@@ -22,6 +22,12 @@ import SidebarDemoPage from "./pages/SidebarDemo";
 import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 
+// Student Pages
+import StudentDashboard from "./pages/student/Dashboard";
+import StudentLessons from "./pages/student/Lessons";
+import StudentSettings from "./pages/student/Settings";
+import LessonView from "./pages/student/LessonView";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -50,6 +56,12 @@ const App = () => (
             <Route path="/teacher/students" element={<Students />} />
             <Route path="/teacher/assignments" element={<Assignments />} />
             <Route path="/teacher/settings" element={<Settings />} />
+            
+            {/* Student Routes */}
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/lessons" element={<StudentLessons />} />
+            <Route path="/student/lessons/view/:lessonId" element={<LessonView />} />
+            <Route path="/student/settings" element={<StudentSettings />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

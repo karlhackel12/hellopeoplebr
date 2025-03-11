@@ -30,9 +30,7 @@ const Dashboard: React.FC = () => {
         if (profile?.role === 'teacher') {
           navigate('/teacher/dashboard');
         } else if (profile?.role === 'student') {
-          // For future student dashboard
-          toast('Student dashboard is coming soon!');
-          navigate('/');
+          navigate('/student/dashboard');
         } else {
           // Default redirect if role is not set
           navigate('/');
