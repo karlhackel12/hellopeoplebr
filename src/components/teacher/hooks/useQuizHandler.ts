@@ -120,6 +120,9 @@ export const useQuizHandler = (lessonId: string) => {
           if (optionsError) throw optionsError;
         }
 
+        toast.success('Quiz generated successfully', {
+          description: `${data.questions.length} questions have been created.`,
+        });
         return true;
       }
       

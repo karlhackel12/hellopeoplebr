@@ -67,7 +67,11 @@ const LessonPreviewPage: React.FC = () => {
             <p>Loading lesson preview...</p>
           </div>
         ) : lesson ? (
-          <LessonPreview content={lesson.content || ''} title={lesson.title} />
+          <LessonPreview 
+            content={lesson.content || ''} 
+            title={lesson.title} 
+            lessonId={id}
+          />
         ) : (
           <div className="bg-muted p-8 rounded-lg text-center">
             <h3 className="text-xl font-medium mb-2">Lesson not found</h3>

@@ -1,18 +1,27 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Smartphone, Monitor, Bookmark, Book, BookOpen, CheckCircle } from 'lucide-react';
+import { Smartphone, Monitor, Bookmark, Book, BookOpen, CheckCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Question } from './quiz/types';
+import QuizPreview from './quiz/QuizPreview';
 
 interface LessonPreviewProps {
   content: string;
   title?: string;
+  lessonId?: string;
 }
 
-export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title }) => {
+export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, lessonId }) => {
   const [viewMode, setViewMode] = React.useState<'desktop' | 'mobile'>('desktop');
   const [completedSections, setCompletedSections] = React.useState<string[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
+  const [quizTitle, setQuizTitle] = useState<string>('Lesson Quiz');
+  const [quizPassPercent, setQuizPassPercent] = useState<number>(70);
+  const [loadingQuiz, setLoadingQuiz] = useState<boolean>(false);
+  const [quizExists, setQuizExists] = useState<boolean>(false);
   
   const toggleSectionCompletion = (section: string) => {
     if (completedSections.includes(section)) {
@@ -21,6 +30,61 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title }) 
       setCompletedSections([...completedSections, section]);
     }
   };
+
+  // Fetch quiz data if lessonId is provided
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      if (!lessonId) return;
+      
+      try {
+        setLoadingQuiz(true);
+        
+        // First check if there's a quiz for this lesson
+        const { data: quiz, error: quizError } = await supabase
+          .from('quizzes')
+          .select('id, title, pass_percent')
+          .eq('lesson_id', lessonId)
+          .maybeSingle();
+        
+        if (quizError) {
+          console.error('Error fetching quiz:', quizError);
+          return;
+        }
+        
+        if (!quiz) {
+          setQuizExists(false);
+          return;
+        }
+        
+        setQuizExists(true);
+        setQuizTitle(quiz.title);
+        setQuizPassPercent(quiz.pass_percent);
+        
+        // Fetch questions for this quiz
+        const { data: questions, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select(`
+            *,
+            options:quiz_question_options(*)
+          `)
+          .eq('quiz_id', quiz.id)
+          .order('order_index');
+        
+        if (questionsError) {
+          console.error('Error fetching quiz questions:', questionsError);
+          return;
+        }
+        
+        setQuizQuestions(questions || []);
+      } catch (error) {
+        console.error('Error in quiz data fetch:', error);
+      } finally {
+        setLoadingQuiz(false);
+      }
+    };
+    
+    fetchQuizData();
+  }, [lessonId]);
 
   const formatMarkdownToHtml = (markdown: string): string => {
     // Simple markdown to HTML conversion
@@ -175,9 +239,31 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title }) 
             </TabsContent>
             
             <TabsContent value="quiz" className="mt-0">
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Quiz will be available after you save the lesson</p>
-              </div>
+              {!lessonId ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Quiz will be available after you save the lesson</p>
+                </div>
+              ) : loadingQuiz ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <p className="text-muted-foreground">Loading quiz data...</p>
+                </div>
+              ) : !quizExists ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">No quiz has been created for this lesson yet</p>
+                </div>
+              ) : quizQuestions.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">This lesson has a quiz, but no questions have been added yet</p>
+                </div>
+              ) : (
+                <QuizPreview 
+                  questions={quizQuestions} 
+                  title={quizTitle}
+                  passPercent={quizPassPercent}
+                  isPreview={true}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </div>
