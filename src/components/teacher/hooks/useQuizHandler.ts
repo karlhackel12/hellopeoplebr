@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Question } from '../quiz/types';
 
 interface QuizQuestion {
   question_text: string;
@@ -19,8 +20,8 @@ export const useQuizHandler = (lessonId: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateQuiz = async (numQuestions: number = 5) => {
-    if (!lessonId) return;
+  const generateQuiz = async (numQuestions: number = 5): Promise<boolean> => {
+    if (!lessonId) return false;
     
     try {
       setLoading(true);
@@ -89,22 +90,23 @@ export const useQuizHandler = (lessonId: string) => {
           if (optionsError) throw optionsError;
         }
 
-        toast.success('Quiz generated', {
-          description: 'AI has generated quiz questions based on the lesson content',
-        });
+        return true;
       }
+      
+      return false;
     } catch (error: any) {
       console.error('Error generating quiz:', error);
       setError(error.message);
       toast.error('Failed to generate quiz', {
         description: error.message,
       });
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchQuizQuestions = async () => {
+  const fetchQuizQuestions = async (): Promise<Question[] | null> => {
     try {
       setLoading(true);
       setError(null);
