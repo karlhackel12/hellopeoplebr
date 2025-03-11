@@ -9,7 +9,8 @@ import {
   Users, 
   ClipboardList, 
   Settings,
-  LogOut
+  LogOut,
+  ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,34 +22,40 @@ interface SidebarLinkProps {
   icon: React.ElementType;
   children: React.ReactNode;
   active?: boolean;
+  collapsed?: boolean;
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({ 
   href, 
   icon: Icon, 
   children, 
-  active 
+  active,
+  collapsed
 }) => {
   return (
-    <Link to={href}>
+    <Link to={href} className="block w-full">
       <Button
         variant="ghost"
         className={cn(
-          "w-full justify-start gap-3 px-4 py-2 mb-1",
-          active ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-secondary"
+          "w-full justify-start gap-3 px-3 py-2 mb-1 transition-all duration-200",
+          active ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-secondary",
+          collapsed ? "justify-center px-2" : ""
         )}
       >
         <Icon className="h-5 w-5" />
-        <span className="font-medium">{children}</span>
+        {!collapsed && <span className="font-medium truncate">{children}</span>}
       </Button>
     </Link>
   );
 };
 
-const TeacherSidebar: React.FC = () => {
+interface TeacherSidebarProps {
+  collapsed?: boolean;
+}
+
+const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ collapsed = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isExpanded, setIsExpanded] = React.useState(true);
 
   const handleLogout = async () => {
     try {
@@ -91,27 +98,26 @@ const TeacherSidebar: React.FC = () => {
 
   return (
     <aside className={cn(
-      "h-screen fixed top-0 left-0 z-10 bg-sidebar-background border-r border-sidebar-border transition-all duration-300",
-      isExpanded ? "w-64" : "w-20"
+      "fixed top-0 left-0 z-40 h-screen bg-sidebar-background border-r border-sidebar-border transition-all duration-300 shadow-sm",
+      collapsed ? "w-20" : "w-64",
+      // Mobile handling - off canvas when collapsed
+      collapsed ? "-translate-x-full md:translate-x-0" : "translate-x-0"
     )}>
       <div className="flex flex-col h-full">
         {/* Sidebar Header */}
         <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
-          <div className={cn("transition-opacity", isExpanded ? "opacity-100" : "opacity-0")}>
+          <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
             <Logo size="sm" />
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-2" 
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? "←" : "→"}
-          </Button>
+          {collapsed ? (
+            <div className="mx-auto">
+              <Logo iconOnly size="xs" />
+            </div>
+          ) : null}
         </div>
         
         {/* Sidebar Navigation */}
-        <nav className="flex-grow p-4 overflow-y-auto">
+        <nav className="flex-grow p-3 overflow-y-auto">
           <div className="space-y-1">
             {navigationLinks.map((link) => (
               <SidebarLink
@@ -119,25 +125,37 @@ const TeacherSidebar: React.FC = () => {
                 href={link.href}
                 icon={link.icon}
                 active={location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)}
+                collapsed={collapsed}
               >
-                {isExpanded ? link.name : ""}
+                {link.name}
               </SidebarLink>
             ))}
           </div>
         </nav>
         
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-3 border-t border-sidebar-border">
           <Button 
             variant="ghost" 
-            className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+            className={cn(
+              "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
+              collapsed ? "justify-center" : "justify-start gap-3"
+            )}
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
-            {isExpanded && <span className="font-medium">Logout</span>}
+            {!collapsed && <span className="font-medium">Logout</span>}
           </Button>
         </div>
       </div>
+      
+      {/* Mobile overlay */}
+      {!collapsed && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => navigate('/')} // This will trigger a re-render and collapse the sidebar on mobile
+        />
+      )}
     </aside>
   );
 };

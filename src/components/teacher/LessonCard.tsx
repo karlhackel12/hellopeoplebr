@@ -56,9 +56,9 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
   return (
     <Card className="h-full flex flex-col glass transition-all hover:shadow-md duration-300 animate-fade-in">
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle className="mr-2 text-gradient">{lesson.title}</CardTitle>
-          <Badge variant={lesson.is_published ? "default" : "outline"} className={lesson.is_published ? "bg-primary/10" : ""}>
+        <div className="flex justify-between items-start gap-2">
+          <CardTitle className="text-gradient line-clamp-2">{lesson.title}</CardTitle>
+          <Badge variant={lesson.is_published ? "default" : "outline"} className={lesson.is_published ? "bg-primary/10 shrink-0" : "shrink-0"}>
             {lesson.is_published ? "Published" : "Draft"}
           </Badge>
         </div>
@@ -68,15 +68,15 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
           Created {formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true })}
         </p>
       </CardContent>
-      <CardFooter className="flex justify-between gap-2">
-        <Button variant="outline" size="sm" onClick={handleView} className="hover-scale">
+      <CardFooter className="flex justify-between gap-2 flex-wrap">
+        <Button variant="outline" size="sm" onClick={handleView} className="hover:scale-105 transition-transform">
           <Eye className="h-4 w-4 mr-1" /> Preview
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleEdit} className="hover-scale">
+          <Button variant="outline" size="sm" onClick={handleEdit} className="hover:scale-105 transition-transform">
             <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDelete} className="hover-scale text-destructive hover:bg-destructive hover:text-destructive-foreground">
+          <Button variant="outline" size="sm" onClick={handleDelete} className="hover:scale-105 transition-transform text-destructive hover:bg-destructive hover:text-destructive-foreground">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
