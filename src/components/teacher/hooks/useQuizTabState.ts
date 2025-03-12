@@ -1,13 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizPreviewState } from './quiz/useQuizPreviewState';
 import { useQuizGenerationState } from './quiz/useQuizGenerationState';
 import { useQuizPublishState } from './quiz/useQuizPublishState';
 import { useQuizActions } from './quiz/useQuizActions';
+import { useQuizGenerationWorkflow } from './quiz/useQuizGenerationWorkflow';
+import { useQuizExistingData } from './quiz/useQuizExistingData';
+import { useQuizActionWrappers } from './quiz/useQuizActionWrappers';
 import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgress';
 
 export const useQuizTabState = (lessonId?: string) => {
   const [existingQuiz, setExistingQuiz] = useState(false);
+  const [numQuestions, setNumQuestions] = useState('5');
 
   const { 
     generateSmartQuiz,
@@ -25,8 +30,6 @@ export const useQuizTabState = (lessonId?: string) => {
   } = useQuizHandler(lessonId || '');
 
   const {
-    numQuestions,
-    setNumQuestions,
     loadingError,
     setLoadingError,
     errorDetails,
@@ -51,6 +54,32 @@ export const useQuizTabState = (lessonId?: string) => {
     resetPreview
   } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
 
+  // Handle generating quiz workflow
+  const { generateQuiz } = useQuizGenerationWorkflow(
+    fetchLessonContent,
+    generateSmartQuiz,
+    loadQuizPreview,
+    setExistingQuiz,
+    setIsPublished,
+    currentPhase,
+    setGenerationPhase,
+    setError,
+    clearErrors,
+    setContentLoading
+  );
+
+  // Load existing quiz data on mount
+  useQuizExistingData(
+    lessonId,
+    fetchQuizDetails,
+    setExistingQuiz,
+    setQuizTitle,
+    setIsPublished,
+    loadQuizPreview,
+    setLoadingError
+  );
+
+  // Set up publish/unpublish handling with fixed return types
   const publishQuizWithResult = async (): Promise<boolean> => {
     try {
       await publishQuiz();
@@ -75,6 +104,7 @@ export const useQuizTabState = (lessonId?: string) => {
     togglePublishStatus
   } = useQuizPublishState(publishQuizWithResult, unpublishQuizWithResult);
 
+  // Set up quiz action handlers (save, discard, generate)
   const {
     handleSaveQuiz,
     handleDiscardQuiz,
@@ -88,113 +118,26 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
+  // Create wrapped handlers with proper return types
+  const {
+    wrappedGenerateQuiz,
+    wrappedSaveQuiz,
+    wrappedDiscardQuiz
+  } = useQuizActionWrappers(
+    handleGenerateQuiz,
+    handleSaveQuiz,
+    handleDiscardQuiz,
+    resetPreview,
+    setExistingQuiz,
+    setIsPublished,
+    setShowPreview,
+    setContentLoading
+  );
+
+  // Sync retrying state with handler
   useEffect(() => {
     setRetrying(isGenerationRetrying);
   }, [isGenerationRetrying]);
-
-  useEffect(() => {
-    if (lessonId) {
-      const checkExistingQuiz = async () => {
-        try {
-          setLoadingError(null);
-          const quizDetails = await fetchQuizDetails();
-          
-          if (quizDetails) {
-            setExistingQuiz(true);
-            setQuizTitle(quizDetails.title);
-            setIsPublished(quizDetails.is_published || false);
-            
-            await loadQuizPreview();
-          }
-        } catch (error: any) {
-          console.error("Error checking existing quiz:", error);
-          setLoadingError(error.message);
-        }
-      };
-      
-      checkExistingQuiz();
-    }
-  }, [lessonId]);
-
-  const wrappedGenerateQuiz = async () => {
-    setShowPreview(false);
-    clearErrors();
-    setGenerationPhase('content-loading');
-    
-    const onPhaseChange = (phase: GenerationPhase) => {
-      setGenerationPhase(phase);
-    };
-    
-    try {
-      onPhaseChange('content-loading');
-      const content = await fetchLessonContent();
-      
-      if (!content) {
-        setError('Could not load lesson content', 'Make sure your lesson has sufficient content before generating a quiz.');
-        return false;
-      }
-      
-      if (content.length < 100) {
-        setError('Lesson content too short', 'Your lesson needs more content to generate meaningful quiz questions.');
-        return false;
-      }
-
-      onPhaseChange('analyzing');
-      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
-      
-      onPhaseChange('generating');
-      try {
-        const success = await handleGenerateQuiz(numQuestions, setContentLoading);
-        
-        if (success) {
-          onPhaseChange('saving');
-          await loadQuizPreview();
-          setExistingQuiz(true);
-          setIsPublished(false);
-          onPhaseChange('complete');
-          
-          setTimeout(() => {
-            if (currentPhase === 'complete') {
-              setGenerationPhase('idle');
-            }
-          }, 2000);
-          
-          return true;
-        } else {
-          setError('Failed to generate quiz', 'The quiz generation process failed. Please try again later.');
-          return false;
-        }
-      } catch (genError: any) {
-        console.error("Error during quiz generation:", genError);
-        setError(
-          genError.message || 'Quiz generation failed', 
-          genError.details || 'An unexpected error occurred during quiz generation.'
-        );
-        return false;
-      }
-    } catch (error: any) {
-      console.error("Error in quiz generation flow:", error);
-      setError(
-        'Quiz generation error', 
-        error.message || 'An unexpected error occurred during the quiz generation process.'
-      );
-      return false;
-    }
-  };
-
-  const wrappedSaveQuiz = async () => {
-    return await handleSaveQuiz(quizTitle);
-  };
-
-  const wrappedDiscardQuiz = async () => {
-    const success = await handleDiscardQuiz();
-    if (success) {
-      resetPreview();
-      setExistingQuiz(false);
-      setIsPublished(false);
-    }
-    return success;
-  };
 
   return {
     numQuestions,
@@ -213,7 +156,7 @@ export const useQuizTabState = (lessonId?: string) => {
     errorDetails,
     contentLoadingMessage,
     currentPhase,
-    handleGenerateQuiz: wrappedGenerateQuiz,
+    handleGenerateQuiz: () => generateQuiz(numQuestions),
     handleSaveQuiz: wrappedSaveQuiz,
     handleDiscardQuiz: wrappedDiscardQuiz,
     togglePublishStatus,
