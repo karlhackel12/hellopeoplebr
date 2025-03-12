@@ -67,12 +67,25 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
   }, [lessonId, fetchQuizQuestions, fetchQuizDetails]);
 
   const handleGenerateQuiz = async () => {
+    if (!lessonId) {
+      toast.error('Missing lesson', {
+        description: 'Please save the lesson before generating a quiz.',
+      });
+      return;
+    }
+    
     try {
       setShowPreview(false);
+      console.log("Generating quiz with", parseInt(numQuestions), "questions");
+      
       const result = await generateQuiz(parseInt(numQuestions));
+      console.log("Quiz generation result:", result);
+      
       if (result) {
         // Fetch the newly generated questions
         const questions = await fetchQuizQuestions();
+        console.log("Fetched questions:", questions);
+        
         if (questions && questions.length > 0) {
           setPreviewQuestions(questions);
           setShowPreview(true);
@@ -80,6 +93,10 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           setIsPublished(false); // New quizzes are unpublished by default
           toast.success('Quiz generated', {
             description: 'Your quiz questions have been generated. Review them below.',
+          });
+        } else {
+          toast.error('No questions generated', {
+            description: 'The quiz was created but no questions were generated. Please try again.',
           });
         }
       }
@@ -93,6 +110,9 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
 
   const handleSaveQuiz = async () => {
     await saveQuizTitle(quizTitle);
+    toast.success('Quiz saved', {
+      description: 'Your quiz has been saved successfully.',
+    });
   };
 
   const handleDiscardQuiz = async () => {
@@ -103,6 +123,9 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         setExistingQuiz(false);
         setShowPreview(false);
         setIsPublished(false);
+        toast.success('Quiz deleted', {
+          description: 'Your quiz has been deleted successfully.',
+        });
       }
     } else if (!existingQuiz) {
       // Just hide the preview for non-saved quizzes
@@ -124,15 +147,24 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         const success = await unpublishQuiz();
         if (success) {
           setIsPublished(false);
+          toast.success('Quiz unpublished', {
+            description: 'Your quiz is now hidden from students.',
+          });
         }
       } else {
         const success = await publishQuiz();
         if (success) {
           setIsPublished(true);
+          toast.success('Quiz published', {
+            description: 'Your quiz is now visible to students.',
+          });
         }
       }
     } catch (error) {
       console.error("Error toggling publish status:", error);
+      toast.error('Action failed', {
+        description: 'Failed to change publish status. Please try again.',
+      });
     }
   };
 

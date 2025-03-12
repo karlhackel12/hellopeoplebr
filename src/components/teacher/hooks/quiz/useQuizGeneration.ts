@@ -8,7 +8,12 @@ export const useQuizGeneration = (lessonId: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const generateQuiz = async (numQuestions: number = 5): Promise<boolean> => {
-    if (!lessonId) return false;
+    if (!lessonId) {
+      toast.error('Missing lesson ID', {
+        description: 'Cannot generate quiz without a lesson ID',
+      });
+      return false;
+    }
     
     try {
       setLoading(true);
@@ -22,8 +27,12 @@ export const useQuizGeneration = (lessonId: string) => {
         .single();
       
       if (lessonError || !lesson?.content) {
+        console.error('Error fetching lesson content:', lessonError);
         throw new Error('Failed to fetch lesson content');
       }
+
+      console.log('Lesson content length:', lesson.content.length);
+      console.log('Number of questions:', numQuestions);
 
       // Call the edge function to generate quiz questions
       const { data, error } = await supabase.functions.invoke('generate-quiz', {
@@ -33,7 +42,12 @@ export const useQuizGeneration = (lessonId: string) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      console.log('Edge function response:', data);
 
       // If successful, first check if we already have a quiz for this lesson
       const { data: existingQuiz } = await supabase

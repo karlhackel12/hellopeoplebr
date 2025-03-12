@@ -43,7 +43,7 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
               onValueChange={setNumQuestions}
             >
               <SelectTrigger id="num-questions" className="w-24">
-                <SelectValue />
+                <SelectValue placeholder="5" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="3">3</SelectItem>
@@ -58,6 +58,7 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
             variant="secondary"
             disabled={loading}
             className="gap-2"
+            type="button"
           >
             {loading ? (
               <>

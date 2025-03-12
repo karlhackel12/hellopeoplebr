@@ -51,6 +51,7 @@ serve(async (req) => {
   try {
     const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY');
     if (!REPLICATE_API_KEY) {
+      console.error('REPLICATE_API_KEY is not set');
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
@@ -58,7 +59,11 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { lessonContent, numQuestions = 5 } = await req.json();
+    // Log the request body to debug
+    const requestBody = await req.json();
+    console.log("Request body:", JSON.stringify(requestBody));
+    
+    const { lessonContent, numQuestions = 5 } = requestBody;
     console.log("Generating quiz for content length:", lessonContent?.length);
     console.log("Number of questions requested:", numQuestions);
 
@@ -67,7 +72,7 @@ serve(async (req) => {
     }
 
     const prompt = buildPrompt(lessonContent, numQuestions);
-    console.log("Generated prompt:", prompt);
+    console.log("Generated prompt length:", prompt.length);
 
     try {
       const output = await replicate.run(
@@ -83,6 +88,7 @@ serve(async (req) => {
         }
       );
 
+      console.log("Generation response type:", typeof output);
       console.log("Generation response:", output);
 
       let parsedOutput;
