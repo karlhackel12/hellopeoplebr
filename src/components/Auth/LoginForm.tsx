@@ -41,7 +41,7 @@ const LoginForm: React.FC = () => {
             onClick={() => navigate('/forgot-password')}
             type="button"
           >
-            Forgot password?
+            Esqueceu a senha?
           </Button>
         </div>
 

@@ -17,11 +17,11 @@ const NameField: React.FC<NameFieldProps> = ({ form, isLoading }) => {
       name="name"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Full Name</FormLabel>
+          <FormLabel>Nome Completo</FormLabel>
           <FormControl>
             <Input
               {...field}
-              placeholder="Enter your name"
+              placeholder="Digite seu nome"
               disabled={isLoading}
               className="h-11"
             />

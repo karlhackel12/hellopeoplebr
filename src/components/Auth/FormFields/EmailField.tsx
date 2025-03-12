@@ -18,12 +18,12 @@ const EmailField: React.FC<EmailFieldProps> = ({ form, isLoading, isDisabled = f
       name="email"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Email</FormLabel>
+          <FormLabel>E-mail</FormLabel>
           <FormControl>
             <Input
               {...field}
               type="email"
-              placeholder="Enter your email"
+              placeholder="Digite seu e-mail"
               disabled={isLoading || isDisabled}
               className="h-11"
             />

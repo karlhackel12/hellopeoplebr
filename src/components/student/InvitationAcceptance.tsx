@@ -24,10 +24,10 @@ const InvitationAcceptance: React.FC = () => {
       <CardHeader>
         <div className="flex items-center space-x-2 mb-2">
           <BookOpen className="h-5 w-5 text-primary" />
-          <CardTitle>Join HelloPeople</CardTitle>
+          <CardTitle>Junte-se ao HelloPeople</CardTitle>
         </div>
         <CardDescription>
-          Enter your invitation code to get started with your language learning journey
+          Digite seu código de convite para começar sua jornada de aprendizado de idiomas
         </CardDescription>
       </CardHeader>
       <CardContent>

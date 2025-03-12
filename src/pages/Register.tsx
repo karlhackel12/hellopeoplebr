@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
 import Logo from '@/components/ui/Logo';
 import { CheckCircle2 } from 'lucide-react';
+import { H1 } from '@/components/ui/typography';
 
 const Register: React.FC = () => {
   const [invitationEmail, setInvitationEmail] = useState<string | null>(null);
@@ -36,17 +37,17 @@ const Register: React.FC = () => {
   }, []);
 
   const studentBenefits = [
-    "Access to AI-powered conversation practice",
-    "Personalized learning path based on your goals",
-    "Progress tracking and performance insights",
-    "5 free lessons per week on the free plan",
+    "Acesso a práticas de conversação com IA",
+    "Caminho de aprendizado personalizado baseado em seus objetivos",
+    "Acompanhamento de progresso e insights de desempenho",
+    "5 lições gratuitas por semana no plano gratuito",
   ];
 
   const teacherBenefits = [
-    "Manage multiple student groups",
-    "Create custom learning materials",
-    "Track student progress and analytics",
-    "Schedule live conversation sessions",
+    "Gerenciar múltiplos grupos de estudantes",
+    "Criar materiais de aprendizado personalizados",
+    "Acompanhar o progresso dos alunos e análises",
+    "Agendar sessões de conversação ao vivo",
   ];
 
   return (
@@ -59,14 +60,14 @@ const Register: React.FC = () => {
         
         <div className="w-full max-w-md mx-auto mt-16 md:mt-0">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-3">Create your account</h1>
+            <H1 className="mb-3">Crie sua conta</H1>
             {invitationCode ? (
               <p className="text-muted-foreground">
-                You've been invited to join HelloPeople!
+                Você foi convidado para se juntar ao HelloPeople!
               </p>
             ) : (
               <p className="text-muted-foreground">
-                Join thousands of language learners achieving fluency faster
+                Junte-se a milhares de estudantes de idiomas alcançando fluência mais rapidamente
               </p>
             )}
           </div>
@@ -86,11 +87,11 @@ const Register: React.FC = () => {
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/5 to-background relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center p-12">
           <div className="bg-card/60 backdrop-blur-sm border border-border/30 rounded-2xl p-8 max-w-lg shadow-sm">
-            <h2 className="text-2xl font-bold mb-6">Start your fluency journey today</h2>
+            <h2 className="text-2xl font-bold mb-6 font-display">Comece sua jornada de fluência hoje</h2>
             
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3">For Students</h3>
+                <h3 className="text-lg font-semibold mb-3 font-display">Para Estudantes</h3>
                 <ul className="space-y-3">
                   {studentBenefits.map((benefit, index) => (
                     <li key={`student-${index}`} className="flex items-start">
@@ -102,7 +103,7 @@ const Register: React.FC = () => {
               </div>
               
               <div>
-                <h3 className="text-lg font-semibold mb-3">For Teachers</h3>
+                <h3 className="text-lg font-semibold mb-3 font-display">Para Professores</h3>
                 <ul className="space-y-3">
                   {teacherBenefits.map((benefit, index) => (
                     <li key={`teacher-${index}`} className="flex items-start">
@@ -116,7 +117,7 @@ const Register: React.FC = () => {
             
             <div className="bg-primary/10 rounded-lg p-4 mt-6">
               <p className="text-sm">
-                "Our AI technology adapts to your learning style and pace, providing a truly personalized experience that helps you learn up to 3x faster than traditional methods."
+                "Nossa tecnologia de IA se adapta ao seu estilo e ritmo de aprendizado, oferecendo uma experiência verdadeiramente personalizada que ajuda você a aprender até 3x mais rápido que métodos tradicionais."
               </p>
             </div>
           </div>

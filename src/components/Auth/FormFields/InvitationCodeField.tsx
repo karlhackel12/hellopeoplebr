@@ -28,7 +28,7 @@ const InvitationCodeField: React.FC<InvitationCodeFieldProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <FormLabel htmlFor="invitationCode">Invitation Code</FormLabel>
+      <FormLabel htmlFor="invitationCode">Código de Convite</FormLabel>
       {readOnly ? (
         <div className="flex items-center h-11 px-4 rounded-md border bg-muted/50">
           <span className="text-muted-foreground">{code}</span>
@@ -38,7 +38,7 @@ const InvitationCodeField: React.FC<InvitationCodeFieldProps> = ({
           id="invitationCode"
           value={code}
           onChange={onChange}
-          placeholder="Enter 8-character code"
+          placeholder="Digite o código de 8 caracteres"
           className="h-11 uppercase"
           maxLength={8}
           disabled={isLoading || isCheckingCode}
@@ -48,7 +48,7 @@ const InvitationCodeField: React.FC<InvitationCodeFieldProps> = ({
       {isCheckingCode && (
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Verifying code...</span>
+          <span>Verificando código...</span>
         </div>
       )}
       

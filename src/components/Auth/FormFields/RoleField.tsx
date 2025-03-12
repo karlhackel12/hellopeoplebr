@@ -16,7 +16,7 @@ const RoleField: React.FC<RoleFieldProps> = ({ form }) => {
       name="role"
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <FormLabel>I am a</FormLabel>
+          <FormLabel>Eu sou um</FormLabel>
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
@@ -25,11 +25,11 @@ const RoleField: React.FC<RoleFieldProps> = ({ form }) => {
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="student" id="student" />
-                <FormLabel htmlFor="student" className="cursor-pointer">Student</FormLabel>
+                <FormLabel htmlFor="student" className="cursor-pointer">Estudante</FormLabel>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="teacher" id="teacher" />
-                <FormLabel htmlFor="teacher" className="cursor-pointer">Teacher</FormLabel>
+                <FormLabel htmlFor="teacher" className="cursor-pointer">Professor</FormLabel>
               </div>
             </RadioGroup>
           </FormControl>

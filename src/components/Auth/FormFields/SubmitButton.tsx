@@ -18,15 +18,15 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ isLoading, type }) => {
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {type === 'login' ? 'Logging in...' : 
-            type === 'register' ? 'Creating account...' : 
-            'Sending reset link...'}
+          {type === 'login' ? 'Entrando...' : 
+            type === 'register' ? 'Criando conta...' : 
+            'Enviando link...'}
         </>
       ) : (
         <>
-          {type === 'login' ? 'Log in' : 
-            type === 'register' ? 'Create account' : 
-            'Send reset link'}
+          {type === 'login' ? 'Entrar' : 
+            type === 'register' ? 'Criar conta' : 
+            'Enviar link'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </>
       )}

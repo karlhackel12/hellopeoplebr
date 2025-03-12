@@ -60,8 +60,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
   }
 
   html {
@@ -80,6 +84,38 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/75;
+  }
+  
+  .handwriting {
+    @apply font-handwriting;
+  }
+  
+  .heading-1 {
+    @apply text-4xl font-bold font-display md:text-5xl;
+  }
+  
+  .heading-2 {
+    @apply text-3xl font-bold font-display md:text-4xl;
+  }
+  
+  .heading-3 {
+    @apply text-2xl font-bold font-display md:text-3xl;
+  }
+  
+  .heading-4 {
+    @apply text-xl font-semibold font-display md:text-2xl;
+  }
+  
+  .body-large {
+    @apply text-lg font-sans;
+  }
+  
+  .body-normal {
+    @apply text-base font-sans;
+  }
+  
+  .body-small {
+    @apply text-sm font-sans;
   }
   
   .animate-delay-100 {

@@ -25,13 +25,13 @@ const PasswordField: React.FC<PasswordFieldProps> = ({ form, isLoading, isRegist
       name="password"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Password</FormLabel>
+          <FormLabel>Senha</FormLabel>
           <FormControl>
             <div className="relative">
               <Input
                 {...field}
                 type={showPassword ? "text" : "password"}
-                placeholder={isRegister ? "Create a password" : "Enter your password"}
+                placeholder={isRegister ? "Crie uma senha" : "Digite sua senha"}
                 disabled={isLoading}
                 className="h-11 pr-10"
               />

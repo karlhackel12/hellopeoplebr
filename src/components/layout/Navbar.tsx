@@ -28,9 +28,9 @@ const Navbar: React.FC = () => {
   }, [location.pathname]);
 
   const navLinks = [
-    { title: 'Features', href: '/#features' },
-    { title: 'How It Works', href: '/#how-it-works' },
-    { title: 'Pricing', href: '/#pricing' },
+    { title: 'Recursos', href: '/#features' },
+    { title: 'Como Funciona', href: '/#how-it-works' },
+    { title: 'Preços', href: '/#pricing' },
   ];
 
   return (
@@ -62,12 +62,12 @@ const Navbar: React.FC = () => {
             <ThemeToggle />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="font-medium">
-                Log in
+                Entrar
               </Button>
             </Link>
             <Link to="/register">
               <Button size="sm" className="font-medium">
-                Sign up
+                Cadastrar
               </Button>
             </Link>
           </div>
@@ -106,12 +106,12 @@ const Navbar: React.FC = () => {
             <div className="flex flex-col space-y-3">
               <Link to="/login" className="w-full">
                 <Button variant="outline" className="w-full">
-                  Log in
+                  Entrar
                 </Button>
               </Link>
               <Link to="/register" className="w-full">
                 <Button className="w-full">
-                  Sign up
+                  Cadastrar
                 </Button>
               </Link>
             </div>

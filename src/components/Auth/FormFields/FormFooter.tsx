@@ -14,38 +14,38 @@ const FormFooter: React.FC<FormFooterProps> = ({ type }) => {
     <div className="text-center text-sm">
       {type === 'login' ? (
         <p>
-          Don't have an account?{' '}
+          Não tem uma conta?{' '}
           <Button
             variant="link"
             className="p-0 h-auto font-medium"
             onClick={() => navigate('/register')}
             type="button"
           >
-            Sign up
+            Cadastre-se
           </Button>
         </p>
       ) : type === 'register' ? (
         <p>
-          Already have an account?{' '}
+          Já tem uma conta?{' '}
           <Button
             variant="link"
             className="p-0 h-auto font-medium"
             onClick={() => navigate('/login')}
             type="button"
           >
-            Log in
+            Entrar
           </Button>
         </p>
       ) : (
         <p>
-          Remember your password?{' '}
+          Lembrou sua senha?{' '}
           <Button
             variant="link"
             className="p-0 h-auto font-medium"
             onClick={() => navigate('/login')}
             type="button"
           >
-            Log in
+            Entrar
           </Button>
         </p>
       )}
