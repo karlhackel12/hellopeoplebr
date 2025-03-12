@@ -12,13 +12,14 @@ import { toast } from 'sonner';
 const Students = () => {
   const [activeTab, setActiveTab] = useState('students');
   
-  // Fetch student data using React Query
+  // Fetch student profile data using React Query
   const { 
     data: students = [], 
     isLoading: loadingStudents,
+    error: studentsError,
     refetch: refetchStudents
   } = useQuery({
-    queryKey: ['students-list'],
+    queryKey: ['students-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -27,11 +28,7 @@ const Students = () => {
           first_name,
           last_name,
           avatar_url,
-          created_at,
-          user_onboarding (
-            current_step_index,
-            completed_steps
-          )
+          created_at
         `)
         .eq('role', 'student');
 
@@ -45,6 +42,46 @@ const Students = () => {
       return data || [];
     }
   });
+
+  // Fetch onboarding data separately
+  const { 
+    data: onboardingData = [],
+    isLoading: loadingOnboarding
+  } = useQuery({
+    queryKey: ['students-onboarding'],
+    queryFn: async () => {
+      if (students.length === 0) return [];
+      
+      const studentIds = students.map(student => student.id);
+      
+      const { data, error } = await supabase
+        .from('user_onboarding')
+        .select('user_id, current_step_index, completed_steps')
+        .in('user_id', studentIds);
+
+      if (error) {
+        console.error('Failed to load onboarding data:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+    enabled: students.length > 0
+  });
+
+  // Combine student profiles with their onboarding data
+  const studentsWithOnboarding = React.useMemo(() => {
+    return students.map(student => {
+      const onboarding = onboardingData.find(
+        item => item.user_id === student.id
+      );
+      
+      return {
+        ...student,
+        user_onboarding: onboarding || null
+      };
+    });
+  }, [students, onboardingData]);
 
   // Fetch invitation data
   const { 
@@ -75,6 +112,21 @@ const Students = () => {
     refetchInvitations();
   };
 
+  // Show error state if student query failed
+  if (studentsError) {
+    return (
+      <TeacherLayout>
+        <div className="animate-fade-in">
+          <h1 className="text-3xl font-bold mb-6">Student Management</h1>
+          <div className="bg-destructive/10 text-destructive rounded-lg p-6">
+            <h2 className="text-lg font-semibold mb-2">Failed to load students</h2>
+            <p>Please try refreshing the page or contact support if the problem persists.</p>
+          </div>
+        </div>
+      </TeacherLayout>
+    );
+  }
+
   return (
     <TeacherLayout>
       <div className="animate-fade-in">
@@ -89,8 +141,8 @@ const Students = () => {
           
           <TabsContent value="students">
             <StudentsList 
-              students={students} 
-              loading={loadingStudents} 
+              students={studentsWithOnboarding} 
+              loading={loadingStudents || loadingOnboarding} 
               onUpdate={refetchStudents} 
             />
           </TabsContent>
