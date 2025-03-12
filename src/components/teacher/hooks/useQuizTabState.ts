@@ -13,11 +13,13 @@ export const useQuizTabState = (lessonId?: string) => {
   const [isPublished, setIsPublished] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [contentLoadingMessage, setContentLoadingMessage] = useState<string | null>(null);
 
   const { 
-    generateQuiz, 
+    generateSmartQuiz,
     fetchQuizQuestions, 
     fetchQuizDetails,
+    fetchLessonContent,
     saveQuizTitle,
     deleteQuiz,
     publishQuiz,
@@ -54,7 +56,6 @@ export const useQuizTabState = (lessonId?: string) => {
         } catch (error: any) {
           console.error("Error checking existing quiz:", error);
           setLoadingError(error.message);
-          // Don't show toast here as it might be disruptive on page load
         }
       };
       
@@ -73,7 +74,21 @@ export const useQuizTabState = (lessonId?: string) => {
     try {
       setShowPreview(false);
       setLoadingError(null);
-      const result = await generateQuiz(parseInt(numQuestions));
+      
+      // First check if we have lesson content
+      setContentLoadingMessage('Analyzing lesson content...');
+      const content = await fetchLessonContent();
+      setContentLoadingMessage(null);
+      
+      if (!content) {
+        toast.error('Missing content', {
+          description: 'Cannot find lesson content to generate quiz questions.',
+        });
+        return;
+      }
+      
+      // Generate the quiz with smart content analysis
+      const result = await generateSmartQuiz(parseInt(numQuestions));
       
       if (result) {
         const questions = await fetchQuizQuestions();
@@ -95,7 +110,6 @@ export const useQuizTabState = (lessonId?: string) => {
     } catch (error: any) {
       console.error("Error handling quiz generation:", error);
       setLoadingError(error.message);
-      // Toast is already shown in the generateQuiz function
     }
   };
 
@@ -186,6 +200,7 @@ export const useQuizTabState = (lessonId?: string) => {
     saving,
     isRetrying,
     loadingError,
+    contentLoadingMessage,
     handleGenerateQuiz,
     handleSaveQuiz,
     handleDiscardQuiz,

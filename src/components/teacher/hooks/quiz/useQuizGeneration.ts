@@ -8,7 +8,7 @@ export const useQuizGeneration = (lessonId: string) => {
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const generateQuiz = async (numQuestions: number = 5): Promise<boolean> => {
+  const generateQuiz = async (numQuestions: number = 5, optimizedContent?: string): Promise<boolean> => {
     if (!lessonId) {
       toast.error('Missing lesson ID', {
         description: 'Cannot generate quiz without a lesson ID',
@@ -20,27 +20,33 @@ export const useQuizGeneration = (lessonId: string) => {
       setLoading(true);
       setError(null);
       
-      // First, get the lesson content
-      const { data: lesson, error: lessonError } = await supabase
-        .from('lessons')
-        .select('content')
-        .eq('id', lessonId)
-        .single();
+      let lessonContent = optimizedContent;
       
-      if (lessonError || !lesson?.content) {
-        console.error('Error fetching lesson content:', lessonError);
-        throw new Error(lessonError?.message || 'Failed to fetch lesson content');
+      // If no optimized content is provided, fetch the raw lesson content
+      if (!lessonContent) {
+        const { data: lesson, error: lessonError } = await supabase
+          .from('lessons')
+          .select('content')
+          .eq('id', lessonId)
+          .single();
+        
+        if (lessonError || !lesson?.content) {
+          console.error('Error fetching lesson content:', lessonError);
+          throw new Error(lessonError?.message || 'Failed to fetch lesson content');
+        }
+
+        lessonContent = lesson.content;
       }
 
-      if (!lesson.content || lesson.content.length < 50) {
+      if (!lessonContent || lessonContent.length < 50) {
         toast.error('Insufficient lesson content', {
           description: 'The lesson needs more content before generating a quiz.',
         });
         return false;
       }
 
-      console.log('Lesson content length:', lesson.content.length);
-      console.log('Number of questions:', numQuestions);
+      console.log('Content length for quiz generation:', lessonContent.length);
+      console.log('Number of questions requested:', numQuestions);
 
       // Call the edge function to generate quiz questions with retry logic
       let attempts = 0;
@@ -58,7 +64,7 @@ export const useQuizGeneration = (lessonId: string) => {
 
           const response = await supabase.functions.invoke('generate-quiz', {
             body: { 
-              lessonContent: lesson.content,
+              lessonContent,
               numQuestions
             }
           });
@@ -85,8 +91,6 @@ export const useQuizGeneration = (lessonId: string) => {
         console.error('Edge function error after all attempts:', error);
         throw error;
       }
-
-      console.log('Edge function response:', data);
 
       // If successful, first check if we already have a quiz for this lesson
       const { data: existingQuiz } = await supabase

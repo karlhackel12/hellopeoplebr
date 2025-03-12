@@ -4,9 +4,8 @@ import { useQuizTabState } from '@/components/teacher/hooks/useQuizTabState';
 import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewSection from './components/QuizPreviewSection';
 import QuizPublishAlert from './components/QuizPublishAlert';
-import QuizPlaceholder from './QuizPlaceholder';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -28,6 +27,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     saving,
     isRetrying,
     loadingError,
+    contentLoadingMessage,
     handleGenerateQuiz,
     handleSaveQuiz,
     handleDiscardQuiz,
@@ -35,7 +35,13 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
   } = useQuizTabState(lessonId);
 
   if (!isEditMode || !lessonId) {
-    return <QuizPlaceholder />;
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg">
+        <p className="text-muted-foreground text-center">
+          Save the lesson first to enable quiz generation.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -45,6 +51,15 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             There was an issue connecting to the quiz service. You can try again or refresh the page.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {contentLoadingMessage && (
+        <Alert className="mb-4 bg-blue-50 border-blue-200">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+          <AlertDescription className="text-blue-700">
+            {contentLoadingMessage}
           </AlertDescription>
         </Alert>
       )}

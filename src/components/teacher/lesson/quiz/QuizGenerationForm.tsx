@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Loader2, RotateCcw, RefreshCw } from 'lucide-react';
+import { Loader2, RotateCcw, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 
 interface QuizGenerationFormProps {
@@ -33,13 +33,18 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
   existingQuiz
 }) => {
   return (
-    <Card className="p-6">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">AI Quiz Generator</h3>
-        <p className="text-sm text-muted-foreground">
-          Create a quiz automatically by analyzing your lesson content using AI
-        </p>
-        
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          AI Quiz Generator
+        </CardTitle>
+        <CardDescription>
+          Automatically create quiz questions by analyzing your lesson content with AI
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
         {error && (
           <div className="p-3 border rounded-md bg-red-50 text-red-800 flex items-center gap-2 text-sm">
             <AlertCircle className="h-4 w-4" />
@@ -47,7 +52,7 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
           </div>
         )}
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <Label htmlFor="num-questions">Number of Questions:</Label>
             <Select
@@ -66,9 +71,10 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
               </SelectContent>
             </Select>
           </div>
+          
           <Button 
             onClick={onGenerateQuiz} 
-            variant="secondary"
+            variant="default"
             disabled={loading}
             className="gap-2"
             type="button"
@@ -88,11 +94,22 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
                 Regenerate Quiz
               </>
             ) : (
-              'Generate Quiz'
+              <>
+                <Sparkles className="h-4 w-4" />
+                Generate Quiz
+              </>
             )}
           </Button>
         </div>
-      </div>
+        
+        <div className="border-t pt-4 text-sm text-muted-foreground">
+          <p>
+            Our smart AI looks at your lesson content and creates targeted questions to help
+            students test their understanding. The better your lesson content, the better the
+            questions will be.
+          </p>
+        </div>
+      </CardContent>
     </Card>
   );
 };
