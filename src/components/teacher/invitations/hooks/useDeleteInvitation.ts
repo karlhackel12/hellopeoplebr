@@ -15,30 +15,15 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
       
       console.log(`Attempting to delete invitation for ${email} with id ${id}`);
       
-      // First verify the invitation exists
-      const { data: checkData, error: checkError } = await supabase
-        .from('student_invitations')
-        .select('id')
-        .eq('id', id)
-        .single();
-      
-      if (checkError) {
-        console.warn(`Error checking invitation existence: ${checkError.message}`);
-        // If the error is "No rows returned", then invitation doesn't exist
-        if (checkError.code === 'PGRST116') {
-          toast.warning('Invitation not found', {
-            description: 'The invitation may have already been deleted.',
-          });
-          return;
-        }
-      }
-      
-      // Perform the deletion operation without using count aggregate
+      // Direct deletion without pre-checking - simpler and more reliable
       const { data, error } = await supabase
         .from('student_invitations')
         .delete()
         .eq('id', id)
         .select();
+      
+      // Log the complete response for debugging
+      console.log('Delete invitation response:', { data, error });
       
       // Check if there was an error during deletion
       if (error) {
@@ -48,21 +33,33 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
       
       // Verify if any rows were actually deleted by checking the returned data
       if (!data || data.length === 0) {
-        console.warn(`No invitation found with id ${id}`);
+        console.warn(`No invitation found with id ${id} or deletion failed`);
         toast.warning('Invitation not found', {
-          description: 'The invitation may have already been deleted.',
+          description: 'The invitation may have already been deleted or you may not have permission to delete it.',
         });
       } else {
-        console.log(`Successfully deleted invitation for ${email}, received response:`, data);
+        console.log(`Successfully deleted invitation for ${email}`, data);
         toast.success('Invitation deleted', {
           description: `The invitation to ${email} has been removed.`,
         });
       }
       
-      // Force immediate data refresh
-      setTimeout(() => {
-        onUpdate();
-      }, 100);
+      // After deletion, verify that it was actually removed from the database
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('student_invitations')
+        .select('id')
+        .eq('id', id);
+        
+      if (verifyError) {
+        console.error('Error verifying deletion:', verifyError);
+      } else if (verifyData && verifyData.length > 0) {
+        console.error('Deletion verification failed - invitation still exists in database:', verifyData);
+        toast.error('Deletion may have failed', {
+          description: 'The system reported success but the invitation still exists. Please try again.',
+        });
+      } else {
+        console.log('Deletion verification successful - invitation no longer exists in database');
+      }
       
     } catch (error: any) {
       console.error('Failed to delete invitation:', error);
@@ -73,6 +70,14 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
       // Clear the deleting state
       setDeletingInvitations(prev => ({ ...prev, [id]: false }));
       setIsDeleting(false);
+      
+      // Force data refresh
+      onUpdate();
+      
+      // Schedule another refresh after a delay to ensure database consistency
+      setTimeout(() => {
+        onUpdate();
+      }, 500);
     }
   }, [onUpdate]);
 

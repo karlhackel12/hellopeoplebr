@@ -8,6 +8,7 @@ import LoadingInvitations from './invitations/LoadingInvitations';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface InvitationsListProps {
   invitations: StudentInvitation[];
