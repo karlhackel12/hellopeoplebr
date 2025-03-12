@@ -5,6 +5,7 @@ import { useQuizPreviewState } from './quiz/useQuizPreviewState';
 import { useQuizGenerationState } from './quiz/useQuizGenerationState';
 import { useQuizPublishState } from './quiz/useQuizPublishState';
 import { useQuizActions } from './quiz/useQuizActions';
+import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgress';
 
 export const useQuizTabState = (lessonId?: string) => {
   const [existingQuiz, setExistingQuiz] = useState(false);
@@ -35,7 +36,9 @@ export const useQuizTabState = (lessonId?: string) => {
     isRetrying,
     setRetrying,
     contentLoadingMessage,
-    setContentLoading
+    setContentLoading,
+    currentPhase,
+    setGenerationPhase
   } = useQuizGenerationState();
 
   const {
@@ -120,12 +123,45 @@ export const useQuizTabState = (lessonId?: string) => {
   const wrappedGenerateQuiz = async () => {
     setShowPreview(false);
     clearErrors();
-    const success = await handleGenerateQuiz(numQuestions, setContentLoading);
+    setGenerationPhase('content-loading');
     
-    if (success) {
-      await loadQuizPreview();
-      setExistingQuiz(true);
-      setIsPublished(false);
+    const onPhaseChange = (phase: GenerationPhase) => {
+      setGenerationPhase(phase);
+    };
+    
+    try {
+      // First load content
+      onPhaseChange('content-loading');
+      await fetchLessonContent();
+      
+      // Analyze content
+      onPhaseChange('analyzing');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
+      
+      // Generate questions
+      onPhaseChange('generating');
+      const success = await handleGenerateQuiz(numQuestions, setContentLoading);
+      
+      if (success) {
+        // Save questions
+        onPhaseChange('saving');
+        await loadQuizPreview();
+        setExistingQuiz(true);
+        setIsPublished(false);
+        onPhaseChange('complete');
+        
+        // Reset to idle after showing complete for a moment
+        setTimeout(() => {
+          if (currentPhase === 'complete') {
+            setGenerationPhase('idle');
+          }
+        }, 2000);
+      } else {
+        onPhaseChange('error');
+      }
+    } catch (error) {
+      console.error("Error in quiz generation:", error);
+      onPhaseChange('error');
     }
   };
 
@@ -157,6 +193,7 @@ export const useQuizTabState = (lessonId?: string) => {
     isRetrying,
     loadingError,
     contentLoadingMessage,
+    currentPhase,
     handleGenerateQuiz: wrappedGenerateQuiz,
     handleSaveQuiz: wrappedSaveQuiz,
     handleDiscardQuiz: wrappedDiscardQuiz,

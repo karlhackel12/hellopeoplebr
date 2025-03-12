@@ -28,6 +28,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     isRetrying,
     loadingError,
     contentLoadingMessage,
+    currentPhase,
     handleGenerateQuiz,
     handleSaveQuiz,
     handleDiscardQuiz,
@@ -55,7 +56,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         </Alert>
       )}
       
-      {contentLoadingMessage && (
+      {contentLoadingMessage && currentPhase !== 'idle' && currentPhase !== 'error' && (
         <Alert className="mb-4 bg-blue-50 border-blue-200">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
           <AlertDescription className="text-blue-700">
@@ -72,6 +73,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         isRetrying={isRetrying}
         error={loadingError}
         existingQuiz={existingQuiz}
+        currentPhase={currentPhase}
       />
       
       {previewQuestions.length > 0 && (

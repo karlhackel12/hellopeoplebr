@@ -3,6 +3,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
 
 interface QuizPublishSwitchProps {
   isPublished: boolean;
@@ -28,6 +29,9 @@ const QuizPublishSwitch: React.FC<QuizPublishSwitchProps> = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        {saving ? (
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+        ) : null}
         <Label htmlFor="publish-toggle" className="text-sm">
           {isPublished ? "Published" : "Draft"}
         </Label>

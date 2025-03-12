@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Loader2, RotateCcw, RefreshCw, Sparkles } from 'lucide-react';
+import { RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import QuizGenerationProgress, { GenerationPhase } from './components/QuizGenerationProgress';
 
 interface QuizGenerationFormProps {
   numQuestions: string;
@@ -21,6 +22,7 @@ interface QuizGenerationFormProps {
   isRetrying?: boolean;
   error?: string | null;
   existingQuiz: boolean;
+  currentPhase: GenerationPhase;
 }
 
 const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
@@ -30,8 +32,11 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
   loading,
   isRetrying = false,
   error,
-  existingQuiz
+  existingQuiz,
+  currentPhase
 }) => {
+  const showProgress = currentPhase !== 'idle' && currentPhase !== 'error';
+
   return (
     <Card>
       <CardHeader>
@@ -84,7 +89,7 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
                 {isRetrying ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Sparkles className="h-4 w-4 animate-pulse" />
                 )}
                 {isRetrying ? 'Retrying...' : 'Generating...'}
               </>
@@ -101,6 +106,13 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
             )}
           </Button>
         </div>
+        
+        {showProgress && (
+          <QuizGenerationProgress 
+            currentPhase={currentPhase}
+            isRetrying={isRetrying}
+          />
+        )}
         
         <div className="border-t pt-4 text-sm text-muted-foreground">
           <p>
