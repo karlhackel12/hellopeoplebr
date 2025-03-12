@@ -68,16 +68,6 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
-  useQuizExistingData(
-    lessonId,
-    fetchQuizDetails,
-    setExistingQuiz,
-    setQuizTitle,
-    setIsPublished,
-    loadQuizPreview,
-    setLoadingError
-  );
-
   const publishQuizWithVoid = async (): Promise<void> => {
     try {
       await publishQuiz();
@@ -114,12 +104,14 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
-  // Convert the function to ensure it returns Promise<void>
-  const wrappedGenerateQuizVoid = async (): Promise<void> => {
+  // Create a wrapped version of handleGenerateQuiz that accepts setContentLoadingMessage parameter
+  // and returns Promise<boolean> as required
+  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<boolean> => {
     try {
-      await handleGenerateQuiz();
+      return await handleGenerateQuiz(setContentLoadingMessage);
     } catch (error) {
-      console.error("Error in wrappedGenerateQuizVoid:", error);
+      console.error("Error in wrappedHandleGenerateQuiz:", error);
+      return false;
     }
   };
 
@@ -128,7 +120,7 @@ export const useQuizTabState = (lessonId?: string) => {
     wrappedSaveQuiz,
     wrappedDiscardQuiz
   } = useQuizActionWrappers(
-    wrappedGenerateQuizVoid, // Pass the void-returning function here
+    wrappedHandleGenerateQuiz,
     handleSaveQuiz,
     handleDiscardQuiz,
     resetPreview,
