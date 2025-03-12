@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProgressTracker from './ProgressTracker';
 import LessonSectionNavigator from './LessonSectionNavigator';
 import LessonSection from './LessonSection';
-import { extractSections } from '@/utils/markdownUtils';
+import { extractSections, formatMarkdownToHtml } from '@/utils/markdownUtils';
 
 interface LessonContentTabProps {
   content: string;
@@ -20,12 +19,10 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [sectionData, setSectionData] = useState<{id: string, title: string, content: string}[]>([]);
   
-  // Parse content into sections on mount
   useEffect(() => {
     const sections = extractSections(content);
     setSectionData(sections);
     
-    // Initially expand all sections
     const initialExpandState: Record<string, boolean> = {};
     sections.forEach(section => {
       initialExpandState[section.id] = true;
@@ -45,13 +42,11 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
   };
 
   useEffect(() => {
-    // Add event listeners for audio buttons
     document.querySelectorAll('.audio-btn').forEach(button => {
       button.addEventListener('click', (e) => {
         e.preventDefault();
         const word = (button as HTMLElement).dataset.word;
         if (word) {
-          // Simulate text-to-speech
           alert(`Playing pronunciation for: ${word}`);
         }
       });
@@ -64,7 +59,6 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
         <CardTitle className="text-xl">Lesson Content</CardTitle>
       </CardHeader>
       <CardContent className="px-0 space-y-4">
-        {/* Introduction content (anything before first section) */}
         <div className="prose max-w-none mb-6">
           {content.split('## ')[0] && (
             <div dangerouslySetInnerHTML={{ 
@@ -79,7 +73,6 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
           onSectionClick={handleSectionClick}
         />
         
-        {/* Sections content */}
         <div className="divide-y">
           {sectionData.map(section => (
             <LessonSection

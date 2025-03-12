@@ -6,5 +6,5 @@ export interface LessonProgress {
   completed: boolean;
   completed_at: string | null;
   last_accessed_at: string;
-  completed_sections?: string[];
+  completed_sections: string[];
 }
