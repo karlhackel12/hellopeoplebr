@@ -23,7 +23,7 @@ export const useInvitationsData = (queryClient: any) => {
           throw new Error('Authentication required');
         }
         
-        // Update the query to use a proper join with profiles instead of auth.users
+        // Use the profiles table instead of auth.users to avoid permission issues
         const { data, error } = await supabase
           .from('student_invitations')
           .select(`
