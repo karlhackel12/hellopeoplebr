@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 interface QuizPublishSwitchProps {
   isPublished: boolean;
-  onTogglePublish: () => Promise<boolean>;
+  onTogglePublish: () => Promise<void>;
   saving: boolean;
 }
 
@@ -22,16 +22,7 @@ const QuizPublishSwitch: React.FC<QuizPublishSwitchProps> = ({
   const handleTogglePublish = async () => {
     try {
       setLocalSaving(true);
-      const success = await onTogglePublish();
-      
-      if (!success) {
-        toast.error(isPublished 
-          ? "Failed to unpublish quiz" 
-          : "Failed to publish quiz",
-        {
-          description: "Please try again later",
-        });
-      }
+      await onTogglePublish();
     } catch (error) {
       console.error("Error toggling publish status:", error);
       toast.error("Error changing publish status", {

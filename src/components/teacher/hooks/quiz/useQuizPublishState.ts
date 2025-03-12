@@ -9,7 +9,7 @@ export const useQuizPublishState = (
 ) => {
   const [publishLoading, setPublishLoading] = useState(false);
   
-  const togglePublishStatus = async (): Promise<boolean> => {
+  const togglePublishStatus = async (): Promise<void> => {
     try {
       setPublishLoading(true);
       
@@ -20,11 +20,8 @@ export const useQuizPublishState = (
         await publishQuiz();
         setIsPublished(true);
       }
-      
-      return true;
     } catch (error) {
       console.error("Error toggling publish status:", error);
-      return false;
     } finally {
       setPublishLoading(false);
     }

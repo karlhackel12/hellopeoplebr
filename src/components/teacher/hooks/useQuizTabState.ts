@@ -80,28 +80,26 @@ export const useQuizTabState = (lessonId?: string) => {
     setLoadingError
   );
 
-  // Set up publish/unpublish handling with fixed return types
-  const publishQuizWithResult = async (): Promise<boolean> => {
+  // Convert the publish/unpublish functions to return void instead of boolean
+  const publishQuizWithVoid = async (): Promise<void> => {
     try {
       await publishQuiz();
-      return true;
     } catch (error) {
-      return false;
+      console.error("Error publishing quiz:", error);
     }
   };
 
-  const unpublishQuizWithResult = async (): Promise<boolean> => {
+  const unpublishQuizWithVoid = async (): Promise<void> => {
     try {
       await unpublishQuiz();
-      return true;
     } catch (error) {
-      return false;
+      console.error("Error unpublishing quiz:", error);
     }
   };
 
   const { togglePublishStatus } = useQuizPublishState(
-    publishQuizWithResult, 
-    unpublishQuizWithResult, 
+    publishQuizWithVoid, 
+    unpublishQuizWithVoid, 
     isPublished, 
     setIsPublished
   );

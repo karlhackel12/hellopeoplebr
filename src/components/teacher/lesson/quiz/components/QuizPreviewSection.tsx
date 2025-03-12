@@ -12,12 +12,12 @@ interface QuizPreviewSectionProps {
   togglePreview: () => void;
   quizTitle: string;
   setQuizTitle: (title: string) => void;
-  handleSaveQuiz: (title: string) => Promise<boolean>;
-  handleDiscardQuiz: () => Promise<boolean>;
+  handleSaveQuiz: (title: string) => Promise<void>;
+  handleDiscardQuiz: () => Promise<void>;
   saving: boolean;
   existingQuiz: boolean;
   isPublished: boolean;
-  onTogglePublish: () => Promise<boolean>;
+  onTogglePublish: () => Promise<void>;
 }
 
 const QuizPreviewSection: React.FC<QuizPreviewSectionProps> = ({
