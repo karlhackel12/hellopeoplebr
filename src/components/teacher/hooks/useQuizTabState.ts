@@ -13,6 +13,7 @@ import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgres
 export const useQuizTabState = (lessonId?: string) => {
   const [existingQuiz, setExistingQuiz] = useState(false);
   const [numQuestions, setNumQuestions] = useState('5');
+  const [isPublished, setIsPublished] = useState(false);
 
   const { 
     generateSmartQuiz,
@@ -98,11 +99,12 @@ export const useQuizTabState = (lessonId?: string) => {
     }
   };
 
-  const {
-    isPublished,
-    setIsPublished,
-    togglePublishStatus
-  } = useQuizPublishState(publishQuizWithResult, unpublishQuizWithResult);
+  const { togglePublishStatus } = useQuizPublishState(
+    publishQuizWithResult, 
+    unpublishQuizWithResult, 
+    isPublished, 
+    setIsPublished
+  );
 
   // Set up quiz action handlers (save, discard, generate)
   const {
@@ -137,7 +139,7 @@ export const useQuizTabState = (lessonId?: string) => {
   // Sync retrying state with handler
   useEffect(() => {
     setRetrying(isGenerationRetrying);
-  }, [isGenerationRetrying]);
+  }, [isGenerationRetrying, setRetrying]);
 
   return {
     numQuestions,

@@ -3,10 +3,10 @@ import { useState } from 'react';
 
 export const useQuizPublishState = (
   publishQuiz: () => Promise<boolean>,
-  unpublishQuiz: () => Promise<boolean>
+  unpublishQuiz: () => Promise<boolean>,
+  isPublished: boolean,
+  setIsPublished: (value: boolean) => void
 ) => {
-  const [isPublished, setIsPublished] = useState(false);
-
   const togglePublishStatus = async (): Promise<boolean> => {
     try {
       if (isPublished) {
@@ -29,8 +29,6 @@ export const useQuizPublishState = (
   };
 
   return {
-    isPublished,
-    setIsPublished,
     togglePublishStatus
   };
 };
