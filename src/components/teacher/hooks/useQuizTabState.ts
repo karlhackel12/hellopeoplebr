@@ -1,20 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
-import { Question } from '../quiz/types';
+import { useQuizPreviewState } from './quiz/useQuizPreviewState';
+import { useQuizGenerationState } from './quiz/useQuizGenerationState';
+import { useQuizPublishState } from './quiz/useQuizPublishState';
+import { useQuizActions } from './quiz/useQuizActions';
 
 export const useQuizTabState = (lessonId?: string) => {
-  const [numQuestions, setNumQuestions] = useState('5');
-  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
-  const [quizTitle, setQuizTitle] = useState('Lesson Quiz');
   const [existingQuiz, setExistingQuiz] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
-  const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [contentLoadingMessage, setContentLoadingMessage] = useState<string | null>(null);
 
+  // Initialize the quiz handler
   const { 
     generateSmartQuiz,
     fetchQuizQuestions, 
@@ -30,8 +25,51 @@ export const useQuizTabState = (lessonId?: string) => {
     error: quizError
   } = useQuizHandler(lessonId || '');
 
+  // Initialize sub-hooks
+  const {
+    numQuestions,
+    setNumQuestions,
+    loadingError,
+    setLoadingError,
+    clearErrors,
+    isRetrying,
+    setRetrying,
+    contentLoadingMessage,
+    setContentLoading
+  } = useQuizGenerationState();
+
+  const {
+    previewQuestions,
+    showPreview,
+    setShowPreview,
+    quizTitle,
+    setQuizTitle,
+    loadQuizPreview,
+    resetPreview
+  } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
+
+  const {
+    isPublished,
+    setIsPublished,
+    togglePublishStatus
+  } = useQuizPublishState(publishQuiz, unpublishQuiz);
+
+  const {
+    handleSaveQuiz,
+    handleDiscardQuiz,
+    handleGenerateQuiz
+  } = useQuizActions(
+    lessonId, 
+    saveQuizTitle, 
+    deleteQuiz, 
+    generateSmartQuiz, 
+    fetchLessonContent,
+    fetchQuizQuestions
+  );
+
+  // Sync with external state
   useEffect(() => {
-    setIsRetrying(isGenerationRetrying);
+    setRetrying(isGenerationRetrying);
   }, [isGenerationRetrying]);
 
   // Check if quiz already exists
@@ -47,11 +85,7 @@ export const useQuizTabState = (lessonId?: string) => {
             setQuizTitle(quizDetails.title);
             setIsPublished(quizDetails.is_published || false);
             
-            const questions = await fetchQuizQuestions();
-            if (questions && questions.length > 0) {
-              setPreviewQuestions(questions);
-              setShowPreview(true);
-            }
+            await loadQuizPreview();
           }
         } catch (error: any) {
           console.error("Error checking existing quiz:", error);
@@ -61,128 +95,31 @@ export const useQuizTabState = (lessonId?: string) => {
       
       checkExistingQuiz();
     }
-  }, [lessonId, fetchQuizQuestions, fetchQuizDetails]);
+  }, [lessonId]);
 
-  const handleGenerateQuiz = async () => {
-    if (!lessonId) {
-      toast.error('Missing lesson', {
-        description: 'Please save the lesson before generating a quiz.',
-      });
-      return;
-    }
+  // Wrap the action handlers to manage state properly
+  const wrappedGenerateQuiz = async () => {
+    setShowPreview(false);
+    clearErrors();
+    const success = await handleGenerateQuiz(numQuestions, setContentLoading);
     
-    try {
-      setShowPreview(false);
-      setLoadingError(null);
-      
-      // First check if we have lesson content
-      setContentLoadingMessage('Analyzing lesson content...');
-      const content = await fetchLessonContent();
-      setContentLoadingMessage(null);
-      
-      if (!content) {
-        toast.error('Missing content', {
-          description: 'Cannot find lesson content to generate quiz questions.',
-        });
-        return;
-      }
-      
-      // Generate the quiz with smart content analysis
-      const result = await generateSmartQuiz(parseInt(numQuestions));
-      
-      if (result) {
-        const questions = await fetchQuizQuestions();
-        
-        if (questions && questions.length > 0) {
-          setPreviewQuestions(questions);
-          setShowPreview(true);
-          setExistingQuiz(true);
-          setIsPublished(false);
-          toast.success('Quiz generated', {
-            description: 'Your quiz questions have been generated. Review them below.',
-          });
-        } else {
-          toast.error('No questions generated', {
-            description: 'The quiz was created but no questions were generated. Please try again.',
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error("Error handling quiz generation:", error);
-      setLoadingError(error.message);
+    if (success) {
+      await loadQuizPreview();
+      setExistingQuiz(true);
+      setIsPublished(false);
     }
   };
 
-  const handleSaveQuiz = async () => {
-    try {
-      await saveQuizTitle(quizTitle);
-      toast.success('Quiz saved', {
-        description: 'Your quiz has been saved successfully.',
-      });
-    } catch (error: any) {
-      console.error("Error saving quiz:", error);
-      toast.error('Failed to save quiz', {
-        description: error.message || 'An unexpected error occurred',
-      });
-    }
+  const wrappedSaveQuiz = async () => {
+    return await handleSaveQuiz(quizTitle);
   };
 
-  const handleDiscardQuiz = async () => {
-    if (existingQuiz && window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
-      try {
-        const success = await deleteQuiz();
-        if (success) {
-          setPreviewQuestions([]);
-          setExistingQuiz(false);
-          setShowPreview(false);
-          setIsPublished(false);
-          toast.success('Quiz deleted', {
-            description: 'Your quiz has been deleted successfully.',
-          });
-        }
-      } catch (error: any) {
-        console.error("Error deleting quiz:", error);
-        toast.error('Failed to delete quiz', {
-          description: error.message || 'An unexpected error occurred',
-        });
-      }
-    } else if (!existingQuiz) {
-      setShowPreview(false);
-      setPreviewQuestions([]);
-    }
-  };
-
-  const togglePublishStatus = async () => {
-    if (!existingQuiz) {
-      toast.error('Save quiz first', {
-        description: 'You need to save the quiz before publishing it.',
-      });
-      return;
-    }
-
-    try {
-      if (isPublished) {
-        const success = await unpublishQuiz();
-        if (success) {
-          setIsPublished(false);
-          toast.success('Quiz unpublished', {
-            description: 'Your quiz is now hidden from students.',
-          });
-        }
-      } else {
-        const success = await publishQuiz();
-        if (success) {
-          setIsPublished(true);
-          toast.success('Quiz published', {
-            description: 'Your quiz is now visible to students.',
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error("Error toggling publish status:", error);
-      toast.error('Action failed', {
-        description: error.message || 'Failed to change publish status. Please try again.',
-      });
+  const wrappedDiscardQuiz = async () => {
+    const success = await handleDiscardQuiz();
+    if (success) {
+      resetPreview();
+      setExistingQuiz(false);
+      setIsPublished(false);
     }
   };
 
@@ -201,9 +138,9 @@ export const useQuizTabState = (lessonId?: string) => {
     isRetrying,
     loadingError,
     contentLoadingMessage,
-    handleGenerateQuiz,
-    handleSaveQuiz,
-    handleDiscardQuiz,
+    handleGenerateQuiz: wrappedGenerateQuiz,
+    handleSaveQuiz: wrappedSaveQuiz,
+    handleDiscardQuiz: wrappedDiscardQuiz,
     togglePublishStatus,
   };
 };
