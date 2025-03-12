@@ -97,7 +97,7 @@ export const useQuizTabState = (lessonId?: string) => {
     }
   }, [lessonId]);
 
-  // Wrap the action handlers to manage state properly
+  // Wrap the action handlers to manage state properly and ensure proper return types
   const wrappedGenerateQuiz = async () => {
     setShowPreview(false);
     clearErrors();
@@ -108,6 +108,7 @@ export const useQuizTabState = (lessonId?: string) => {
       setExistingQuiz(true);
       setIsPublished(false);
     }
+    return success;
   };
 
   const wrappedSaveQuiz = async () => {
@@ -121,6 +122,7 @@ export const useQuizTabState = (lessonId?: string) => {
       setExistingQuiz(false);
       setIsPublished(false);
     }
+    return success;
   };
 
   return {

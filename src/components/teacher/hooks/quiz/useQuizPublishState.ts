@@ -7,8 +7,12 @@ export const useQuizPublishState = (
   unpublishQuiz: () => Promise<void>
 ) => {
   const [isPublished, setIsPublished] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   const togglePublishStatus = async () => {
+    if (isToggling) return;
+    
+    setIsToggling(true);
     try {
       if (isPublished) {
         await unpublishQuiz();
@@ -17,16 +21,20 @@ export const useQuizPublishState = (
         await publishQuiz();
         setIsPublished(true);
       }
-      return true;
     } catch (error: any) {
       console.error("Error toggling publish status:", error);
-      return false;
+      toast.error('Action failed', {
+        description: 'Failed to update quiz status. Please try again.',
+      });
+    } finally {
+      setIsToggling(false);
     }
   };
 
   return {
     isPublished,
     setIsPublished,
+    isToggling,
     togglePublishStatus
   };
 };
