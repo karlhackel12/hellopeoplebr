@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizPreviewState } from './quiz/useQuizPreviewState';
@@ -55,7 +54,6 @@ export const useQuizTabState = (lessonId?: string) => {
     resetPreview
   } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
 
-  // Handle generating quiz workflow
   const { generateQuiz } = useQuizGenerationWorkflow(
     fetchLessonContent,
     generateSmartQuiz,
@@ -69,7 +67,6 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
-  // Load existing quiz data on mount
   useQuizExistingData(
     lessonId,
     fetchQuizDetails,
@@ -80,7 +77,6 @@ export const useQuizTabState = (lessonId?: string) => {
     setLoadingError
   );
 
-  // Convert the publish/unpublish functions to return void instead of boolean
   const publishQuizWithVoid = async (): Promise<void> => {
     try {
       await publishQuiz();
@@ -104,7 +100,6 @@ export const useQuizTabState = (lessonId?: string) => {
     setIsPublished
   );
 
-  // Set up quiz action handlers (save, discard, generate)
   const {
     handleSaveQuiz,
     handleDiscardQuiz,
@@ -118,7 +113,6 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
-  // Create wrapped handlers with proper return types
   const {
     wrappedGenerateQuiz,
     wrappedSaveQuiz,
@@ -134,7 +128,6 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
-  // Sync retrying state with handler
   useEffect(() => {
     setRetrying(isGenerationRetrying);
   }, [isGenerationRetrying, setRetrying]);

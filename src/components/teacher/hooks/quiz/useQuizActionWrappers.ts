@@ -9,13 +9,18 @@ export const useQuizActionWrappers = (
   setShowPreview: (value: boolean) => void,
   setContentLoading: (msg: string | null) => void
 ) => {
+  // This wrapper transforms a Promise<boolean> to Promise<void>
   const wrappedGenerateQuiz = async (numQuestions: string): Promise<void> => {
     setShowPreview(false);
+    // We ignore the boolean result
     await handleGenerateQuiz(setContentLoading);
+    // No return value (void)
   };
 
   const wrappedSaveQuiz = async (quizTitle: string): Promise<void> => {
+    // We ignore the boolean result
     await handleSaveQuiz(quizTitle);
+    // No return value (void)
   };
 
   const wrappedDiscardQuiz = async (): Promise<void> => {
@@ -25,6 +30,7 @@ export const useQuizActionWrappers = (
       setExistingQuiz(false);
       setIsPublished(false);
     }
+    // No return value (void)
   };
 
   return {
