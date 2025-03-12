@@ -8,7 +8,7 @@ export const useQuizPublishState = (
 ) => {
   const [isPublished, setIsPublished] = useState(false);
 
-  const togglePublishStatus = async () => {
+  const togglePublishStatus = async (): Promise<boolean> => {
     try {
       if (isPublished) {
         await unpublishQuiz();

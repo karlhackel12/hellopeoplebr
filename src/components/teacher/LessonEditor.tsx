@@ -9,7 +9,7 @@ import LessonFormBasicFields from './lesson-editor/LessonFormBasicFields';
 import LessonContentTabs from './lesson-editor/LessonContentTabs';
 import LessonSaveButton from './lesson-editor/LessonSaveButton';
 import { Button } from '@/components/ui/button';
-import { BookQuestion } from 'lucide-react';
+import { BookText } from 'lucide-react';
 
 const LessonEditor: React.FC = () => {
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ const LessonEditor: React.FC = () => {
               onClick={handleQuizClick}
               className="gap-2"
             >
-              <BookQuestion className="h-4 w-4" />
+              <BookText className="h-4 w-4" />
               Quiz
             </Button>
           )}
