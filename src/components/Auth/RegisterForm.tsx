@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form } from '@/components/ui/form';
+import { Form, FormLabel } from '@/components/ui/form';
 import { registerSchema, RegisterFormValues, InvitationData } from './types';
 import { useAuthSubmit } from './hooks/useAuthSubmit';
 import { useInvitationCode } from './hooks/useInvitationCode';
