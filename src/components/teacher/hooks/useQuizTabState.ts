@@ -105,12 +105,11 @@ export const useQuizTabState = (lessonId?: string) => {
   );
 
   // Create a wrapped version of handleGenerateQuiz that implements the expected interface
-  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<boolean> => {
+  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<void> => {
     try {
-      return await handleGenerateQuiz(setContentLoadingMessage);
+      await handleGenerateQuiz(setContentLoadingMessage);
     } catch (error) {
       console.error("Error in wrappedHandleGenerateQuiz:", error);
-      return false;
     }
   };
 
