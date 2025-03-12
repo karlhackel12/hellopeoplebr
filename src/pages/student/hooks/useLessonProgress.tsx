@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -27,7 +26,6 @@ export const useLessonProgress = (lessonId: string | undefined) => {
       // Handle case where data is null (no progress record yet)
       if (!data) return null;
       
-      // Ensure completed_sections is always an array
       return {
         ...data,
         completed_sections: data.completed_sections || []

@@ -500,6 +500,7 @@ export type Database = {
         Row: {
           completed: boolean
           completed_at: string | null
+          completed_sections: string[] | null
           id: string
           last_accessed_at: string
           lesson_id: string
@@ -508,6 +509,7 @@ export type Database = {
         Insert: {
           completed?: boolean
           completed_at?: string | null
+          completed_sections?: string[] | null
           id?: string
           last_accessed_at?: string
           lesson_id: string
@@ -516,6 +518,7 @@ export type Database = {
         Update: {
           completed?: boolean
           completed_at?: string | null
+          completed_sections?: string[] | null
           id?: string
           last_accessed_at?: string
           lesson_id?: string
