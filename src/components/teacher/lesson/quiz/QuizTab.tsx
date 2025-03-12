@@ -27,6 +27,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     saving,
     isRetrying,
     loadingError,
+    errorDetails,
     contentLoadingMessage,
     currentPhase,
     handleGenerateQuiz,
@@ -47,11 +48,11 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
 
   return (
     <div className="space-y-6">
-      {loadingError && (
+      {loadingError && currentPhase !== 'error' && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            There was an issue connecting to the quiz service. You can try again or refresh the page.
+            {loadingError} {errorDetails && <span className="text-xs opacity-80">({errorDetails})</span>}
           </AlertDescription>
         </Alert>
       )}
@@ -72,6 +73,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         loading={loading}
         isRetrying={isRetrying}
         error={loadingError}
+        errorDetails={errorDetails}
         existingQuiz={existingQuiz}
         currentPhase={currentPhase}
       />

@@ -1,8 +1,9 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import Replicate from "https://esm.sh/replicate@0.25.2";
 
-const MODEL_ID = "deepseek-ai/deepseek-r1";
+const MODEL_ID = "meta/llama-3-8b-instruct:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48"; // Using a more reliable model
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -216,15 +217,52 @@ function parseModelOutput(output) {
     // Try to find JSON in markdown code blocks first
     const jsonMatch = outputText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (jsonMatch && jsonMatch[1]) {
-      return JSON.parse(jsonMatch[1]);
+      try {
+        return JSON.parse(jsonMatch[1].trim());
+      } catch (e) {
+        console.error("Failed to parse JSON from code block", e);
+      }
     }
     
-    // Try to parse the entire output as JSON
+    // Look for JSON object with curly braces
+    const jsonObjectMatch = outputText.match(/\{[\s\S]*\}/);
+    if (jsonObjectMatch) {
+      try {
+        return JSON.parse(jsonObjectMatch[0]);
+      } catch (e) {
+        console.error("Failed to parse JSON from object match", e);
+      }
+    }
+    
+    // Last resort: try to parse the entire output as JSON
     return JSON.parse(outputText);
   } catch (error) {
     console.error("Error parsing model output:", error);
     throw new Error("Failed to parse AI response as JSON");
   }
+}
+
+/**
+ * Generates fallback questions if AI generation fails
+ */
+function generateFallbackQuestions(numQuestions = 5) {
+  const questions = [];
+  
+  for (let i = 0; i < numQuestions; i++) {
+    questions.push({
+      question_text: `Question ${i + 1} (AI generation failed - please regenerate)`,
+      points: 1,
+      question_type: "multiple_choice",
+      options: [
+        { option_text: "Option A", is_correct: true },
+        { option_text: "Option B", is_correct: false },
+        { option_text: "Option C", is_correct: false },
+        { option_text: "Option D", is_correct: false }
+      ]
+    });
+  }
+  
+  return questions;
 }
 
 serve(async (req) => {
@@ -234,6 +272,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Starting quiz generation request");
+    const startTime = Date.now();
+    
     const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY');
     if (!REPLICATE_API_KEY) {
       console.error('REPLICATE_API_KEY is not set');
@@ -288,28 +329,31 @@ serve(async (req) => {
       );
     }
     
-    console.log("Generating quiz for content length:", lessonContent?.length);
-    console.log("Number of questions requested:", numQuestions);
+    console.log("Content length:", lessonContent?.length);
+    console.log("Number of questions:", numQuestions);
 
     const prompt = buildPrompt(lessonContent, numQuestions);
     console.log("Generated prompt length:", prompt.length);
 
     // Create an AbortController for timeout management
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 55000); // 55-second timeout
+    const timeoutId = setTimeout(() => {
+      console.log("Request timed out after 50 seconds");
+      controller.abort();
+    }, 50000); // 50-second timeout (lower than Deno's 60s limit)
 
     try {
-      console.log("Calling AI model for quiz generation");
+      console.log("Calling model API for quiz generation");
       
       const output = await replicate.run(
         MODEL_ID,
         {
           input: {
             prompt: prompt,
-            max_new_tokens: 2048,
-            temperature: 0.3,
+            max_tokens: 4000,
+            temperature: 0.2,
             top_p: 0.9,
-            top_k: 50
+            system_prompt: "You are an expert education quiz creator. Create well-structured quiz questions that test understanding of educational content. Always return valid JSON."
           }
         },
         { signal: controller.signal }
@@ -319,14 +363,17 @@ serve(async (req) => {
       clearTimeout(timeoutId);
       
       console.log("Model response received, processing output");
+      const processingStartTime = Date.now();
       
       let parsedOutput;
       try {
         parsedOutput = parseModelOutput(output);
+        console.log("Successfully parsed JSON response");
         
         // Validate the structure
         if (!parsedOutput.questions || !Array.isArray(parsedOutput.questions)) {
-          throw new Error("Invalid response structure");
+          console.error("Invalid response structure", JSON.stringify(parsedOutput).substring(0, 200));
+          throw new Error("Invalid response structure - missing questions array");
         }
 
         // Validate and fix each question
@@ -334,6 +381,7 @@ serve(async (req) => {
         
         // Make sure we have at least one question
         if (validatedQuestions.length === 0) {
+          console.error("No valid questions were generated");
           throw new Error("No valid questions were generated");
         }
         
@@ -341,26 +389,46 @@ serve(async (req) => {
 
       } catch (error) {
         console.error("Error processing AI response:", error);
+        console.error("Raw output sample:", typeof output === 'string' 
+          ? output.substring(0, 500) 
+          : Array.isArray(output) 
+            ? output.join("").substring(0, 500) 
+            : JSON.stringify(output).substring(0, 500));
         
+        // Generate fallback questions if we can't parse the response
         return new Response(
           JSON.stringify({ 
-            error: "AI response processing failed",
-            details: error.message,
-            raw_output: output
+            status: "failed_with_fallback",
+            questions: generateFallbackQuestions(numQuestions),
+            error: error.message,
+            raw_sample: typeof output === 'string' 
+              ? output.substring(0, 200) 
+              : Array.isArray(output) 
+                ? output.join("").substring(0, 200) 
+                : JSON.stringify(output).substring(0, 200)
           }),
           {
-            status: 422,
+            status: 207, // Partial success
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
 
+      const processingTime = Date.now() - processingStartTime;
+      const totalTime = Date.now() - startTime;
       console.log(`Successfully generated ${parsedOutput.questions.length} quiz questions`);
+      console.log(`Processing time: ${processingTime}ms, Total time: ${totalTime}ms`);
       
       return new Response(
         JSON.stringify({
           status: "succeeded",
-          questions: parsedOutput.questions
+          questions: parsedOutput.questions,
+          processing_stats: {
+            content_length: lessonContent.length,
+            prompt_length: prompt.length,
+            processing_time_ms: processingTime,
+            total_time_ms: totalTime
+          }
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -384,13 +452,16 @@ serve(async (req) => {
         errorMessage = "Too many requests to AI service";
       }
       
+      // Generate fallback questions with error message
       return new Response(
         JSON.stringify({ 
+          status: "failed_with_fallback",
+          questions: generateFallbackQuestions(numQuestions),
           error: errorMessage,
           details: modelError.message || "Unknown error"
         }),
         {
-          status: statusCode,
+          status: 207, // Partial success with fallback
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -410,4 +481,3 @@ serve(async (req) => {
     );
   }
 });
-

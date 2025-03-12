@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { GenerationPhase } from '../../lesson/quiz/components/QuizGenerationProgress';
 
@@ -7,9 +8,11 @@ export const useQuizGenerationState = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [contentLoadingMessage, setContentLoadingMessage] = useState<string | null>(null);
   const [currentPhase, setCurrentPhase] = useState<GenerationPhase>('idle');
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   const clearErrors = () => {
     setLoadingError(null);
+    setErrorDetails(null);
     if (currentPhase === 'error') {
       setCurrentPhase('idle');
     }
@@ -21,6 +24,12 @@ export const useQuizGenerationState = () => {
 
   const setContentLoading = (message: string | null) => {
     setContentLoadingMessage(message);
+  };
+
+  const setError = (message: string, details?: string) => {
+    setLoadingError(message);
+    setErrorDetails(details || null);
+    setCurrentPhase('error');
   };
 
   const setGenerationPhase = (phase: GenerationPhase) => {
@@ -57,12 +66,15 @@ export const useQuizGenerationState = () => {
     setNumQuestions,
     loadingError,
     setLoadingError,
+    errorDetails,
+    setErrorDetails,
     clearErrors,
     isRetrying,
     setRetrying,
     contentLoadingMessage,
     setContentLoading,
     currentPhase,
-    setGenerationPhase
+    setGenerationPhase,
+    setError
   };
 };

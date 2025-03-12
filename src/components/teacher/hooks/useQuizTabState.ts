@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizPreviewState } from './quiz/useQuizPreviewState';
@@ -10,7 +9,6 @@ import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgres
 export const useQuizTabState = (lessonId?: string) => {
   const [existingQuiz, setExistingQuiz] = useState(false);
 
-  // Initialize the quiz handler
   const { 
     generateSmartQuiz,
     fetchQuizQuestions, 
@@ -23,22 +21,24 @@ export const useQuizTabState = (lessonId?: string) => {
     loading, 
     saving,
     isRetrying: isGenerationRetrying,
-    error: quizError
+    error: quizError 
   } = useQuizHandler(lessonId || '');
 
-  // Initialize sub-hooks
   const {
     numQuestions,
     setNumQuestions,
     loadingError,
     setLoadingError,
+    errorDetails,
+    setErrorDetails,
     clearErrors,
     isRetrying,
     setRetrying,
     contentLoadingMessage,
     setContentLoading,
     currentPhase,
-    setGenerationPhase
+    setGenerationPhase,
+    setError
   } = useQuizGenerationState();
 
   const {
@@ -51,7 +51,6 @@ export const useQuizTabState = (lessonId?: string) => {
     resetPreview
   } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
 
-  // Create custom publish/unpublish functions that return boolean
   const publishQuizWithResult = async (): Promise<boolean> => {
     try {
       await publishQuiz();
@@ -89,12 +88,10 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
-  // Sync with external state
   useEffect(() => {
     setRetrying(isGenerationRetrying);
   }, [isGenerationRetrying]);
 
-  // Check if quiz already exists
   useEffect(() => {
     if (lessonId) {
       const checkExistingQuiz = async () => {
@@ -119,7 +116,6 @@ export const useQuizTabState = (lessonId?: string) => {
     }
   }, [lessonId]);
 
-  // Wrap the action handlers to manage state properly
   const wrappedGenerateQuiz = async () => {
     setShowPreview(false);
     clearErrors();
@@ -130,40 +126,58 @@ export const useQuizTabState = (lessonId?: string) => {
     };
     
     try {
-      // First load content
       onPhaseChange('content-loading');
-      await fetchLessonContent();
+      const content = await fetchLessonContent();
       
-      // Analyze content
+      if (!content) {
+        setError('Could not load lesson content', 'Make sure your lesson has sufficient content before generating a quiz.');
+        return false;
+      }
+      
+      if (content.length < 100) {
+        setError('Lesson content too short', 'Your lesson needs more content to generate meaningful quiz questions.');
+        return false;
+      }
+
       onPhaseChange('analyzing');
       await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
       
-      // Generate questions
       onPhaseChange('generating');
-      const success = await handleGenerateQuiz(numQuestions, setContentLoading);
-      
-      if (success) {
-        // Save questions
-        onPhaseChange('saving');
-        await loadQuizPreview();
-        setExistingQuiz(true);
-        setIsPublished(false);
-        onPhaseChange('complete');
+      try {
+        const success = await handleGenerateQuiz(numQuestions, setContentLoading);
         
-        // Reset to idle after showing complete for a moment
-        setTimeout(() => {
-          if (currentPhase === 'complete') {
-            setGenerationPhase('idle');
-          }
-        }, 2000);
-      } else {
-        onPhaseChange('error');
+        if (success) {
+          onPhaseChange('saving');
+          await loadQuizPreview();
+          setExistingQuiz(true);
+          setIsPublished(false);
+          onPhaseChange('complete');
+          
+          setTimeout(() => {
+            if (currentPhase === 'complete') {
+              setGenerationPhase('idle');
+            }
+          }, 2000);
+          
+          return true;
+        } else {
+          setError('Failed to generate quiz', 'The quiz generation process failed. Please try again later.');
+          return false;
+        }
+      } catch (genError: any) {
+        console.error("Error during quiz generation:", genError);
+        setError(
+          genError.message || 'Quiz generation failed', 
+          genError.details || 'An unexpected error occurred during quiz generation.'
+        );
+        return false;
       }
-      
-      return success;
-    } catch (error) {
-      console.error("Error in quiz generation:", error);
-      onPhaseChange('error');
+    } catch (error: any) {
+      console.error("Error in quiz generation flow:", error);
+      setError(
+        'Quiz generation error', 
+        error.message || 'An unexpected error occurred during the quiz generation process.'
+      );
       return false;
     }
   };
@@ -196,6 +210,7 @@ export const useQuizTabState = (lessonId?: string) => {
     saving,
     isRetrying,
     loadingError,
+    errorDetails,
     contentLoadingMessage,
     currentPhase,
     handleGenerateQuiz: wrappedGenerateQuiz,

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Brain, FileText, CheckCircle2, Loader2 } from 'lucide-react';
+import { Brain, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
 export type GenerationPhase = 'idle' | 'content-loading' | 'analyzing' | 'generating' | 'saving' | 'complete' | 'error';
 
@@ -14,11 +14,13 @@ interface PhaseInfo {
 interface QuizGenerationProgressProps {
   currentPhase: GenerationPhase;
   isRetrying?: boolean;
+  errorMessage?: string | null;
 }
 
 const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
   currentPhase,
-  isRetrying = false
+  isRetrying = false,
+  errorMessage = null
 }) => {
   const phases: Record<GenerationPhase, PhaseInfo> = {
     'idle': {
@@ -56,9 +58,9 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
       description: 'Quiz has been successfully generated'
     },
     'error': {
-      icon: <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">!</div>,
+      icon: <AlertCircle className="h-5 w-5 text-red-500" />,
       label: 'Error',
-      description: 'There was a problem generating the quiz'
+      description: errorMessage || 'There was a problem generating the quiz'
     }
   };
 
@@ -111,6 +113,12 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
           );
         })}
       </div>
+      
+      {currentPhase === 'error' && errorMessage && (
+        <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+          {errorMessage}
+        </div>
+      )}
     </div>
   );
 };

@@ -7,6 +7,8 @@ import { toast } from 'sonner';
  */
 export const generateQuizContent = async (lessonContent: string, numQuestions: number) => {
   try {
+    console.log(`Calling generate-quiz function with ${numQuestions} questions`);
+    
     const response = await supabase.functions.invoke('generate-quiz', {
       body: { 
         lessonContent,
@@ -14,9 +16,22 @@ export const generateQuizContent = async (lessonContent: string, numQuestions: n
       }
     });
 
+    if (response.error) {
+      console.error('Error from edge function:', response.error);
+      throw response.error;
+    }
+
+    // Check if the response indicates fallback questions were generated
+    if (response.data?.status === 'failed_with_fallback') {
+      console.warn('Using fallback questions due to generation failure:', response.data.error);
+      toast.warning('Quiz generation partially failed', {
+        description: 'Using simplified questions. You may want to regenerate or edit them.',
+      });
+    }
+
     return {
       data: response.data,
-      error: response.error
+      error: null
     };
   } catch (error: any) {
     console.error('Error in quiz generation API:', error);
@@ -29,6 +44,7 @@ export const generateQuizContent = async (lessonContent: string, numQuestions: n
  */
 export const fetchLessonContent = async (lessonId: string) => {
   try {
+    console.log(`Fetching content for lesson: ${lessonId}`);
     const { data: lesson, error } = await supabase
       .from('lessons')
       .select('content')
@@ -36,10 +52,17 @@ export const fetchLessonContent = async (lessonId: string) => {
       .maybeSingle();
       
     if (error) {
+      console.error('Error fetching lesson content:', error);
       throw error;
     }
     
-    return lesson?.content || null;
+    if (!lesson?.content) {
+      console.warn('No content found for lesson');
+      return null;
+    }
+    
+    console.log(`Fetched ${lesson.content.length} characters of content`);
+    return lesson.content;
   } catch (error) {
     console.error("Error fetching lesson content:", error);
     return null;
@@ -60,6 +83,10 @@ export const handleQuizGenerationError = (error: any) => {
   } else if (error.status === 429) {
     toast.error('Too many requests', {
       description: 'Quiz generation service is busy. Please wait a moment and try again.',
+    });
+  } else if (error.status === 504 || error.message?.includes('timeout')) {
+    toast.error('Request timed out', {
+      description: 'The quiz generation is taking too long. Try again with a shorter lesson or fewer questions.',
     });
   } else if (error.status >= 500) {
     toast.error('Server error', {
