@@ -1,17 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { toast } from 'sonner';
+import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import QuizGenerationForm from './QuizGenerationForm';
-import QuizPreviewHeader from './QuizPreviewHeader';
-import QuizPreviewContent from './QuizPreviewContent';
+import QuizPreviewSection from './components/QuizPreviewSection';
+import QuizPublishAlert from './components/QuizPublishAlert';
 import QuizPlaceholder from './QuizPlaceholder';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -20,6 +14,12 @@ interface QuizTabProps {
 
 const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
   const [numQuestions, setNumQuestions] = useState('5');
+  const [previewQuestions, setPreviewQuestions] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [quizTitle, setQuizTitle] = useState('Lesson Quiz');
+  const [existingQuiz, setExistingQuiz] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+
   const { 
     generateQuiz, 
     fetchQuizQuestions, 
@@ -31,12 +31,6 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     loading, 
     saving 
   } = useQuizHandler(lessonId || '');
-  
-  const [previewQuestions, setPreviewQuestions] = useState([]);
-  const [showPreview, setShowPreview] = useState(false);
-  const [quizTitle, setQuizTitle] = useState('Lesson Quiz');
-  const [existingQuiz, setExistingQuiz] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
 
   // Check if quiz already exists
   useEffect(() => {
@@ -50,7 +44,6 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
             setQuizTitle(quizDetails.title);
             setIsPublished(quizDetails.is_published || false);
             
-            // Fetch existing questions
             const questions = await fetchQuizQuestions();
             if (questions && questions.length > 0) {
               setPreviewQuestions(questions);
@@ -76,21 +69,16 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     
     try {
       setShowPreview(false);
-      console.log("Generating quiz with", parseInt(numQuestions), "questions");
-      
       const result = await generateQuiz(parseInt(numQuestions));
-      console.log("Quiz generation result:", result);
       
       if (result) {
-        // Fetch the newly generated questions
         const questions = await fetchQuizQuestions();
-        console.log("Fetched questions:", questions);
         
         if (questions && questions.length > 0) {
           setPreviewQuestions(questions);
           setShowPreview(true);
-          setExistingQuiz(true); // Since we've now created a quiz
-          setIsPublished(false); // New quizzes are unpublished by default
+          setExistingQuiz(true);
+          setIsPublished(false);
           toast.success('Quiz generated', {
             description: 'Your quiz questions have been generated. Review them below.',
           });
@@ -128,7 +116,6 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         });
       }
     } else if (!existingQuiz) {
-      // Just hide the preview for non-saved quizzes
       setShowPreview(false);
       setPreviewQuestions([]);
     }
@@ -168,83 +155,38 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     }
   };
 
-  const togglePreview = () => {
-    setShowPreview(!showPreview);
-  };
+  if (!isEditMode || !lessonId) {
+    return <QuizPlaceholder />;
+  }
 
   return (
-    <>
-      {isEditMode && lessonId ? (
-        <div className="space-y-6">
-          {/* AI Generation Section */}
-          <QuizGenerationForm
-            numQuestions={numQuestions}
-            setNumQuestions={setNumQuestions}
-            onGenerateQuiz={handleGenerateQuiz}
-            loading={loading}
-            existingQuiz={existingQuiz}
-          />
-          
-          {/* Quiz Preview Section */}
-          {previewQuestions.length > 0 && (
-            <Card>
-              <QuizPreviewHeader 
-                showPreview={showPreview} 
-                togglePreview={togglePreview} 
-              />
-              
-              {existingQuiz && (
-                <div className="px-6 py-2 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={isPublished ? "default" : "outline"}>
-                      {isPublished ? "Published" : "Draft"}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">
-                      {isPublished 
-                        ? "This quiz is visible to students" 
-                        : "This quiz is only visible to teachers"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="publish-toggle" className="text-sm">
-                      {isPublished ? "Published" : "Draft"}
-                    </Label>
-                    <Switch 
-                      id="publish-toggle" 
-                      checked={isPublished} 
-                      onCheckedChange={togglePublishStatus}
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <QuizPreviewContent
-                showPreview={showPreview}
-                quizTitle={quizTitle}
-                setQuizTitle={setQuizTitle}
-                previewQuestions={previewQuestions}
-                saveQuiz={handleSaveQuiz}
-                discardQuiz={handleDiscardQuiz}
-                saving={saving}
-                existingQuiz={existingQuiz}
-              />
-            </Card>
-          )}
-          
-          {existingQuiz && !isPublished && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This quiz is in draft mode and won't be visible to students. Publish it when you're ready for students to take it.
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      ) : (
-        <QuizPlaceholder />
+    <div className="space-y-6">
+      <QuizGenerationForm
+        numQuestions={numQuestions}
+        setNumQuestions={setNumQuestions}
+        onGenerateQuiz={handleGenerateQuiz}
+        loading={loading}
+        existingQuiz={existingQuiz}
+      />
+      
+      {previewQuestions.length > 0 && (
+        <QuizPreviewSection
+          previewQuestions={previewQuestions}
+          showPreview={showPreview}
+          togglePreview={() => setShowPreview(!showPreview)}
+          quizTitle={quizTitle}
+          setQuizTitle={setQuizTitle}
+          handleSaveQuiz={handleSaveQuiz}
+          handleDiscardQuiz={handleDiscardQuiz}
+          saving={saving}
+          existingQuiz={existingQuiz}
+          isPublished={isPublished}
+          onTogglePublish={togglePublishStatus}
+        />
       )}
-    </>
+      
+      {existingQuiz && !isPublished && <QuizPublishAlert />}
+    </div>
   );
 };
 
