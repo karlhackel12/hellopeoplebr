@@ -15,12 +15,30 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
       
       console.log(`Attempting to delete invitation for ${email} with id ${id}`);
       
-      // Perform the deletion operation
-      const { error, count } = await supabase
+      // First verify the invitation exists
+      const { data: checkData, error: checkError } = await supabase
+        .from('student_invitations')
+        .select('id')
+        .eq('id', id)
+        .single();
+      
+      if (checkError) {
+        console.warn(`Error checking invitation existence: ${checkError.message}`);
+        // If the error is "No rows returned", then invitation doesn't exist
+        if (checkError.code === 'PGRST116') {
+          toast.warning('Invitation not found', {
+            description: 'The invitation may have already been deleted.',
+          });
+          return;
+        }
+      }
+      
+      // Perform the deletion operation without using count aggregate
+      const { data, error } = await supabase
         .from('student_invitations')
         .delete()
         .eq('id', id)
-        .select('count');
+        .select();
       
       // Check if there was an error during deletion
       if (error) {
@@ -28,21 +46,24 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
         throw error;
       }
       
-      // Verify if any rows were actually deleted
-      if (count === 0) {
+      // Verify if any rows were actually deleted by checking the returned data
+      if (!data || data.length === 0) {
         console.warn(`No invitation found with id ${id}`);
         toast.warning('Invitation not found', {
           description: 'The invitation may have already been deleted.',
         });
       } else {
-        console.log(`Successfully deleted invitation for ${email}`);
+        console.log(`Successfully deleted invitation for ${email}, received response:`, data);
         toast.success('Invitation deleted', {
           description: `The invitation to ${email} has been removed.`,
         });
       }
       
-      // Ensure the parent component refetches the updated data immediately
-      onUpdate();
+      // Force immediate data refresh
+      setTimeout(() => {
+        onUpdate();
+      }, 100);
+      
     } catch (error: any) {
       console.error('Failed to delete invitation:', error);
       toast.error('Failed to delete invitation', {
