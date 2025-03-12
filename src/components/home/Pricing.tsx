@@ -50,7 +50,7 @@ const Pricing: React.FC = () => {
                 </li>
               </ul>
               <Link to="/register">
-                <Button className="w-full bg-[#1E88E5] hover:bg-[#1E88E5]/90 text-lg py-6">
+                <Button className="w-full bg-[#36B37E] hover:bg-[#36B37E]/90 text-lg py-6">
                   Comece Gratuitamente
                 </Button>
               </Link>

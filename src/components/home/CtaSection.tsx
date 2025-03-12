@@ -18,7 +18,7 @@ const CtaSection: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/register">
-                <Button size="lg" className="font-medium w-full sm:w-auto px-8 py-6 text-lg bg-[#FF8F00] hover:bg-[#FF8F00]/90">
+                <Button size="lg" className="font-medium w-full sm:w-auto px-8 py-6 text-lg bg-[#36B37E] hover:bg-[#36B37E]/90">
                   Comece Gratuitamente
                   <ArrowRight size={20} className="ml-2" />
                 </Button>

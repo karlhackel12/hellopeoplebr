@@ -31,7 +31,7 @@ const Hero: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-slide-up animate-delay-200">
             <Link to="/register">
-              <Button size="lg" className="font-medium w-full sm:w-auto px-8 bg-[#FF8F00] hover:bg-[#FF8F00]/90">
+              <Button size="lg" className="font-medium w-full sm:w-auto px-8 bg-[#36B37E] hover:bg-[#36B37E]/90">
                 Comece Gratuitamente
                 <ArrowRight size={16} className="ml-2" />
               </Button>

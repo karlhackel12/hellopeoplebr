@@ -67,7 +67,7 @@ const Navbar: React.FC = () => {
               </Button>
             </Link>
             <Link to="/register">
-              <Button size="sm" className="font-medium bg-[#FF8F00] hover:bg-[#FF8F00]/90">
+              <Button size="sm" className="font-medium bg-[#36B37E] hover:bg-[#36B37E]/90">
                 Comece Grátis
               </Button>
             </Link>
@@ -115,7 +115,7 @@ const Navbar: React.FC = () => {
                 </Button>
               </Link>
               <Link to="/register" className="w-full">
-                <Button className="w-full bg-[#FF8F00] hover:bg-[#FF8F00]/90">
+                <Button className="w-full bg-[#36B37E] hover:bg-[#36B37E]/90">
                   Comece Grátis
                 </Button>
               </Link>

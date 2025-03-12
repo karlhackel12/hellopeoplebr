@@ -104,14 +104,22 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
-  // Create a wrapped version of handleGenerateQuiz that accepts setContentLoadingMessage parameter
-  // and returns Promise<boolean> as required
+  // Create a wrapped version of handleGenerateQuiz that implements the expected interface
   const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<boolean> => {
     try {
       return await handleGenerateQuiz(setContentLoadingMessage);
     } catch (error) {
       console.error("Error in wrappedHandleGenerateQuiz:", error);
       return false;
+    }
+  };
+
+  // This wrapper just calls the generate function without the message setter
+  const generateQuizWrapper = async (): Promise<void> => {
+    try {
+      await generateQuiz(numQuestions);
+    } catch (error) {
+      console.error("Error generating quiz:", error);
     }
   };
 
@@ -151,7 +159,7 @@ export const useQuizTabState = (lessonId?: string) => {
     errorDetails,
     contentLoadingMessage,
     currentPhase,
-    handleGenerateQuiz: () => generateQuiz(numQuestions),
+    handleGenerateQuiz: generateQuizWrapper,
     handleSaveQuiz: wrappedSaveQuiz,
     handleDiscardQuiz: wrappedDiscardQuiz,
     togglePublishStatus,
