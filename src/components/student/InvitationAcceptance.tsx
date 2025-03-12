@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -37,21 +37,25 @@ const InvitationAcceptance: React.FC = () => {
   
   const navigate = useNavigate();
   const { code } = useParams<{ code?: string }>();
+  const [searchParams] = useSearchParams();
+  const codeFromQuery = searchParams.get('code');
   
   const form = useForm<InvitationFormValues>({
     resolver: zodResolver(invitationSchema),
     defaultValues: {
-      invitationCode: code || '',
+      invitationCode: code || codeFromQuery || '',
     },
   });
 
   // Automatically verify code if provided in URL
   useEffect(() => {
-    if (code && code.length === 8) {
-      form.setValue('invitationCode', code);
-      verifyInvitation(code);
+    const initialCode = code || codeFromQuery;
+    if (initialCode && initialCode.length === 8) {
+      console.log('Verifying initial code:', initialCode);
+      form.setValue('invitationCode', initialCode);
+      verifyInvitation(initialCode);
     }
-  }, [code]);
+  }, [code, codeFromQuery]);
 
   const verifyInvitation = async (invitationCode: string) => {
     setIsLoading(true);
@@ -60,30 +64,32 @@ const InvitationAcceptance: React.FC = () => {
     try {
       console.log("Verifying invitation code:", invitationCode);
       
-      // Verify invitation code - use join syntax to properly get teacher data
+      // Case-insensitive query for the invitation code
       const { data: invitation, error } = await supabase
         .from('student_invitations')
         .select(`
           *,
           invited_by:profiles(first_name, last_name)
         `)
-        .eq('invitation_code', invitationCode.toUpperCase())
+        .ilike('invitation_code', invitationCode)
         .eq('status', 'pending')
-        .single();
+        .maybeSingle();
+      
+      console.log("Invitation query result:", { invitation, error });
       
       if (error) {
-        console.error("Error fetching invitation:", error);
-        throw new Error('Invalid or expired invitation code');
+        console.error("Supabase error:", error);
+        throw new Error('Error validating code: ' + error.message);
       }
       
       if (!invitation) {
-        throw new Error('Invitation not found or already accepted');
+        throw new Error('This invitation code is invalid or has already been used');
       }
       
       // Check if the invitation has expired
       const expiresAt = new Date(invitation.expires_at);
       if (expiresAt < new Date()) {
-        throw new Error('This invitation has expired');
+        throw new Error('This invitation has expired. Please contact your teacher for a new invitation.');
       }
       
       // Get teacher information - now correctly typed
@@ -92,7 +98,6 @@ const InvitationAcceptance: React.FC = () => {
         'Your teacher';
       
       setStudentEmail(invitation.email);
-      setTeacherEmail(invitation.invited_by);
       setTeacherName(formattedTeacherName);
       setInvitationVerified(true);
       
@@ -113,13 +118,12 @@ const InvitationAcceptance: React.FC = () => {
   };
 
   const onSubmit = async (values: InvitationFormValues) => {
-    await verifyInvitation(values.invitationCode);
+    await verifyInvitation(values.invitationCode.toUpperCase());
   };
 
   const proceedToRegister = () => {
-    // Store invitation details in session storage to retrieve during registration
     if (studentEmail) {
-      sessionStorage.setItem('invitationCode', form.getValues().invitationCode);
+      sessionStorage.setItem('invitationCode', form.getValues().invitationCode.toUpperCase());
       sessionStorage.setItem('invitedEmail', studentEmail);
       navigate('/register');
     }

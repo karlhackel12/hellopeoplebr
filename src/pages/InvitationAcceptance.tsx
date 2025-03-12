@@ -1,18 +1,20 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import InvitationAcceptance from '@/components/student/InvitationAcceptance';
 import Logo from '@/components/ui/Logo';
 import { Link } from 'react-router-dom';
 
 const InvitationAcceptancePage: React.FC = () => {
   const { code } = useParams<{ code?: string }>();
+  const [searchParams] = useSearchParams();
+  const codeFromQuery = searchParams.get('code');
   
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <Link to="/">
+        <div className="container mx-auto">
+          <Link to="/" className="inline-block">
             <Logo />
           </Link>
         </div>
