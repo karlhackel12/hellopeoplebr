@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import Replicate from "https://esm.sh/replicate@0.25.2";
@@ -27,8 +26,9 @@ function optimizeContent(lessonContent: string, maxLength: number = 12000): stri
   const headings = [...lessonContent.matchAll(headingRegex)];
   
   // Extract content with key concepts (bolded text)
-  const boldedTextRegex = /\*\*(.+?)\*\*/g;
-  const boldMatches = [...lessonContent.matchAll(boldedTextRegex)];
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  const boldMatches = [...lessonContent.matchAll(boldRegex)];
+  const boldedConcepts = boldMatches.map(match => match[1].trim());
   
   // If we found headings, use them to prioritize content
   if (headings.length > 0) {
@@ -48,8 +48,8 @@ function optimizeContent(lessonContent: string, maxLength: number = 12000): stri
     
     // Sort sections by presence of key concepts and length
     const sortedSections = sections.sort((a, b) => {
-      const aBolded = (a.match(boldedTextRegex) || []).length;
-      const bBolded = (b.match(boldedTextRegex) || []).length;
+      const aBolded = (a.match(boldRegex) || []).length;
+      const bBolded = (b.match(boldRegex) || []).length;
       
       if (aBolded !== bBolded) return bBolded - aBolded;
       return b.length - a.length;
