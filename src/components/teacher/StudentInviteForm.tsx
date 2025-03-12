@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -52,7 +51,6 @@ const StudentInviteForm: React.FC<StudentInviteFormProps> = ({ onSuccess }) => {
     },
   });
 
-  // Handler for email invitations
   const onEmailSubmit = async (values: InviteFormValues) => {
     try {
       // Get current user
@@ -81,6 +79,7 @@ const StudentInviteForm: React.FC<StudentInviteFormProps> = ({ onSuccess }) => {
           email: values.email,
           invited_by: userData.user.id,
           expires_at: expiresAt,
+          status: 'pending',
           // The invitation_code field is generated via a trigger in the database
           invitation_code: 'PENDING' // This value will be overwritten by the trigger
         })

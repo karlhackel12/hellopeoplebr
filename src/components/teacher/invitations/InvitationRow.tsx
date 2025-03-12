@@ -2,21 +2,19 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Copy, Loader2, RotateCw, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, TrashIcon, Loader2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
-export interface StudentInvitation {
+export type StudentInvitation = {
   id: string;
   email: string;
-  invitation_code: string;
   status: 'pending' | 'accepted' | 'expired' | 'rejected';
+  invitation_code: string;
   created_at: string;
   expires_at: string;
-  user_id?: string | null;
   used_by_name?: string | null;
-  accepted_at?: string | null;
-}
+};
 
 interface InvitationRowProps {
   invitation: StudentInvitation;
@@ -33,114 +31,87 @@ const InvitationRow: React.FC<InvitationRowProps> = ({
   isResending,
   isDeleting
 }) => {
-  const [copied, setCopied] = React.useState(false);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-100 border-yellow-200 text-yellow-800">Pending</Badge>;
-      case 'accepted':
-        return <Badge variant="outline" className="bg-green-100 border-green-200 text-green-800">Accepted</Badge>;
-      case 'expired':
-        return <Badge variant="outline" className="bg-gray-100 border-gray-200 text-gray-800">Expired</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-100 border-red-200 text-red-800">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(invitation.invitation_code);
-      setCopied(true);
       toast.success('Code copied to clipboard');
-      
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
     } catch (err) {
       console.error('Failed to copy code:', err);
       toast.error('Failed to copy code');
     }
   };
 
-  // Check if it's a code-only invitation (no email)
-  const isCodeOnly = !invitation.email || invitation.email.trim() === '';
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+      case 'accepted':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Accepted</Badge>;
+      case 'expired':
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Expired</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   return (
-    <tr>
+    <tr className="bg-card hover:bg-muted/50 transition-colors">
+      <td className="px-4 py-3">{invitation.email || '—'}</td>
+      <td className="px-4 py-3">{getStatusBadge(invitation.status)}</td>
       <td className="px-4 py-3">
-        {isCodeOnly ? (
-          <Badge variant="outline" className="bg-blue-100 border-blue-200 text-blue-800">Code Only</Badge>
-        ) : (
-          invitation.email
-        )}
-      </td>
-      <td className="px-4 py-3">
-        {getStatusBadge(invitation.status)}
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center space-x-2">
-          <code className="bg-muted px-2 py-1 rounded text-xs">
+        <div className="flex items-center gap-2">
+          <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
             {invitation.invitation_code}
           </code>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleCopyCode}
-            title="Copy code"
-            className="h-6 w-6"
+            className="h-8 w-8"
           >
-            {copied ? (
-              <Check className="h-3 w-3 text-green-500" />
-            ) : (
-              <Copy className="h-3 w-3" />
-            )}
+            <Copy className="h-4 w-4" />
           </Button>
         </div>
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
-        {format(new Date(invitation.created_at), 'MMM dd, yyyy')}
+        {format(new Date(invitation.created_at), 'MMM d, yyyy')}
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
-        {format(new Date(invitation.expires_at), 'MMM dd, yyyy')}
+        {format(new Date(invitation.expires_at), 'MMM d, yyyy')}
       </td>
       <td className="px-4 py-3 text-sm">
-        {invitation.status === 'accepted' && invitation.accepted_at ? (
-          <span className="text-green-700">
-            {invitation.used_by_name || 'Student'} ({format(new Date(invitation.accepted_at), 'MMM dd, yyyy')})
-          </span>
-        ) : '-'}
+        {invitation.used_by_name || '—'}
       </td>
       <td className="px-4 py-3 text-right">
-        <div className="flex justify-end space-x-2">
-          {!isCodeOnly && (
+        <div className="flex items-center justify-end gap-2">
+          {invitation.status === 'pending' && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onResend(invitation.id, invitation.email, invitation.invitation_code)}
-              disabled={isResending || invitation.status === 'accepted'}
-              title="Resend invitation"
+              disabled={isResending}
+              className="h-8 w-8"
             >
               {isResending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4" />
+                <RotateCw className="h-4 w-4" />
               )}
             </Button>
           )}
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onDelete(invitation.id, invitation.email || 'this invitation')}
+            onClick={() => onDelete(invitation.id, invitation.email)}
             disabled={isDeleting}
-            title="Delete invitation"
+            className="h-8 w-8 text-destructive hover:text-destructive"
           >
             {isDeleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <TrashIcon className="h-4 w-4 text-red-500" />
+              <Trash2 className="h-4 w-4" />
             )}
           </Button>
         </div>

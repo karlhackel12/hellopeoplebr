@@ -417,6 +417,7 @@ export type Database = {
           invitation_code: string
           invited_by: string
           status: Database["public"]["Enums"]["invitation_status"]
+          used_by_name: string | null
           user_id: string | null
         }
         Insert: {
@@ -428,6 +429,7 @@ export type Database = {
           invitation_code: string
           invited_by: string
           status?: Database["public"]["Enums"]["invitation_status"]
+          used_by_name?: string | null
           user_id?: string | null
         }
         Update: {
@@ -439,6 +441,7 @@ export type Database = {
           invitation_code?: string
           invited_by?: string
           status?: Database["public"]["Enums"]["invitation_status"]
+          used_by_name?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -673,6 +676,14 @@ export type Database = {
           user_id: string
         }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      mark_invitation_used: {
+        Args: {
+          invitation_code_param: string
+          user_id_param: string
+          user_name_param: string
+        }
+        Returns: boolean
       }
       validate_invitation_code: {
         Args: {

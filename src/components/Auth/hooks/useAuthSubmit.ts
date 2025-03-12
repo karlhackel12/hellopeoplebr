@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -29,14 +28,12 @@ export const useAuthSubmit = () => {
 
   const updateInvitationStatus = async (code: string, userId: string, userName: string) => {
     try {
-      const { data, error } = await supabase.rpc(
-        'mark_invitation_used',
-        { 
+      const { data, error } = await supabase
+        .rpc('mark_invitation_used', { 
           invitation_code_param: code,
           user_id_param: userId,
           user_name_param: userName
-        }
-      );
+        });
 
       if (error) {
         console.error('Error updating invitation status:', error);
