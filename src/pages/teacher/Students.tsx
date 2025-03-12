@@ -101,25 +101,30 @@ const Students = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching invitations:', error);
         toast.error('Failed to load invitations', {
           description: error.message
         });
         throw error;
       }
 
-      console.log('Fetched invitations:', data);
+      console.log('Fetched invitations:', data ? data.length : 0);
       return data || [];
     },
     staleTime: 0, // Always consider data stale
-    refetchOnWindowFocus: true // Auto-refetch when window focus returns
+    refetchOnWindowFocus: true, // Auto-refetch when window focus returns
+    refetchInterval: 30000 // Refetch every 30 seconds
   });
 
   // Handler for successful invitation or deletion
   const handleInvitationUpdate = useCallback(() => {
     console.log('handleInvitationUpdate called, invalidating cache');
-    // Invalidate the cache and refetch data
+    // Invalidate the cache and force refetch data
     queryClient.invalidateQueries({ queryKey: ['student-invitations'] });
-    refetchInvitations();
+    queryClient.removeQueries({ queryKey: ['student-invitations'] });
+    setTimeout(() => {
+      refetchInvitations();
+    }, 100);
     
     // Switch to the invitations tab if we're not already there
     if (activeTab !== 'invitations') {

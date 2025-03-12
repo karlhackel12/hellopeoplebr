@@ -5,8 +5,9 @@ import { useInvitationActions } from './invitations/useInvitationActions';
 import InvitationsTable from './invitations/InvitationsTable';
 import EmptyInvitations from './invitations/EmptyInvitations';
 import LoadingInvitations from './invitations/LoadingInvitations';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface InvitationsListProps {
   invitations: StudentInvitation[];
@@ -29,6 +30,7 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
 
   // Call onUpdate when component mounts to ensure data is fresh
   useEffect(() => {
+    console.log('InvitationsList mounted, fetching fresh data');
     onUpdate();
   }, [onUpdate]);
 
@@ -52,6 +54,22 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
           </AlertDescription>
         </Alert>
       )}
+      
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => {
+            console.log('Manual refresh requested');
+            onUpdate();
+          }}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          <span>Refresh</span>
+        </Button>
+      </div>
+      
       <InvitationsTable
         invitations={invitations}
         deletingInvitations={deletingInvitations}
