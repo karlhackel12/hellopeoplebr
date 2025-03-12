@@ -1,10 +1,13 @@
 
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import InvitationAcceptance from '@/components/student/InvitationAcceptance';
 import Logo from '@/components/ui/Logo';
 import { Link } from 'react-router-dom';
 
 const InvitationAcceptancePage: React.FC = () => {
+  const { code } = useParams<{ code?: string }>();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b p-4">

@@ -44,7 +44,10 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
-            <Route path="/invitation/:code?" element={<InvitationAcceptancePage />} />
+            
+            {/* Invitation routes - both with and without code parameter */}
+            <Route path="/invitation" element={<InvitationAcceptancePage />} />
+            <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
             
             {/* Teacher Routes */}
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

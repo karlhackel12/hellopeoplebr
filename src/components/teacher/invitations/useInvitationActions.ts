@@ -14,6 +14,8 @@ export const useInvitationActions = (onUpdate: () => void) => {
       setResendingInvitations(prev => ({ ...prev, [id]: true }));
       setIsProcessing(true);
 
+      console.log(`Resending invitation to ${email} with code ${invitationCode}`);
+
       // Update the expiration date (7 days from now)
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
@@ -26,7 +28,12 @@ export const useInvitationActions = (onUpdate: () => void) => {
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating invitation:', error);
+        throw error;
+      }
+      
+      console.log('Invitation updated successfully with new expiration date:', expiresAt.toISOString());
       
       // Get user profile to get the teacher's name
       const { data: userData } = await supabase.auth.getUser();
@@ -49,6 +56,8 @@ export const useInvitationActions = (onUpdate: () => void) => {
         ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
         : 'Your teacher';
 
+      console.log('Teacher name for invitation email:', teacherName);
+
       // Send the invitation email using our edge function
       const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
         body: {
@@ -64,8 +73,9 @@ export const useInvitationActions = (onUpdate: () => void) => {
           description: 'The invitation was updated but we could not send the email. The student can still use the invitation code.',
         });
       } else {
+        console.log('Invitation email sent successfully');
         toast.success('Invitation resent', {
-          description: `The invitation to ${email} has been resent`,
+          description: `The invitation to ${email} has been resent with code ${invitationCode}`,
         });
       }
       
@@ -89,13 +99,19 @@ export const useInvitationActions = (onUpdate: () => void) => {
       setDeletingInvitations(prev => ({ ...prev, [id]: true }));
       setIsProcessing(true);
       
+      console.log(`Deleting invitation for ${email} with id ${id}`);
+      
       const { error } = await supabase
         .from('student_invitations')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting invitation:', error);
+        throw error;
+      }
       
+      console.log('Invitation deleted successfully');
       toast.success('Invitation deleted', {
         description: `The invitation to ${email} has been deleted`,
       });

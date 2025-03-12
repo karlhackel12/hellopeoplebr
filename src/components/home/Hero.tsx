@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Users, Mail } from 'lucide-react';
 
 const Hero: React.FC = () => {
   return (
@@ -37,9 +37,10 @@ const Hero: React.FC = () => {
                 <ArrowRight size={16} className="ml-2" />
               </Button>
             </Link>
-            <Link to="/demo">
+            <Link to="/invitation">
               <Button size="lg" variant="outline" className="font-medium w-full sm:w-auto px-8">
-                Try a free lesson
+                Have an invitation code? 
+                <Mail size={16} className="ml-2" />
               </Button>
             </Link>
           </div>
@@ -62,6 +63,43 @@ const Hero: React.FC = () => {
                 <p className="text-lg font-medium">Watch how HelloPeople works</p>
               </div>
             </div>
+          </div>
+        </div>
+        
+        {/* Student and Teacher Info Cards */}
+        <div className="mt-16 grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold">Students</h3>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              If you've received an invitation from your teacher, you can join HelloPeople using your invitation code.
+            </p>
+            <Link to="/invitation">
+              <Button variant="outline" className="w-full">
+                Enter your invitation code
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"></path><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M12 2v2"></path><path d="M12 22v-2"></path><path d="m17 20.66-1-1.73"></path><path d="M11 10.27 7 3.34"></path><path d="m20.66 17-1.73-1"></path><path d="m3.34 7 1.73 1"></path><path d="M14 12h8"></path><path d="M2 12h2"></path><path d="m20.66 7-1.73 1"></path><path d="m3.34 17 1.73-1"></path><path d="m17 3.34-1 1.73"></path><path d="m11 13.73-4 6.93"></path></svg>
+              </div>
+              <h3 className="text-xl font-semibold">Teachers</h3>
+            </div>
+            <p className="text-muted-foreground mb-4">
+              Create an account to manage your students, create customized lessons, and track progress.
+            </p>
+            <Link to="/register">
+              <Button className="w-full">
+                Create teacher account
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

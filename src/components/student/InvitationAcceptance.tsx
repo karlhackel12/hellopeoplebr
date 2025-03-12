@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Check, Loader2 } from 'lucide-react';
+import { BookOpen, Check, Loader2, XCircle } from 'lucide-react';
 
 const invitationSchema = z.object({
   invitationCode: z.string()
@@ -31,19 +31,35 @@ const InvitationAcceptance: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [invitationVerified, setInvitationVerified] = useState(false);
   const [teacherEmail, setTeacherEmail] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [teacherName, setTeacherName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  
   const navigate = useNavigate();
+  const { code } = useParams<{ code?: string }>();
   
   const form = useForm<InvitationFormValues>({
     resolver: zodResolver(invitationSchema),
     defaultValues: {
-      invitationCode: '',
+      invitationCode: code || '',
     },
   });
 
-  const onSubmit = async (values: InvitationFormValues) => {
+  // Automatically verify code if provided in URL
+  useEffect(() => {
+    if (code && code.length === 8) {
+      form.setValue('invitationCode', code);
+      verifyInvitation(code);
+    }
+  }, [code]);
+
+  const verifyInvitation = async (invitationCode: string) => {
     setIsLoading(true);
+    setError(null);
     
     try {
+      console.log("Verifying invitation code:", invitationCode);
+      
       // Verify invitation code - use join syntax to properly get teacher data
       const { data: invitation, error } = await supabase
         .from('student_invitations')
@@ -51,11 +67,12 @@ const InvitationAcceptance: React.FC = () => {
           *,
           invited_by:profiles(first_name, last_name)
         `)
-        .eq('invitation_code', values.invitationCode.toUpperCase())
+        .eq('invitation_code', invitationCode.toUpperCase())
         .eq('status', 'pending')
         .single();
       
       if (error) {
+        console.error("Error fetching invitation:", error);
         throw new Error('Invalid or expired invitation code');
       }
       
@@ -63,33 +80,47 @@ const InvitationAcceptance: React.FC = () => {
         throw new Error('Invitation not found or already accepted');
       }
       
+      // Check if the invitation has expired
+      const expiresAt = new Date(invitation.expires_at);
+      if (expiresAt < new Date()) {
+        throw new Error('This invitation has expired');
+      }
+      
       // Get teacher information - now correctly typed
-      const teacherName = invitation.invited_by ? 
+      const formattedTeacherName = invitation.invited_by ? 
         `${invitation.invited_by.first_name || ''} ${invitation.invited_by.last_name || ''}`.trim() : 
         'Your teacher';
       
-      setTeacherEmail(invitation.email);
+      setStudentEmail(invitation.email);
+      setTeacherEmail(invitation.invited_by);
+      setTeacherName(formattedTeacherName);
       setInvitationVerified(true);
       
       toast.success('Invitation verified', {
-        description: `You've been invited by ${teacherName}`,
+        description: `You've been invited by ${formattedTeacherName}`,
       });
       
     } catch (error: any) {
       console.error('Error validating invitation:', error);
+      setError(error.message || 'Please check your invitation code and try again');
       toast.error('Invalid invitation', {
         description: error.message || 'Please check your invitation code and try again',
       });
+      setInvitationVerified(false);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const onSubmit = async (values: InvitationFormValues) => {
+    await verifyInvitation(values.invitationCode);
+  };
+
   const proceedToRegister = () => {
     // Store invitation details in session storage to retrieve during registration
-    if (teacherEmail) {
+    if (studentEmail) {
       sessionStorage.setItem('invitationCode', form.getValues().invitationCode);
-      sessionStorage.setItem('invitedEmail', teacherEmail);
+      sessionStorage.setItem('invitedEmail', studentEmail);
       navigate('/register');
     }
   };
@@ -133,6 +164,13 @@ const InvitationAcceptance: React.FC = () => {
                 )}
               />
               
+              {error && (
+                <div className="rounded-lg bg-red-50 p-4 text-red-800 flex items-start">
+                  <XCircle className="h-5 w-5 text-red-600 mr-2 mt-0.5" />
+                  <p>{error}</p>
+                </div>
+              )}
+              
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -151,7 +189,10 @@ const InvitationAcceptance: React.FC = () => {
               <Check className="h-5 w-5 text-green-600 mr-2 mt-0.5" />
               <div>
                 <p className="font-medium">Invitation Verified!</p>
-                <p className="text-sm mt-1">You're invited to join HelloPeople. Complete your registration to get started.</p>
+                <p className="text-sm mt-1">You're invited by {teacherName} to join HelloPeople as a student.</p>
+                {studentEmail && (
+                  <p className="text-sm mt-1">This invitation is for: <strong>{studentEmail}</strong></p>
+                )}
               </div>
             </div>
             
