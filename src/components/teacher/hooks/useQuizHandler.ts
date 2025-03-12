@@ -5,7 +5,7 @@ import { useQuizManagement } from './quiz/useQuizManagement';
 import { QuizContentAnalyzer } from '../quiz/services/QuizContentAnalyzer';
 import { Question, Quiz } from '../quiz/types';
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchLessonContent as apiFetchLessonContent } from './quiz/api/quizGenerationApi';
 
 export const useQuizHandler = (lessonId: string) => {
   const [lessonContent, setLessonContent] = useState<string | null>(null);
@@ -41,20 +41,12 @@ export const useQuizHandler = (lessonId: string) => {
         return lessonContent;
       }
       
-      const { data: lesson, error } = await supabase
-        .from('lessons')
-        .select('content')
-        .eq('id', lessonId)
-        .maybeSingle();
+      const content = await apiFetchLessonContent(lessonId);
       
-      if (error) {
-        throw error;
-      }
-      
-      if (lesson?.content) {
-        setLessonContent(lesson.content);
+      if (content) {
+        setLessonContent(content);
         setIsContentLoaded(true);
-        return lesson.content;
+        return content;
       }
       
       return null;
