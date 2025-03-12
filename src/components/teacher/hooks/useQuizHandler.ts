@@ -34,7 +34,6 @@ export const useQuizHandler = (lessonId: string) => {
     error: managementError 
   } = useQuizManagement(lessonId);
 
-  // Function to fetch lesson content for quiz generation
   const fetchLessonContent = async (): Promise<string | null> => {
     try {
       if (lessonContent && isContentLoaded) {
@@ -56,7 +55,6 @@ export const useQuizHandler = (lessonId: string) => {
     }
   };
 
-  // Enhanced quiz generation that analyzes content
   const generateSmartQuiz = async (numQuestions: number): Promise<boolean> => {
     try {
       const content = await fetchLessonContent();
@@ -64,13 +62,11 @@ export const useQuizHandler = (lessonId: string) => {
         return false;
       }
       
-      // Analyze and optimize content for quiz generation
       const optimizedContent = QuizContentAnalyzer.prepareContentForQuizGeneration(
         content, 
         numQuestions
       );
       
-      // Use optimized content for quiz generation
       return await generateQuiz(numQuestions, optimizedContent);
     } catch (error) {
       console.error("Error in smart quiz generation:", error);
@@ -78,28 +74,16 @@ export const useQuizHandler = (lessonId: string) => {
     }
   };
 
-  // Re-export the functions and combine the loading/error states
   return {
-    // Content Analysis
     fetchLessonContent,
-    
-    // Smart Generation
     generateSmartQuiz,
-    
-    // Original Generation
     generateQuiz,
-    
-    // Fetching
     fetchQuizQuestions,
     fetchQuizDetails,
-    
-    // Management
     saveQuizTitle,
     deleteQuiz,
     publishQuiz,
     unpublishQuiz,
-    
-    // Combined states
     loading: generationLoading || fetchLoading,
     saving,
     isRetrying,

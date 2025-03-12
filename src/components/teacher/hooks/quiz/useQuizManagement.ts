@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -6,7 +7,7 @@ export const useQuizManagement = (lessonId: string) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const saveQuizTitle = async (quizTitle: string): Promise<boolean> => {
+  const saveQuizTitle = async (quizTitle: string): Promise<void> => {
     try {
       setSaving(true);
       setError(null);
@@ -29,21 +30,19 @@ export const useQuizManagement = (lessonId: string) => {
       toast.success('Quiz updated', {
         description: 'Your quiz has been updated successfully',
       });
-      
-      return true;
     } catch (error: any) {
       console.error("Error saving quiz:", error);
       setError(error.message);
       toast.error('Save failed', {
         description: 'Failed to save quiz. Please try again.',
       });
-      return false;
+      throw error;
     } finally {
       setSaving(false);
     }
   };
 
-  const publishQuiz = async (): Promise<boolean> => {
+  const publishQuiz = async (): Promise<void> => {
     try {
       setSaving(true);
       setError(null);
@@ -66,21 +65,19 @@ export const useQuizManagement = (lessonId: string) => {
       toast.success('Quiz published', {
         description: 'Your quiz is now published and visible to students',
       });
-      
-      return true;
     } catch (error: any) {
       console.error("Error publishing quiz:", error);
       setError(error.message);
       toast.error('Publish failed', {
         description: 'Failed to publish quiz. Please try again.',
       });
-      return false;
+      throw error;
     } finally {
       setSaving(false);
     }
   };
 
-  const unpublishQuiz = async (): Promise<boolean> => {
+  const unpublishQuiz = async (): Promise<void> => {
     try {
       setSaving(true);
       setError(null);
@@ -103,21 +100,19 @@ export const useQuizManagement = (lessonId: string) => {
       toast.success('Quiz unpublished', {
         description: 'Your quiz is now unpublished and hidden from students',
       });
-      
-      return true;
     } catch (error: any) {
       console.error("Error unpublishing quiz:", error);
       setError(error.message);
       toast.error('Unpublish failed', {
         description: 'Failed to unpublish quiz. Please try again.',
       });
-      return false;
+      throw error;
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteQuiz = async (): Promise<boolean> => {
+  const deleteQuiz = async (): Promise<void> => {
     try {
       setSaving(true);
       setError(null);
@@ -135,7 +130,7 @@ export const useQuizManagement = (lessonId: string) => {
           
       if (fetchError) throw fetchError;
       if (!quiz) {
-        return true; // Nothing to delete
+        return; // Nothing to delete
       }
       
       // Delete the quiz questions first (cascade will delete options)
@@ -157,15 +152,13 @@ export const useQuizManagement = (lessonId: string) => {
       toast.success('Quiz deleted', {
         description: 'Your quiz has been deleted successfully',
       });
-      
-      return true;
     } catch (error: any) {
       console.error("Error deleting quiz:", error);
       setError(error.message);
       toast.error('Delete failed', {
         description: 'Failed to delete quiz. Please try again.',
       });
-      return false;
+      throw error;
     } finally {
       setSaving(false);
     }
