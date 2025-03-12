@@ -1,24 +1,28 @@
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 export const useQuizPublishState = (
-  publishQuiz: () => Promise<void>,
-  unpublishQuiz: () => Promise<void>
+  publishQuiz: () => Promise<boolean>,
+  unpublishQuiz: () => Promise<boolean>
 ) => {
   const [isPublished, setIsPublished] = useState(false);
 
   const togglePublishStatus = async (): Promise<boolean> => {
     try {
       if (isPublished) {
-        await unpublishQuiz();
-        setIsPublished(false);
+        const success = await unpublishQuiz();
+        if (success) {
+          setIsPublished(false);
+        }
+        return success;
       } else {
-        await publishQuiz();
-        setIsPublished(true);
+        const success = await publishQuiz();
+        if (success) {
+          setIsPublished(true);
+        }
+        return success;
       }
-      return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error toggling publish status:", error);
       return false;
     }

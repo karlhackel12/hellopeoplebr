@@ -1,13 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface QuizPublishSwitchProps {
   isPublished: boolean;
-  onTogglePublish: () => Promise<boolean> | Promise<void>;
+  onTogglePublish: () => Promise<boolean>;
   saving: boolean;
 }
 
@@ -16,6 +17,31 @@ const QuizPublishSwitch: React.FC<QuizPublishSwitchProps> = ({
   onTogglePublish,
   saving
 }) => {
+  const [localSaving, setLocalSaving] = useState(false);
+  
+  const handleTogglePublish = async () => {
+    try {
+      setLocalSaving(true);
+      const success = await onTogglePublish();
+      
+      if (!success) {
+        toast.error(isPublished 
+          ? "Failed to unpublish quiz" 
+          : "Failed to publish quiz",
+        {
+          description: "Please try again later",
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling publish status:", error);
+      toast.error("Error changing publish status", {
+        description: "An unexpected error occurred",
+      });
+    } finally {
+      setLocalSaving(false);
+    }
+  };
+
   return (
     <div className="px-6 py-2 border-b flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -29,7 +55,7 @@ const QuizPublishSwitch: React.FC<QuizPublishSwitchProps> = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
-        {saving ? (
+        {(saving || localSaving) ? (
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
         ) : null}
         <Label htmlFor="publish-toggle" className="text-sm">
@@ -38,8 +64,8 @@ const QuizPublishSwitch: React.FC<QuizPublishSwitchProps> = ({
         <Switch 
           id="publish-toggle" 
           checked={isPublished} 
-          onCheckedChange={onTogglePublish}
-          disabled={saving}
+          onCheckedChange={handleTogglePublish}
+          disabled={saving || localSaving}
         />
       </div>
     </div>

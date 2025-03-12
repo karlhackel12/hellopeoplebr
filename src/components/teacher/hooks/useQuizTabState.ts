@@ -159,9 +159,12 @@ export const useQuizTabState = (lessonId?: string) => {
       } else {
         onPhaseChange('error');
       }
+      
+      return success;
     } catch (error) {
       console.error("Error in quiz generation:", error);
       onPhaseChange('error');
+      return false;
     }
   };
 
@@ -176,6 +179,7 @@ export const useQuizTabState = (lessonId?: string) => {
       setExistingQuiz(false);
       setIsPublished(false);
     }
+    return success;
   };
 
   return {

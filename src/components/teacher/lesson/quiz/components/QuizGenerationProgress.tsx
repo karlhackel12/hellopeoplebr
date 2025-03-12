@@ -75,6 +75,7 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
 
   const progressPercentage = getProgressPercentage();
   const currentInfo = phases[currentPhase];
+  const phaseValues: GenerationPhase[] = ['idle', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
 
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-md border">
