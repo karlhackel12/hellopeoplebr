@@ -23,6 +23,12 @@ export const useLessonProgress = (lessonId: string | undefined) => {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
+      
+      // Ensure completed_sections is always an array
+      if (data && !data.completed_sections) {
+        data.completed_sections = [];
+      }
+      
       return data;
     },
     enabled: !!lessonId
@@ -38,7 +44,7 @@ export const useLessonProgress = (lessonId: string | undefined) => {
         completed,
         completed_at: completed ? new Date().toISOString() : null,
         last_accessed_at: new Date().toISOString(),
-        completed_sections: sections
+        completed_sections: sections || []
       };
       
       if (lessonProgress) {

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
@@ -16,6 +17,7 @@ const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const [activeTab, setActiveTab] = React.useState('content');
   const [completedSections, setCompletedSections] = React.useState<string[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const { lesson, lessonLoading, quiz, quizQuestions } = useLessonData(lessonId);
   const { lessonProgress, updateProgress } = useLessonProgress(lessonId);
@@ -24,6 +26,8 @@ const LessonView: React.FC = () => {
   useEffect(() => {
     if (lessonProgress?.completed_sections) {
       setCompletedSections(lessonProgress.completed_sections);
+    } else {
+      setCompletedSections([]);
     }
   }, [lessonProgress]);
 
@@ -43,11 +47,14 @@ const LessonView: React.FC = () => {
     }
     
     setCompletedSections(newCompletedSections);
+    setIsUpdating(true);
     updateProgress({ completed: false, sections: newCompletedSections });
+    setIsUpdating(false);
   };
   
   const handleMarkComplete = () => {
     try {
+      setIsUpdating(true);
       updateProgress({ completed: true, sections: completedSections });
       if (assignment) {
         updateAssignmentStatus(assignment.id, 'completed', true);
@@ -56,6 +63,8 @@ const LessonView: React.FC = () => {
     } catch (error) {
       console.error('Error marking lesson as complete:', error);
       toast.error('Failed to mark lesson as complete');
+    } finally {
+      setIsUpdating(false);
     }
   };
   
@@ -92,7 +101,7 @@ const LessonView: React.FC = () => {
           title={lesson.title}
           isCompleted={!!lessonProgress?.completed}
           onMarkComplete={handleMarkComplete}
-          isUpdating={false}
+          isUpdating={isUpdating}
         />
         
         {assignment && (
