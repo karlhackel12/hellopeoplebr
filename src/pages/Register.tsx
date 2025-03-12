@@ -14,8 +14,13 @@ const Register: React.FC = () => {
     const storedInvitationCode = sessionStorage.getItem('invitationCode');
     const storedEmail = sessionStorage.getItem('invitedEmail');
 
-    if (storedInvitationCode && storedEmail) {
+    if (storedInvitationCode) {
+      console.log("Found stored invitation code:", storedInvitationCode);
       setInvitationCode(storedInvitationCode);
+    }
+    
+    if (storedEmail) {
+      console.log("Found stored email:", storedEmail);
       setInvitationEmail(storedEmail);
     }
     
@@ -24,6 +29,7 @@ const Register: React.FC = () => {
     const codeParam = urlParams.get('code');
     
     if (codeParam) {
+      console.log("Found invitation code in URL:", codeParam);
       setInvitationCode(codeParam);
       // We'll let the invitation code validation in AuthForm handle filling the email
     }

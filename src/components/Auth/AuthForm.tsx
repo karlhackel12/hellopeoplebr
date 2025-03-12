@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -146,17 +147,31 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, invitationData }) => {
     setInvitationStatus(null);
     
     try {
-      const { data: invitation, error } = await supabase
+      console.log("Validating invitation code:", code);
+      
+      // First, try to get the invitation
+      const { data: invitations, error } = await supabase
         .from('student_invitations')
         .select(`
           *,
           invited_by:profiles(first_name, last_name)
         `)
         .eq('invitation_code', code.toUpperCase())
-        .eq('status', 'pending')
-        .single();
+        .eq('status', 'pending');
       
-      if (error || !invitation) {
+      console.log("Invitation query result:", { invitations, error });
+      
+      if (error) {
+        console.error("Supabase error:", error);
+        setInvitationStatus({ 
+          valid: false, 
+          message: 'Error validating code: ' + error.message 
+        });
+        return false;
+      }
+      
+      if (!invitations || invitations.length === 0) {
+        console.log("No invitation found with this code");
         setInvitationStatus({ 
           valid: false, 
           message: 'Invalid or expired invitation code' 
@@ -164,8 +179,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, invitationData }) => {
         return false;
       }
       
+      // Use the first invitation if multiple are found
+      const invitation = invitations[0];
+      
+      // Check if the invitation has expired
       const expiresAt = new Date(invitation.expires_at);
       if (expiresAt < new Date()) {
+        console.log("Invitation expired on:", expiresAt);
         setInvitationStatus({ 
           valid: false, 
           message: 'This invitation has expired' 
@@ -179,6 +199,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, invitationData }) => {
       
       form.setValue('email', invitation.email);
       
+      console.log("Valid invitation from:", teacherName);
       setInvitationStatus({ 
         valid: true, 
         message: `Valid invitation from ${teacherName}`, 
@@ -202,7 +223,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, invitationData }) => {
     const code = event.target.value;
     
     if (type === 'register') {
-      (form.getValues() as RegisterFormValues).invitationCode = code;
+      if (form.getValues() && typeof form.getValues() === 'object') {
+        (form.getValues() as RegisterFormValues).invitationCode = code;
+      }
       
       if (code.length === 8) {
         await validateInvitationCode(code);
