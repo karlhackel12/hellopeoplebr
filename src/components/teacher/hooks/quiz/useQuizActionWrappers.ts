@@ -9,9 +9,9 @@ export const useQuizActionWrappers = (
   setShowPreview: (value: boolean) => void,
   setContentLoading: (msg: string | null) => void
 ) => {
-  const wrappedGenerateQuiz = async (): Promise<boolean> => {
+  const wrappedGenerateQuiz = async (numQuestions: string): Promise<boolean> => {
     setShowPreview(false);
-    return await handleGenerateQuiz(setContentLoading);
+    return await handleGenerateQuiz(numQuestions, setContentLoading);
   };
 
   const wrappedSaveQuiz = async (quizTitle: string): Promise<boolean> => {

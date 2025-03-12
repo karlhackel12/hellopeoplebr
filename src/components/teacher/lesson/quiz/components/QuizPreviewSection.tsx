@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Question } from '@/components/teacher/quiz/types';
@@ -53,7 +52,7 @@ const QuizPreviewSection: React.FC<QuizPreviewSectionProps> = ({
         quizTitle={quizTitle}
         setQuizTitle={setQuizTitle}
         previewQuestions={previewQuestions}
-        saveQuiz={handleSaveQuiz}
+        saveQuiz={() => handleSaveQuiz(quizTitle)}
         discardQuiz={handleDiscardQuiz}
         saving={saving}
         existingQuiz={existingQuiz}
