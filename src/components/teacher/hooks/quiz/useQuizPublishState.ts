@@ -7,24 +7,21 @@ export const useQuizPublishState = (
   isPublished: boolean,
   setIsPublished: (value: boolean) => void
 ) => {
-  const togglePublishStatus = async (): Promise<boolean> => {
+  const togglePublishStatus = async (): Promise<void> => {
     try {
       if (isPublished) {
         const success = await unpublishQuiz();
         if (success) {
           setIsPublished(false);
         }
-        return success;
       } else {
         const success = await publishQuiz();
         if (success) {
           setIsPublished(true);
         }
-        return success;
       }
     } catch (error) {
       console.error("Error toggling publish status:", error);
-      return false;
     }
   };
 

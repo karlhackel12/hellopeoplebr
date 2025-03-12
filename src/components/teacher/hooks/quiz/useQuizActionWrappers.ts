@@ -9,23 +9,22 @@ export const useQuizActionWrappers = (
   setShowPreview: (value: boolean) => void,
   setContentLoading: (msg: string | null) => void
 ) => {
-  const wrappedGenerateQuiz = async (numQuestions: string): Promise<boolean> => {
+  const wrappedGenerateQuiz = async (numQuestions: string): Promise<void> => {
     setShowPreview(false);
-    return await handleGenerateQuiz(setContentLoading);
+    await handleGenerateQuiz(setContentLoading);
   };
 
-  const wrappedSaveQuiz = async (quizTitle: string): Promise<boolean> => {
-    return await handleSaveQuiz(quizTitle);
+  const wrappedSaveQuiz = async (quizTitle: string): Promise<void> => {
+    await handleSaveQuiz(quizTitle);
   };
 
-  const wrappedDiscardQuiz = async (): Promise<boolean> => {
+  const wrappedDiscardQuiz = async (): Promise<void> => {
     const success = await handleDiscardQuiz();
     if (success) {
       resetPreview();
       setExistingQuiz(false);
       setIsPublished(false);
     }
-    return success;
   };
 
   return {
