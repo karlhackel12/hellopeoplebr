@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/ui/Logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -58,6 +59,7 @@ const Navbar: React.FC = () => {
           </ul>
           
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="font-medium">
                 Log in
@@ -72,7 +74,8 @@ const Navbar: React.FC = () => {
         </nav>
         
         {/* Mobile Menu Toggle */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center space-x-2">
+          <ThemeToggle />
           <Button
             variant="ghost" 
             size="icon"
