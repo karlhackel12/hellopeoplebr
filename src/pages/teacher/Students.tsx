@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,9 +8,11 @@ import StudentsList from '@/components/teacher/students/StudentsList';
 import StudentInviteForm from '@/components/teacher/StudentInviteForm';
 import InvitationsList from '@/components/teacher/InvitationsList';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const Students = () => {
   const [activeTab, setActiveTab] = useState('students');
+  const queryClient = useQueryClient();
   
   // Fetch student profile data using React Query
   const { 
@@ -83,11 +85,12 @@ const Students = () => {
     });
   }, [students, onboardingData]);
 
-  // Fetch invitation data
+  // Fetch invitation data with better cache control
   const { 
     data: invitations = [], 
     isLoading: loadingInvitations,
-    refetch: refetchInvitations
+    refetch: refetchInvitations,
+    isRefetching: isRefetchingInvitations
   } = useQuery({
     queryKey: ['student-invitations'],
     queryFn: async () => {
@@ -105,13 +108,16 @@ const Students = () => {
 
       return data || [];
     },
-    // Don't auto-refetch on window focus - we'll control when to refetch
-    refetchOnWindowFocus: false
+    staleTime: 1000, // Consider data stale after 1 second
+    refetchOnWindowFocus: false // Don't auto-refetch on window focus
   });
 
   // Handler for successful invitation or deletion
   const handleInvitationUpdate = () => {
+    // Invalidate the cache and refetch data
+    queryClient.invalidateQueries({ queryKey: ['student-invitations'] });
     refetchInvitations();
+    
     // Switch to the invitations tab if we're not already there
     if (activeTab !== 'invitations') {
       setActiveTab('invitations');
@@ -163,7 +169,7 @@ const Students = () => {
           <TabsContent value="invitations">
             <InvitationsList 
               invitations={invitations} 
-              loading={loadingInvitations} 
+              loading={loadingInvitations || isRefetchingInvitations} 
               onUpdate={handleInvitationUpdate} 
             />
           </TabsContent>

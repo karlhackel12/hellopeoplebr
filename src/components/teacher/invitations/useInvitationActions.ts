@@ -1,16 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useInvitationActions = (onUpdate: () => void) => {
   const [deletingInvitations, setDeletingInvitations] = useState<Record<string, boolean>>({});
   const [resendingInvitations, setResendingInvitations] = useState<Record<string, boolean>>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const resendInvitation = async (id: string, email: string, invitationCode: string) => {
     try {
       // Mark this invitation as being processed
       setResendingInvitations(prev => ({ ...prev, [id]: true }));
+      setIsProcessing(true);
 
       // Update the expiration date (7 days from now)
       const expiresAt = new Date();
@@ -77,13 +79,15 @@ export const useInvitationActions = (onUpdate: () => void) => {
     } finally {
       // Clear the processing state
       setResendingInvitations(prev => ({ ...prev, [id]: false }));
+      setIsProcessing(false);
     }
   };
   
-  const deleteInvitation = async (id: string, email: string) => {
+  const deleteInvitation = useCallback(async (id: string, email: string) => {
     try {
       // Mark this invitation as being deleted
       setDeletingInvitations(prev => ({ ...prev, [id]: true }));
+      setIsProcessing(true);
       
       const { error } = await supabase
         .from('student_invitations')
@@ -97,7 +101,9 @@ export const useInvitationActions = (onUpdate: () => void) => {
       });
       
       // Trigger the parent component to refetch the updated data
-      onUpdate();
+      setTimeout(() => {
+        onUpdate();
+      }, 100); // Small delay to ensure the UI updates properly
     } catch (error: any) {
       console.error('Error deleting invitation:', error);
       toast.error('Failed to delete invitation', {
@@ -106,13 +112,15 @@ export const useInvitationActions = (onUpdate: () => void) => {
     } finally {
       // Clear the deleting state
       setDeletingInvitations(prev => ({ ...prev, [id]: false }));
+      setIsProcessing(false);
     }
-  };
+  }, [onUpdate]);
 
   return {
     deletingInvitations,
     resendingInvitations,
     resendInvitation,
-    deleteInvitation
+    deleteInvitation,
+    isProcessing
   };
 };
