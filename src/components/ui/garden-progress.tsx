@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Seed, Sprout, LeafyGreen, Flower2, Sparkles } from 'lucide-react';
+import { Sprout, LeafyGreen, Flower2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GardenProgressProps {
@@ -31,8 +31,7 @@ const GardenProgress: React.FC<GardenProgressProps> = ({
   }, [value, previousValue]);
 
   const getGrowthIcon = () => {
-    if (value < 25) return <Seed className="h-6 w-6" />;
-    if (value < 50) return <Sprout className="h-6 w-6" />;
+    if (value < 25) return <Sprout className="h-6 w-6" />;
     if (value < 75) return <LeafyGreen className="h-6 w-6" />;
     return <Flower2 className="h-6 w-6" />;
   };

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Seed, Sprout, LeafyGreen, Flower2 } from 'lucide-react';
+import { Sprout, LeafyGreen, Flower2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type LoaderDuration = 'quick' | 'standard' | 'extended';
@@ -26,10 +26,9 @@ const GardenLoader: React.FC<GardenLoaderProps> = ({
         "relative flex items-center justify-center",
         durationConfig[duration]
       )}>
-        <Seed className="absolute h-6 w-6 opacity-0 growth-stage-1" />
-        <Sprout className="absolute h-6 w-6 opacity-0 growth-stage-2" />
-        <LeafyGreen className="absolute h-6 w-6 opacity-0 growth-stage-3" />
-        <Flower2 className="absolute h-6 w-6 opacity-0 growth-stage-4" />
+        <Sprout className="absolute h-6 w-6 opacity-0 growth-stage-1" />
+        <LeafyGreen className="absolute h-6 w-6 opacity-0 growth-stage-2" />
+        <Flower2 className="absolute h-6 w-6 opacity-0 growth-stage-3" />
       </div>
     </div>
   );
