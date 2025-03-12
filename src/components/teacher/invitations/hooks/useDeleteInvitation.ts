@@ -1,17 +1,22 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useInvitationAction } from './useInvitationAction';
 
 export const useDeleteInvitation = (onUpdate: () => void) => {
-  const [deletingInvitations, setDeletingInvitations] = useState<Record<string, boolean>>({});
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { 
+    processingInvitations: deletingInvitations, 
+    isProcessing: isDeleting,
+    startProcessing,
+    stopProcessing,
+    handleError
+  } = useInvitationAction(onUpdate);
 
   const deleteInvitation = useCallback(async (id: string, email: string) => {
     try {
       // Mark this invitation as being deleted
-      setDeletingInvitations(prev => ({ ...prev, [id]: true }));
-      setIsDeleting(true);
+      startProcessing(id);
       
       console.log(`Attempting to delete invitation for ${email} with id ${id}`);
       
@@ -60,26 +65,13 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
       } else {
         console.log('Deletion verification successful - invitation no longer exists in database');
       }
-      
     } catch (error: any) {
-      console.error('Failed to delete invitation:', error);
-      toast.error('Failed to delete invitation', {
-        description: error.message || 'An unexpected error occurred.',
-      });
+      handleError(error, 'delete invitation');
     } finally {
       // Clear the deleting state
-      setDeletingInvitations(prev => ({ ...prev, [id]: false }));
-      setIsDeleting(false);
-      
-      // Force data refresh
-      onUpdate();
-      
-      // Schedule another refresh after a delay to ensure database consistency
-      setTimeout(() => {
-        onUpdate();
-      }, 500);
+      stopProcessing(id);
     }
-  }, [onUpdate]);
+  }, [startProcessing, stopProcessing, handleError]);
 
   return {
     deletingInvitations,

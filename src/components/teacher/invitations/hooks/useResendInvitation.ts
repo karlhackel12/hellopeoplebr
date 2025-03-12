@@ -1,17 +1,22 @@
 
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useInvitationAction } from './useInvitationAction';
 
 export const useResendInvitation = (onUpdate: () => void) => {
-  const [resendingInvitations, setResendingInvitations] = useState<Record<string, boolean>>({});
-  const [isResending, setIsResending] = useState(false);
+  const { 
+    processingInvitations: resendingInvitations, 
+    isProcessing: isResending,
+    startProcessing,
+    stopProcessing,
+    handleError
+  } = useInvitationAction(onUpdate);
 
-  const resendInvitation = async (id: string, email: string, invitationCode: string) => {
+  const resendInvitation = useCallback(async (id: string, email: string, invitationCode: string) => {
     try {
       // Mark this invitation as being processed
-      setResendingInvitations(prev => ({ ...prev, [id]: true }));
-      setIsResending(true);
+      startProcessing(id);
 
       console.log(`Resending invitation to ${email} with code ${invitationCode}`);
 
@@ -77,20 +82,13 @@ export const useResendInvitation = (onUpdate: () => void) => {
           description: `The invitation to ${email} has been resent with code ${invitationCode}`,
         });
       }
-      
-      // Trigger the parent component to refetch the updated data
-      onUpdate();
     } catch (error: any) {
-      console.error('Error resending invitation:', error);
-      toast.error('Failed to resend invitation', {
-        description: error.message,
-      });
+      handleError(error, 'resend invitation');
     } finally {
       // Clear the processing state
-      setResendingInvitations(prev => ({ ...prev, [id]: false }));
-      setIsResending(false);
+      stopProcessing(id);
     }
-  };
+  }, [startProcessing, stopProcessing, handleError]);
 
   return {
     resendingInvitations,
