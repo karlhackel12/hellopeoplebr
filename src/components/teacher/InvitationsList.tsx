@@ -5,6 +5,7 @@ import { useInvitationActions } from './invitations/useInvitationActions';
 import InvitationsTable from './invitations/InvitationsTable';
 import EmptyInvitations from './invitations/EmptyInvitations';
 import LoadingInvitations from './invitations/LoadingInvitations';
+import { Loader2 } from 'lucide-react';
 
 interface InvitationsListProps {
   invitations: StudentInvitation[];
