@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import StudentsList from '@/components/teacher/students/StudentsList';
 import StudentInviteForm from '@/components/teacher/StudentInviteForm';
 import InvitationsList from '@/components/teacher/InvitationsList';
-import OnboardingProgress from '@/components/teacher/dashboard/OnboardingProgress';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -152,11 +150,6 @@ const Students = () => {
     <TeacherLayout>
       <div className="animate-fade-in">
         <h1 className="text-3xl font-bold mb-6">Student Management</h1>
-        
-        {/* Add the OnboardingProgress component here */}
-        <div className="mb-6">
-          <OnboardingProgress />
-        </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
