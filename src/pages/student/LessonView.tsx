@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen } from 'lucide-react';
@@ -12,9 +12,11 @@ import { useLessonProgress } from './hooks/useLessonProgress';
 import { useAssignmentData } from './hooks/useAssignmentData';
 import LessonHeader from './components/LessonHeader';
 import LessonAssignmentCard from './components/LessonAssignmentCard';
+import LessonCardTransition from '@/components/student/LessonCardTransition';
 
 const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState('content');
   const [completedSections, setCompletedSections] = React.useState<string[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -67,6 +69,10 @@ const LessonView: React.FC = () => {
       setIsUpdating(false);
     }
   };
+
+  const handleBack = () => {
+    navigate('/student/lessons');
+  };
   
   if (lessonLoading) {
     return (
@@ -96,70 +102,78 @@ const LessonView: React.FC = () => {
 
   return (
     <StudentLayout>
-      <div className="space-y-6">
-        <LessonHeader 
-          title={lesson.title}
-          isCompleted={!!lessonProgress?.completed}
-          onMarkComplete={handleMarkComplete}
-          isUpdating={isUpdating}
-        />
-        
-        {assignment && (
-          <LessonAssignmentCard 
-            title={assignment.title}
-            description={assignment.description}
-            dueDate={assignment.due_date}
+      <LessonCardTransition
+        lessonId={lessonId || ''}
+        title={lesson.title}
+        isCard={false}
+        className="space-y-6"
+      >
+        <div className="space-y-6">
+          <LessonHeader 
+            title={lesson.title}
+            isCompleted={!!lessonProgress?.completed}
+            onMarkComplete={handleMarkComplete}
+            onBack={handleBack}
+            isUpdating={isUpdating}
           />
-        )}
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="content">
-              <BookOpen className="h-4 w-4 mr-1" /> Lesson Content
-            </TabsTrigger>
-            <TabsTrigger value="quiz" disabled={!quiz || !quiz.is_published}>
-              Quiz {!quiz && '(Not Available)'}
-            </TabsTrigger>
-          </TabsList>
           
-          <TabsContent value="content" className="mt-4">
-            <LessonContentTab 
-              content={lesson.content || 'No content available.'} 
-              completedSections={completedSections}
-              toggleSectionCompletion={handleSectionComplete}
+          {assignment && (
+            <LessonAssignmentCard 
+              title={assignment.title}
+              description={assignment.description}
+              dueDate={assignment.due_date}
             />
-          </TabsContent>
-          
-          <TabsContent value="quiz" className="mt-4">
-            {quiz ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{quiz.title}</CardTitle>
-                  {quiz.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{quiz.description}</p>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {quizQuestions && quizQuestions.length > 0 ? (
-                    <div className="space-y-4">
-                      <p>This quiz has {quizQuestions.length} questions</p>
-                      <p>Passing score: {quiz.pass_percent}%</p>
-                    </div>
-                  ) : (
-                    <p>No questions available for this quiz.</p>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  No quiz available for this lesson.
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+          )}
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="content">
+                <BookOpen className="h-4 w-4 mr-1" /> Lesson Content
+              </TabsTrigger>
+              <TabsTrigger value="quiz" disabled={!quiz || !quiz.is_published}>
+                Quiz {!quiz && '(Not Available)'}
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="content" className="mt-4">
+              <LessonContentTab 
+                content={lesson.content || 'No content available.'} 
+                completedSections={completedSections}
+                toggleSectionCompletion={handleSectionComplete}
+              />
+            </TabsContent>
+            
+            <TabsContent value="quiz" className="mt-4">
+              {quiz ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{quiz.title}</CardTitle>
+                    {quiz.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{quiz.description}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {quizQuestions && quizQuestions.length > 0 ? (
+                      <div className="space-y-4">
+                        <p>This quiz has {quizQuestions.length} questions</p>
+                        <p>Passing score: {quiz.pass_percent}%</p>
+                      </div>
+                    ) : (
+                      <p>No questions available for this quiz.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    No quiz available for this lesson.
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </LessonCardTransition>
     </StudentLayout>
   );
 };

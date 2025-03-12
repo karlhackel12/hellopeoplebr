@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -129,13 +130,21 @@ export default {
           '0%': { transform: 'scale(1)', opacity: '1' },
           '100%': { transform: 'scale(0.95)', opacity: '0' }
         },
-        float: {
+        'float': {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' }
         },
         'pulse-light': {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.8' }
+        },
+        'expand-card': {
+          '0%': { transform: 'scale(1)', opacity: '1' },
+          '100%': { transform: 'scale(1.05)', opacity: '0' }
+        },
+        'contract-card': {
+          '0%': { transform: 'scale(1.05)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' }
         }
       },
       animation: {
@@ -149,7 +158,9 @@ export default {
         'scale-in': 'scale-in 0.3s ease-out',
         'scale-out': 'scale-out 0.3s ease-out',
         'float': 'float 6s ease-in-out infinite',
-        'pulse-light': 'pulse-light 4s ease-in-out infinite'
+        'pulse-light': 'pulse-light 4s ease-in-out infinite',
+        'expand-card': 'expand-card 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+        'contract-card': 'contract-card 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards'
       }
     }
   },

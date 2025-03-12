@@ -1,9 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { PageTransitionWrapper } from "@/components/ui/page-transition";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -41,10 +43,26 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/login" element={
+                <PageTransitionWrapper>
+                  <Login />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/register" element={
+                <PageTransitionWrapper>
+                  <Register />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/forgot-password" element={
+                <PageTransitionWrapper>
+                  <ForgotPassword />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/dashboard" element={
+                <PageTransitionWrapper>
+                  <Dashboard />
+                </PageTransitionWrapper>
+              } />
               <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
               
               {/* Invitation routes - both with and without code parameter */}
@@ -52,21 +70,73 @@ const App = () => (
               <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
               
               {/* Teacher Routes */}
-              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-              <Route path="/teacher/lessons" element={<Lessons />} />
-              <Route path="/teacher/lessons/create" element={<LessonEditor />} />
-              <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
-              <Route path="/teacher/lessons/preview/:id" element={<LessonPreviewPage />} />
-              <Route path="/teacher/invitations" element={<Invitations />} />
-              <Route path="/teacher/students" element={<Students />} />
-              <Route path="/teacher/assignments" element={<Assignments />} />
-              <Route path="/teacher/settings" element={<Settings />} />
+              <Route path="/teacher/dashboard" element={
+                <PageTransitionWrapper>
+                  <TeacherDashboard />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/lessons" element={
+                <PageTransitionWrapper>
+                  <Lessons />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/lessons/create" element={
+                <PageTransitionWrapper>
+                  <LessonEditor />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/lessons/edit/:id" element={
+                <PageTransitionWrapper>
+                  <LessonEditor />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/lessons/preview/:id" element={
+                <PageTransitionWrapper>
+                  <LessonPreviewPage />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/invitations" element={
+                <PageTransitionWrapper>
+                  <Invitations />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/students" element={
+                <PageTransitionWrapper>
+                  <Students />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/assignments" element={
+                <PageTransitionWrapper>
+                  <Assignments />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/settings" element={
+                <PageTransitionWrapper>
+                  <Settings />
+                </PageTransitionWrapper>
+              } />
               
               {/* Student Routes */}
-              <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/student/lessons" element={<StudentLessons />} />
-              <Route path="/student/lessons/view/:lessonId" element={<LessonView />} />
-              <Route path="/student/settings" element={<StudentSettings />} />
+              <Route path="/student/dashboard" element={
+                <PageTransitionWrapper>
+                  <StudentDashboard />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/student/lessons" element={
+                <PageTransitionWrapper>
+                  <StudentLessons />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/student/lessons/view/:lessonId" element={
+                <PageTransitionWrapper>
+                  <LessonView />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/student/settings" element={
+                <PageTransitionWrapper>
+                  <StudentSettings />
+                </PageTransitionWrapper>
+              } />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
