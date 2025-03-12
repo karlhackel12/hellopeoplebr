@@ -18,6 +18,15 @@ const Register: React.FC = () => {
       setInvitationCode(storedInvitationCode);
       setInvitationEmail(storedEmail);
     }
+    
+    // Also check URL parameters for invitation code
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get('code');
+    
+    if (codeParam) {
+      setInvitationCode(codeParam);
+      // We'll let the invitation code validation in AuthForm handle filling the email
+    }
   }, []);
 
   const studentBenefits = [
