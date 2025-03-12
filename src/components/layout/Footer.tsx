@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '@/components/ui/Logo';
-import { Instagram, Tiktok, MessageCircle } from 'lucide-react';
+import { Instagram, MessageCircle } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -46,7 +46,20 @@ const Footer: React.FC = () => {
             </p>
             <div className="mt-6 flex space-x-4">
               <a href="https://tiktok.com/@hellopeople" className="text-muted-foreground hover:text-[#1E88E5] transition-colors">
-                <Tiktok size={24} />
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="24" 
+                  height="24" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="lucide lucide-brand-tiktok"
+                >
+                  <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                </svg>
               </a>
               <a href="https://instagram.com/hellopeople" className="text-muted-foreground hover:text-[#1E88E5] transition-colors">
                 <Instagram size={24} />

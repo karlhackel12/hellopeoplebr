@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizPreviewState } from './quiz/useQuizPreviewState';
@@ -113,12 +114,21 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
+  // Convert the function to ensure it returns Promise<void>
+  const wrappedGenerateQuizVoid = async (): Promise<void> => {
+    try {
+      await handleGenerateQuiz();
+    } catch (error) {
+      console.error("Error in wrappedGenerateQuizVoid:", error);
+    }
+  };
+
   const {
     wrappedGenerateQuiz,
     wrappedSaveQuiz,
     wrappedDiscardQuiz
   } = useQuizActionWrappers(
-    handleGenerateQuiz,
+    wrappedGenerateQuizVoid, // Pass the void-returning function here
     handleSaveQuiz,
     handleDiscardQuiz,
     resetPreview,
