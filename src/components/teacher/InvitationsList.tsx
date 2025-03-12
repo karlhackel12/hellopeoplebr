@@ -18,7 +18,7 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
   loading, 
   onUpdate 
 }) => {
-  const resendInvitation = async (id: string, email: string) => {
+  const resendInvitation = async (id: string, email: string, invitationCode: string) => {
     try {
       // Update the expiration date (7 days from now)
       const expiresAt = new Date();
@@ -34,9 +34,46 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
       
       if (error) throw error;
       
-      toast.success('Invitation resent', {
-        description: `The invitation to ${email} has been resent`,
+      // Get user profile to get the teacher's name
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast.error('Authentication error', {
+          description: 'You must be logged in to resend invitations',
+        });
+        return;
+      }
+
+      // Get teacher's profile data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', userData.user.id)
+        .single();
+
+      // Format teacher name for the email
+      const teacherName = profileData
+        ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
+        : 'Your teacher';
+
+      // Send the invitation email using our edge function
+      const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          email: email,
+          invitation_code: invitationCode,
+          teacher_name: teacherName
+        }
       });
+      
+      if (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        toast.warning('Invitation updated but email delivery failed', {
+          description: 'The invitation was updated but we could not send the email. The student can still use the invitation code.',
+        });
+      } else {
+        toast.success('Invitation resent', {
+          description: `The invitation to ${email} has been resent`,
+        });
+      }
       
       onUpdate();
     } catch (error: any) {
@@ -140,7 +177,7 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => resendInvitation(invitation.id, invitation.email)}
+                        onClick={() => resendInvitation(invitation.id, invitation.email, invitation.invitation_code)}
                         title="Resend invitation"
                       >
                         <RefreshCw className="h-4 w-4" />
