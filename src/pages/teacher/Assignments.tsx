@@ -23,7 +23,7 @@ const Assignments = () => {
     }
   }, [initialTab]);
 
-  // Fetch assignments with React Query
+  // Fetch assignments with React Query - improved query to get all related data
   const { 
     data: assignments = [], 
     isLoading: loadingAssignments,
@@ -34,11 +34,23 @@ const Assignments = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return [];
 
-      // Base query
+      // Enhanced query with explicit selections
       let query = supabase
         .from('student_assignments')
         .select(`
-          *,
+          id,
+          title,
+          description,
+          student_id,
+          assigned_by,
+          lesson_id,
+          quiz_id,
+          due_date,
+          started_at,
+          completed_at,
+          created_at,
+          updated_at,
+          status,
           student:student_id(id, first_name, last_name, avatar_url),
           lesson:lesson_id(id, title),
           quiz:quiz_id(id, title)
@@ -52,7 +64,14 @@ const Assignments = () => {
       
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching assignments:', error);
+        toast.error('Error loading assignments', {
+          description: error.message
+        });
+        return [];
+      }
+      
       return data || [];
     },
   });
@@ -69,41 +88,62 @@ const Assignments = () => {
         .select('id, first_name, last_name, avatar_url')
         .eq('role', 'student');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching students:', error);
+        toast.error('Error loading students');
+        return [];
+      }
+      
       return data || [];
     }
   });
 
-  // Fetch lessons and quizzes with React Query
+  // Improved lesson and quiz fetching - separate queries for better performance
   const { 
-    data: contentData = { lessons: [], quizzes: [] },
-    isLoading: loadingContent
+    data: lessons = [],
+    isLoading: loadingLessons
   } = useQuery({
-    queryKey: ['lessons-quizzes'],
+    queryKey: ['assignable-lessons'],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return { lessons: [], quizzes: [] };
+      if (!user.user) return [];
 
-      // Parallel requests for better performance
-      const [lessonsResponse, quizzesResponse] = await Promise.all([
-        supabase
-          .from('lessons')
-          .select('id, title')
-          .eq('created_by', user.user.id),
-        
-        supabase
-          .from('quizzes')
-          .select('id, title')
-          .eq('created_by', user.user.id)
-      ]);
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('id, title, is_published')
+        .eq('created_by', user.user.id)
+        .order('title');
 
-      if (lessonsResponse.error) throw lessonsResponse.error;
-      if (quizzesResponse.error) throw quizzesResponse.error;
+      if (error) {
+        console.error('Error fetching lessons:', error);
+        return [];
+      }
+      
+      return data || [];
+    }
+  });
 
-      return { 
-        lessons: lessonsResponse.data || [],
-        quizzes: quizzesResponse.data || []
-      };
+  const { 
+    data: quizzes = [],
+    isLoading: loadingQuizzes
+  } = useQuery({
+    queryKey: ['assignable-quizzes'],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select('id, title, is_published, lesson_id')
+        .eq('created_by', user.user.id)
+        .order('title');
+
+      if (error) {
+        console.error('Error fetching quizzes:', error);
+        return [];
+      }
+      
+      return data || [];
     }
   });
 
@@ -113,6 +153,8 @@ const Assignments = () => {
     // Switch to the view tab after creating
     setActiveTab('view');
   };
+
+  const isLoading = loadingStudents || loadingLessons || loadingQuizzes;
 
   return (
     <TeacherLayout>
@@ -129,13 +171,14 @@ const Assignments = () => {
           
           <TabsContent value="create" className="space-y-4">
             <div className="bg-card rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Assign Lesson or Quiz</h2>
+              <h2 className="text-xl font-semibold mb-4">Assign Content to Student</h2>
               <AssignmentForm 
                 students={students}
-                lessons={contentData?.lessons || []}
-                quizzes={contentData?.quizzes || []}
+                lessons={lessons}
+                quizzes={quizzes}
                 onSuccess={handleAssignmentSuccess}
                 initialStudentId={initialStudentId}
+                isLoading={isLoading}
               />
             </div>
           </TabsContent>

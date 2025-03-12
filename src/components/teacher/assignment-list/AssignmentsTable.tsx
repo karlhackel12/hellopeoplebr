@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import AssignmentStatusBadge from './AssignmentStatusBadge';
 import AssignmentContentType from './AssignmentContentType';
 import DeleteAssignmentButton from './DeleteAssignmentButton';
+import { Badge } from '@/components/ui/badge';
 
 interface AssignmentsTableProps {
   assignments: any[];
@@ -84,7 +85,17 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <AssignmentContentType assignment={assignment} />
+                  <div className="space-y-1">
+                    <AssignmentContentType assignment={assignment} />
+                    
+                    {assignment.quiz_id && (
+                      <div className="flex items-center">
+                        <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200">
+                          Has Quiz
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <AssignmentStatusBadge status={assignment.status} />

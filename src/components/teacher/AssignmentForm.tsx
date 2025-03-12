@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -12,30 +12,42 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 
 const assignmentSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
   description: z.string().optional(),
   student_id: z.string().uuid({ message: 'Please select a student' }),
-  content_type: z.enum(['lesson', 'quiz']),
-  content_ids: z.array(z.string().uuid()).min(1, { message: 'Please select at least one item to assign' }),
+  content_type: z.enum(['lesson']),
+  lesson_id: z.string().uuid({ message: 'Please select a lesson to assign' }),
   due_date: z.date().optional(),
 });
 
 type AssignmentFormValues = z.infer<typeof assignmentSchema>;
 
+interface Lesson {
+  id: string;
+  title: string;
+  is_published?: boolean;
+}
+
+interface Quiz {
+  id: string;
+  title: string;
+  lesson_id?: string;
+  is_published?: boolean;
+}
+
 interface AssignmentFormProps {
   students: any[];
-  lessons: any[];
-  quizzes: any[];
+  lessons: Lesson[];
+  quizzes: Quiz[];
   onSuccess: () => void;
-  initialStudentId?: string; // Added initialStudentId prop as optional
+  initialStudentId?: string;
+  isLoading?: boolean;
 }
 
 const AssignmentForm: React.FC<AssignmentFormProps> = ({ 
@@ -43,36 +55,24 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
   lessons, 
   quizzes, 
   onSuccess,
-  initialStudentId
+  initialStudentId,
+  isLoading = false
 }) => {
-  const [contentType, setContentType] = useState<'lesson' | 'quiz'>('lesson');
-  const [open, setOpen] = useState(false);
-
+  const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
+  const [hasRelatedQuiz, setHasRelatedQuiz] = useState<boolean>(false);
+  
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
       title: '',
       description: '',
       content_type: 'lesson',
-      content_ids: [],
-      student_id: initialStudentId || '', // Use initialStudentId if provided
+      student_id: initialStudentId || '',
     },
   });
 
-  // Watch the content type to update the UI
-  const watchedContentType = form.watch('content_type');
-  
-  // Update the state when the form value changes
-  React.useEffect(() => {
-    if (watchedContentType) {
-      setContentType(watchedContentType);
-      // Reset content selections when changing type
-      form.setValue('content_ids', []);
-    }
-  }, [watchedContentType, form]);
-
   // Set initialStudentId when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialStudentId) {
       form.setValue('student_id', initialStudentId, {
         shouldValidate: true,
@@ -80,6 +80,33 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
       });
     }
   }, [initialStudentId, form]);
+
+  // Check if selected lesson has an associated quiz
+  useEffect(() => {
+    const lessonId = form.watch('lesson_id');
+    if (lessonId) {
+      const relatedQuiz = quizzes.find(quiz => quiz.lesson_id === lessonId);
+      setHasRelatedQuiz(!!relatedQuiz);
+      setSelectedLesson(lessonId);
+    } else {
+      setHasRelatedQuiz(false);
+      setSelectedLesson(null);
+    }
+  }, [form.watch('lesson_id'), quizzes]);
+
+  // Generate a nice title when lesson is selected
+  useEffect(() => {
+    const lessonId = form.watch('lesson_id');
+    if (lessonId && !form.getValues('title')) {
+      const selectedLesson = lessons.find(lesson => lesson.id === lessonId);
+      if (selectedLesson) {
+        form.setValue('title', `Complete: ${selectedLesson.title}`, { 
+          shouldValidate: true,
+          shouldDirty: true
+        });
+      }
+    }
+  }, [form.watch('lesson_id'), lessons, form]);
 
   const onSubmit = async (values: AssignmentFormValues) => {
     try {
@@ -92,60 +119,50 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         return;
       }
 
-      // Create multiple assignments (one per selected content)
-      const assignments = values.content_ids.map(contentId => ({
+      // Find related quiz if it exists
+      const relatedQuiz = quizzes.find(quiz => quiz.lesson_id === values.lesson_id);
+      const quizId = relatedQuiz?.id || null;
+
+      // Create the assignment
+      const assignment = {
         title: values.title,
         description: values.description || null,
         student_id: values.student_id,
         assigned_by: userData.user.id,
         due_date: values.due_date ? values.due_date.toISOString() : null,
-        // Set either lesson_id or quiz_id based on content type
-        ...(values.content_type === 'lesson' 
-          ? { lesson_id: contentId, quiz_id: null } 
-          : { quiz_id: contentId, lesson_id: null })
-      }));
+        lesson_id: values.lesson_id,
+        quiz_id: quizId,
+        status: 'not_started'
+      };
 
-      // Insert assignments
+      // Insert assignment
       const { error } = await supabase
         .from('student_assignments')
-        .insert(assignments);
+        .insert(assignment);
 
       if (error) throw error;
 
-      toast.success('Assignments created', {
-        description: `${assignments.length} assignment(s) have been successfully created`,
+      toast.success('Assignment created', {
+        description: `Assignment has been successfully created${quizId ? ' with associated quiz' : ''}`,
       });
       
       form.reset();
       onSuccess();
     } catch (error: any) {
-      console.error('Error creating assignments:', error);
-      toast.error('Failed to create assignments', {
+      console.error('Error creating assignment:', error);
+      toast.error('Failed to create assignment', {
         description: error.message,
       });
     }
   };
 
-  const availableContent = contentType === 'lesson' ? lessons : quizzes;
+  // Filter published lessons only
+  const publishedLessons = lessons.filter(lesson => lesson.is_published !== false);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Assignment Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter assignment title" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
           <FormField
             control={form.control}
             name="student_id"
@@ -154,8 +171,15 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
                 <FormLabel>Student</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a student" />
+                    <SelectTrigger disabled={isLoading}>
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Loading students...</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select a student" />
+                      )}
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -181,7 +205,69 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
               </FormItem>
             )}
           />
+          
+          <FormField
+            control={form.control}
+            name="lesson_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lesson</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger disabled={isLoading}>
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Loading lessons...</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select a lesson" />
+                      )}
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {publishedLessons.length === 0 && (
+                      <SelectItem value="no-lessons" disabled>
+                        No published lessons available
+                      </SelectItem>
+                    )}
+                    {publishedLessons.map((lesson) => (
+                      <SelectItem key={lesson.id} value={lesson.id}>
+                        {lesson.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {publishedLessons.length === 0 ? 
+                    "You need to create and publish lessons first" : 
+                    "Select the lesson to assign"
+                  }
+                </FormDescription>
+                {hasRelatedQuiz && (
+                  <p className="text-sm mt-2 text-blue-600">
+                    This lesson has an associated quiz that will be assigned automatically
+                  </p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
+        
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assignment Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter assignment title" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <FormField
           control={form.control}
@@ -196,120 +282,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
                   {...field} 
                 />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="content_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content Type</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="lesson" id="lesson" />
-                    <label htmlFor="lesson" className="cursor-pointer text-sm font-medium">
-                      Lesson
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="quiz" id="quiz" />
-                    <label htmlFor="quiz" className="cursor-pointer text-sm font-medium">
-                      Quiz
-                    </label>
-                  </div>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-          
-        <FormField
-          control={form.control}
-          name="content_ids"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{contentType === 'lesson' ? 'Lessons' : 'Quizzes'} (multiple selection)</FormLabel>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={open}
-                      className="w-full justify-between"
-                    >
-                      {field.value.length > 0
-                        ? `${field.value.length} item(s) selected`
-                        : `Select ${contentType === 'lesson' ? 'lessons' : 'quizzes'}`}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder={`Search ${contentType === 'lesson' ? 'lessons' : 'quizzes'}...`} />
-                    <CommandEmpty>No {contentType} found.</CommandEmpty>
-                    <CommandGroup className="max-h-64 overflow-auto">
-                      {availableContent.length === 0 ? (
-                        <CommandItem disabled>
-                          No {contentType === 'lesson' ? 'lessons' : 'quizzes'} available
-                        </CommandItem>
-                      ) : (
-                        availableContent.map((item) => (
-                          <CommandItem
-                            key={item.id}
-                            onSelect={() => {
-                              const selected = field.value.includes(item.id)
-                                ? field.value.filter(id => id !== item.id)
-                                : [...field.value, item.id];
-                              form.setValue('content_ids', selected, { 
-                                shouldValidate: true,
-                                shouldDirty: true
-                              });
-                            }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Checkbox 
-                                checked={field.value.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  const selected = checked
-                                    ? [...field.value, item.id]
-                                    : field.value.filter(id => id !== item.id);
-                                  form.setValue('content_ids', selected, { 
-                                    shouldValidate: true,
-                                    shouldDirty: true
-                                  });
-                                }}
-                              />
-                              <span>{item.title}</span>
-                            </div>
-                            <Check
-                              className={cn(
-                                "ml-auto h-4 w-4",
-                                field.value.includes(item.id) ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                          </CommandItem>
-                        ))
-                      )}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {availableContent.length === 0 && (
-                <FormDescription>
-                  You need to create {contentType === 'lesson' ? 'lessons' : 'quizzes'} first
-                </FormDescription>
-              )}
               <FormMessage />
             </FormItem>
           )}
@@ -361,9 +333,14 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         <Button 
           type="submit" 
           className="w-full"
-          disabled={form.formState.isSubmitting}
+          disabled={form.formState.isSubmitting || isLoading}
         >
-          {form.formState.isSubmitting ? 'Creating...' : 'Create Assignment'}
+          {form.formState.isSubmitting ? 
+            'Creating...' : 
+            hasRelatedQuiz ? 
+              'Create Assignment with Quiz' : 
+              'Create Assignment'
+          }
         </Button>
       </form>
     </Form>

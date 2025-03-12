@@ -7,6 +7,7 @@ interface AssignmentContentTypeProps {
 }
 
 const AssignmentContentType: React.FC<AssignmentContentTypeProps> = ({ assignment }) => {
+  // Always show the lesson if available
   if (assignment.lesson_id) {
     return (
       <div className="flex items-center">
@@ -14,7 +15,9 @@ const AssignmentContentType: React.FC<AssignmentContentTypeProps> = ({ assignmen
         <span>Lesson: {assignment.lesson?.title || 'Unknown'}</span>
       </div>
     );
-  } else if (assignment.quiz_id) {
+  } 
+  // Only show quiz if there's no lesson (should be rare)
+  else if (assignment.quiz_id) {
     return (
       <div className="flex items-center">
         <ClipboardListIcon className="h-4 w-4 mr-1 text-purple-500" />
@@ -22,6 +25,7 @@ const AssignmentContentType: React.FC<AssignmentContentTypeProps> = ({ assignmen
       </div>
     );
   }
+  
   return <span>Unknown content</span>;
 };
 
