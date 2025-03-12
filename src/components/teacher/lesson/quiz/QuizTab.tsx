@@ -67,9 +67,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       <QuizGenerationForm
         numQuestions={numQuestions}
         setNumQuestions={setNumQuestions}
-        onGenerateQuiz={async () => {
-          await handleGenerateQuiz();
-        }}
+        onGenerateQuiz={handleGenerateQuiz}
         loading={loading}
         isRetrying={isRetrying}
         error={loadingError}
@@ -83,12 +81,8 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           togglePreview={() => setShowPreview(!showPreview)}
           quizTitle={quizTitle}
           setQuizTitle={setQuizTitle}
-          handleSaveQuiz={async () => {
-            await handleSaveQuiz();
-          }}
-          handleDiscardQuiz={async () => {
-            await handleDiscardQuiz();
-          }}
+          handleSaveQuiz={handleSaveQuiz}
+          handleDiscardQuiz={handleDiscardQuiz}
           saving={saving}
           existingQuiz={existingQuiz}
           isPublished={isPublished}

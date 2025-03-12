@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -111,7 +112,7 @@ export const useQuizManagement = (lessonId: string) => {
     }
   };
 
-  const deleteQuiz = async (): Promise<boolean> => {
+  const deleteQuiz = async (): Promise<void> => {
     try {
       setSaving(true);
       setError(null);
@@ -129,7 +130,7 @@ export const useQuizManagement = (lessonId: string) => {
           
       if (fetchError) throw fetchError;
       if (!quiz) {
-        return true; // Nothing to delete, but consider it successful
+        return; // Nothing to delete
       }
       
       // Delete the quiz questions first (cascade will delete options)
@@ -151,15 +152,13 @@ export const useQuizManagement = (lessonId: string) => {
       toast.success('Quiz deleted', {
         description: 'Your quiz has been deleted successfully',
       });
-      
-      return true;
     } catch (error: any) {
       console.error("Error deleting quiz:", error);
       setError(error.message);
       toast.error('Delete failed', {
         description: 'Failed to delete quiz. Please try again.',
       });
-      return false;
+      throw error;
     } finally {
       setSaving(false);
     }

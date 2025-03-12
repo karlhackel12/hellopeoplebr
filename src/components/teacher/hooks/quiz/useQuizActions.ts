@@ -9,7 +9,7 @@ export const useQuizActions = (
   fetchLessonContent: () => Promise<string | null>,
   fetchQuizQuestions: () => Promise<any[]>
 ) => {
-  const handleSaveQuiz = async (quizTitle: string): Promise<boolean> => {
+  const handleSaveQuiz = async (quizTitle: string) => {
     try {
       await saveQuizTitle(quizTitle);
       toast.success('Quiz saved', {
@@ -25,7 +25,7 @@ export const useQuizActions = (
     }
   };
 
-  const handleDiscardQuiz = async (): Promise<boolean> => {
+  const handleDiscardQuiz = async () => {
     if (!lessonId) return false;
     
     try {
@@ -45,7 +45,7 @@ export const useQuizActions = (
     }
   };
 
-  const handleGenerateQuiz = async (numQuestions: string | number, setContentLoadingMessage: (msg: string | null) => void): Promise<boolean> => {
+  const handleGenerateQuiz = async (numQuestions: string, setContentLoadingMessage: (msg: string | null) => void) => {
     if (!lessonId) {
       toast.error('Missing lesson', {
         description: 'Please save the lesson before generating a quiz.',
@@ -67,8 +67,7 @@ export const useQuizActions = (
       }
       
       // Generate the quiz with smart content analysis
-      const numQuestionsInt = typeof numQuestions === 'string' ? parseInt(numQuestions) : numQuestions;
-      const result = await generateSmartQuiz(numQuestionsInt);
+      const result = await generateSmartQuiz(parseInt(numQuestions));
       
       if (result) {
         const questions = await fetchQuizQuestions();
