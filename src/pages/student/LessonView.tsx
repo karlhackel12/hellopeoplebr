@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
@@ -6,9 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, CheckCircle, ArrowLeft, Clock } from 'lucide-react';
+import { BookOpen, CheckCircle, ArrowLeft, Clock, ChevronDown, ChevronUp, CheckIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import LessonContentTab from '@/components/teacher/preview/LessonContentTab';
 
 const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -32,7 +34,7 @@ const LessonView: React.FC = () => {
       headers.push({ id, text, level });
     }
     
-    return headers;
+    return headers.filter(header => header.level === 2); // Only return H2 sections
   };
 
   // Fetch lesson data
@@ -230,19 +232,43 @@ const LessonView: React.FC = () => {
     }
   }, [assignment, queryClient]);
   
+  useEffect(() => {
+    // Initialize completed sections from saved progress if available
+    if (lessonProgress?.completed_sections && Array.isArray(lessonProgress.completed_sections)) {
+      setCompletedSections(lessonProgress.completed_sections);
+    }
+  }, [lessonProgress]);
+
   const sections = lesson?.content ? extractSections(lesson.content) : [];
   
   const handleSectionComplete = (sectionId: string) => {
+    let newCompletedSections: string[];
+    
     if (completedSections.includes(sectionId)) {
-      setCompletedSections(completedSections.filter(id => id !== sectionId));
+      newCompletedSections = completedSections.filter(id => id !== sectionId);
     } else {
-      const newCompletedSections = [...completedSections, sectionId];
-      setCompletedSections(newCompletedSections);
-      
-      // If all sections are complete, mark lesson as complete
-      if (sections.length > 0 && newCompletedSections.length === sections.length) {
-        handleMarkComplete();
-      }
+      newCompletedSections = [...completedSections, sectionId];
+    }
+    
+    setCompletedSections(newCompletedSections);
+    
+    // Save progress to database
+    if (lessonProgress) {
+      supabase
+        .from('user_lesson_progress')
+        .update({
+          completed_sections: newCompletedSections,
+          last_accessed_at: new Date().toISOString()
+        })
+        .eq('id', lessonProgress.id)
+        .then(({ error }) => {
+          if (error) console.error('Error saving section progress:', error);
+        });
+    }
+    
+    // If all sections are complete, mark lesson as complete
+    if (sections.length > 0 && newCompletedSections.length === sections.length) {
+      handleMarkComplete();
     }
   };
   
@@ -349,14 +375,44 @@ const LessonView: React.FC = () => {
         {sections.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Progress</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base">Progress</CardTitle>
+                <div className="text-sm font-medium">
+                  {completedSections.length} of {sections.length} sections
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Progress value={lessonCompletionPercentage} className="h-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>{completedSections.length} of {sections.length} sections read</span>
-                  <span>{lessonCompletionPercentage}%</span>
+                <Progress 
+                  value={lessonCompletionPercentage} 
+                  className="h-2" 
+                  indicatorClassName={
+                    lessonCompletionPercentage < 30 ? "bg-red-500" :
+                    lessonCompletionPercentage < 70 ? "bg-amber-500" : 
+                    "bg-green-500"
+                  }
+                />
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {sections.map((section) => (
+                    <Button 
+                      key={section.id}
+                      variant={completedSections.includes(section.text) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        document.getElementById(section.id)?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'start'
+                        });
+                      }}
+                      className={completedSections.includes(section.text) ? "bg-primary" : ""}
+                    >
+                      {completedSections.includes(section.text) && (
+                        <CheckIcon className="mr-1 h-3 w-3" />
+                      )}
+                      <span className="truncate max-w-[150px]">{section.text}</span>
+                    </Button>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -374,34 +430,11 @@ const LessonView: React.FC = () => {
           </TabsList>
           
           <TabsContent value="content" className="mt-4">
-            <Card>
-              <CardContent className="p-6 prose max-w-none">
-                <div className="markdown-content" 
-                     dangerouslySetInnerHTML={{ __html: lesson.content || 'No content available.' }} />
-                
-                {sections.length > 0 && (
-                  <div className="mt-8 border-t pt-4">
-                    <h3 className="text-lg font-medium mb-2">Track Your Progress</h3>
-                    <div className="space-y-2">
-                      {sections.map((section) => (
-                        <div key={section.id} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id={section.id}
-                            checked={completedSections.includes(section.id)}
-                            onChange={() => handleSectionComplete(section.id)}
-                            className="mr-2"
-                          />
-                          <label htmlFor={section.id} className="cursor-pointer">
-                            {section.text}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <LessonContentTab 
+              content={lesson.content || 'No content available.'} 
+              completedSections={completedSections}
+              toggleSectionCompletion={handleSectionComplete}
+            />
           </TabsContent>
           
           <TabsContent value="quiz" className="mt-4">
