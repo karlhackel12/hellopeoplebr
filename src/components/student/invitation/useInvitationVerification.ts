@@ -35,7 +35,7 @@ export const useInvitationVerification = () => {
       form.setValue('invitationCode', initialCode);
       verifyInvitation(initialCode);
     }
-  }, [code, codeFromQuery]);
+  }, [code, codeFromQuery, form]);
 
   const verifyInvitation = async (invitationCode: string) => {
     setIsLoading(true);
@@ -44,45 +44,34 @@ export const useInvitationVerification = () => {
     try {
       console.log("Verifying invitation code:", invitationCode);
       
-      // Case-insensitive query for the invitation code
-      const { data: invitation, error } = await supabase
-        .from('student_invitations')
-        .select(`
-          *,
-          invited_by:profiles(first_name, last_name)
-        `)
-        .ilike('invitation_code', invitationCode)
-        .eq('status', 'pending')
-        .maybeSingle();
+      // Use the database function to validate the invitation code
+      const { data, error: functionError } = await supabase.rpc(
+        'validate_invitation_code',
+        { code: invitationCode.toUpperCase() }
+      );
       
-      console.log("Invitation query result:", { invitation, error });
+      console.log("Validation result:", data, functionError);
       
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error('Error validating code: ' + error.message);
+      if (functionError) {
+        console.error("Supabase function error:", functionError);
+        throw new Error('Error validating code: ' + functionError.message);
       }
       
-      if (!invitation) {
-        throw new Error('This invitation code is invalid or has already been used');
+      // Check if we got a result and if the invitation is valid
+      if (!data || data.length === 0 || !data[0].is_valid) {
+        const message = data && data[0] ? data[0].message : 'Invalid invitation code';
+        throw new Error(message);
       }
       
-      // Check if the invitation has expired
-      const expiresAt = new Date(invitation.expires_at);
-      if (expiresAt < new Date()) {
-        throw new Error('This invitation has expired. Please contact your teacher for a new invitation.');
-      }
+      // Extract the validation result
+      const validationResult = data[0];
       
-      // Get teacher information - now correctly typed
-      const formattedTeacherName = invitation.invited_by ? 
-        `${invitation.invited_by.first_name || ''} ${invitation.invited_by.last_name || ''}`.trim() : 
-        'Your teacher';
-      
-      setStudentEmail(invitation.email);
-      setTeacherName(formattedTeacherName);
+      setStudentEmail(validationResult.student_email);
+      setTeacherName(validationResult.teacher_name);
       setInvitationVerified(true);
       
       toast.success('Invitation verified', {
-        description: `You've been invited by ${formattedTeacherName}`,
+        description: `You've been invited by ${validationResult.teacher_name}`,
       });
       
     } catch (error: any) {
@@ -98,13 +87,15 @@ export const useInvitationVerification = () => {
   };
 
   const onSubmit = async (values: InvitationFormValues) => {
-    await verifyInvitation(values.invitationCode.toUpperCase());
+    await verifyInvitation(values.invitationCode);
   };
 
   const proceedToRegister = () => {
     if (studentEmail) {
+      // Save invitation data to session storage for the registration flow
       sessionStorage.setItem('invitationCode', form.getValues().invitationCode.toUpperCase());
       sessionStorage.setItem('invitedEmail', studentEmail);
+      sessionStorage.setItem('teacherName', teacherName);
       navigate('/register');
     }
   };
