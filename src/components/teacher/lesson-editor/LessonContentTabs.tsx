@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ManualLessonForm from '../ManualLessonForm';
 import AILessonForm from '../AILessonForm';
 import MediaAttachmentsTab from '../lesson/media/MediaAttachmentsTab';
-import QuizTab from '../lesson/quiz/QuizTab';
 
 interface LessonContentTabsProps {
   form: UseFormReturn<LessonFormValues>;
@@ -25,10 +24,9 @@ const LessonContentTabs: React.FC<LessonContentTabsProps> = ({
   
   return (
     <Tabs defaultValue="content" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 px-0">
+      <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-2 px-0">
         <TabsTrigger value="content">Lesson Content</TabsTrigger>
         <TabsTrigger value="media">Media Attachments</TabsTrigger>
-        <TabsTrigger value="quiz">Quiz</TabsTrigger>
       </TabsList>
       
       <TabsContent value="content" className="mt-6">
@@ -41,10 +39,6 @@ const LessonContentTabs: React.FC<LessonContentTabsProps> = ({
       
       <TabsContent value="media" className="mt-6">
         <MediaAttachmentsTab lessonId={lessonId} isEditMode={isEditMode} />
-      </TabsContent>
-      
-      <TabsContent value="quiz" className="mt-6">
-        <QuizTab lessonId={lessonId} isEditMode={isEditMode} />
       </TabsContent>
     </Tabs>
   );
