@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 
 interface QuizPublishSwitchProps {
   isPublished: boolean;
-  onTogglePublish: () => void;
+  onTogglePublish: () => Promise<boolean> | Promise<void>;
   saving: boolean;
 }
 

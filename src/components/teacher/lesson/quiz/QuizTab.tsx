@@ -34,11 +34,6 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     togglePublishStatus,
   } = useQuizTabState(lessonId);
 
-  // Handle toggle publish status with boolean return
-  const handleTogglePublish = async () => {
-    await togglePublishStatus();
-  };
-
   if (!isEditMode || !lessonId) {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg">
@@ -91,7 +86,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           saving={saving}
           existingQuiz={existingQuiz}
           isPublished={isPublished}
-          onTogglePublish={handleTogglePublish}
+          onTogglePublish={togglePublishStatus}
         />
       )}
       

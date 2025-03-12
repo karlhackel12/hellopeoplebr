@@ -17,7 +17,7 @@ interface QuizPreviewSectionProps {
   saving: boolean;
   existingQuiz: boolean;
   isPublished: boolean;
-  onTogglePublish: () => void;
+  onTogglePublish: () => Promise<boolean> | Promise<void>;
 }
 
 const QuizPreviewSection: React.FC<QuizPreviewSectionProps> = ({

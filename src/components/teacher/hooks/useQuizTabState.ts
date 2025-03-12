@@ -48,11 +48,30 @@ export const useQuizTabState = (lessonId?: string) => {
     resetPreview
   } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
 
+  // Create custom publish/unpublish functions that return boolean
+  const publishQuizWithResult = async (): Promise<boolean> => {
+    try {
+      await publishQuiz();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const unpublishQuizWithResult = async (): Promise<boolean> => {
+    try {
+      await unpublishQuiz();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
   const {
     isPublished,
     setIsPublished,
     togglePublishStatus
-  } = useQuizPublishState(publishQuiz, unpublishQuiz);
+  } = useQuizPublishState(publishQuizWithResult, unpublishQuizWithResult);
 
   const {
     handleSaveQuiz,
