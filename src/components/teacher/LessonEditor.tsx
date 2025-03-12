@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form } from '@/components/ui/form';
@@ -9,13 +8,14 @@ import LessonFormHeader from './lesson-editor/LessonFormHeader';
 import LessonFormBasicFields from './lesson-editor/LessonFormBasicFields';
 import LessonContentTabs from './lesson-editor/LessonContentTabs';
 import LessonSaveButton from './lesson-editor/LessonSaveButton';
+import { Button } from '@/components/ui/button';
+import { BookQuestion } from 'lucide-react';
 
 const LessonEditor: React.FC = () => {
   const navigate = useNavigate();
   const { form, onSubmit, loading, saving, isEditMode, id } = useLessonForm();
   const [lessonType, setLessonType] = useState<'manual' | 'ai'>('manual');
 
-  // Detect if content was AI-generated when loading an existing lesson
   useEffect(() => {
     const contentSource = form.watch('contentSource');
     if (contentSource === 'ai_generated' || contentSource === 'mixed') {
@@ -25,19 +25,20 @@ const LessonEditor: React.FC = () => {
     }
   }, [form.watch('contentSource')]);
 
-  // Handle lesson type change
   const handleLessonTypeChange = (type: 'manual' | 'ai') => {
     setLessonType(type);
     
-    // Update content source based on type
     if (type === 'manual') {
       form.setValue('contentSource', 'manual');
     }
-    // For AI type, the content source will be set when content is actually generated
   };
 
   const handleBack = () => {
     navigate('/teacher/lessons');
+  };
+
+  const handleQuizClick = () => {
+    navigate(`/teacher/lessons/${id}/quiz`);
   };
 
   if (loading) {
@@ -53,11 +54,22 @@ const LessonEditor: React.FC = () => {
   return (
     <TeacherLayout>
       <div className="container mx-auto p-4 md:p-8">
-        <LessonFormHeader 
-          isEditMode={isEditMode}
-          saving={saving}
-          onBackClick={handleBack}
-        />
+        <div className="flex justify-between items-start mb-6">
+          <LessonFormHeader 
+            isEditMode={isEditMode}
+            saving={saving}
+            onBackClick={handleBack}
+          />
+          {isEditMode && id && (
+            <Button 
+              onClick={handleQuizClick}
+              className="gap-2"
+            >
+              <BookQuestion className="h-4 w-4" />
+              Quiz
+            </Button>
+          )}
+        </div>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

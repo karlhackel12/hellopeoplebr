@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -93,6 +92,11 @@ const App = () => (
               <Route path="/teacher/lessons/preview/:id" element={
                 <PageTransitionWrapper>
                   <LessonPreviewPage />
+                </PageTransitionWrapper>
+              } />
+              <Route path="/teacher/lessons/:lessonId/quiz" element={
+                <PageTransitionWrapper>
+                  <LessonQuizPage />
                 </PageTransitionWrapper>
               } />
               <Route path="/teacher/invitations" element={
