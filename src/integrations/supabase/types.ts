@@ -677,6 +677,18 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      is_student: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
+      is_teacher: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
       mark_invitation_used: {
         Args: {
           invitation_code_param: string

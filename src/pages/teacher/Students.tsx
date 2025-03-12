@@ -23,25 +23,46 @@ const Students = () => {
   } = useQuery({
     queryKey: ['students-profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          avatar_url,
-          created_at
-        `)
-        .eq('role', 'student');
+      try {
+        // First check if user is authenticated
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData.user) {
+          throw new Error('Authentication required');
+        }
 
-      if (error) {
-        toast.error('Failed to load students', {
-          description: error.message
+        const { data, error } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            first_name,
+            last_name,
+            avatar_url,
+            created_at
+          `)
+          .eq('role', 'student');
+
+        if (error) {
+          console.error('Error fetching students:', error);
+          if (error.code === 'PGRST301') {
+            toast.error('Permission denied', {
+              description: 'You do not have permission to view student data'
+            });
+          } else {
+            toast.error('Failed to load students', {
+              description: error.message
+            });
+          }
+          throw error;
+        }
+
+        return data || [];
+      } catch (error: any) {
+        console.error('Failed to fetch students:', error);
+        toast.error('Authentication error', {
+          description: 'Please sign in again to continue'
         });
         throw error;
       }
-
-      return data || [];
     }
   });
 
@@ -95,39 +116,57 @@ const Students = () => {
     queryKey: ['student-invitations'],
     queryFn: async () => {
       console.log('Fetching student invitations');
-      // Update the query to use a proper join with profiles instead of auth.users
-      const { data, error } = await supabase
-        .from('student_invitations')
-        .select(`
-          id,
-          email,
-          status,
-          invitation_code,
-          created_at,
-          expires_at,
-          used_by_name,
-          invited_by,
-          profiles:profiles(first_name, last_name)
-        `)
-        .order('created_at', { ascending: false });
+      
+      try {
+        // First check if user is authenticated
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData.user) {
+          throw new Error('Authentication required');
+        }
+        
+        // Update the query to use a proper join with profiles instead of auth.users
+        const { data, error } = await supabase
+          .from('student_invitations')
+          .select(`
+            id,
+            email,
+            status,
+            invitation_code,
+            created_at,
+            expires_at,
+            used_by_name,
+            invited_by,
+            profiles:profiles(first_name, last_name)
+          `)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching invitations:', error);
-        toast.error('Failed to load invitations', {
-          description: error.message
-        });
-        throw error;
+        if (error) {
+          console.error('Error fetching invitations:', error);
+          if (error.code === 'PGRST301') {
+            toast.error('Permission denied', {
+              description: 'You do not have permission to view invitations'
+            });
+          } else {
+            toast.error('Failed to load invitations', {
+              description: error.message
+            });
+          }
+          throw error;
+        }
+
+        console.log('Fetched invitations:', data ? data.length : 0);
+        
+        // Transform the data to match the expected format
+        const transformedData = data?.map(invitation => ({
+          ...invitation,
+          invited_by: invitation.profiles || { first_name: '', last_name: '' }
+        })) || [];
+        
+        return transformedData;
+      } catch (error: any) {
+        console.error('Failed to fetch invitations:', error);
+        return [];
       }
-
-      console.log('Fetched invitations:', data ? data.length : 0);
-      
-      // Transform the data to match the expected format
-      const transformedData = data?.map(invitation => ({
-        ...invitation,
-        invited_by: invitation.profiles || { first_name: '', last_name: '' }
-      })) || [];
-      
-      return transformedData;
     },
     staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: true, // Auto-refetch when window focus returns

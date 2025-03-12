@@ -64,7 +64,17 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
         .select();
 
       if (error) {
-        throw error;
+        console.error('Error generating invitation code:', error);
+        if (error.code === 'PGRST301') {
+          toast.error('Permission denied', {
+            description: 'You do not have permission to generate invitation codes.',
+          });
+        } else {
+          toast.error('Failed to generate invitation code', {
+            description: error.message,
+          });
+        }
+        return;
       }
 
       // Get the generated invitation code

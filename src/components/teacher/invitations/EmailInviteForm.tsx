@@ -64,12 +64,19 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
         .select();
 
       if (error) {
+        console.error('Error creating invitation:', error);
         if (error.code === '23505') {
           toast.error('Invitation already sent', {
             description: 'You have already invited this student',
           });
+        } else if (error.code === 'PGRST301') {
+          toast.error('Permission denied', {
+            description: 'You do not have permission to send invitations. Please check your account status.',
+          });
         } else {
-          throw error;
+          toast.error('Failed to send invitation', {
+            description: error.message,
+          });
         }
         return;
       }
