@@ -116,10 +116,8 @@ export const useInvitationActions = (onUpdate: () => void) => {
         description: `The invitation to ${email} has been deleted`,
       });
       
-      // Trigger the parent component to refetch the updated data
-      setTimeout(() => {
-        onUpdate();
-      }, 100); // Small delay to ensure the UI updates properly
+      // Ensure the parent component refetches the updated data immediately
+      onUpdate();
     } catch (error: any) {
       console.error('Error deleting invitation:', error);
       toast.error('Failed to delete invitation', {

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TeacherLayout from '@/components/layout/TeacherLayout';
@@ -94,6 +94,7 @@ const Students = () => {
   } = useQuery({
     queryKey: ['student-invitations'],
     queryFn: async () => {
+      console.log('Fetching student invitations');
       const { data, error } = await supabase
         .from('student_invitations')
         .select('*')
@@ -106,14 +107,16 @@ const Students = () => {
         throw error;
       }
 
+      console.log('Fetched invitations:', data);
       return data || [];
     },
-    staleTime: 1000, // Consider data stale after 1 second
-    refetchOnWindowFocus: false // Don't auto-refetch on window focus
+    staleTime: 0, // Always consider data stale
+    refetchOnWindowFocus: true // Auto-refetch when window focus returns
   });
 
   // Handler for successful invitation or deletion
-  const handleInvitationUpdate = () => {
+  const handleInvitationUpdate = useCallback(() => {
+    console.log('handleInvitationUpdate called, invalidating cache');
     // Invalidate the cache and refetch data
     queryClient.invalidateQueries({ queryKey: ['student-invitations'] });
     refetchInvitations();
@@ -122,7 +125,7 @@ const Students = () => {
     if (activeTab !== 'invitations') {
       setActiveTab('invitations');
     }
-  };
+  }, [queryClient, refetchInvitations, activeTab, setActiveTab]);
 
   // Show error state if student query failed
   if (studentsError) {

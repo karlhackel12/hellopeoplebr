@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StudentInvitation } from './invitations/InvitationRow';
 import { useInvitationActions } from './invitations/useInvitationActions';
 import InvitationsTable from './invitations/InvitationsTable';
 import EmptyInvitations from './invitations/EmptyInvitations';
 import LoadingInvitations from './invitations/LoadingInvitations';
 import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface InvitationsListProps {
   invitations: StudentInvitation[];
@@ -26,6 +27,11 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
     isProcessing
   } = useInvitationActions(onUpdate);
 
+  // Call onUpdate when component mounts to ensure data is fresh
+  useEffect(() => {
+    onUpdate();
+  }, [onUpdate]);
+
   // Show loading state when initially loading or during batch operations
   if (loading) {
     return <LoadingInvitations />;
@@ -39,10 +45,12 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
   return (
     <div className="space-y-4">
       {isProcessing && (
-        <div className="bg-muted p-3 rounded flex items-center justify-center space-x-2 mb-4">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Processing your request...</span>
-        </div>
+        <Alert className="bg-muted animate-pulse">
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          <AlertDescription>
+            Processing your request...
+          </AlertDescription>
+        </Alert>
       )}
       <InvitationsTable
         invitations={invitations}
