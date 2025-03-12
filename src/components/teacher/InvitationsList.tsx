@@ -1,14 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { MailIcon, RefreshCw, TrashIcon } from 'lucide-react';
+import { MailIcon, RefreshCw, TrashIcon, Loader2 } from 'lucide-react';
+
+interface StudentInvitation {
+  id: string;
+  email: string;
+  invitation_code: string;
+  status: 'pending' | 'accepted' | 'expired' | 'rejected';
+  created_at: string;
+  expires_at: string;
+}
 
 interface InvitationsListProps {
-  invitations: any[];
+  invitations: StudentInvitation[];
   loading: boolean;
   onUpdate: () => void;
 }
@@ -18,8 +27,14 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
   loading, 
   onUpdate 
 }) => {
+  const [deletingInvitations, setDeletingInvitations] = useState<Record<string, boolean>>({});
+  const [resendingInvitations, setResendingInvitations] = useState<Record<string, boolean>>({});
+
   const resendInvitation = async (id: string, email: string, invitationCode: string) => {
     try {
+      // Mark this invitation as being processed
+      setResendingInvitations(prev => ({ ...prev, [id]: true }));
+
       // Update the expiration date (7 days from now)
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
@@ -75,17 +90,24 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
         });
       }
       
+      // Trigger the parent component to refetch the updated data
       onUpdate();
     } catch (error: any) {
       console.error('Error resending invitation:', error);
       toast.error('Failed to resend invitation', {
         description: error.message,
       });
+    } finally {
+      // Clear the processing state
+      setResendingInvitations(prev => ({ ...prev, [id]: false }));
     }
   };
   
   const deleteInvitation = async (id: string, email: string) => {
     try {
+      // Mark this invitation as being deleted
+      setDeletingInvitations(prev => ({ ...prev, [id]: true }));
+      
       const { error } = await supabase
         .from('student_invitations')
         .delete()
@@ -97,12 +119,16 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
         description: `The invitation to ${email} has been deleted`,
       });
       
+      // Trigger the parent component to refetch the updated data
       onUpdate();
     } catch (error: any) {
       console.error('Error deleting invitation:', error);
       toast.error('Failed to delete invitation', {
         description: error.message,
       });
+    } finally {
+      // Clear the deleting state
+      setDeletingInvitations(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -178,17 +204,27 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => resendInvitation(invitation.id, invitation.email, invitation.invitation_code)}
+                        disabled={resendingInvitations[invitation.id]}
                         title="Resend invitation"
                       >
-                        <RefreshCw className="h-4 w-4" />
+                        {resendingInvitations[invitation.id] ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => deleteInvitation(invitation.id, invitation.email)}
+                        disabled={deletingInvitations[invitation.id]}
                         title="Delete invitation"
                       >
-                        <TrashIcon className="h-4 w-4 text-red-500" />
+                        {deletingInvitations[invitation.id] ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <TrashIcon className="h-4 w-4 text-red-500" />
+                        )}
                       </Button>
                     </div>
                   </td>

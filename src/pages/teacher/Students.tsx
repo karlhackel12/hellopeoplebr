@@ -104,12 +104,18 @@ const Students = () => {
       }
 
       return data || [];
-    }
+    },
+    // Don't auto-refetch on window focus - we'll control when to refetch
+    refetchOnWindowFocus: false
   });
 
-  // Handler for successful invitation
-  const handleInvitationSuccess = () => {
+  // Handler for successful invitation or deletion
+  const handleInvitationUpdate = () => {
     refetchInvitations();
+    // Switch to the invitations tab if we're not already there
+    if (activeTab !== 'invitations') {
+      setActiveTab('invitations');
+    }
   };
 
   // Show error state if student query failed
@@ -150,7 +156,7 @@ const Students = () => {
           <TabsContent value="invite" className="space-y-4">
             <div className="bg-card rounded-lg p-6 shadow-sm">
               <h2 className="text-xl font-semibold mb-4">Invite a New Student</h2>
-              <StudentInviteForm onSuccess={handleInvitationSuccess} />
+              <StudentInviteForm onSuccess={handleInvitationUpdate} />
             </div>
           </TabsContent>
           
@@ -158,7 +164,7 @@ const Students = () => {
             <InvitationsList 
               invitations={invitations} 
               loading={loadingInvitations} 
-              onUpdate={refetchInvitations} 
+              onUpdate={handleInvitationUpdate} 
             />
           </TabsContent>
         </Tabs>
