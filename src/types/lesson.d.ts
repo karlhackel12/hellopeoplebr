@@ -1,12 +1,12 @@
-
-export type LessonType = {
+export interface Lesson {
   id: string;
+  created_at: string;
   title: string;
-  description: string;
   content: string;
+  teacher_id: string;
 }
 
-export type LessonProgress = {
+export interface LessonProgress {
   id: string;
   user_id: string;
   lesson_id: string;

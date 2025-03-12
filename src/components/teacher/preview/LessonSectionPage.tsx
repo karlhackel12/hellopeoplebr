@@ -24,7 +24,7 @@ const LessonSectionPage: React.FC<LessonSectionPageProps> = ({
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">{title}</h2>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="flex items-center gap-2"
           onClick={onToggleComplete}

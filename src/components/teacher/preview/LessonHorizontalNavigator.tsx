@@ -53,7 +53,7 @@ const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
       
       <Progress 
         value={completionPercentage} 
-        className="h-2" 
+        className="h-1" 
         indicatorClassName={
           completionPercentage === 100 
             ? "bg-green-500" 
@@ -63,7 +63,7 @@ const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
         }
       />
       
-      <div className="flex justify-between text-xs text-muted-foreground mt-2">
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
         <span>Introduction</span>
         <span>Complete</span>
       </div>

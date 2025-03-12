@@ -22,48 +22,32 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
     ? Math.round((completedSections.length / totalSections) * 100) 
     : 0;
   
-  const getProgressColor = () => {
-    if (percentComplete < 30) return 'bg-red-500';
-    if (percentComplete < 70) return 'bg-amber-500';
-    return 'bg-green-500';
-  };
-  
   return (
-    <div className={cn("mt-8 border-t pt-4", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium flex items-center">
-          <CheckCircle className="h-4 w-4 mr-2 text-primary" />
-          {customLabel || 'Progress'}
-        </h3>
+    <div className={cn("mt-4 pt-2", className)}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-muted-foreground">
+          {completedSections.length} of {totalSections} complete
+        </p>
         <Badge 
           variant={percentComplete === 100 ? "default" : "outline"}
-          className={percentComplete === 100 ? "bg-green-500" : ""}
+          className={cn(
+            "text-xs",
+            percentComplete === 100 ? "bg-green-500" : ""
+          )}
         >
-          {percentComplete === 100 ? 'Complete!' : `${percentComplete}%`}
+          {percentComplete}%
         </Badge>
       </div>
       
       <Progress 
         value={percentComplete} 
-        className="h-2 mb-2" 
-        indicatorClassName={cn(getProgressColor())}
-      />
-      
-      <div className="flex justify-between items-center mt-3">
-        <p className="text-sm text-muted-foreground">
-          {completedSections.length} of {totalSections} {customLabel ? 'steps' : 'sections'} completed
-        </p>
-        
-        {percentComplete === 100 ? (
-          <p className="text-sm text-green-600 font-medium">
-            All sections completed!
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {totalSections - completedSections.length} remaining
-          </p>
+        className="h-1" 
+        indicatorClassName={cn(
+          percentComplete === 100 
+            ? "bg-green-500" 
+            : "bg-primary"
         )}
-      </div>
+      />
     </div>
   );
 };
