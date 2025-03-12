@@ -3,6 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ClerkAuthProvider } from "./auth/ClerkAuthProvider";
+import { ClerkRoutesGuard } from "./auth/ClerkRoutesGuard";
+import { SignIn } from "@clerk/clerk-react";
+import { SignUp } from "@clerk/clerk-react";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,10 +24,6 @@ import LessonPreviewPage from "./pages/teacher/LessonPreviewPage";
 import SidebarDemoPage from "./pages/SidebarDemo";
 import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
-import { ClerkAuthProvider } from "./auth/ClerkAuthProvider";
-import { SignIn } from "@clerk/clerk-react";
-import { SignUp } from "@clerk/clerk-react";
-import { ClerkRoutesGuard } from "./auth/ClerkRoutesGuard";
 
 // Student Pages
 import StudentDashboard from "./pages/student/Dashboard";
@@ -35,50 +35,48 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <OnboardingProvider>
-      <ClerkAuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/sign-in/*" element={<SignIn />} />
-              <Route path="/sign-up/*" element={<SignUp />} />
+    <ClerkAuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/sign-in/*" element={<SignIn />} />
+            <Route path="/sign-up/*" element={<SignUp />} />
+            
+            {/* Protected Routes */}
+            <Route element={<ClerkRoutesGuard />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
               
-              {/* Protected Routes */}
-              <Route element={<ClerkRoutesGuard />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
-                
-                {/* Invitation routes - both with and without code parameter */}
-                <Route path="/invitation" element={<InvitationAcceptancePage />} />
-                <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
-                
-                {/* Teacher Routes */}
-                <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-                <Route path="/teacher/lessons" element={<Lessons />} />
-                <Route path="/teacher/lessons/create" element={<LessonEditor />} />
-                <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
-                <Route path="/teacher/lessons/preview/:id" element={<LessonPreviewPage />} />
-                <Route path="/teacher/invitations" element={<Invitations />} />
-                <Route path="/teacher/students" element={<Students />} />
-                <Route path="/teacher/assignments" element={<Assignments />} />
-                <Route path="/teacher/settings" element={<Settings />} />
-                
-                {/* Student Routes */}
-                <Route path="/student/dashboard" element={<StudentDashboard />} />
-                <Route path="/student/lessons" element={<StudentLessons />} />
-                <Route path="/student/lessons/view/:lessonId" element={<LessonView />} />
-                <Route path="/student/settings" element={<StudentSettings />} />
-              </Route>
+              {/* Invitation routes */}
+              <Route path="/invitation" element={<InvitationAcceptancePage />} />
+              <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
               
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ClerkAuthProvider>
-    </OnboardingProvider>
+              {/* Teacher Routes */}
+              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+              <Route path="/teacher/lessons" element={<Lessons />} />
+              <Route path="/teacher/lessons/create" element={<LessonEditor />} />
+              <Route path="/teacher/lessons/edit/:id" element={<LessonEditor />} />
+              <Route path="/teacher/lessons/preview/:id" element={<LessonPreviewPage />} />
+              <Route path="/teacher/invitations" element={<Invitations />} />
+              <Route path="/teacher/students" element={<Students />} />
+              <Route path="/teacher/assignments" element={<Assignments />} />
+              <Route path="/teacher/settings" element={<Settings />} />
+              
+              {/* Student Routes */}
+              <Route path="/student/dashboard" element={<StudentDashboard />} />
+              <Route path="/student/lessons" element={<StudentLessons />} />
+              <Route path="/student/lessons/view/:lessonId" element={<LessonView />} />
+              <Route path="/student/settings" element={<StudentSettings />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ClerkAuthProvider>
   </QueryClientProvider>
 );
 
