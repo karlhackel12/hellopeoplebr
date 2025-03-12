@@ -1,44 +1,63 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Question } from '../../quiz/types';
-import { toast } from 'sonner';
 
 export const useQuizPreviewState = (
   existingQuiz: boolean,
   fetchQuizQuestions: () => Promise<Question[] | null>
 ) => {
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
-  const [quizTitle, setQuizTitle] = useState('Lesson Quiz');
+  const [showPreview, setShowPreview] = useState(true);
+  const [quizTitle, setQuizTitle] = useState<string>('Lesson Quiz');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const loadQuizPreview = async () => {
+  const loadQuizPreview = async (): Promise<Question[] | null> => {
     try {
+      if (!existingQuiz) return [];
+      
+      setPreviewLoading(true);
+      setPreviewError(null);
+      
       const questions = await fetchQuizQuestions();
       
-      if (questions && questions.length > 0) {
+      if (questions) {
         setPreviewQuestions(questions);
-        setShowPreview(true);
+        return questions;
+      } else {
+        setPreviewError('Failed to load quiz questions');
+        return null;
       }
-      return questions;
     } catch (error: any) {
       console.error("Error loading quiz preview:", error);
+      setPreviewError(error.message || 'An unexpected error occurred');
       return null;
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
   const resetPreview = () => {
-    setShowPreview(false);
     setPreviewQuestions([]);
+    setQuizTitle('Lesson Quiz');
   };
+
+  // Load quiz when existingQuiz changes
+  useEffect(() => {
+    if (existingQuiz) {
+      loadQuizPreview();
+    }
+  }, [existingQuiz]);
 
   return {
     previewQuestions,
-    setPreviewQuestions,
     showPreview,
     setShowPreview,
     quizTitle,
     setQuizTitle,
     loadQuizPreview,
-    resetPreview
+    resetPreview,
+    previewLoading,
+    previewError
   };
 };

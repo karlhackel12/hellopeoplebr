@@ -1,39 +1,44 @@
 
 /**
- * Executes a function with retry logic
- * @param fn The function to execute with retry logic
- * @param maxAttempts Maximum number of retry attempts
- * @param delayMs Delay between retries in milliseconds
+ * Execute a function with retry logic
+ * @param fn The function to execute
+ * @param maxAttempts Maximum number of attempts
+ * @param delayMs Delay between attempts in milliseconds
+ * @returns The result of the function execution with metadata
  */
-export const executeWithRetry = async <T>(
+export async function executeWithRetry<T>(
   fn: () => Promise<T>,
   maxAttempts: number = 2,
   delayMs: number = 1000
-): Promise<{ result: T | null; error: any; attempts: number }> => {
+): Promise<{
+  result: T | null;
+  error: Error | null;
+  attempts: number;
+}> {
   let attempts = 0;
-  let error = null;
-  let result = null;
-
+  let lastError: Error | null = null;
+  
   while (attempts < maxAttempts) {
+    attempts++;
+    
     try {
-      attempts++;
+      const result = await fn();
+      return { result, error: null, attempts };
+    } catch (error) {
+      console.error(`Attempt ${attempts} failed:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
       
-      // Execute the function
-      result = await fn();
+      // If we've reached max attempts, don't delay
+      if (attempts >= maxAttempts) break;
       
-      // If successful, break the retry loop
-      error = null;
-      break;
-    } catch (err) {
-      console.error(`Error in attempt ${attempts}:`, err);
-      error = err;
-      
-      // If this is not the last attempt, wait before retrying
-      if (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
-
-  return { result, error, attempts };
-};
+  
+  return { 
+    result: null, 
+    error: lastError, 
+    attempts 
+  };
+}

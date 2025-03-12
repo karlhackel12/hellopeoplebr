@@ -4,7 +4,8 @@ import {
   corsHeaders, 
   MODEL_ID, 
   buildPrompt,
-  createTimeoutController
+  createTimeoutController,
+  optimizeContent
 } from "./utils.ts";
 import { 
   parseModelOutput, 
@@ -16,6 +17,8 @@ import {
  * Creates a response with fallback questions when generation fails
  */
 export function createFallbackResponse(numQuestions: number, error: any, rawSample?: string) {
+  console.error("Using fallback response due to error:", error);
+  
   return new Response(
     JSON.stringify({ 
       status: "failed_with_fallback",
@@ -71,7 +74,9 @@ export async function handleQuizGeneration(lessonContent: string, numQuestions: 
     auth: REPLICATE_API_KEY,
   });
 
-  const prompt = buildPrompt(lessonContent, numQuestions);
+  // Optimize content before generating the prompt
+  const optimizedContent = optimizeContent(lessonContent);
+  const prompt = buildPrompt(optimizedContent, numQuestions);
   console.log("Generated prompt length:", prompt.length);
 
   // Create an AbortController for timeout management
@@ -100,9 +105,8 @@ export async function handleQuizGeneration(lessonContent: string, numQuestions: 
     console.log("Model response received, processing output");
     const processingStartTime = Date.now();
     
-    let parsedOutput;
     try {
-      parsedOutput = parseModelOutput(output);
+      const parsedOutput = parseModelOutput(output);
       console.log("Successfully parsed JSON response");
       
       // Validate the structure
@@ -122,8 +126,29 @@ export async function handleQuizGeneration(lessonContent: string, numQuestions: 
       
       parsedOutput.questions = validatedQuestions;
 
-    } catch (error) {
-      console.error("Error processing AI response:", error);
+      const processingTime = Date.now() - processingStartTime;
+      const totalTime = Date.now() - startTime;
+      console.log(`Successfully generated ${parsedOutput.questions.length} quiz questions`);
+      console.log(`Processing time: ${processingTime}ms, Total time: ${totalTime}ms`);
+      
+      return new Response(
+        JSON.stringify({
+          status: "succeeded",
+          questions: parsedOutput.questions,
+          processing_stats: {
+            content_length: lessonContent.length,
+            prompt_length: prompt.length,
+            processing_time_ms: processingTime,
+            total_time_ms: totalTime
+          }
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+
+    } catch (parseError) {
+      console.error("Error processing AI response:", parseError);
       const rawSample = typeof output === 'string' 
         ? output.substring(0, 200) 
         : Array.isArray(output) 
@@ -133,29 +158,8 @@ export async function handleQuizGeneration(lessonContent: string, numQuestions: 
       console.error("Raw output sample:", rawSample);
       
       // Generate fallback questions if we can't parse the response
-      return createFallbackResponse(numQuestions, error, rawSample);
+      return createFallbackResponse(numQuestions, parseError, rawSample);
     }
-
-    const processingTime = Date.now() - processingStartTime;
-    const totalTime = Date.now() - startTime;
-    console.log(`Successfully generated ${parsedOutput.questions.length} quiz questions`);
-    console.log(`Processing time: ${processingTime}ms, Total time: ${totalTime}ms`);
-    
-    return new Response(
-      JSON.stringify({
-        status: "succeeded",
-        questions: parsedOutput.questions,
-        processing_stats: {
-          content_length: lessonContent.length,
-          prompt_length: prompt.length,
-          processing_time_ms: processingTime,
-          total_time_ms: totalTime
-        }
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
 
   } catch (modelError) {
     // Clear the timeout to prevent memory leaks

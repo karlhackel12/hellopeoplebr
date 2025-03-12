@@ -2,30 +2,36 @@
 import { useState } from 'react';
 
 export const useQuizPublishState = (
-  publishQuiz: () => Promise<boolean>,
-  unpublishQuiz: () => Promise<boolean>,
+  publishQuiz: () => Promise<void>,
+  unpublishQuiz: () => Promise<void>,
   isPublished: boolean,
   setIsPublished: (value: boolean) => void
 ) => {
-  const togglePublishStatus = async (): Promise<void> => {
+  const [publishLoading, setPublishLoading] = useState(false);
+  
+  const togglePublishStatus = async (): Promise<boolean> => {
     try {
+      setPublishLoading(true);
+      
       if (isPublished) {
-        const success = await unpublishQuiz();
-        if (success) {
-          setIsPublished(false);
-        }
+        await unpublishQuiz();
+        setIsPublished(false);
       } else {
-        const success = await publishQuiz();
-        if (success) {
-          setIsPublished(true);
-        }
+        await publishQuiz();
+        setIsPublished(true);
       }
+      
+      return true;
     } catch (error) {
       console.error("Error toggling publish status:", error);
+      return false;
+    } finally {
+      setPublishLoading(false);
     }
   };
 
   return {
-    togglePublishStatus
+    togglePublishStatus,
+    publishLoading
   };
 };

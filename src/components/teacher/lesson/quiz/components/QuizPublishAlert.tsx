@@ -1,14 +1,16 @@
 
 import React from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const QuizPublishAlert: React.FC = () => {
   return (
-    <Alert variant="destructive" className="mt-4">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription>
-        This quiz is in draft mode and won't be visible to students. Publish it when you're ready for students to take it.
+    <Alert variant="warning" className="bg-amber-50 border-amber-200">
+      <AlertCircle className="h-4 w-4 text-amber-600" />
+      <AlertTitle className="text-amber-800">Quiz in Draft Mode</AlertTitle>
+      <AlertDescription className="text-amber-700">
+        This quiz is currently in draft mode. Students will not be able to see it
+        until you publish it using the switch above.
       </AlertDescription>
     </Alert>
   );

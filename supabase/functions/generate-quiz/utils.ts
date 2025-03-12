@@ -36,8 +36,8 @@ export function optimizeContent(lessonContent: string, maxLength: number = 12000
     for (let i = 0; i < headings.length; i++) {
       const heading = headings[i];
       const nextHeading = headings[i + 1];
-      const sectionStart = heading.index;
-      const sectionEnd = nextHeading ? nextHeading.index : lessonContent.length;
+      const sectionStart = heading.index!; // Non-null assertion since we know index exists from matchAll
+      const sectionEnd = nextHeading ? nextHeading.index! : lessonContent.length;
       
       const section = lessonContent.substring(sectionStart, sectionEnd);
       sections.push(section);
@@ -87,12 +87,9 @@ export function optimizeContent(lessonContent: string, maxLength: number = 12000
  * Builds an optimized prompt for quiz generation
  */
 export function buildPrompt(lessonContent: string, numQuestions: number = 5): string {
-  // Optimize content first
-  const trimmedContent = optimizeContent(lessonContent);
-  
   return `Generate a comprehensive multiple choice quiz based on this lesson content:
 
-${trimmedContent}
+${lessonContent}
 
 Create exactly ${numQuestions} multiple choice questions. Format the response as JSON with this structure:
 {
