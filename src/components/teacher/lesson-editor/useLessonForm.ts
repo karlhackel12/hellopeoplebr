@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +18,10 @@ export const lessonFormSchema = z.object({
 });
 
 export type LessonFormValues = z.infer<typeof lessonFormSchema>;
+
+export type UseLessonFormReturn = UseFormReturn<LessonFormValues> & {
+  id?: string;
+};
 
 export const useLessonForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -160,7 +163,7 @@ export const useLessonForm = () => {
   };
 
   return {
-    form,
+    form: { ...form, id },
     onSubmit,
     loading,
     saving,
