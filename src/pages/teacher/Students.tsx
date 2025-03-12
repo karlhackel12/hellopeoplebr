@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -96,7 +97,10 @@ const Students = () => {
       console.log('Fetching student invitations');
       const { data, error } = await supabase
         .from('student_invitations')
-        .select('*')
+        .select(`
+          *,
+          invited_by:profiles(first_name, last_name)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {

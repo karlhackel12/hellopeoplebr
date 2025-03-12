@@ -27,21 +27,26 @@ export const useAuthSubmit = () => {
     }
   };
 
-  const updateInvitationStatus = async (code: string, userId: string) => {
+  const updateInvitationStatus = async (code: string, userId: string, userName: string) => {
     try {
-      const { error } = await supabase
-        .from('student_invitations')
-        .update({
-          status: 'accepted',
-          accepted_at: new Date().toISOString()
-        })
-        .eq('invitation_code', code);
+      const { data, error } = await supabase.rpc(
+        'mark_invitation_used',
+        { 
+          invitation_code_param: code,
+          user_id_param: userId,
+          user_name_param: userName
+        }
+      );
 
       if (error) {
         console.error('Error updating invitation status:', error);
+        return false;
       }
+
+      return data;
     } catch (error) {
       console.error('Error updating invitation status:', error);
+      return false;
     }
   };
 
@@ -108,11 +113,19 @@ export const useAuthSubmit = () => {
         if (data.user) {
           await createOnboardingRecord(data.user.id);
 
+          const fullName = `${firstName} ${lastName}`.trim();
+          
           if ((hasInvitation && registerValues.invitationCode) || 
               (invitationData?.isInvited && invitationData.code)) {
             const code = registerValues.invitationCode || invitationData?.code;
             if (code) {
-              await updateInvitationStatus(code, data.user.id);
+              const updated = await updateInvitationStatus(code, data.user.id, fullName);
+              
+              if (updated) {
+                toast.success("Connected to teacher", {
+                  description: "You've been successfully connected to your teacher",
+                });
+              }
             }
           }
         }

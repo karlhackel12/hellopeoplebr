@@ -23,20 +23,16 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
     try {
       console.log("Validating invitation code:", code);
       
-      // First, try to get the invitation
-      const { data: invitations, error } = await supabase
-        .from('student_invitations')
-        .select(`
-          *,
-          invited_by:profiles(first_name, last_name)
-        `)
-        .eq('invitation_code', code.toUpperCase())
-        .eq('status', 'pending');
+      // Use the database function to validate the invitation code
+      const { data, error } = await supabase.rpc(
+        'validate_invitation_code',
+        { code: code.toUpperCase() }
+      );
       
-      console.log("Invitation query result:", { invitations, error });
+      console.log("Validation result:", data, error);
       
       if (error) {
-        console.error("Supabase error:", error);
+        console.error("Supabase function error:", error);
         setInvitationStatus({ 
           valid: false, 
           message: 'Error validating code: ' + error.message 
@@ -44,34 +40,26 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
         return false;
       }
       
-      if (!invitations || invitations.length === 0) {
-        console.log("No invitation found with this code");
+      // Check if we got a result and if the invitation is valid
+      if (!data || data.length === 0 || !data[0].is_valid) {
+        const message = data && data[0] ? data[0].message : 'Invalid invitation code';
+        console.log("Invalid invitation:", message);
         setInvitationStatus({ 
           valid: false, 
-          message: 'Invalid or expired invitation code' 
+          message: message
         });
         return false;
       }
       
-      // Use the first invitation if multiple are found
-      const invitation = invitations[0];
+      // Extract the validation result
+      const validationResult = data[0];
       
-      // Check if the invitation has expired
-      const expiresAt = new Date(invitation.expires_at);
-      if (expiresAt < new Date()) {
-        console.log("Invitation expired on:", expiresAt);
-        setInvitationStatus({ 
-          valid: false, 
-          message: 'This invitation has expired' 
-        });
-        return false;
+      // For code-based invitations, there might not be an email
+      if (validationResult.student_email && validationResult.student_email.trim() !== '') {
+        form.setValue('email', validationResult.student_email);
       }
       
-      const teacherName = invitation.invited_by 
-        ? `${invitation.invited_by.first_name || ''} ${invitation.invited_by.last_name || ''}`.trim() 
-        : 'your teacher';
-      
-      form.setValue('email', invitation.email);
+      const teacherName = validationResult.teacher_name || 'your teacher';
       
       console.log("Valid invitation from:", teacherName);
       setInvitationStatus({ 
@@ -94,7 +82,7 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
   };
 
   const handleInvitationCodeChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const code = event.target.value;
+    const code = event.target.value.toUpperCase();
     
     if (form.getValues() && typeof form.getValues() === 'object') {
       (form.getValues() as RegisterFormValues).invitationCode = code;

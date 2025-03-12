@@ -66,7 +66,11 @@ export const useInvitationVerification = () => {
       // Extract the validation result
       const validationResult = data[0];
       
-      setStudentEmail(validationResult.student_email);
+      // Handle code-only invitations (no email)
+      if (validationResult.student_email && validationResult.student_email.trim() !== '') {
+        setStudentEmail(validationResult.student_email);
+      }
+      
       setTeacherName(validationResult.teacher_name);
       setInvitationVerified(true);
       
@@ -91,13 +95,18 @@ export const useInvitationVerification = () => {
   };
 
   const proceedToRegister = () => {
+    // Save invitation data to session storage for the registration flow
+    sessionStorage.setItem('invitationCode', form.getValues().invitationCode.toUpperCase());
+    
     if (studentEmail) {
-      // Save invitation data to session storage for the registration flow
-      sessionStorage.setItem('invitationCode', form.getValues().invitationCode.toUpperCase());
       sessionStorage.setItem('invitedEmail', studentEmail);
-      sessionStorage.setItem('teacherName', teacherName);
-      navigate('/register');
     }
+    
+    if (teacherName) {
+      sessionStorage.setItem('teacherName', teacherName);
+    }
+    
+    navigate('/register');
   };
 
   return {

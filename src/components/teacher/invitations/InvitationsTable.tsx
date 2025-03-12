@@ -26,8 +26,9 @@ const InvitationsTable: React.FC<InvitationsTableProps> = ({
               <th className="px-4 py-3 text-left">Email</th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Invitation Code</th>
-              <th className="px-4 py-3 text-left">Sent Date</th>
+              <th className="px-4 py-3 text-left">Created</th>
               <th className="px-4 py-3 text-left">Expires</th>
+              <th className="px-4 py-3 text-left">Used By</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
