@@ -1,0 +1,55 @@
+import { SignIn as ClerkSignIn } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+import Logo from "@/components/ui/Logo";
+
+const SignIn = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 md:px-12 lg:px-16 relative">
+        <div className="absolute top-8 left-8">
+          <Logo />
+        </div>
+        
+        <div className="w-full max-w-md mx-auto mt-16 md:mt-0">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-3">Welcome back</h1>
+            <p className="text-muted-foreground">
+              Sign in to continue your language learning journey
+            </p>
+          </div>
+          
+          <ClerkSignIn 
+            routing="path" 
+            path="/sign-in" 
+            afterSignInUrl="/dashboard"
+            signUpUrl="/sign-up"
+          />
+        </div>
+      </div>
+      
+      {/* Right side - Image/Illustration (hidden on mobile) */}
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/5 to-background relative">
+        <div className="absolute inset-0 flex flex-col justify-center items-center p-12">
+          <div className="bg-card/60 backdrop-blur-sm border border-border/30 rounded-2xl p-8 max-w-lg shadow-sm">
+            <blockquote className="text-lg italic text-foreground/80 mb-6">
+              "HelloPeople has completely transformed my language learning experience. The AI-powered conversations feel incredibly natural, and I'm making progress faster than I ever did with traditional methods."
+            </blockquote>
+            <div className="flex items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
+                JD
+              </div>
+              <div className="ml-4">
+                <p className="font-medium">Jane Doe</p>
+                <p className="text-sm text-muted-foreground">Spanish Learner, 3 months</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SignIn;
