@@ -14,6 +14,7 @@ export type StudentInvitation = {
   created_at: string;
   expires_at: string;
   used_by_name?: string | null;
+  invited_by?: { first_name: string; last_name: string };
 };
 
 interface InvitationRowProps {

@@ -85,7 +85,7 @@ const Students = () => {
     });
   }, [students, onboardingData]);
 
-  // Fetch invitation data with better cache control
+  // Fetch invitation data with better cache control and corrected query
   const { 
     data: invitations = [], 
     isLoading: loadingInvitations,
@@ -95,11 +95,19 @@ const Students = () => {
     queryKey: ['student-invitations'],
     queryFn: async () => {
       console.log('Fetching student invitations');
+      // Update the query to use a proper join with profiles instead of auth.users
       const { data, error } = await supabase
         .from('student_invitations')
         .select(`
-          *,
-          invited_by:profiles(first_name, last_name)
+          id,
+          email,
+          status,
+          invitation_code,
+          created_at,
+          expires_at,
+          used_by_name,
+          invited_by,
+          profiles:profiles(first_name, last_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -112,7 +120,14 @@ const Students = () => {
       }
 
       console.log('Fetched invitations:', data ? data.length : 0);
-      return data || [];
+      
+      // Transform the data to match the expected format
+      const transformedData = data?.map(invitation => ({
+        ...invitation,
+        invited_by: invitation.profiles || { first_name: '', last_name: '' }
+      })) || [];
+      
+      return transformedData;
     },
     staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: true, // Auto-refetch when window focus returns
