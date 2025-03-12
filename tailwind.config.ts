@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -102,6 +101,10 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
         },
+        'ripple': {
+          '0%': { transform: 'scale(0)', opacity: '0.7' },
+          '100%': { transform: 'scale(1)', opacity: '0' }
+        },
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' }
@@ -138,6 +141,7 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'ripple': 'ripple 0.6s linear forwards',
         'fade-in': 'fade-in 0.3s ease-out',
         'fade-out': 'fade-out 0.3s ease-out',
         'slide-up': 'slide-up 0.4s ease-out',
