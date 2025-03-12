@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Bookmark, BookOpen } from 'lucide-react';
 import ViewModeToggle from './preview/ViewModeToggle';
 import LessonContentTab from './preview/LessonContentTab';
-import PracticeExercisesTab from './preview/PracticeExercisesTab';
 import QuizTab from './preview/QuizTab';
 import { useQuizData } from './preview/useQuizData';
 
@@ -62,11 +61,10 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
         
         <div className="p-4">
           <Tabs defaultValue="content">
-            <TabsList className="w-full grid grid-cols-3 mb-4">
+            <TabsList className="w-full grid grid-cols-2 mb-4">
               <TabsTrigger value="content">
                 <BookOpen className="h-4 w-4 mr-1" /> Lesson
               </TabsTrigger>
-              <TabsTrigger value="practice">Exercises</TabsTrigger>
               <TabsTrigger value="quiz">Quiz</TabsTrigger>
             </TabsList>
             
@@ -76,10 +74,6 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
                 completedSections={completedSections}
                 toggleSectionCompletion={toggleSectionCompletion}
               />
-            </TabsContent>
-            
-            <TabsContent value="practice" className="mt-0">
-              <PracticeExercisesTab />
             </TabsContent>
             
             <TabsContent value="quiz" className="mt-0">
@@ -98,7 +92,7 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
       </div>
 
       <div className="text-sm text-muted-foreground">
-        <p>This is a preview of how your lesson will appear to students. Save the lesson to enable exercises and quiz features.</p>
+        <p>This is a preview of how your lesson will appear to students. Save the lesson to enable quiz features.</p>
       </div>
     </div>
   );
