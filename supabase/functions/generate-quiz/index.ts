@@ -11,9 +11,15 @@ const corsHeaders = {
 };
 
 function buildPrompt(lessonContent: string, numQuestions: number = 5): string {
+  // Limit content length to avoid token limits
+  const maxContentLength = 12000;
+  const trimmedContent = lessonContent.length > maxContentLength
+    ? lessonContent.substring(0, maxContentLength) + "... (content truncated)"
+    : lessonContent;
+    
   return `Generate a multiple choice quiz based on this lesson content:
 
-${lessonContent}
+${trimmedContent}
 
 Create exactly ${numQuestions} multiple choice questions. Format the response as JSON with this structure:
 {
@@ -52,30 +58,70 @@ serve(async (req) => {
     const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY');
     if (!REPLICATE_API_KEY) {
       console.error('REPLICATE_API_KEY is not set');
-      throw new Error('REPLICATE_API_KEY is not set');
+      return new Response(
+        JSON.stringify({ 
+          error: "Configuration error",
+          details: "Missing API key for AI service" 
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const replicate = new Replicate({
       auth: REPLICATE_API_KEY,
     });
 
-    // Log the request body to debug
-    const requestBody = await req.json();
+    // Parse request body safely
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (error) {
+      console.error("Error parsing request body:", error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request",
+          details: "Could not parse request body as JSON" 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
     console.log("Request body:", JSON.stringify(requestBody));
     
     const { lessonContent, numQuestions = 5 } = requestBody;
+    
+    if (!lessonContent) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Missing content",
+          details: "Lesson content is required" 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
     console.log("Generating quiz for content length:", lessonContent?.length);
     console.log("Number of questions requested:", numQuestions);
-
-    if (!lessonContent) {
-      throw new Error("Lesson content is required");
-    }
 
     const prompt = buildPrompt(lessonContent, numQuestions);
     console.log("Generated prompt length:", prompt.length);
 
     try {
-      const output = await replicate.run(
+      // Set timeout for the Replicate API call
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timed out")), 60000);
+      });
+
+      const generatePromise = replicate.run(
         MODEL_ID,
         {
           input: {
@@ -87,6 +133,9 @@ serve(async (req) => {
           }
         }
       );
+
+      // Race the generation against the timeout
+      const output = await Promise.race([generatePromise, timeoutPromise]);
 
       console.log("Generation response type:", typeof output);
       console.log("Generation response:", output);
@@ -125,7 +174,18 @@ serve(async (req) => {
 
       } catch (error) {
         console.error("Error parsing AI response:", error);
-        throw new Error(`Failed to parse quiz content: ${error.message}`);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: "AI response parsing failed",
+            details: error.message,
+            raw_output: output
+          }),
+          {
+            status: 422,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
 
       return new Response(
@@ -138,17 +198,38 @@ serve(async (req) => {
         }
       );
 
-    } catch (modelError) {
+    } catch (modelError: any) {
       console.error("Error running model:", modelError);
-      throw new Error(`Model execution failed: ${modelError.message}`);
+      
+      let statusCode = 500;
+      let errorMessage = "AI model execution failed";
+      
+      if (modelError.message?.includes("timed out")) {
+        statusCode = 504;
+        errorMessage = "AI model request timed out";
+      } else if (modelError.status === 429) {
+        statusCode = 429;
+        errorMessage = "Too many requests to AI service";
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: errorMessage,
+          details: modelError.message || "Unknown error"
+        }),
+        {
+          status: statusCode,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in generate-quiz function:", error);
     
     return new Response(
       JSON.stringify({ 
         error: "Failed to generate quiz",
-        details: error.message 
+        details: error.message || "Unknown error" 
       }),
       {
         status: 500,

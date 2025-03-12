@@ -19,7 +19,10 @@ export const useQuizFetching = (lessonId: string) => {
         .eq('lesson_id', lessonId)
         .maybeSingle();
 
-      if (quizError) throw quizError;
+      if (quizError) {
+        console.error('Error fetching quiz:', quizError);
+        throw new Error(quizError.message || 'Failed to fetch quiz');
+      }
       
       if (!quiz) return [];
 
@@ -32,7 +35,10 @@ export const useQuizFetching = (lessonId: string) => {
         .eq('quiz_id', quiz.id)
         .order('order_index');
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.error('Error fetching quiz questions:', questionsError);
+        throw new Error(questionsError.message || 'Failed to fetch quiz questions');
+      }
 
       return questions;
     } catch (error: any) {
@@ -55,7 +61,10 @@ export const useQuizFetching = (lessonId: string) => {
         .eq('lesson_id', lessonId)
         .maybeSingle();
 
-      if (quizError) throw quizError;
+      if (quizError) {
+        console.error('Error fetching quiz details:', quizError);
+        throw new Error(quizError.message || 'Failed to fetch quiz details');
+      }
       
       return quiz;
     } catch (error: any) {

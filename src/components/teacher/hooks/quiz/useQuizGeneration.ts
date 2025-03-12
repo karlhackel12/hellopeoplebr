@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 export const useQuizGeneration = (lessonId: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const generateQuiz = async (numQuestions: number = 5): Promise<boolean> => {
     if (!lessonId) {
@@ -28,22 +29,60 @@ export const useQuizGeneration = (lessonId: string) => {
       
       if (lessonError || !lesson?.content) {
         console.error('Error fetching lesson content:', lessonError);
-        throw new Error('Failed to fetch lesson content');
+        throw new Error(lessonError?.message || 'Failed to fetch lesson content');
+      }
+
+      if (!lesson.content || lesson.content.length < 50) {
+        toast.error('Insufficient lesson content', {
+          description: 'The lesson needs more content before generating a quiz.',
+        });
+        return false;
       }
 
       console.log('Lesson content length:', lesson.content.length);
       console.log('Number of questions:', numQuestions);
 
-      // Call the edge function to generate quiz questions
-      const { data, error } = await supabase.functions.invoke('generate-quiz', {
-        body: { 
-          lessonContent: lesson.content,
-          numQuestions
+      // Call the edge function to generate quiz questions with retry logic
+      let attempts = 0;
+      const maxAttempts = 2;
+      let data;
+      let error;
+
+      while (attempts < maxAttempts) {
+        try {
+          attempts++;
+          if (attempts > 1) {
+            console.log(`Retrying quiz generation (attempt ${attempts})`);
+            setIsRetrying(true);
+          }
+
+          const response = await supabase.functions.invoke('generate-quiz', {
+            body: { 
+              lessonContent: lesson.content,
+              numQuestions
+            }
+          });
+
+          // If successful, break the retry loop
+          data = response.data;
+          error = response.error;
+          
+          if (!error) break;
+          
+          // If we got an error and this is not the last attempt, wait before retrying
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (err) {
+          console.error(`Error in attempt ${attempts}:`, err);
+          error = err;
         }
-      });
+      }
+
+      setIsRetrying(false);
 
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('Edge function error after all attempts:', error);
         throw error;
       }
 
@@ -131,9 +170,26 @@ export const useQuizGeneration = (lessonId: string) => {
     } catch (error: any) {
       console.error('Error generating quiz:', error);
       setError(error.message);
-      toast.error('Failed to generate quiz', {
-        description: error.message,
-      });
+      
+      // More descriptive error messages
+      if (error.message?.includes('Failed to fetch') || error.code === 'NETWORK_ERROR') {
+        toast.error('Network error', {
+          description: 'Could not connect to the quiz generation service. Please check your internet connection and try again.',
+        });
+      } else if (error.status === 429) {
+        toast.error('Too many requests', {
+          description: 'Quiz generation service is busy. Please wait a moment and try again.',
+        });
+      } else if (error.status >= 500) {
+        toast.error('Server error', {
+          description: 'There was a problem with the quiz generation service. Our team has been notified.',
+        });
+      } else {
+        toast.error('Failed to generate quiz', {
+          description: error.message || 'An unexpected error occurred',
+        });
+      }
+      
       return false;
     } finally {
       setLoading(false);
@@ -143,6 +199,7 @@ export const useQuizGeneration = (lessonId: string) => {
   return {
     generateQuiz,
     loading,
+    isRetrying,
     error
   };
 };

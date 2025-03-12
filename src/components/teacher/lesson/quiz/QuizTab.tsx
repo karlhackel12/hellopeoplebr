@@ -5,6 +5,8 @@ import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewSection from './components/QuizPreviewSection';
 import QuizPublishAlert from './components/QuizPublishAlert';
 import QuizPlaceholder from './QuizPlaceholder';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -24,6 +26,8 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     isPublished,
     loading,
     saving,
+    isRetrying,
+    loadingError,
     handleGenerateQuiz,
     handleSaveQuiz,
     handleDiscardQuiz,
@@ -36,11 +40,22 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
 
   return (
     <div className="space-y-6">
+      {loadingError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            There was an issue connecting to the quiz service. You can try again or refresh the page.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <QuizGenerationForm
         numQuestions={numQuestions}
         setNumQuestions={setNumQuestions}
         onGenerateQuiz={handleGenerateQuiz}
         loading={loading}
+        isRetrying={isRetrying}
+        error={loadingError}
         existingQuiz={existingQuiz}
       />
       

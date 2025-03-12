@@ -11,6 +11,8 @@ export const useQuizTabState = (lessonId?: string) => {
   const [quizTitle, setQuizTitle] = useState('Lesson Quiz');
   const [existingQuiz, setExistingQuiz] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const { 
     generateQuiz, 
@@ -21,14 +23,21 @@ export const useQuizTabState = (lessonId?: string) => {
     publishQuiz,
     unpublishQuiz,
     loading, 
-    saving 
+    saving,
+    isRetrying: isGenerationRetrying,
+    error: quizError
   } = useQuizHandler(lessonId || '');
+
+  useEffect(() => {
+    setIsRetrying(isGenerationRetrying);
+  }, [isGenerationRetrying]);
 
   // Check if quiz already exists
   useEffect(() => {
     if (lessonId) {
       const checkExistingQuiz = async () => {
         try {
+          setLoadingError(null);
           const quizDetails = await fetchQuizDetails();
           
           if (quizDetails) {
@@ -42,8 +51,10 @@ export const useQuizTabState = (lessonId?: string) => {
               setShowPreview(true);
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error checking existing quiz:", error);
+          setLoadingError(error.message);
+          // Don't show toast here as it might be disruptive on page load
         }
       };
       
@@ -61,6 +72,7 @@ export const useQuizTabState = (lessonId?: string) => {
     
     try {
       setShowPreview(false);
+      setLoadingError(null);
       const result = await generateQuiz(parseInt(numQuestions));
       
       if (result) {
@@ -82,29 +94,42 @@ export const useQuizTabState = (lessonId?: string) => {
       }
     } catch (error: any) {
       console.error("Error handling quiz generation:", error);
-      toast.error('Generation failed', {
-        description: 'Failed to generate quiz questions. Please try again.',
-      });
+      setLoadingError(error.message);
+      // Toast is already shown in the generateQuiz function
     }
   };
 
   const handleSaveQuiz = async () => {
-    await saveQuizTitle(quizTitle);
-    toast.success('Quiz saved', {
-      description: 'Your quiz has been saved successfully.',
-    });
+    try {
+      await saveQuizTitle(quizTitle);
+      toast.success('Quiz saved', {
+        description: 'Your quiz has been saved successfully.',
+      });
+    } catch (error: any) {
+      console.error("Error saving quiz:", error);
+      toast.error('Failed to save quiz', {
+        description: error.message || 'An unexpected error occurred',
+      });
+    }
   };
 
   const handleDiscardQuiz = async () => {
     if (existingQuiz && window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
-      const success = await deleteQuiz();
-      if (success) {
-        setPreviewQuestions([]);
-        setExistingQuiz(false);
-        setShowPreview(false);
-        setIsPublished(false);
-        toast.success('Quiz deleted', {
-          description: 'Your quiz has been deleted successfully.',
+      try {
+        const success = await deleteQuiz();
+        if (success) {
+          setPreviewQuestions([]);
+          setExistingQuiz(false);
+          setShowPreview(false);
+          setIsPublished(false);
+          toast.success('Quiz deleted', {
+            description: 'Your quiz has been deleted successfully.',
+          });
+        }
+      } catch (error: any) {
+        console.error("Error deleting quiz:", error);
+        toast.error('Failed to delete quiz', {
+          description: error.message || 'An unexpected error occurred',
         });
       }
     } else if (!existingQuiz) {
@@ -139,10 +164,10 @@ export const useQuizTabState = (lessonId?: string) => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling publish status:", error);
       toast.error('Action failed', {
-        description: 'Failed to change publish status. Please try again.',
+        description: error.message || 'Failed to change publish status. Please try again.',
       });
     }
   };
@@ -159,6 +184,8 @@ export const useQuizTabState = (lessonId?: string) => {
     isPublished,
     loading,
     saving,
+    isRetrying,
+    loadingError,
     handleGenerateQuiz,
     handleSaveQuiz,
     handleDiscardQuiz,

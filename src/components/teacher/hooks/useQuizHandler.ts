@@ -5,7 +5,12 @@ import { useQuizManagement } from './quiz/useQuizManagement';
 import { Question } from '../quiz/types';
 
 export const useQuizHandler = (lessonId: string) => {
-  const { generateQuiz, loading: generationLoading, error: generationError } = useQuizGeneration(lessonId);
+  const { 
+    generateQuiz, 
+    loading: generationLoading, 
+    isRetrying,
+    error: generationError 
+  } = useQuizGeneration(lessonId);
   const { 
     fetchQuizQuestions, 
     fetchQuizDetails, 
@@ -39,6 +44,7 @@ export const useQuizHandler = (lessonId: string) => {
     // Combined states
     loading: generationLoading || fetchLoading,
     saving,
+    isRetrying,
     error: generationError || fetchError || managementError
   };
 };
