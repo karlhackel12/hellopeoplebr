@@ -20,16 +20,15 @@ export const useLessonProgress = (lessonId: string | undefined) => {
         .select('*')
         .eq('lesson_id', lessonId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
       
       // Ensure completed_sections is always an array
-      if (data && !data.completed_sections) {
-        data.completed_sections = [];
-      }
-      
-      return data;
+      return {
+        ...data,
+        completed_sections: data?.completed_sections || []
+      };
     },
     enabled: !!lessonId
   });
