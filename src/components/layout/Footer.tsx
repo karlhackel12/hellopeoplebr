@@ -2,49 +2,59 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '@/components/ui/Logo';
-import { Heart } from 'lucide-react';
+import { Instagram, Tiktok, MessageCircle } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
   
   const footerLinks = [
     {
-      title: 'Platform',
+      title: 'Plataforma',
       links: [
-        { label: 'Features', href: '/#features' },
-        { label: 'How It Works', href: '/#how-it-works' },
-        { label: 'Pricing', href: '/#pricing' },
+        { label: 'Recursos', href: '/#recursos' },
+        { label: 'Como Funciona', href: '/#como-funciona' },
+        { label: 'Preços', href: '/#precos' },
       ],
     },
     {
-      title: 'Resources',
+      title: 'Recursos',
       links: [
         { label: 'Blog', href: '/blog' },
-        { label: 'Help Center', href: '/help' },
-        { label: 'Contact Us', href: '/contact' },
+        { label: 'Central de Ajuda', href: '/ajuda' },
+        { label: 'Fale Conosco', href: 'https://wa.me/5511999999999' },
       ],
     },
     {
-      title: 'Company',
+      title: 'Empresa',
       links: [
-        { label: 'About Us', href: '/about' },
-        { label: 'Careers', href: '/careers' },
-        { label: 'Privacy Policy', href: '/privacy' },
-        { label: 'Terms of Service', href: '/terms' },
+        { label: 'Sobre Nós', href: '/sobre' },
+        { label: 'Carreiras', href: '/carreiras' },
+        { label: 'Política de Privacidade', href: '/privacidade' },
+        { label: 'Termos de Uso', href: '/termos' },
       ],
     },
   ];
 
   return (
-    <footer className="border-t border-border bg-secondary/30">
+    <footer className="border-t border-border bg-[#F5F7FA]">
       <div className="container px-6 md:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <Logo size="lg" />
+            <Logo />
             <p className="mt-4 text-muted-foreground max-w-md">
-              Learn languages naturally with AI-powered conversations and personalized feedback
-              to achieve fluency faster than traditional methods.
+              Revolucione suas aulas de inglês com nossa plataforma de IA que economiza horas de preparação, melhora os resultados dos alunos e aumenta sua renda mensal.
             </p>
+            <div className="mt-6 flex space-x-4">
+              <a href="https://tiktok.com/@hellopeople" className="text-muted-foreground hover:text-[#1E88E5] transition-colors">
+                <Tiktok size={24} />
+              </a>
+              <a href="https://instagram.com/hellopeople" className="text-muted-foreground hover:text-[#1E88E5] transition-colors">
+                <Instagram size={24} />
+              </a>
+              <a href="https://wa.me/5511999999999" className="text-muted-foreground hover:text-[#1E88E5] transition-colors">
+                <MessageCircle size={24} />
+              </a>
+            </div>
           </div>
           
           <div className="col-span-1 lg:col-span-3">
@@ -72,11 +82,16 @@ const Footer: React.FC = () => {
         
         <div className="mt-12 pt-8 border-t border-border/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} HelloPeople. All rights reserved.
+            &copy; {currentYear} HelloPeople Brazil. Todos os direitos reservados.
           </p>
-          <p className="text-sm text-muted-foreground flex items-center">
-            Made with <Heart size={14} className="mx-1 text-primary" /> for language learners worldwide
-          </p>
+          <div className="flex space-x-4">
+            <Link to="/termos" className="text-sm text-muted-foreground hover:text-foreground">
+              Termos de Uso
+            </Link>
+            <Link to="/privacidade" className="text-sm text-muted-foreground hover:text-foreground">
+              Política de Privacidade
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
