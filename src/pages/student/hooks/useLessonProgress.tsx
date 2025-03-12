@@ -24,10 +24,13 @@ export const useLessonProgress = (lessonId: string | undefined) => {
       
       if (error && error.code !== 'PGRST116') throw error;
       
+      // Handle case where data is null (no progress record yet)
+      if (!data) return null;
+      
       // Ensure completed_sections is always an array
       return {
         ...data,
-        completed_sections: data?.completed_sections || []
+        completed_sections: data.completed_sections || []
       };
     },
     enabled: !!lessonId
