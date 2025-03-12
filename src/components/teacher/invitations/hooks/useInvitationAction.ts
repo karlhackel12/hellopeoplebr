@@ -54,3 +54,4 @@ export const useInvitationAction = (onUpdate: () => void): InvitationActionHook 
     handleError
   };
 };
+

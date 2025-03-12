@@ -79,3 +79,4 @@ export const useDeleteInvitation = (onUpdate: () => void) => {
     isDeleting
   };
 };
+

@@ -96,3 +96,4 @@ export const useResendInvitation = (onUpdate: () => void) => {
     isResending
   };
 };
+
