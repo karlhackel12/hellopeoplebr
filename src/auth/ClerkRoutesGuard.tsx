@@ -1,9 +1,9 @@
 
-import { useAuth } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 
 export const ClerkRoutesGuard = () => {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
   const location = useLocation();
   
   if (!isLoaded) {
