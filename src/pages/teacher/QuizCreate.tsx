@@ -44,10 +44,16 @@ const QuizCreate: React.FC = () => {
     setError
   } = useQuizGenerationState();
 
+  // Fix for the type mismatch - create a wrapper function that returns boolean
+  const generateQuizWrapper = async (numQuestions: number): Promise<boolean> => {
+    const result = await generateSmartQuiz(numQuestions);
+    return result !== null && Array.isArray(result) && result.length > 0;
+  };
+
   // Quiz generation workflow
   const { generateQuiz } = useQuizGenerationWorkflow(
     fetchLessonContent,
-    generateSmartQuiz,
+    generateQuizWrapper,
     async () => [], // We don't need to preview questions here
     () => {}, // We don't need to set existing quiz
     () => {}, // We don't need to set published status
