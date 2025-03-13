@@ -15,6 +15,15 @@ export interface PredictionResponse {
   output?: any;
 }
 
+export type GenerationPhase = 
+  | 'idle' 
+  | 'starting' 
+  | 'analyzing' 
+  | 'generating' 
+  | 'processing' 
+  | 'complete' 
+  | 'error';
+
 export interface GenerationState {
   generating: boolean;
   generatedContent: GeneratedLessonContent | null;
@@ -23,6 +32,9 @@ export interface GenerationState {
   error: string | null;
   retryCount: number;
   generationStatus: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
+  generationPhase: GenerationPhase;
+  progressPercentage: number;
+  statusMessage: string;
   isCancelled: boolean;
   // Add the missing properties that are causing TypeScript errors
   generationId?: string;

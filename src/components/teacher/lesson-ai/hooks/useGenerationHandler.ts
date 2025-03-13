@@ -25,6 +25,9 @@ export const useGenerationHandler = (
     setError,
     clearErrors,
     setGenerationStatus,
+    setGenerationPhase,
+    setProgressPercentage,
+    setStatusMessage,
     resetGenerationState
   } = updateState;
 
@@ -48,6 +51,9 @@ export const useGenerationHandler = (
       clearErrors();
       setGenerating(true);
       setGenerationStatus('pending');
+      setGenerationPhase('starting');
+      setProgressPercentage(10);
+      setStatusMessage('Starting lesson generation...');
       
       if (!validateTitleInput(title)) {
         return;
@@ -61,22 +67,52 @@ export const useGenerationHandler = (
         instructions: instructions.trim() || undefined,
       };
       
+      // Set up a timeout to progress to the analyzing phase
+      setTimeout(() => {
+        if (generationState.generationPhase === 'starting') {
+          setGenerationPhase('analyzing');
+          setProgressPercentage(20);
+        }
+      }, 1500);
+      
+      // Set up a timeout to progress to the generating phase
+      setTimeout(() => {
+        if (generationState.generationPhase === 'analyzing') {
+          setGenerationPhase('generating');
+          setProgressPercentage(30);
+        }
+      }, 3000);
+      
       try {
-        await processGeneration(generationParams);
+        const result = await processGeneration(generationParams);
+        setGenerationPhase('complete');
+        setProgressPercentage(100);
+        setStatusMessage('Lesson content generated successfully!');
         setGenerating(false);
         setGenerationStatus('completed');
+        
+        toast.success("Content generated", {
+          description: "AI-generated English lesson content is ready for review",
+        });
+        
+        return result;
       } catch (error: any) {
         handleGenerationError(error);
+        setGenerationPhase('error');
+        return null;
       }
     } catch (error: any) {
       console.error("Error in handleGenerate:", error);
       setError(error?.message || "Unknown error");
       setGenerating(false);
       setGenerationStatus('failed');
+      setGenerationPhase('error');
       
       toast.error("Generation failed", {
         description: error?.message || "An unexpected error occurred",
       });
+      
+      return null;
     }
   };
 
@@ -87,8 +123,18 @@ export const useGenerationHandler = (
     });
   };
 
+  const retryGeneration = async (
+    title: string,
+    level: 'beginner' | 'intermediate' | 'advanced',
+    instructions: string
+  ) => {
+    clearErrors();
+    return handleGenerate(title, level, instructions);
+  };
+
   return {
     handleGenerate,
-    cancelGeneration
+    cancelGeneration,
+    retryGeneration
   };
 };

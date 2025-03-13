@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from '../../lesson-editor/useLessonForm';
@@ -17,6 +18,9 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     error,
     retryCount,
     generationStatus,
+    generationPhase,
+    progressPercentage,
+    statusMessage,
     generationId,
     pollingInterval,
     pollCount,
@@ -28,6 +32,9 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setError,
     clearErrors,
     setGenerationStatus,
+    setGenerationPhase,
+    setProgressPercentage,
+    setStatusMessage,
     setGenerationId,
     resetGenerationState,
     cancelGeneration
@@ -39,6 +46,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     if (structuredContent && !generatedContent) {
       setGeneratedContent(structuredContent);
       setGenerationStatus('completed');
+      setGenerationPhase('complete');
+      setProgressPercentage(100);
     }
   }, [form.watch('structuredContent')]);
 
@@ -65,15 +74,23 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setError,
     clearErrors,
     setGenerationStatus,
+    setGenerationPhase,
+    setProgressPercentage,
+    setStatusMessage,
     setGenerationId,
     incrementPollCount: generationState.incrementPollCount,
     resetPollCount: generationState.resetPollCount,
     incrementRetryCount: generationState.incrementRetryCount,
-    resetRetryCount: generationState.resetRetryCount
+    resetRetryCount: generationState.resetRetryCount,
+    resetGenerationState
   };
 
   // Get the generation handler
-  const { handleGenerate: generateHandler, cancelGeneration: cancelGenerationHandler } = useGenerationHandler(
+  const { 
+    handleGenerate: generateHandler, 
+    cancelGeneration: cancelGenerationHandler,
+    retryGeneration: retryGenerationHandler
+  } = useGenerationHandler(
     form,
     generationState,
     stateUpdaters
@@ -88,6 +105,11 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
   const handleCancelGeneration = () => {
     cancelGeneration();
     cancelGenerationHandler();
+  };
+  
+  // Function to retry generation
+  const handleRetryGeneration = async () => {
+    await retryGenerationHandler(title, level, instructions);
   };
 
   // Clean up any polling or resources when component unmounts
@@ -108,13 +130,16 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setInstructions,
     handleGenerate,
     handleCancelGeneration,
+    handleRetryGeneration,
     error,
     clearErrors,
     retryCount,
     generationStatus,
+    generationPhase,
+    progressPercentage,
+    statusMessage,
     generationId,
     pollCount,
-    maxPollCount,
-    progress: Math.min(Math.floor((pollCount / maxPollCount) * 100), 95) // Cap at 95% until complete
+    maxPollCount
   };
 };
