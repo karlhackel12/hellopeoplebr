@@ -10,6 +10,7 @@ import { useQuizGenerationWorkflow } from './hooks/quiz/useQuizGenerationWorkflo
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizGenerationService } from './quiz/services/QuizGenerationService';
+import { Quiz } from './quiz/types';
 
 interface QuizEditorProps {
   quizId?: string;
@@ -111,12 +112,36 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     }
   };
 
+  // Modified to correctly handle the types
+  const setQuizWithCorrectType = (value: boolean) => {
+    if (value) {
+      // Only set if value is true and we have an existing quiz or create a placeholder
+      if (quiz) {
+        // No need to change anything if quiz already exists
+        return;
+      } else {
+        // Create a temporary quiz object with the required properties
+        const tempQuiz: Quiz = {
+          id: 'temp',
+          title: title || 'Temporary Quiz',
+          description: description || '',
+          is_published: false,
+          pass_percent: 70
+        };
+        setQuiz(tempQuiz);
+      }
+    } else {
+      // Set to null if value is false
+      setQuiz(null);
+    }
+  };
+
   // Quiz generation workflow (legacy)
   const { generateQuiz } = useQuizGenerationWorkflow(
     () => fetchLessonContent(lessonId || ''),
     generateSmartQuiz,
     loadQuizPreview,
-    (value) => setQuiz(value ? (quiz || { id: 'temp' }) : null),
+    setQuizWithCorrectType,
     setIsPublished,
     currentPhase,
     setGenerationPhase,
