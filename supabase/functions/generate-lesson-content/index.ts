@@ -14,7 +14,7 @@ const corsHeaders = {
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
-  let prompt = `Create an English language lesson with the title "${title}" for ${level} level students.`;
+  let prompt = `Create an English language quiz with 25 questions using information from the title "${title}" for ${level} level students.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
@@ -22,16 +22,12 @@ function buildPrompt(requestData: any): string {
   
   prompt += `\n\nFormat the response as JSON with the following structure:
 {
-  "description": "A brief overview of the English lesson (2-3 sentences)",
+  "description": ["A brief overview of the English lesson (2-3 sentences)"],
   "objectives": ["List of 3-5 learning objectives for English learners"],
-  "practicalSituations": ["List of 2-3 real-world scenarios where this English would be used"],
-  "keyPhrases": [{"phrase": "English phrase", "translation": "translation in student's language if needed", "usage": "brief context"}],
-  "vocabulary": [{"word": "English word", "translation": "translation if needed", "partOfSpeech": "noun/verb/etc"}],
-  "explanations": ["2-3 paragraphs explaining key English language concepts"],
-  "tips": ["3-5 tips for practicing or remembering this English content"]
+  "Questions: ["Each Question should have 1 correct answer in quiz format. Create a sorting of formats multiple choice, fill blank, and others"],
 }
 
-Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
+Make sure the entire response is valid JSON break down question by quesion. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
   return prompt;
 }
@@ -101,7 +97,7 @@ serve(async (req) => {
       const modelInput = {
         prompt: prompt,
         max_new_tokens: 2048,
-        temperature: 0.3,
+        temperature: 0.5,
         top_p: 0.9,
         top_k: 50
       };
