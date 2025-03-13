@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
@@ -7,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GeneratedLessonContent } from '../types';
 import { formatContent } from '../contentUtils';
+import QuizTab from './QuizTab';
 
 interface ContentEditorProps {
   form: UseFormReturn<LessonFormValues>;
@@ -54,9 +56,10 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="structured" className="w-full">
-        <TabsList className="w-full grid grid-cols-2">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="structured">Structured Editor</TabsTrigger>
           <TabsTrigger value="markdown">Markdown</TabsTrigger>
+          <TabsTrigger value="quiz">Quiz</TabsTrigger>
         </TabsList>
         
         <TabsContent value="structured" className="mt-4">
@@ -148,6 +151,10 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
               </FormItem>
             )}
           />
+        </TabsContent>
+        
+        <TabsContent value="quiz" className="mt-4">
+          <QuizTab form={form} />
         </TabsContent>
       </Tabs>
     </div>

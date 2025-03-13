@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +8,8 @@ import ContentPreview from './lesson-ai/ContentPreview';
 import { useAIGeneration } from './lesson-ai/useAIGeneration';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useQuizData } from './preview/useQuizData';
+import QuizTab from './preview/QuizTab';
 
 interface AILessonFormProps {
   form: UseFormReturn<LessonFormValues>;
@@ -39,15 +40,14 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
     statusMessage
   } = useAIGeneration(form, title);
 
-  // When generation completes, switch to preview tab
+  const { quizQuestions, quizTitle, quizPassPercent, loadingQuiz, quizExists, isQuizPublished } = useQuizData(form.getValues().id);
+
   useEffect(() => {
     if (generatedContent && activeTab === 'generate' && generationStatus === 'completed') {
       setActiveTab('preview');
     }
   }, [generatedContent, generationStatus, activeTab]);
 
-  // Reset errors when changing tabs - this was causing an infinite loop
-  // Fix: Add proper dependency array
   useEffect(() => {
     if (clearErrors) {
       clearErrors();
@@ -61,7 +61,6 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
     }
   };
 
-  // When clicking student tab, ensure edit mode is off
   useEffect(() => {
     if (activeTab === 'student') {
       setEditMode(false);
@@ -126,10 +125,29 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
         
         <TabsContent value="student" className="pt-4">
           {generatedContent ? (
-            <LessonPreview 
-              content={form.watch('content')} 
-              title={form.watch('title')} 
-            />
+            <div className="space-y-8">
+              <LessonPreview 
+                content={form.watch('content')} 
+                title={form.watch('title')} 
+              />
+              
+              {quizExists && quizQuestions.length > 0 && (
+                <div className="mt-8 pt-8 border-t">
+                  <h2 className="text-xl font-semibold mb-4">Lesson Quiz</h2>
+                  <div className="bg-card rounded-lg shadow-sm p-4">
+                    <QuizTab 
+                      lessonId={form.getValues().id} 
+                      loadingQuiz={loadingQuiz}
+                      quizExists={quizExists}
+                      quizQuestions={quizQuestions}
+                      quizTitle={quizTitle}
+                      quizPassPercent={quizPassPercent}
+                      isQuizPublished={isQuizPublished}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="text-center py-12 border rounded-md bg-muted">
               <p className="text-muted-foreground">Generate content first to see student view</p>
