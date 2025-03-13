@@ -46,6 +46,10 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     );
   }
 
+  const onGenerateQuiz = () => {
+    handleGenerateQuiz(numQuestions);
+  };
+
   return (
     <div className="space-y-6">
       {loadingError && currentPhase !== 'error' && (
@@ -69,7 +73,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       <QuizGenerationForm
         numQuestions={numQuestions}
         setNumQuestions={setNumQuestions}
-        onGenerateQuiz={handleGenerateQuiz}
+        onGenerateQuiz={onGenerateQuiz}
         loading={loading}
         isRetrying={isRetrying}
         error={loadingError}
