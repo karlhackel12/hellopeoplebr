@@ -16,17 +16,6 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   className
 }) => {
   const percentComplete = totalSections > 0 ? Math.round(completedSections.length / totalSections * 100) : 0;
-  return <div className="py-[5px] my-[60px]">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-muted-foreground">
-          {completedSections.length} of {totalSections} complete
-        </p>
-        <Badge variant={percentComplete === 100 ? "default" : "outline"} className={cn("text-xs", percentComplete === 100 ? "bg-green-500" : "")}>
-          {percentComplete}%
-        </Badge>
-      </div>
-      
-      <Progress value={percentComplete} className="h-1" indicatorClassName={cn(percentComplete === 100 ? "bg-green-500" : "bg-primary")} />
-    </div>;
+  return;
 };
 export default ProgressTracker;
