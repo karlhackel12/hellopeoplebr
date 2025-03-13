@@ -3,15 +3,16 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { ThemeProvider } from './hooks/useTheme.tsx';
 import { AuthProvider } from './hooks/useAuth.tsx';
+
+// Force light theme on the document
+document.documentElement.classList.remove('dark');
+document.documentElement.classList.add('light');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-        <App />
-      </ThemeProvider>
+      <App />
     </AuthProvider>
   </React.StrictMode>,
 );
