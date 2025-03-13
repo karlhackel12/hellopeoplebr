@@ -3,7 +3,7 @@ import { useQuizGeneration } from './quiz/useQuizGeneration';
 import { useQuizFetching } from './quiz/useQuizFetching';
 import { useQuizManagement } from './quiz/useQuizManagement';
 import { useQuizContent } from './quiz/useQuizContent';
-import { useSmartQuizGeneration } from './quiz/useSmartQuizGeneration';
+import { useSmartQuizGeneration } from './useSmartQuizGeneration';
 import { Question } from '../quiz/types';
 
 export const useQuizHandler = (lessonId: string) => {
