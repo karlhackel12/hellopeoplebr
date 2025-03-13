@@ -10,7 +10,7 @@ import {
   X 
 } from 'lucide-react';
 
-interface StudentSidebarProps {
+export interface StudentSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }
