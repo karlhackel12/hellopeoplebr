@@ -3,10 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import QuizEditor from '@/components/teacher/QuizEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import LessonSelect from '@/components/teacher/quiz/LessonSelect';
+import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 
 const QuizEdit: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
@@ -14,6 +16,10 @@ const QuizEdit: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [quizTitle, setQuizTitle] = useState('');
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [isSavingLesson, setIsSavingLesson] = useState(false);
+
+  const { generateQuiz } = useQuizHandler(lessonId || '');
 
   useEffect(() => {
     const fetchQuizInfo = async () => {
@@ -47,24 +53,107 @@ const QuizEdit: React.FC = () => {
   }, [quizId]);
 
   const handleBack = () => {
-    if (lessonId) {
-      navigate(`/teacher/lessons/quiz/${lessonId}`);
-    } else {
-      navigate('/teacher/quiz');
+    navigate('/teacher/quiz');
+  };
+
+  const handleSelectLesson = async (newLessonId: string | null) => {
+    if (newLessonId === lessonId) return;
+    
+    try {
+      setIsSavingLesson(true);
+      
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ lesson_id: newLessonId })
+        .eq('id', quizId);
+        
+      if (error) throw error;
+      
+      setLessonId(newLessonId);
+      toast.success('Lesson association updated', {
+        description: newLessonId 
+          ? 'This quiz is now associated with the selected lesson' 
+          : 'This quiz is now a standalone quiz'
+      });
+    } catch (error) {
+      console.error('Error updating lesson association:', error);
+      toast.error('Error', {
+        description: 'Failed to update lesson association',
+      });
+    } finally {
+      setIsSavingLesson(false);
+    }
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (!lessonId) {
+      toast.error('Error', {
+        description: 'A lesson must be selected to generate questions',
+      });
+      return;
+    }
+    
+    try {
+      setGenerating(true);
+      
+      // First clear existing questions
+      const { error: clearError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .eq('quiz_id', quizId);
+      
+      if (clearError) throw clearError;
+      
+      // Generate new questions
+      await generateQuiz(5);
+      
+      toast.success('Questions generated', {
+        description: 'New questions have been generated based on the lesson content',
+      });
+      
+      // Refresh the page to show new questions
+      window.location.reload();
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      toast.error('Error', {
+        description: 'Failed to generate questions',
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
   return (
     <TeacherLayout>
       <div className="container mx-auto p-4 md:p-8 space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to {lessonId ? 'Lesson Quiz' : 'Quizzes'}
-          </Button>
-          <h1 className="text-2xl font-semibold">
-            {loading ? 'Loading Quiz...' : `Edit Quiz: ${quizTitle}`}
-          </h1>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Quizzes
+            </Button>
+            <h1 className="text-2xl font-semibold">
+              {loading ? 'Loading Quiz...' : `Edit Quiz: ${quizTitle}`}
+            </h1>
+          </div>
+          
+          {lessonId && (
+            <Button 
+              onClick={handleGenerateQuestions} 
+              disabled={generating || !lessonId}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {generating ? 'Generating...' : 'Generate New Questions'}
+            </Button>
+          )}
+        </div>
+
+        <div className="bg-muted/30 p-4 rounded-lg">
+          <LessonSelect 
+            selectedLessonId={lessonId}
+            onSelectLesson={handleSelectLesson}
+          />
         </div>
 
         {loading ? (
