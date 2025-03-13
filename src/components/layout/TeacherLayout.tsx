@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BookText, Users, Settings, Mail, LogOut, Clipboard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import ThemeToggle from '@/components/ThemeToggle';
 
 interface TeacherLayoutProps {
   children: React.ReactNode;
@@ -69,8 +67,6 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
                 </Link>
               </Button>
             ))}
-            
-            <ThemeToggle />
             
             <Button 
               variant="ghost" 

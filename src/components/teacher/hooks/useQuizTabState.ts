@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizPreviewState } from './quiz/useQuizPreviewState';
@@ -68,7 +67,6 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
-  // Wrap the publishing functions to convert boolean return to void
   const publishQuizWithVoid = async (): Promise<void> => {
     try {
       await publishQuiz();
@@ -85,12 +83,20 @@ export const useQuizTabState = (lessonId?: string) => {
     }
   };
 
-  const { togglePublishStatus } = useQuizPublishState(
+  const { togglePublishStatus: originalTogglePublishStatus } = useQuizPublishState(
     publishQuizWithVoid, 
     unpublishQuizWithVoid, 
     isPublished, 
     setIsPublished
   );
+
+  const togglePublishStatus = async (): Promise<void> => {
+    try {
+      await originalTogglePublishStatus();
+    } catch (error) {
+      console.error("Error toggling publish status:", error);
+    }
+  };
 
   const {
     handleSaveQuiz,
@@ -105,16 +111,16 @@ export const useQuizTabState = (lessonId?: string) => {
     fetchQuizQuestions
   );
 
-  // Create a wrapped version of handleGenerateQuiz that implements the expected interface
-  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<void> => {
+  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string) => void): Promise<boolean> => {
     try {
       await handleGenerateQuiz(setContentLoadingMessage);
+      return true;
     } catch (error) {
       console.error("Error in wrappedHandleGenerateQuiz:", error);
+      return false;
     }
   };
 
-  // This wrapper just calls the generate function without the message setter
   const generateQuizWrapper = async (): Promise<void> => {
     try {
       await generateQuiz(numQuestions);
