@@ -40,6 +40,8 @@ const QuizCreatePage: React.FC = () => {
       }
       
       // Create a new quiz record
+      // We need to provide a non-null value for lesson_id or make it optional in the DB schema
+      // For now, we'll use a placeholder value or null if the schema allows
       const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
         .insert({
