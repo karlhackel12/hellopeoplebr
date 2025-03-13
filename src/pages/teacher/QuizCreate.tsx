@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -122,7 +121,7 @@ const QuizCreate: React.FC = () => {
       if (error) throw error;
 
       // Generate questions
-      await generateQuiz(5);
+      const questions = await generateQuiz(5);
       
       toast.success('Quiz created with AI questions', {
         description: 'Your quiz has been created with AI-generated questions',
