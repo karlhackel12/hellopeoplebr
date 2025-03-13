@@ -68,6 +68,7 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
+  // Wrap the publishing functions to convert boolean return to void
   const publishQuizWithVoid = async (): Promise<void> => {
     try {
       await publishQuiz();
