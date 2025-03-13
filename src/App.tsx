@@ -12,19 +12,23 @@ import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
-import Invitations from "./pages/teacher/Invitations";
-import Students from "./pages/teacher/Students";
-import Assignments from "./pages/teacher/Assignments";
-import Settings from "./pages/teacher/Settings";
+import Students from "./pages/teacher/students/Students";
+import Assignments from "./pages/teacher/assignments/Assignments";
+import Settings from "./pages/teacher/settings/Settings";
 import SidebarDemoPage from "./pages/SidebarDemo";
 import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 
 // Quiz pages
-import QuizManagementPage from "./pages/teacher/QuizManagementPage";
-import QuizCreatePage from "./pages/teacher/QuizCreatePage";
-import QuizEditPage from "./pages/teacher/QuizEditPage";
-import QuizPreviewPage from "./pages/teacher/QuizPreviewPage";
+import QuizManagementPage from "./pages/teacher/quizzes/QuizManagementPage";
+import QuizCreatePage from "./pages/teacher/quizzes/QuizCreatePage";
+import QuizEditPage from "./pages/teacher/quizzes/QuizEditPage";
+import QuizPreviewPage from "./pages/teacher/quizzes/QuizPreviewPage";
+
+// Lesson pages
+import Lessons from "./pages/teacher/lessons/Lessons";
+import LessonEditor from "./pages/teacher/lessons/LessonEditor";
+import LessonQuizPage from "./pages/teacher/lessons/LessonQuizPage";
 
 // Student Pages
 import StudentDashboard from "./pages/student/Dashboard";
@@ -76,6 +80,28 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
+            {/* Lesson Routes */}
+            <Route path="/teacher/lessons" element={
+              <PageTransitionWrapper>
+                <Lessons />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/lessons/create" element={
+              <PageTransitionWrapper>
+                <LessonEditor />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/lessons/edit/:lessonId" element={
+              <PageTransitionWrapper>
+                <LessonEditor />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/lessons/:lessonId/quiz" element={
+              <PageTransitionWrapper>
+                <LessonQuizPage />
+              </PageTransitionWrapper>
+            } />
+            
             {/* Quiz Management Routes */}
             <Route path="/teacher/quizzes" element={
               <PageTransitionWrapper>
@@ -99,11 +125,6 @@ const App = () => (
             } />
             
             {/* Other Teacher Routes */}
-            <Route path="/teacher/invitations" element={
-              <PageTransitionWrapper>
-                <Invitations />
-              </PageTransitionWrapper>
-            } />
             <Route path="/teacher/students" element={
               <PageTransitionWrapper>
                 <Students />

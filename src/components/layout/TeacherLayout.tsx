@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,11 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
       icon: <BookText className="h-4 w-4 mr-2" /> 
     },
     { 
+      name: 'Lessons', 
+      path: '/teacher/lessons', 
+      icon: <BookText className="h-4 w-4 mr-2" /> 
+    },
+    { 
       name: 'Quizzes', 
       path: '/teacher/quizzes', 
       icon: <Clipboard className="h-4 w-4 mr-2" /> 
@@ -33,11 +39,6 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
       name: 'Students', 
       path: '/teacher/students', 
       icon: <Users className="h-4 w-4 mr-2" /> 
-    },
-    { 
-      name: 'Invitations', 
-      path: '/teacher/invitations', 
-      icon: <Mail className="h-4 w-4 mr-2" /> 
     },
     { 
       name: 'Settings', 
