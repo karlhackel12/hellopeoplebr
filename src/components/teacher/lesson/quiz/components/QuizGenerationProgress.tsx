@@ -3,7 +3,7 @@ import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Brain, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
-export type GenerationPhase = 'idle' | 'content-loading' | 'analyzing' | 'generating' | 'saving' | 'complete' | 'error';
+export type GenerationPhase = 'idle' | 'loading' | 'content-loading' | 'analyzing' | 'generating' | 'saving' | 'complete' | 'error';
 
 interface PhaseInfo {
   icon: React.ReactNode;
@@ -27,6 +27,11 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
       icon: <div className="w-5 h-5" />,
       label: 'Waiting to start',
       description: 'Quiz generation has not started yet'
+    },
+    'loading': {
+      icon: <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />,
+      label: 'Loading',
+      description: 'Preparing to generate quiz'
     },
     'content-loading': {
       icon: <FileText className="h-5 w-5 text-blue-500" />,
@@ -66,7 +71,7 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
 
   // Calculate progress percentage based on current phase
   const getProgressPercentage = () => {
-    const phaseValues: GenerationPhase[] = ['idle', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
+    const phaseValues: GenerationPhase[] = ['idle', 'loading', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
     const currentIndex = phaseValues.indexOf(currentPhase);
     
     if (currentPhase === 'error') return 100;
@@ -77,7 +82,7 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
 
   const progressPercentage = getProgressPercentage();
   const currentInfo = phases[currentPhase];
-  const phaseValues: GenerationPhase[] = ['idle', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
+  const phaseValues: GenerationPhase[] = ['idle', 'loading', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
 
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-md border">
@@ -97,11 +102,11 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
         indicatorClassName={currentPhase === 'error' ? 'bg-red-500' : undefined}
       />
       
-      <div className="grid grid-cols-5 gap-1 text-xs">
-        {['content-loading', 'analyzing', 'generating', 'saving', 'complete'].map((phase) => {
+      <div className="grid grid-cols-6 gap-1 text-xs">
+        {['loading', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'].map((phase) => {
           const phaseInfo = phases[phase as GenerationPhase];
           const isActive = phase === currentPhase;
-          const isPast = getProgressPercentage() > phaseValues.indexOf(phase as GenerationPhase) * 25;
+          const isPast = getProgressPercentage() > phaseValues.indexOf(phase as GenerationPhase) * 20;
           
           return (
             <div 

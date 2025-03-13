@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { GenerationPhase } from '../../lesson/quiz/components/QuizGenerationProgress';
 
@@ -37,6 +36,9 @@ export const useQuizGenerationState = () => {
     
     // Set appropriate loading message based on phase
     switch (phase) {
+      case 'loading':
+        setContentLoadingMessage('Preparing to generate quiz...');
+        break;
       case 'content-loading':
         setContentLoadingMessage('Loading lesson content for analysis...');
         break;

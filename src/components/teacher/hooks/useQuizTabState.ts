@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Question } from '../quiz/types';
 import { useQuizHandler } from './useQuizHandler';
 import { toast } from 'sonner';
+import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgress';
 
 export const useQuizTabState = (lessonId?: string) => {
   const [numQuestions, setNumQuestions] = useState<string>('5');
@@ -14,7 +15,7 @@ export const useQuizTabState = (lessonId?: string) => {
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [contentLoadingMessage, setContentLoadingMessage] = useState<string>('');
-  const [currentPhase, setCurrentPhase] = useState<'idle' | 'loading' | 'analyzing' | 'generating' | 'processing' | 'complete' | 'error'>('idle');
+  const [currentPhase, setCurrentPhase] = useState<GenerationPhase>('idle');
 
   const {
     fetchLessonContent,
@@ -75,23 +76,31 @@ export const useQuizTabState = (lessonId?: string) => {
       setLoadingError(null);
       setErrorDetails(null);
       setCurrentPhase('loading');
-      setContentLoadingMessage('Analyzing lesson content...');
+      setContentLoadingMessage('Preparing to analyze lesson content...');
       
-      // Set loading phases
+      // Set loading phases with timeouts to show progress
       setTimeout(() => {
         if (currentPhase === 'loading') {
-          setCurrentPhase('analyzing');
-          setContentLoadingMessage('Creating quiz questions based on lesson content...');
+          setCurrentPhase('content-loading');
+          setContentLoadingMessage('Loading lesson content...');
         }
-      }, 1500);
+      }, 1000);
+      
+      setTimeout(() => {
+        if (currentPhase === 'content-loading') {
+          setCurrentPhase('analyzing');
+          setContentLoadingMessage('Analyzing lesson content...');
+        }
+      }, 2500);
       
       setTimeout(() => {
         if (currentPhase === 'analyzing') {
           setCurrentPhase('generating');
-          setContentLoadingMessage('Finalizing quiz questions and options...');
+          setContentLoadingMessage('Creating quiz questions...');
         }
-      }, 3000);
+      }, 4000);
       
+      // Generate the quiz with the specified number of questions
       await generateSmartQuiz(parseInt(numQuestions));
       
       setCurrentPhase('complete');
