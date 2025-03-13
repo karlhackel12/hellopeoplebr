@@ -4,14 +4,19 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Auth Components
-import Login from 'src/pages/auth/Login';
+// Auth Pages
+import Login from '@/pages/auth/Login';
+import Register from '@/pages/auth/Register';
+import ForgotPassword from '@/pages/auth/ForgotPassword';
+import InvitationAcceptancePage from '@/pages/InvitationAcceptance';
+
 // Teacher Components
-import TeacherDashboard from 'src/pages/teacher/dashboard/Dashboard';
+import TeacherDashboard from '@/pages/teacher/dashboard/Dashboard';
+
 // Protected Route Components
-import ProtectedRoute from 'src/components/auth/ProtectedRoute';
-import TeacherRoute from 'src/components/auth/TeacherRoute';
-import StudentRoute from 'src/components/auth/StudentRoute';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import TeacherRoute from '@/components/auth/TeacherRoute';
+import StudentRoute from '@/components/auth/StudentRoute';
 
 // Create a React Query client
 const queryClient = new QueryClient({
@@ -29,6 +34,18 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
+  },
+  {
+    path: '/invitation/:code',
+    element: <InvitationAcceptancePage />,
   },
   // Teacher routes
   {
