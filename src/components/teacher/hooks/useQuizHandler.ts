@@ -32,9 +32,9 @@ export const useQuizHandler = (lessonId: string) => {
   const {
     getLessonContent,
     isContentLoaded
-  } = useQuizContent(lessonId);
+  } = useQuizContent();
 
-  const { generateSmartQuiz } = useSmartQuizGeneration(generateQuiz, getLessonContent);
+  const { generateSmartQuiz } = useSmartQuizGeneration(generateQuiz);
 
   return {
     fetchLessonContent: getLessonContent,

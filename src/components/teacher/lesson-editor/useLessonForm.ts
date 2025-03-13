@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Define form validation schema
 export const lessonFormSchema = z.object({
+  id: z.string().optional(),
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
   is_published: z.boolean().default(false),
@@ -31,6 +32,7 @@ export const useLessonForm = () => {
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
+      id: undefined,
       title: '',
       content: '',
       is_published: false,
@@ -58,6 +60,7 @@ export const useLessonForm = () => {
         
         if (data) {
           form.reset({
+            id: data.id,
             title: data.title,
             content: data.content || '',
             is_published: data.is_published,
