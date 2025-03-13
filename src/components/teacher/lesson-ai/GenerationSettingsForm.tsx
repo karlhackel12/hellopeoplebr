@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, MessageSquare, AlertCircle, StopCircle } from 'lucide-react';
+import { Sparkles, MessageSquare, StopCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress'; 
+import GenerationProgress from './components/GenerationProgress';
+import { GenerationPhase } from './hooks/types';
 
 interface GenerationSettingsFormProps {
   title: string;
@@ -14,10 +15,12 @@ interface GenerationSettingsFormProps {
   setInstructions: (instructions: string) => void;
   handleGenerate: () => Promise<void>;
   handleCancel?: () => void;
+  handleRetry?: () => void;
   generating: boolean;
   error?: string | null;
-  generationStatus?: 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
-  progress?: number;
+  generationPhase: GenerationPhase;
+  progressPercentage: number;
+  statusMessage: string;
 }
 
 const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
@@ -28,49 +31,24 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
   setInstructions,
   handleGenerate,
   handleCancel,
+  handleRetry,
   generating,
   error,
-  generationStatus = 'idle',
-  progress = 0,
+  generationPhase,
+  progressPercentage,
+  statusMessage,
 }) => {
-  const getProgressValue = () => {
-    if (generationStatus === 'completed') return 100;
-    if (generationStatus === 'failed') return 0;
-    
-    // Use the provided progress or calculate based on status
-    if (progress > 0) return progress;
-    
-    switch (generationStatus) {
-      case 'pending': return 15;
-      case 'processing': return 45;
-      default: return 0;
-    }
-  };
-
-  const getStatusMessage = () => {
-    switch (generationStatus) {
-      case 'pending': 
-        return "Starting content generation...";
-      case 'processing': 
-        return "AI is generating your English lesson content. This typically takes 30-60 seconds...";
-      case 'completed':
-        return "Generation complete! Content ready for review.";
-      case 'failed':
-        return "Generation failed. Please try again.";
-      default:
-        return "Generate content to see status here.";
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error}
-          </AlertDescription>
-        </Alert>
+      {generating && (
+        <GenerationProgress
+          phase={generationPhase}
+          progress={progressPercentage}
+          statusMessage={statusMessage}
+          error={error}
+          onCancel={handleCancel}
+          onRetry={handleRetry}
+        />
       )}
 
       <div>
@@ -122,36 +100,16 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
           Generate English Lesson Content
         </Button>
       ) : (
-        <div className="flex gap-2">
+        generationPhase !== 'error' && (
           <Button 
-            className="w-full opacity-50" 
-            disabled={true}
+            variant="destructive" 
+            onClick={handleCancel}
+            className="w-full"
           >
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-            Generating...
+            <StopCircle className="mr-2 h-4 w-4" />
+            Cancel Generation
           </Button>
-          
-          {handleCancel && (
-            <Button 
-              variant="destructive" 
-              onClick={handleCancel}
-              className="flex-shrink-0"
-            >
-              <StopCircle className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-          )}
-        </div>
-      )}
-
-      {generating && (
-        <div className="p-4 border rounded-md bg-muted">
-          <p className="text-sm text-center mb-2">{getStatusMessage()}</p>
-          <Progress value={getProgressValue()} className="h-2 w-full" />
-          <p className="text-xs text-center mt-2 text-muted-foreground">
-            {Math.round(getProgressValue())}% - {generationStatus === 'processing' ? `Processing (attempt ${progress}/${100})` : generationStatus}
-          </p>
-        </div>
+        )
       )}
 
       <div className="p-4 border rounded-md bg-muted">

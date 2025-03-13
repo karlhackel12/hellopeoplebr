@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { GeneratedLessonContent } from '../types';
-import { GenerationState } from './types';
+import { GenerationState, GenerationPhase } from './types';
 
 // Constants
 const DEFAULT_POLLING_INTERVAL = 3000; // 3 seconds
@@ -16,6 +16,9 @@ export const useGenerationState = () => {
     error: null,
     retryCount: 0,
     generationStatus: 'idle',
+    generationPhase: 'idle',
+    progressPercentage: 0,
+    statusMessage: '',
     isCancelled: false,
     // Add the missing properties with their default values
     generationId: undefined,
@@ -51,7 +54,11 @@ export const useGenerationState = () => {
   };
 
   const setError = (error: string | null) => {
-    setState(prev => ({ ...prev, error }));
+    setState(prev => ({ 
+      ...prev, 
+      error,
+      generationPhase: error ? 'error' : prev.generationPhase 
+    }));
   };
 
   const incrementRetryCount = () => {
@@ -68,6 +75,59 @@ export const useGenerationState = () => {
 
   const setGenerationStatus = (status: GenerationState['generationStatus']) => {
     setState(prev => ({ ...prev, generationStatus: status }));
+    
+    // Update phase based on status
+    if (status === 'pending') {
+      setGenerationPhase('starting');
+      setProgressPercentage(10);
+    } else if (status === 'processing') {
+      setGenerationPhase('generating');
+      setProgressPercentage(40);
+    } else if (status === 'completed') {
+      setGenerationPhase('complete');
+      setProgressPercentage(100);
+    } else if (status === 'failed') {
+      setGenerationPhase('error');
+    }
+  };
+
+  const setGenerationPhase = (phase: GenerationPhase) => {
+    setState(prev => ({ ...prev, generationPhase: phase }));
+    
+    // Set appropriate status message based on phase
+    let message = '';
+    switch (phase) {
+      case 'starting':
+        message = 'Initializing AI lesson generation...';
+        break;
+      case 'analyzing':
+        message = 'Analyzing topic and requirements...';
+        break;
+      case 'generating':
+        message = 'Creating lesson content with AI...';
+        break;
+      case 'processing':
+        message = 'Processing and formatting content...';
+        break;
+      case 'complete':
+        message = 'Lesson content successfully generated!';
+        break;
+      case 'error':
+        message = 'There was an error generating content.';
+        break;
+      default:
+        message = '';
+    }
+    
+    setStatusMessage(message);
+  };
+
+  const setProgressPercentage = (percentage: number) => {
+    setState(prev => ({ ...prev, progressPercentage: percentage }));
+  };
+
+  const setStatusMessage = (message: string) => {
+    setState(prev => ({ ...prev, statusMessage: message }));
   };
 
   const setGenerationId = (id: string | undefined) => {
@@ -79,7 +139,18 @@ export const useGenerationState = () => {
   };
 
   const incrementPollCount = () => {
-    setState(prev => ({ ...prev, pollCount: prev.pollCount + 1, lastPollTime: Date.now() }));
+    setState(prev => {
+      const newPollCount = prev.pollCount + 1;
+      // Calculate progress based on poll count (25% to 90%)
+      const pollProgress = Math.min(25 + (newPollCount / prev.maxPollCount) * 65, 90);
+      
+      return { 
+        ...prev, 
+        pollCount: newPollCount, 
+        lastPollTime: Date.now(),
+        progressPercentage: prev.generationPhase === 'complete' ? 100 : pollProgress
+      };
+    });
   };
 
   const resetPollCount = () => {
@@ -91,7 +162,10 @@ export const useGenerationState = () => {
       ...prev, 
       isCancelled: true, 
       generating: false,
-      generationStatus: 'idle'
+      generationStatus: 'idle',
+      generationPhase: 'idle',
+      progressPercentage: 0,
+      statusMessage: 'Generation cancelled'
     }));
   };
 
@@ -102,6 +176,9 @@ export const useGenerationState = () => {
       error: null,
       retryCount: 0,
       generationStatus: 'idle',
+      generationPhase: 'idle',
+      progressPercentage: 0,
+      statusMessage: '',
       generationId: undefined,
       pollCount: 0,
       lastPollTime: undefined,
@@ -120,6 +197,9 @@ export const useGenerationState = () => {
     resetRetryCount,
     clearErrors,
     setGenerationStatus,
+    setGenerationPhase,
+    setProgressPercentage,
+    setStatusMessage,
     setGenerationId,
     setPollingInterval,
     incrementPollCount,

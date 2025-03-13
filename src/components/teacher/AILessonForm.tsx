@@ -30,10 +30,13 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
     setInstructions,
     handleGenerate,
     handleCancelGeneration,
+    handleRetryGeneration,
     error,
     clearErrors,
     generationStatus,
-    progress
+    generationPhase,
+    progressPercentage,
+    statusMessage
   } = useAIGeneration(form, title);
 
   // When generation completes, switch to preview tab
@@ -78,7 +81,10 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
       
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="generate" disabled={generating && generationStatus !== 'failed'}>
+          <TabsTrigger 
+            value="generate" 
+            disabled={generating && generationPhase !== 'error'}
+          >
             Generation Settings
           </TabsTrigger>
           <TabsTrigger value="preview" disabled={!generatedContent}>
@@ -97,11 +103,13 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
             instructions={instructions} 
             setInstructions={setInstructions} 
             handleGenerate={handleGenerate} 
-            handleCancel={generating ? handleCancelGeneration : undefined} 
+            handleCancel={generating ? handleCancelGeneration : undefined}
+            handleRetry={generationPhase === 'error' ? handleRetryGeneration : undefined} 
             generating={generating} 
             error={error} 
-            generationStatus={generationStatus} 
-            progress={progress} 
+            generationPhase={generationPhase}
+            progressPercentage={progressPercentage}
+            statusMessage={statusMessage}
           />
         </TabsContent>
         
