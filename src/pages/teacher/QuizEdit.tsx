@@ -97,7 +97,7 @@ const QuizEdit: React.FC = () => {
   const handleGenerateQuestions = async () => {
     if (!lessonId) {
       toast.error('Error', {
-        description: 'A lesson must be selected to generate questions',
+        description: 'A lesson must be selected to generate questions from lesson content',
       });
       return;
     }

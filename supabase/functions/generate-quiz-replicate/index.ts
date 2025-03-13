@@ -1,200 +1,174 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import Replicate from "https://esm.sh/replicate@0.25.2";
 
-const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY');
-const REPLICATE_MODEL = "meta/llama-3-70b-instruct:6ad3e3d2f5151fa45a1a14d0def0250cd223e6b6f531d42a53e9b98d91275d8c";
-
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
     if (!REPLICATE_API_KEY) {
-      throw new Error('REPLICATE_API_KEY is not set');
+      throw new Error("REPLICATE_API_KEY is not available");
     }
 
-    const requestData = await req.json();
-    const { quizTitle, quizDescription, numQuestions = 5 } = requestData;
+    const { quizTitle, quizDescription, numQuestions = 5 } = await req.json();
 
     if (!quizTitle) {
       return new Response(
-        JSON.stringify({ error: 'Quiz title is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Quiz title is required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
-    console.log(`Generating quiz: "${quizTitle}" with ${numQuestions} questions`);
-
+    console.log(`Generating quiz questions for: ${quizTitle}`);
+    
     const replicate = new Replicate({
       auth: REPLICATE_API_KEY,
     });
 
-    const systemPrompt = `
-    Act as a teacher creating a quiz. You will generate ${numQuestions} questions based on the title and description provided.
-    The questions should be evenly distributed among these types:
-    - multiple_choice: Questions with 4 options where only one is correct
-    - true_false: True or False questions
-    - fill_in_blank: Questions where users fill in a missing word or phrase
+    // Create a prompt for quiz generation
+    const prompt = generatePrompt(quizTitle, quizDescription, numQuestions);
     
-    Your response must be valid JSON that matches this exact structure:
-    {
-      "questions": [
-        {
-          "question_text": "string - the question text",
-          "question_type": "one of: multiple_choice, true_false, fill_in_blank",
-          "points": "number - difficulty level from 1-3",
-          "options": [
-            {
-              "option_text": "string - text of the option",
-              "is_correct": "boolean - whether this option is correct"
-            }
-          ]
+    // Call the Replicate API
+    const output = await replicate.run(
+      "meta/llama-3-8b-instruct:20440e4fdbb7e4a9e2d652737bb3fb87b08b9e759a37f97adcd2d5bd9b6c5ea1",
+      {
+        input: {
+          prompt: prompt,
+          system_prompt: "You are an expert educational quiz creator that creates high-quality quiz questions for students. Always respond with valid JSON.",
+          max_tokens: 3000,
+          temperature: 0.3,
+          top_p: 0.9
         }
-      ]
-    }
-    
-    For true_false questions, include exactly two options: "True" and "False", with the correct one marked.
-    For fill_in_blank questions, provide 4 options, with one being the correct answer.
-    For multiple_choice questions, provide 4 options with only one marked as correct.
-    
-    All questions must have options, and each question must have exactly one correct answer.
-    
-    Ensure the response is valid JSON and contains the exact structure shown above. Do not include any text other than the JSON.
-    `;
-
-    const userPrompt = `
-    Create a quiz titled "${quizTitle}".
-    ${quizDescription ? `Description: ${quizDescription}` : ''}
-    Generate exactly ${numQuestions} questions.
-    `;
-
-    console.log("Calling Replicate for quiz generation");
-    const output = await replicate.run(REPLICATE_MODEL, {
-      input: {
-        prompt: userPrompt,
-        system_prompt: systemPrompt,
-        temperature: 0.7,
-        max_tokens: 4000,
-        top_p: 0.9,
       }
-    });
-
-    console.log("Received output from Replicate, parsing...");
-    
-    let quizData = null;
-    try {
-      // Extract the JSON part from the response if it's wrapped in backticks
-      let jsonString = output.toString();
-      const jsonMatch = jsonString.match(/```json\n([\s\S]*?)\n```/) || 
-                       jsonString.match(/```\n([\s\S]*?)\n```/) ||
-                       jsonString.match(/\{[\s\S]*\}/);
-      
-      if (jsonMatch) {
-        jsonString = jsonMatch[0].replace(/```json\n|```\n|```/g, '');
-      }
-      
-      quizData = JSON.parse(jsonString);
-      
-      // Validate structure
-      if (!quizData.questions || !Array.isArray(quizData.questions)) {
-        throw new Error('Response missing questions array');
-      }
-
-      // Validate and clean up each question
-      quizData.questions = quizData.questions.map((q: any, index: number) => {
-        if (!q.question_text) {
-          throw new Error(`Question ${index} missing text`);
-        }
-        
-        if (!q.question_type || !['multiple_choice', 'true_false', 'fill_in_blank'].includes(q.question_type)) {
-          console.warn(`Question ${index} has invalid type, defaulting to multiple_choice`);
-          q.question_type = 'multiple_choice';
-        }
-        
-        if (!q.options || !Array.isArray(q.options) || q.options.length === 0) {
-          throw new Error(`Question ${index} missing options`);
-        }
-        
-        // Make sure true_false has exactly two options
-        if (q.question_type === 'true_false' && q.options.length !== 2) {
-          q.options = [
-            { option_text: 'True', is_correct: q.options.some((o: any) => o.is_correct && o.option_text.toLowerCase().includes('true')) },
-            { option_text: 'False', is_correct: q.options.some((o: any) => o.is_correct && o.option_text.toLowerCase().includes('false')) }
-          ];
-          
-          // Ensure one is marked as correct
-          if (!q.options.some((o: any) => o.is_correct)) {
-            q.options[0].is_correct = true;
-          }
-        }
-        
-        // Make sure points are valid
-        q.points = parseInt(q.points) || 1;
-        if (q.points < 1 || q.points > 3) {
-          q.points = 1;
-        }
-        
-        // Ensure each question has exactly one correct answer
-        const correctCount = q.options.filter((o: any) => o.is_correct).length;
-        if (correctCount === 0) {
-          q.options[0].is_correct = true;
-        } else if (correctCount > 1 && q.question_type !== 'multiple_select') {
-          // Keep only the first correct answer
-          let foundCorrect = false;
-          q.options = q.options.map((o: any) => {
-            if (o.is_correct && !foundCorrect) {
-              foundCorrect = true;
-              return o;
-            }
-            return { ...o, is_correct: false };
-          });
-        }
-        
-        return q;
-      });
-      
-    } catch (parseError) {
-      console.error("Error parsing Replicate response:", parseError);
-      console.log("Raw response:", output);
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to parse AI response', 
-          details: parseError.message,
-          rawOutput: output
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`Successfully generated ${quizData.questions.length} questions`);
-    
-    return new Response(
-      JSON.stringify({ 
-        status: 'success',
-        questions: quizData.questions,
-        source: 'replicate'
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-    
-  } catch (error) {
-    console.error("Error generating quiz with Replicate:", error);
+
+    // Parse and clean the output
+    const parsedResponse = parseModelOutput(output);
     
     return new Response(
-      JSON.stringify({ 
-        error: 'Quiz generation failed', 
-        details: error.message 
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify(parsedResponse),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  } catch (error) {
+    console.error("Error:", error.message);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
+
+// Helper function to generate the prompt
+function generatePrompt(quizTitle: string, quizDescription: string, numQuestions: number): string {
+  return `Create a quiz titled "${quizTitle}" ${quizDescription ? `about: ${quizDescription}` : ""}.
+  
+Generate ${numQuestions} multiple-choice questions with 4 options each, where only one option is correct.
+
+The response should be a JSON object with this structure:
+{
+  "title": "${quizTitle}",
+  "questions": [
+    {
+      "question_text": "Question text here?",
+      "question_type": "multiple_choice",
+      "points": 1,
+      "options": [
+        {"option_text": "First option", "is_correct": false},
+        {"option_text": "Second option", "is_correct": true},
+        {"option_text": "Third option", "is_correct": false},
+        {"option_text": "Fourth option", "is_correct": false}
+      ]
+    }
+  ]
+}
+
+Each question should:
+1. Be clearly worded
+2. Test understanding rather than just facts
+3. Have four distinct answer options
+4. Have exactly one correct answer 
+5. Use the "multiple_choice" question type
+6. Assign 1 point to each question
+
+Make the questions challenging but appropriate for students. Ensure the JSON is properly formatted with no trailing commas.`;
+}
+
+// Helper function to parse and clean the model output
+function parseModelOutput(output: any): any {
+  let combinedOutput = "";
+  
+  if (Array.isArray(output)) {
+    combinedOutput = output.join("");
+  } else if (typeof output === "string") {
+    combinedOutput = output;
+  } else {
+    throw new Error("Unexpected output format from Replicate");
+  }
+  
+  // Find JSON in the response
+  const jsonMatch = combinedOutput.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("No valid JSON found in the response");
+  }
+  
+  let parsedJson;
+  try {
+    parsedJson = JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    // Try to fix common JSON issues and parse again
+    const fixedJson = fixJsonString(jsonMatch[0]);
+    parsedJson = JSON.parse(fixedJson);
+  }
+  
+  // Validate and fix the questions if needed
+  if (!parsedJson.questions || !Array.isArray(parsedJson.questions)) {
+    throw new Error("Invalid JSON structure: missing questions array");
+  }
+  
+  // Ensure each question has the required fields
+  parsedJson.questions = parsedJson.questions.map((q: any) => {
+    return {
+      question_text: q.question_text || "No question text provided",
+      question_type: q.question_type || "multiple_choice",
+      points: q.points || 1,
+      options: (q.options || []).map((o: any) => ({
+        option_text: o.option_text || "No option text provided",
+        is_correct: !!o.is_correct
+      }))
+    };
+  });
+  
+  return parsedJson;
+}
+
+// Helper function to fix common JSON issues
+function fixJsonString(jsonString: string): string {
+  // Replace single quotes with double quotes
+  let fixed = jsonString.replace(/'/g, '"');
+  
+  // Fix trailing commas in arrays and objects
+  fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
+  
+  // Ensure property names are in double quotes
+  fixed = fixed.replace(/(\w+):/g, '"$1":');
+  
+  return fixed;
+}

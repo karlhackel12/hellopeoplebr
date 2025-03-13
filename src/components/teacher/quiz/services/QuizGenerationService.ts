@@ -18,6 +18,11 @@ export class QuizGenerationService {
     try {
       console.log(`Generating quiz "${quizTitle}" with ${numQuestions} questions using Replicate`);
       
+      // Ensure we have a valid title
+      if (!quizTitle?.trim()) {
+        throw new Error('Quiz title is required for AI generation');
+      }
+      
       const response = await supabase.functions.invoke('generate-quiz-replicate', {
         body: { 
           quizTitle,
@@ -69,8 +74,8 @@ export class QuizGenerationService {
           .insert({
             quiz_id: quizId,
             question_text: question.question_text,
-            question_type: question.question_type,
-            points: question.points,
+            question_type: question.question_type || 'multiple_choice',
+            points: question.points || 1,
             order_index: index
           })
           .select()

@@ -98,7 +98,7 @@ const QuizCreate: React.FC = () => {
           created_by: user.user.id,
           pass_percent: 70,
           is_published: false,
-          lesson_id: selectedLessonId || null
+          lesson_id: selectedLessonId  // This will be null for standalone quizzes
         })
         .select();
 
@@ -190,7 +190,7 @@ const QuizCreate: React.FC = () => {
           created_by: user.user.id,
           pass_percent: 70,
           is_published: false,
-          lesson_id: selectedLessonId || null
+          lesson_id: selectedLessonId  // This will be null for standalone quizzes
         })
         .select();
 
