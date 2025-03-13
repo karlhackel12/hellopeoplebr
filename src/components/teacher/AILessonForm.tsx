@@ -43,7 +43,8 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
     }
   }, [generatedContent, generationStatus, activeTab]);
 
-  // Reset errors when changing tabs
+  // Reset errors when changing tabs - this was causing an infinite loop
+  // Fix: Add proper dependency array
   useEffect(() => {
     if (clearErrors) {
       clearErrors();
@@ -66,7 +67,14 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
 
   return (
     <div className="space-y-6">
-      {!import.meta.env.VITE_REPLICATE_API_KEY}
+      {!import.meta.env.VITE_REPLICATE_API_KEY && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Replicate API key is missing. Please add REPLICATE_API_KEY in your environment variables.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">

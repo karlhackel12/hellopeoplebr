@@ -110,6 +110,31 @@ function validateOutput(parsedOutput: any): any {
   };
 }
 
+function transformQuizQuestionsFormat(quizQuestions: any[]): any[] {
+  // Transform the questions format to match what the database expects
+  return quizQuestions.map((q, index) => {
+    // Determine which option is correct
+    const correctOptionIndex = q.options.findIndex(
+      (opt: string) => opt === q.correct_answer
+    );
+    
+    // Create options array with is_correct flag
+    const formattedOptions = q.options.map((optionText: string, optIndex: number) => ({
+      option_text: optionText,
+      is_correct: optIndex === correctOptionIndex,
+      order_index: optIndex
+    }));
+    
+    return {
+      question_text: q.question,
+      question_type: "multiple_choice",
+      points: 1,
+      order_index: index,
+      options: formattedOptions
+    };
+  });
+}
+
 serve(async (req) => {
   console.log("Edge function invoked: generate-lesson-content");
   
@@ -169,10 +194,28 @@ serve(async (req) => {
       const parsedOutput = parseOutput(output);
       const validatedOutput = validateOutput(parsedOutput);
       
+      // Extract quiz questions and transform to the expected format
+      const quizQuestions = transformQuizQuestionsFormat(validatedOutput.quiz.questions || []);
+      
+      // Create the lesson content structure (without quiz questions)
+      const lessonContent = {
+        description: validatedOutput.description,
+        keyPhrases: validatedOutput.keyPhrases,
+        vocabulary: validatedOutput.vocabulary,
+        // Add any other lesson fields from the validated output
+        practicalSituations: validatedOutput.practicalSituations || ["Everyday conversation"],
+        explanations: validatedOutput.explanations || ["No detailed explanation provided"],
+        tips: validatedOutput.tips || ["Practice regularly"],
+        objectives: validatedOutput.objectives || ["Learn key vocabulary", "Practice essential phrases"]
+      };
+      
       return new Response(
         JSON.stringify({
           status: "succeeded",
-          lesson: validatedOutput
+          lesson: lessonContent,
+          quiz: {
+            questions: quizQuestions
+          }
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

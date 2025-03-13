@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -9,6 +8,28 @@ export const generateQuizContent = async (lessonContent: string, numQuestions: n
   try {
     console.log(`Calling generate-quiz function with ${numQuestions} questions`);
     
+    // Check if the content is already pre-formatted quiz data
+    let isPreGenerated = false;
+    try {
+      const parsedContent = JSON.parse(lessonContent);
+      isPreGenerated = parsedContent && 
+                      parsedContent.questions && 
+                      Array.isArray(parsedContent.questions);
+    } catch (e) {
+      // Not JSON, treat as regular content
+      isPreGenerated = false;
+    }
+    
+    if (isPreGenerated) {
+      console.log("Using pre-generated quiz questions");
+      // Use pre-generated quiz data directly
+      return {
+        data: JSON.parse(lessonContent),
+        error: null
+      };
+    }
+    
+    // Otherwise, call the edge function to generate questions
     const response = await supabase.functions.invoke('generate-quiz', {
       body: { 
         lessonContent,

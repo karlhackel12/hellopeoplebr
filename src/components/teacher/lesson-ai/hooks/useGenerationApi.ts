@@ -20,6 +20,20 @@ export const useGenerationApi = () => {
       const resultData = response.data;
       console.log("Edge function response:", resultData);
       
+      // Store quiz data in local storage for later use
+      if (resultData.quiz && resultData.quiz.questions) {
+        try {
+          // Save the quiz data in localStorage for later retrieval
+          localStorage.setItem(
+            `lesson_quiz_${generationParams.timestamp || new Date().toISOString()}`,
+            JSON.stringify(resultData.quiz)
+          );
+          console.log("Quiz data stored for later use");
+        } catch (storageError) {
+          console.warn("Failed to store quiz data:", storageError);
+        }
+      }
+      
       return {
         id: 'direct',
         status: resultData.status || 'succeeded',
