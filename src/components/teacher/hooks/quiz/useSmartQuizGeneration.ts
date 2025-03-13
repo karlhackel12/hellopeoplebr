@@ -1,40 +1,76 @@
 
-import { QuizContentAnalyzer } from '../../quiz/services/QuizContentAnalyzer';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { QuizQuestionData } from '../../quiz/types/quizGeneration';
+import { useQuizGeneration } from './useQuizGeneration';
+import { useQuizDataProcessor } from './useQuizDataProcessor';
+import { Question } from '../../quiz/types';
 
-export const useSmartQuizGeneration = (
-  generateQuiz: (numQuestions: number, content: string) => Promise<boolean>,
-  getLessonContent: () => Promise<string | null>
-) => {
-  const generateSmartQuiz = async (numQuestions: number): Promise<void> => {
+export const useSmartQuizGeneration = (lessonId: string) => {
+  const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [savingQuiz, setSavingQuiz] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
+  
+  const { generateQuiz, loading: apiLoading, isRetrying, error: apiError } = useQuizGeneration();
+  const { processQuizData, processing, error: processingError } = useQuizDataProcessor();
+  
+  /**
+   * Unified error tracking
+   */
+  const error = apiError || processingError;
+  
+  /**
+   * Unified loading state
+   */
+  const loading = generatingQuiz || apiLoading || savingQuiz || processing;
+  
+  /**
+   * Main function to generate a smart quiz
+   */
+  const generateSmartQuiz = async (numQuestions: number): Promise<Question[]> => {
     try {
-      // First check if we have pre-generated quiz questions from the lesson generation
+      setGeneratingQuiz(true);
+      
+      // Check for pre-generated quiz data in localStorage
       const storedQuizData = getStoredQuizData();
+      let generationResponse;
       
       if (storedQuizData && storedQuizData.questions && storedQuizData.questions.length > 0) {
         console.log("Using pre-generated quiz questions:", storedQuizData.questions.length);
-        // Use the existing quiz data directly
-        await generateQuiz(numQuestions, JSON.stringify(storedQuizData));
-        return;
+        generationResponse = {
+          status: 'succeeded',
+          questions: storedQuizData.questions as QuizQuestionData[]
+        };
+      } else {
+        // Generate quiz via the edge function
+        generationResponse = await generateQuiz(lessonId, numQuestions);
       }
       
-      // Fallback to regular content analysis if no pre-generated questions exist
-      const content = await getLessonContent();
-      if (!content) {
-        return;
-      }
+      // Process and save the quiz data
+      setSavingQuiz(true);
+      const savedQuestions = await processQuizData(lessonId, generationResponse);
+      setGeneratedQuestions(savedQuestions);
       
-      const optimizedContent = QuizContentAnalyzer.prepareContentForQuizGeneration(
-        content, 
-        numQuestions
-      );
+      toast.success('Quiz generated successfully', {
+        description: `${savedQuestions.length} questions have been created.`
+      });
       
-      await generateQuiz(numQuestions, optimizedContent);
-    } catch (error) {
+      return savedQuestions;
+    } catch (error: any) {
       console.error("Error in smart quiz generation:", error);
+      toast.error('Quiz generation failed', {
+        description: error.message || 'An unexpected error occurred'
+      });
+      return [];
+    } finally {
+      setGeneratingQuiz(false);
+      setSavingQuiz(false);
     }
   };
 
-  // Helper function to retrieve stored quiz data
+  /**
+   * Helper function to retrieve stored quiz data
+   */
   const getStoredQuizData = () => {
     try {
       // Get the most recent quiz data from localStorage
@@ -67,6 +103,10 @@ export const useSmartQuizGeneration = (
   };
 
   return {
-    generateSmartQuiz
+    generateSmartQuiz,
+    loading,
+    isRetrying,
+    error,
+    generatedQuestions
   };
 };

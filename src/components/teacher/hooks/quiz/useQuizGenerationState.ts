@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { GenerationPhase } from '../../lesson/quiz/components/QuizGenerationProgress';
+import { GenerationPhase } from '../../quiz/types/quizGeneration';
 
 export const useQuizGenerationState = () => {
   const [numQuestions, setNumQuestions] = useState('5');

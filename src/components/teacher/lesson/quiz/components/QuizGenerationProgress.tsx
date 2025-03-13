@@ -2,8 +2,7 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Brain, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-
-export type GenerationPhase = 'idle' | 'loading' | 'content-loading' | 'analyzing' | 'generating' | 'saving' | 'complete' | 'error';
+import { GenerationPhase } from '../../../quiz/types/quizGeneration';
 
 interface PhaseInfo {
   icon: React.ReactNode;
