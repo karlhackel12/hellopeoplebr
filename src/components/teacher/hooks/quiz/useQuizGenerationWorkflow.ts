@@ -24,7 +24,7 @@ export const useQuizGenerationWorkflow = (
       
       // Step 1: Fetch lesson content
       setContentLoading('Fetching lesson content...');
-      setGenerationPhase('content-loading');
+      setGenerationPhase('loading-lesson');
       const content = await fetchLessonContent();
       
       if (!content) {
@@ -46,7 +46,7 @@ export const useQuizGenerationWorkflow = (
       
       // Step 3: Load the preview
       setContentLoading('Preparing quiz preview...');
-      setGenerationPhase('saving');
+      setGenerationPhase('validating');
       await loadQuizPreview();
       
       // Mark as existing quiz and set published status

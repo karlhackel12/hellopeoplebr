@@ -70,7 +70,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       )}
       
       {/* Generation progress indicator */}
-      {currentPhase !== 'idle' && currentPhase !== 'error' && (
+      {currentPhase !== 'idle' && (
         <QuizGenerationProgress currentPhase={currentPhase} />
       )}
       
