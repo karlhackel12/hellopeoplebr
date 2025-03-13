@@ -37,6 +37,7 @@ const QuizCreate: React.FC = () => {
         return;
       }
 
+      // Create a quiz without lesson_id (standalone quiz)
       const { data, error } = await supabase
         .from('quizzes')
         .insert({
@@ -45,6 +46,7 @@ const QuizCreate: React.FC = () => {
           created_by: user.user.id,
           pass_percent: 70,
           is_published: false,
+          lesson_id: null // Set as null for standalone quizzes
         })
         .select();
 
@@ -56,10 +58,10 @@ const QuizCreate: React.FC = () => {
 
       navigate(`/teacher/quiz/${data[0].id}/edit`);
     } catch (error) {
+      console.error('Error creating quiz:', error);
       toast.error('Error', {
         description: 'Failed to create quiz',
       });
-      console.error('Error creating quiz:', error);
     } finally {
       setSaving(false);
     }
