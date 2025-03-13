@@ -22,15 +22,15 @@ const LessonSelect: React.FC<LessonSelectProps> = ({ selectedLessonId, onSelectL
     <div className="space-y-2">
       <Label htmlFor="lesson-select">Choose Lesson (Optional)</Label>
       <Select
-        value={selectedLessonId || ""}
-        onValueChange={(value) => onSelectLesson(value || null)}
+        value={selectedLessonId || "none"}
+        onValueChange={(value) => onSelectLesson(value === "none" ? null : value)}
         disabled={loading}
       >
         <SelectTrigger id="lesson-select" className="w-full">
           <SelectValue placeholder="Select a lesson for quiz generation" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">No lesson (standalone quiz)</SelectItem>
+          <SelectItem value="none">No lesson (standalone quiz)</SelectItem>
           {lessons.map((lesson) => (
             <SelectItem key={lesson.id} value={lesson.id}>
               {lesson.title}
