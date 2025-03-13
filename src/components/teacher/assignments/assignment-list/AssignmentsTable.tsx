@@ -61,12 +61,7 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({ assignments, onUpda
               </TableCell>
               
               <TableCell>
-                <AssignmentContentType 
-                  lessonId={assignment.lesson_id}
-                  quizId={assignment.quiz_id}
-                  lessonTitle={assignment.lesson?.title}
-                  quizTitle={assignment.quiz?.title}
-                />
+                <AssignmentContentType assignment={assignment} />
               </TableCell>
               
               <TableCell>
