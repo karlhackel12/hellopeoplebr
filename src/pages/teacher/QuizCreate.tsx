@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,16 +12,51 @@ import { ArrowLeft, Save, Sparkles } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import LessonSelect from '@/components/teacher/quiz/LessonSelect';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
+import { useQuizGenerationState } from '@/components/teacher/hooks/quiz/useQuizGenerationState';
+import { useQuizGenerationWorkflow } from '@/components/teacher/hooks/quiz/useQuizGenerationWorkflow';
+import QuizGenerationProgress from '@/components/teacher/lesson/quiz/components/QuizGenerationProgress';
 
 const QuizCreate: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [quizId, setQuizId] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const { generateQuiz } = useQuizHandler(selectedLessonId || '');
+  const { 
+    fetchLessonContent,
+    generateSmartQuiz,
+    loading: quizHandlerLoading,
+    isRetrying: quizHandlerRetrying,
+  } = useQuizHandler(selectedLessonId || '');
+
+  // Generation state
+  const {
+    numQuestions,
+    setNumQuestions,
+    clearErrors,
+    isRetrying,
+    contentLoadingMessage,
+    setContentLoading,
+    currentPhase,
+    setGenerationPhase,
+    setError
+  } = useQuizGenerationState();
+
+  // Quiz generation workflow
+  const { generateQuiz } = useQuizGenerationWorkflow(
+    fetchLessonContent,
+    generateSmartQuiz,
+    async () => [], // We don't need to preview questions here
+    () => {}, // We don't need to set existing quiz
+    () => {}, // We don't need to set published status
+    currentPhase,
+    setGenerationPhase,
+    setError,
+    clearErrors,
+    setContentLoading
+  );
 
   const handleSelectLesson = (lessonId: string | null) => {
     setSelectedLessonId(lessonId);
@@ -65,6 +101,7 @@ const QuizCreate: React.FC = () => {
         description: 'Your quiz has been created successfully',
       });
 
+      setQuizId(data[0].id);
       navigate(`/teacher/quiz/${data[0].id}/edit`);
     } catch (error) {
       console.error('Error creating quiz:', error);
@@ -92,7 +129,7 @@ const QuizCreate: React.FC = () => {
     }
 
     try {
-      setGenerating(true);
+      setSaving(true);
       
       // First save the quiz
       const { data: user } = await supabase.auth.getUser();
@@ -119,24 +156,39 @@ const QuizCreate: React.FC = () => {
         .select();
 
       if (error) throw error;
+      
+      setQuizId(data[0].id);
 
       // Generate questions
-      const questions = await generateQuiz(5);
+      const success = await generateQuiz(numQuestions);
       
-      toast.success('Quiz created with AI questions', {
-        description: 'Your quiz has been created with AI-generated questions',
-      });
-
-      navigate(`/teacher/quiz/${data[0].id}/edit`);
+      if (success) {
+        toast.success('Quiz created with AI questions', {
+          description: 'Your quiz has been created with AI-generated questions',
+        });
+        navigate(`/teacher/quiz/${data[0].id}/edit`);
+      } else {
+        toast.error('Error', {
+          description: 'Quiz created but question generation failed',
+        });
+        navigate(`/teacher/quiz/${data[0].id}/edit`);
+      }
     } catch (error) {
       console.error('Error creating quiz with AI:', error);
       toast.error('Error', {
         description: 'Failed to create quiz with AI questions',
       });
+      
+      // If we have a quiz ID, navigate to edit it anyway
+      if (quizId) {
+        navigate(`/teacher/quiz/${quizId}/edit`);
+      }
     } finally {
-      setGenerating(false);
+      setSaving(false);
     }
   };
+
+  const isProcessing = saving || currentPhase !== 'idle';
 
   return (
     <TeacherLayout>
@@ -153,17 +205,17 @@ const QuizCreate: React.FC = () => {
             {selectedLessonId && (
               <Button 
                 onClick={handleGenerateAndSave} 
-                disabled={generating || saving || !title.trim()}
+                disabled={isProcessing || !title.trim()}
                 className="gap-2"
                 variant="default"
               >
                 <Sparkles className="h-4 w-4" />
-                {generating ? 'Generating...' : 'Generate & Save'}
+                {saving ? 'Processing...' : 'Generate & Save'}
               </Button>
             )}
             <Button 
               onClick={handleSave} 
-              disabled={saving || generating || !title.trim()}
+              disabled={isProcessing || !title.trim()}
               className="gap-2"
               variant={selectedLessonId ? "outline" : "default"}
             >
@@ -204,6 +256,15 @@ const QuizCreate: React.FC = () => {
                 className="mt-1"
               />
             </div>
+            
+            {currentPhase !== 'idle' && (
+              <div className="p-4 bg-muted/50 rounded-md">
+                <QuizGenerationProgress 
+                  currentPhase={currentPhase}
+                  isRetrying={isRetrying}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 

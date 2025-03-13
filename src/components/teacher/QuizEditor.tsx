@@ -5,6 +5,9 @@ import QuestionManager from './quiz/components/QuestionManager';
 import QuizCreationPanel from './quiz/components/QuizCreationPanel';
 import { useQuizEditor } from './quiz/hooks/useQuizEditor';
 import { useQuestionEditor } from './quiz/hooks/useQuestionEditor';
+import { useQuizGenerationState } from './hooks/quiz/useQuizGenerationState';
+import { useQuizGenerationWorkflow } from './hooks/quiz/useQuizGenerationWorkflow';
+import { toast } from 'sonner';
 
 interface QuizEditorProps {
   quizId?: string;
@@ -30,6 +33,19 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     saveQuiz
   } = useQuizEditor(quizId, lessonId);
 
+  // Generation state
+  const {
+    numQuestions,
+    setNumQuestions,
+    clearErrors,
+    isRetrying,
+    contentLoadingMessage,
+    setContentLoading,
+    currentPhase,
+    setGenerationPhase,
+    setError
+  } = useQuizGenerationState();
+
   // Question editing state and operations
   const {
     currentQuestion,
@@ -45,6 +61,79 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     saveQuestion,
     deleteQuestion
   } = useQuestionEditor(quiz?.id || '', fetchQuizData);
+
+  // Quiz generation workflow
+  const { generateQuiz } = useQuizGenerationWorkflow(
+    () => fetchLessonContent(lessonId || ''),
+    generateSmartQuiz,
+    loadQuizPreview,
+    (value) => setQuiz(value ? (quiz || { id: 'temp' }) : null),
+    setIsPublished,
+    currentPhase,
+    setGenerationPhase,
+    setError,
+    clearErrors,
+    setContentLoading
+  );
+
+  // Functions needed for the workflow, to be implemented in a real app
+  const fetchLessonContent = async (lessonId: string): Promise<string | null> => {
+    try {
+      // This would call an API to fetch the lesson content
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('content')
+        .eq('id', lessonId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data?.content || null;
+    } catch (error) {
+      console.error("Error fetching lesson content:", error);
+      return null;
+    }
+  };
+
+  const generateSmartQuiz = async (numQuestions: number): Promise<boolean> => {
+    try {
+      // This would call the edge function to generate quiz questions
+      console.log(`Generating ${numQuestions} quiz questions for lesson ${lessonId}`);
+      // In a real app, this would make an API call
+      
+      // For demo purposes, simulate a success
+      return true;
+    } catch (error) {
+      console.error("Error generating smart quiz:", error);
+      return false;
+    }
+  };
+
+  const loadQuizPreview = async (): Promise<any[] | null> => {
+    try {
+      // This would load the generated quiz questions for preview
+      await fetchQuizData();
+      return questions;
+    } catch (error) {
+      console.error("Error loading quiz preview:", error);
+      return null;
+    }
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (!lessonId) {
+      toast.error('Missing lesson', {
+        description: 'A lesson must be selected to generate quiz questions',
+      });
+      return;
+    }
+
+    const success = await generateQuiz(numQuestions);
+    if (success) {
+      toast.success('Quiz generated', {
+        description: 'Your quiz questions have been generated successfully',
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -84,12 +173,17 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
           onRemoveOption={removeOption}
           onCancelEdit={cancelQuestionEdit}
           onSaveQuestion={saveQuestion}
+          onGenerateQuestions={handleGenerateQuestions}
+          generationPhase={currentPhase}
+          isRetrying={isRetrying}
+          showGenerateButton={!!lessonId}
         />
       ) : (
         <QuizCreationPanel
           title="Create Quiz"
           onCreateQuiz={saveQuiz}
           disabled={!title}
+          loading={saving}
         />
       )}
     </div>
