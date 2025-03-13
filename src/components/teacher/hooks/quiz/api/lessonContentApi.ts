@@ -1,29 +1,15 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export const fetchLessonContent = async (lessonId: string): Promise<string | null> => {
+// Now this function is a placeholder for future quiz content generation
+export const fetchQuizContent = async (): Promise<string | null> => {
   try {
-    console.log(`Fetching content for lesson: ${lessonId}`);
-    const { data: lesson, error } = await supabase
-      .from('lessons')
-      .select('content')
-      .eq('id', lessonId)
-      .maybeSingle();
-      
-    if (error) {
-      console.error('Error fetching lesson content:', error);
-      throw error;
-    }
+    console.log('Generating quiz content');
     
-    if (!lesson?.content) {
-      console.warn('No content found for lesson');
-      return null;
-    }
-    
-    console.log(`Fetched ${lesson.content.length} characters of content`);
-    return lesson.content;
+    // In the future, this would connect to an AI service to generate quiz content
+    return "Quiz content will be generated here";
   } catch (error) {
-    console.error("Error fetching lesson content:", error);
+    console.error("Error generating quiz content:", error);
     return null;
   }
 };

@@ -1,28 +1,28 @@
 
 import React from 'react';
-import { Clock, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { CheckCircle, Trophy, MessageSquare, Clock } from 'lucide-react';
 
 const Benefits: React.FC = () => {
   const benefits = [
     {
-      icon: <Clock className="h-12 w-12 text-[#1E88E5]" />,
-      title: "Economize Tempo",
-      description: "Reduza 3-5 horas de preparação por semana com nosso gerador de lições e atividades com IA"
+      icon: <Trophy className="h-12 w-12 text-[#FF8F00]" />,
+      title: "Gamificação Inteligente",
+      description: "Aumente o engajamento dos alunos com elementos de gamificação como streaks, conquistas e rankings"
     },
     {
-      icon: <TrendingUp className="h-12 w-12 text-[#26A69A]" />,
-      title: "Melhore Resultados",
-      description: "Ajude seus alunos a progredirem 3x mais rápido entre as aulas com prática consistente e personalizada"
+      icon: <MessageSquare className="h-12 w-12 text-[#26A69A]" />,
+      title: "Prática de Fala",
+      description: "Ofereça feedback de pronúncia com IA para que os alunos aprimorem suas habilidades de conversação"
     },
     {
-      icon: <DollarSign className="h-12 w-12 text-[#FF8F00]" />,
-      title: "Aumente sua Renda",
-      description: "Ganhe R$15,96 por aluno/mês com nosso modelo de comissão (40% do valor da assinatura)"
+      icon: <CheckCircle className="h-12 w-12 text-[#1E88E5]" />,
+      title: "Quiz com IA",
+      description: "Gere quizzes personalizados com IA para reforçar o que foi aprendido em sala de aula"
     },
     {
-      icon: <Users className="h-12 w-12 text-[#9c27b0]" />,
-      title: "Retenha mais Alunos",
-      description: "Aumente o engajamento e retenção dos alunos através de atividades gamificadas e feedback constante"
+      icon: <Clock className="h-12 w-12 text-[#9c27b0]" />,
+      title: "Repetição Espaçada",
+      description: "Sistema científico que otimiza a memorização de vocabulário e frases essenciais"
     }
   ];
 
@@ -31,10 +31,10 @@ const Benefits: React.FC = () => {
       <div className="container px-6 md:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 font-display">
-            Benefícios para Professores
+            Principais Recursos
           </h2>
           <p className="text-xl text-muted-foreground">
-            Nossa plataforma foi projetada para economizar seu tempo, aumentar sua renda e melhorar os resultados dos seus alunos.
+            Nossa plataforma foi projetada para complementar suas aulas e melhorar os resultados dos seus alunos.
           </p>
         </div>
         
