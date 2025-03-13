@@ -12,7 +12,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
-import QuizGenerationProgress, { GenerationPhase } from './components/QuizGenerationProgress';
+import QuizGenerationProgress from './components/QuizGenerationProgress';
+import { GenerationPhase } from '../../quiz/types/quizGeneration';
 
 interface QuizGenerationFormProps {
   numQuestions: string;
