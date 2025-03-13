@@ -1,92 +1,108 @@
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { isTeacher } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import TeacherSidebar from './TeacherSidebar';
+import { Button } from '@/components/ui/button';
+import { BookText, Users, Settings, Mail, LogOut, Clipboard } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface TeacherLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
-  const [authorized, setAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  useEffect(() => {
-    // Check if on mobile and collapse sidebar by default
-    const handleResize = () => {
-      setSidebarCollapsed(window.innerWidth < 1024);
-    };
-    
-    // Set initial state
-    handleResize();
-    
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const checkAccess = async () => {
-      try {
-        const userIsTeacher = await isTeacher();
-        if (!userIsTeacher) {
-          toast.error('Access Denied', {
-            description: 'Only teachers can access this page',
-          });
-          navigate('/');
-          return;
-        }
-        setAuthorized(true);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        navigate('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAccess();
-  }, [navigate]);
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+  const { signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="glass animate-pulse-light rounded-md p-6">
-          <div className="h-8 w-32 bg-muted/50 rounded-md mb-4"></div>
-          <div className="h-24 w-64 bg-muted/50 rounded-md"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!authorized) {
-    return null; // Will redirect in the useEffect
-  }
+  
+  const menuItems = [
+    { 
+      name: 'Dashboard', 
+      path: '/teacher/dashboard', 
+      icon: <BookText className="h-4 w-4 mr-2" /> 
+    },
+    { 
+      name: 'Quizzes', 
+      path: '/teacher/quizzes', 
+      icon: <Clipboard className="h-4 w-4 mr-2" /> 
+    },
+    { 
+      name: 'Students', 
+      path: '/teacher/students', 
+      icon: <Users className="h-4 w-4 mr-2" /> 
+    },
+    { 
+      name: 'Invitations', 
+      path: '/teacher/invitations', 
+      icon: <Mail className="h-4 w-4 mr-2" /> 
+    },
+    { 
+      name: 'Settings', 
+      path: '/teacher/settings', 
+      icon: <Settings className="h-4 w-4 mr-2" /> 
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <TeacherSidebar 
-        collapsed={sidebarCollapsed} 
-        onToggle={toggleSidebar}
-      />
+    <div className="min-h-screen flex flex-col">
+      <header className="border-b bg-background">
+        <div className="container flex h-16 items-center px-4 sm:px-6">
+          <div className="flex items-center font-semibold text-lg">
+            <Link to="/teacher/dashboard">TeachSmart</Link>
+          </div>
+          
+          <nav className="ml-auto flex items-center space-x-1">
+            {menuItems.map((item) => (
+              <Button 
+                key={item.name}
+                variant="ghost" 
+                asChild
+              >
+                <Link to={item.path} className="flex items-center">
+                  {item.icon}
+                  <span className="hidden sm:inline">{item.name}</span>
+                </Link>
+              </Button>
+            ))}
+            
+            <ThemeToggle />
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleSignOut}
+              aria-label="Sign out"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </nav>
+        </div>
+      </header>
       
-      <main 
-        className={`flex-grow transition-all duration-300 pt-16 md:pt-6 px-4 md:px-6 lg:px-8 pb-16 md:pb-10 overflow-x-hidden ${
-          sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
-        }`}
-      >
-        <div className="w-full">{children}</div>
+      <main className="flex-1 bg-muted/40 p-4 sm:p-6 lg:p-8">
+        {children}
       </main>
+      
+      <footer className="border-t py-4 bg-background">
+        <div className="container flex flex-col sm:flex-row items-center justify-between px-4">
+          <p className="text-sm text-muted-foreground">
+            © 2023 TeachSmart. All rights reserved.
+          </p>
+          <div className="flex items-center space-x-4">
+            <Link to="/terms" className="text-sm text-muted-foreground hover:underline">
+              Terms
+            </Link>
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:underline">
+              Privacy
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

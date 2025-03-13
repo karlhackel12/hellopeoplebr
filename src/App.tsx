@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,23 +12,25 @@ import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
-import LessonEditor from "./components/teacher/LessonEditor";
 import Invitations from "./pages/teacher/Invitations";
 import Students from "./pages/teacher/Students";
 import Assignments from "./pages/teacher/Assignments";
-import Lessons from "./pages/teacher/Lessons";
 import Settings from "./pages/teacher/Settings";
-import LessonPreviewPage from "./pages/teacher/LessonPreviewPage";
 import SidebarDemoPage from "./pages/SidebarDemo";
 import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
-import LessonQuizPage from "./pages/teacher/LessonQuizPage";
+
+// Quiz pages
+import QuizManagementPage from "./pages/teacher/QuizManagementPage";
+import QuizCreatePage from "./pages/teacher/QuizCreatePage";
+import QuizEditPage from "./pages/teacher/QuizEditPage";
+import QuizPreviewPage from "./pages/teacher/QuizPreviewPage";
 
 // Student Pages
 import StudentDashboard from "./pages/student/Dashboard";
-import StudentLessons from "./pages/student/Lessons";
 import StudentSettings from "./pages/student/Settings";
-import LessonView from "./pages/student/LessonView";
+import StudentQuizList from "./pages/student/QuizList";
+import TakeQuizPage from "./pages/student/TakeQuizPage";
 
 const queryClient = new QueryClient();
 
@@ -74,31 +75,30 @@ const App = () => (
                 <TeacherDashboard />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons" element={
+            
+            {/* Quiz Management Routes */}
+            <Route path="/teacher/quizzes" element={
               <PageTransitionWrapper>
-                <Lessons />
+                <QuizManagementPage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons/create" element={
+            <Route path="/teacher/quizzes/create" element={
               <PageTransitionWrapper>
-                <LessonEditor />
+                <QuizCreatePage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons/edit/:id" element={
+            <Route path="/teacher/quizzes/edit/:quizId" element={
               <PageTransitionWrapper>
-                <LessonEditor />
+                <QuizEditPage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons/preview/:id" element={
+            <Route path="/teacher/quizzes/preview/:quizId" element={
               <PageTransitionWrapper>
-                <LessonPreviewPage />
+                <QuizPreviewPage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons/:lessonId/quiz" element={
-              <PageTransitionWrapper>
-                <LessonQuizPage />
-              </PageTransitionWrapper>
-            } />
+            
+            {/* Other Teacher Routes */}
             <Route path="/teacher/invitations" element={
               <PageTransitionWrapper>
                 <Invitations />
@@ -126,14 +126,14 @@ const App = () => (
                 <StudentDashboard />
               </PageTransitionWrapper>
             } />
-            <Route path="/student/lessons" element={
+            <Route path="/student/quizzes" element={
               <PageTransitionWrapper>
-                <StudentLessons />
+                <StudentQuizList />
               </PageTransitionWrapper>
             } />
-            <Route path="/student/lessons/view/:lessonId" element={
+            <Route path="/student/quizzes/take/:quizId" element={
               <PageTransitionWrapper>
-                <LessonView />
+                <TakeQuizPage />
               </PageTransitionWrapper>
             } />
             <Route path="/student/settings" element={
