@@ -6,6 +6,7 @@ import QuizPreviewSection from './components/QuizPreviewSection';
 import QuizPublishAlert from './components/QuizPublishAlert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import QuizGenerationProgress from './components/QuizGenerationProgress';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -48,6 +49,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
 
   return (
     <div className="space-y-6">
+      {/* Error alerts */}
       {loadingError && currentPhase !== 'error' && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -57,6 +59,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         </Alert>
       )}
       
+      {/* Loading state */}
       {contentLoadingMessage && currentPhase !== 'idle' && currentPhase !== 'error' && (
         <Alert className="mb-4 bg-blue-50 border-blue-200">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
@@ -66,6 +69,12 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         </Alert>
       )}
       
+      {/* Generation progress indicator */}
+      {currentPhase !== 'idle' && currentPhase !== 'error' && (
+        <QuizGenerationProgress currentPhase={currentPhase} />
+      )}
+      
+      {/* Quiz generator form */}
       <QuizGenerationForm
         numQuestions={numQuestions}
         setNumQuestions={setNumQuestions}
@@ -78,6 +87,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         currentPhase={currentPhase}
       />
       
+      {/* Quiz preview section */}
       {previewQuestions.length > 0 && (
         <QuizPreviewSection
           previewQuestions={previewQuestions}
@@ -90,13 +100,11 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           saving={saving}
           existingQuiz={existingQuiz}
           isPublished={isPublished}
-          onTogglePublish={async () => {
-            await togglePublishStatus();
-            return; // Explicitly return void to match the expected type
-          }}
+          onTogglePublish={togglePublishStatus}
         />
       )}
       
+      {/* Publish reminder */}
       {existingQuiz && !isPublished && <QuizPublishAlert />}
     </div>
   );

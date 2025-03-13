@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import Logo from '@/components/ui/Logo';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -10,44 +9,10 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  X
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-
-interface SidebarLinkProps {
-  href: string;
-  icon: React.ElementType;
-  children: React.ReactNode;
-  active?: boolean;
-  collapsed?: boolean;
-}
-
-const SidebarLink: React.FC<SidebarLinkProps> = ({ 
-  href, 
-  icon: Icon, 
-  children, 
-  active,
-  collapsed
-}) => {
-  return (
-    <Link to={href} className="block w-full">
-      <Button
-        variant="ghost"
-        className={cn(
-          "w-full justify-start gap-3 px-3 py-2 mb-1 transition-all duration-200",
-          active ? "bg-primary/15 text-primary hover:bg-primary/20" : "hover:bg-secondary",
-          collapsed ? "justify-center px-2" : ""
-        )}
-      >
-        <Icon className="h-5 w-5" />
-        {!collapsed && <span className="font-medium truncate">{children}</span>}
-      </Button>
-    </Link>
-  );
-};
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 
 interface StudentSidebarProps {
   collapsed?: boolean;
@@ -100,91 +65,75 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
   };
 
   const sidebarClasses = cn(
-    "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
-    collapsed ? "w-20" : "w-64",
+    "fixed top-0 left-0 z-40 h-screen border-r transition-all duration-300",
+    collapsed ? "w-16" : "w-64",
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
 
-  const sidebarStyles = {
-    backgroundColor: "var(--sidebar-background)",
-    backdropFilter: "blur(8px)"
-  };
-
   return (
     <>
-      <Button 
-        variant="outline" 
-        size="icon" 
+      <button 
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden shadow-md"
+        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-md bg-background border shadow-sm"
       >
-        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
+        {mobileOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
 
-      <aside className={sidebarClasses} style={sidebarStyles}>
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
-            <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
-              <Logo size="sm" />
-            </div>
-            {collapsed ? (
-              <div className="mx-auto">
-                <Logo iconOnly size="sm" />
-              </div>
-            ) : null}
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggle}
-              className="hidden md:flex"
-            >
-              <ChevronLeft
-                className={cn("h-5 w-5 transition-transform", 
-                  collapsed ? "rotate-180" : ""
-                )}
-              />
-            </Button>
+      <div
+        className={cn(
+          "fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden",
+          mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setMobileOpen(false)}
+      />
+
+      <aside className={sidebarClasses}>
+        <div className="flex flex-col h-full bg-background">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h1 className={cn("text-lg font-bold", collapsed && "hidden")}>Student Portal</h1>
+            <button onClick={onToggle} className="p-2 hidden md:block">
+              {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            </button>
           </div>
           
-          <nav className="flex-grow p-3 overflow-y-auto">
+          <nav className="flex-1 overflow-y-auto py-2 px-2">
             <div className="space-y-1">
               {navigationLinks.map((link) => (
-                <SidebarLink
+                <NavLink
                   key={link.name}
-                  href={link.href}
-                  icon={link.icon}
-                  active={isRouteActive(link.href)}
-                  collapsed={collapsed}
+                  to={link.href}
+                  className={({ isActive }) => cn(
+                    "flex items-center p-2 rounded-md", 
+                    isActive ? "bg-primary/10 text-primary" : "hover:bg-muted transition-colors",
+                    collapsed && "justify-center"
+                  )}
                 >
-                  {link.name}
-                </SidebarLink>
+                  <link.icon className="h-5 w-5 flex-shrink-0" />
+                  {!collapsed && <span className="ml-3 font-medium">{link.name}</span>}
+                </NavLink>
               ))}
             </div>
           </nav>
           
-          <div className="p-3 border-t border-sidebar-border">
-            <Button 
-              variant="ghost" 
-              className={cn(
-                "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
-                collapsed ? "justify-center" : "justify-start gap-3"
-              )}
+          <div className="p-4 border-t flex flex-col gap-3">
+            <button 
               onClick={handleLogout}
+              className={cn(
+                "flex items-center p-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors",
+                collapsed && "justify-center"
+              )}
             >
               <LogOut className="h-5 w-5" />
-              {!collapsed && <span className="font-medium">Logout</span>}
-            </Button>
+              {!collapsed && <span className="ml-3 font-medium">Logout</span>}
+            </button>
+            
+            <div className="flex items-center justify-between">
+              <ThemeSwitcher />
+              {!collapsed && <span className="text-sm text-muted-foreground">Theme</span>}
+            </div>
           </div>
         </div>
       </aside>
-      
-      {mobileOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
     </>
   );
 };

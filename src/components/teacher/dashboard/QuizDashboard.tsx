@@ -1,50 +1,38 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Loader2, AlertCircle, BookOpen, Plus } from 'lucide-react';
+import { Loader2, AlertCircle, BookOpen, Plus, FileQuestion } from 'lucide-react';
 import QuizAnalyticsCard from '../analytics/QuizAnalyticsCard';
+import { useQuery } from '@tanstack/react-query';
 
 const QuizDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const { data: quizzes = [], isLoading, error } = useQuery({
+    queryKey: ['dashboard-quizzes'],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
 
-  useEffect(() => {
-    const fetchQuizzes = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const { data: quizzesData, error: quizzesError } = await supabase
-          .from('quizzes')
-          .select(`
-            id, 
-            title,
-            is_published,
-            created_at,
-            pass_percent,
-            lesson_id,
-            lesson:lessons(title)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(5);
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select(`
+          id, 
+          title,
+          is_published,
+          created_at,
+          pass_percent,
+          lesson_id,
+          lesson:lessons(title)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
           
-        if (quizzesError) throw quizzesError;
-        
-        setQuizzes(quizzesData || []);
-      } catch (error) {
-        console.error('Error fetching quizzes:', error);
-        setError('Failed to load quizzes');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchQuizzes();
-  }, []);
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -56,15 +44,23 @@ const QuizDashboard = () => {
           </p>
         </div>
         
-        <Button asChild className="gap-2">
-          <Link to="/teacher/lessons">
-            <Plus className="h-4 w-4" />
-            Create New Quiz
-          </Link>
-        </Button>
+        <div className="flex gap-3">
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/teacher/quizzes/list">
+              <FileQuestion className="h-4 w-4" />
+              View All Quizzes
+            </Link>
+          </Button>
+          <Button asChild className="gap-2">
+            <Link to="/teacher/lessons">
+              <Plus className="h-4 w-4" />
+              Create New Quiz
+            </Link>
+          </Button>
+        </div>
       </div>
       
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -72,7 +68,7 @@ const QuizDashboard = () => {
         <Card>
           <CardContent className="flex items-center gap-2 py-6">
             <AlertCircle className="h-5 w-5 text-destructive" />
-            <p className="text-sm">{error}</p>
+            <p className="text-sm">Failed to load quizzes. Please try again later.</p>
           </CardContent>
         </Card>
       ) : quizzes.length === 0 ? (
@@ -102,12 +98,6 @@ const QuizDashboard = () => {
               passPercent={quiz.pass_percent}
             />
           ))}
-          
-          <div className="flex justify-center mt-2">
-            <Button variant="outline" asChild>
-              <Link to="/teacher/quizzes">View All Quizzes</Link>
-            </Button>
-          </div>
         </div>
       )}
       
@@ -173,7 +163,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </Link>
           </Button>
           <Button size="sm" asChild>
-            <Link to={`/teacher/quizzes/${id}`}>
+            <Link to={`/teacher/lessons/${lessonId}/quiz`}>
               Manage Quiz
             </Link>
           </Button>
