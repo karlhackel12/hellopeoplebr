@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Question } from '../types';
 import { toast } from 'sonner';
@@ -8,7 +7,7 @@ import { toast } from 'sonner';
  */
 export class QuizGenerationService {
   /**
-   * Generates quiz questions using Replicate AI model through edge function
+   * Generates quiz questions using DeepSeek model through edge function
    */
   static async generateWithReplicate(
     quizTitle: string, 
@@ -16,12 +15,17 @@ export class QuizGenerationService {
     numQuestions: number = 5
   ): Promise<Question[] | null> {
     try {
-      console.log(`Generating quiz "${quizTitle}" with ${numQuestions} questions using Replicate`);
+      console.log(`Generating quiz "${quizTitle}" with ${numQuestions} questions using DeepSeek model`);
       
       // Ensure we have a valid title
       if (!quizTitle?.trim()) {
         throw new Error('Quiz title is required for AI generation');
       }
+      
+      // Show loading toast
+      const toastId = toast.loading('Generating quiz questions...', {
+        description: 'This might take a minute',
+      });
       
       const response = await supabase.functions.invoke('generate-quiz-replicate', {
         body: { 
@@ -31,18 +35,70 @@ export class QuizGenerationService {
         }
       });
       
+      // Close loading toast
+      toast.dismiss(toastId);
+      
       if (response.error) {
         console.error('Error from edge function:', response.error);
         throw new Error(response.error.message || 'Failed to generate quiz');
+      }
+      
+      if (response.data?.error) {
+        console.error('Error in generation:', response.data.error);
+        throw new Error(response.data.error || 'Failed to generate quiz');
       }
       
       if (!response.data?.questions || !Array.isArray(response.data.questions)) {
         throw new Error('Invalid response format from quiz generation');
       }
       
-      return response.data.questions;
+      // Validate the questions - ensure each has required properties
+      const validatedQuestions = response.data.questions.map((q: any) => {
+        // Make sure we have exactly 4 options
+        let options = q.options || [];
+        
+        if (options.length < 4) {
+          // Add dummy options if needed
+          while (options.length < 4) {
+            options.push({
+              option_text: `Option ${options.length + 1}`,
+              is_correct: false
+            });
+          }
+        } else if (options.length > 4) {
+          // Keep only the first 4 options
+          options = options.slice(0, 4);
+        }
+        
+        // Make sure exactly one option is correct
+        const correctCount = options.filter((o: any) => o.is_correct).length;
+        if (correctCount === 0 && options.length > 0) {
+          // If no correct answer, make the first one correct
+          options[0].is_correct = true;
+        } else if (correctCount > 1) {
+          // If multiple correct answers, keep only the first one
+          let foundCorrect = false;
+          options = options.map((o: any) => {
+            if (o.is_correct && !foundCorrect) {
+              foundCorrect = true;
+              return o;
+            }
+            return { ...o, is_correct: false };
+          });
+        }
+        
+        return {
+          question_text: q.question_text || "Generated question",
+          question_type: q.question_type || "multiple_choice",
+          points: q.points || 1,
+          options: options
+        };
+      });
+      
+      console.log(`Successfully generated ${validatedQuestions.length} questions`);
+      return validatedQuestions;
     } catch (error: any) {
-      console.error('Error in quiz generation with Replicate:', error);
+      console.error('Error in quiz generation with DeepSeek:', error);
       toast.error('Quiz generation failed', {
         description: error.message || 'An unexpected error occurred',
       });
