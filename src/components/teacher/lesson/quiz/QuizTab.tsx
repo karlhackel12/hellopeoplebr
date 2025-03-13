@@ -90,7 +90,10 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           saving={saving}
           existingQuiz={existingQuiz}
           isPublished={isPublished}
-          onTogglePublish={togglePublishStatus}
+          onTogglePublish={async () => {
+            await togglePublishStatus();
+            return; // Explicitly return void to match the expected type
+          }}
         />
       )}
       

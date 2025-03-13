@@ -32,7 +32,7 @@ import StudentSettings from "./pages/student/Settings";
 import LessonView from "./pages/student/LessonView";
 
 // New Pages from Refactoring
-import QuizManagementPage from "./pages/teacher/QuizManagementPage";
+import QuizDashboardPage from "./pages/teacher/QuizDashboardPage";
 import QuizListPage from "./pages/teacher/QuizListPage";
 import QuizAssignmentPage from "./pages/teacher/QuizAssignmentPage";
 
@@ -105,8 +105,13 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
-            {/* New Quiz Management Routes */}
+            {/* Quiz Management Routes */}
             <Route path="/teacher/quizzes" element={
+              <PageTransitionWrapper>
+                <QuizDashboardPage />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/quizzes/list" element={
               <PageTransitionWrapper>
                 <QuizListPage />
               </PageTransitionWrapper>
