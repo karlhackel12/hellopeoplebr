@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useQuizTabState } from '../../hooks/useQuizTabState';
 import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewSection from './components/QuizPreviewSection';
-import QuizPlaceholder from './quiz/QuizPlaceholder';
+import QuizPlaceholder from './QuizPlaceholder';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -66,14 +66,15 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
     <div className="space-y-8">
       {!showPreview && (
         <QuizGenerationForm
+          numQuestions="5"
+          setNumQuestions={() => {}}
           onGenerateQuiz={handleGenerate}
-          onSmartGeneration={handleSmartGeneration}
-          onGenerateFromLesson={handleGenerateFrom}
           loading={loading}
-          contentLoaded={contentLoaded}
-          contentLoadingMessage={contentLoadingMessage}
           isRetrying={isRetrying}
           error={error}
+          errorDetails={null}
+          existingQuiz={existingQuiz}
+          currentPhase={contentLoaded ? 'completed' : 'idle'}
         />
       )}
       

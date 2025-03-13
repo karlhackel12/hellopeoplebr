@@ -43,7 +43,7 @@ export const useQuizTabState = (lessonId: string, isEditMode: boolean = false) =
         
         // Load questions if quiz exists
         const questions = await fetchQuizQuestions();
-        if (questions.length > 0) {
+        if (questions && questions.length > 0) {
           setPreviewQuestions(questions);
         }
       } else {
@@ -84,8 +84,8 @@ export const useQuizTabState = (lessonId: string, isEditMode: boolean = false) =
     setLoading(true);
     setShowPreview(false);
     try {
-      // Void the return value to make it compatible with Promise<void>
-      await generateSmartQuiz((msg) => {
+      // Call generateSmartQuiz with a callback to update messages
+      await generateSmartQuiz((msg: string) => {
         if (msg) {
           setContentLoadingMessage(msg);
         } else {

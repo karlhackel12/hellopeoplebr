@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,12 @@ import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 import LessonQuizPage from "./pages/teacher/LessonQuizPage";
 import TeacherQuiz from "./pages/teacher/Quiz";
+
+// Import student pages
+import StudentDashboard from "./pages/student/Dashboard";
+import StudentLessons from "./pages/student/Lessons";
+import LessonView from "./pages/student/LessonView";
+import StudentSettings from "./pages/student/Settings";
 
 const queryClient = new QueryClient();
 
