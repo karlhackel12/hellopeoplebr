@@ -16,21 +16,21 @@ const Index: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>HelloPeople - Prática de Inglês Para Além da Sala de Aula</title>
+        <title>HelloPeople - Estenda o Aprendizado de Inglês Além da Sala de Aula</title>
         <meta name="description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional. Plataforma 100% gratuita para professores de inglês." />
-        <meta name="keywords" content="professores de inglês, ensino com IA, ferramentas para professores de inglês, IA para ensino de inglês, gamificação, repetição espaçada" />
+        <meta name="keywords" content="professores de inglês, ensino com IA, ferramentas para professores de inglês, IA para ensino de inglês, extensão de aprendizado" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://hellopeople.com.br/" />
-        <meta property="og:title" content="HelloPeople - Prática de Inglês Para Além da Sala de Aula" />
+        <meta property="og:title" content="HelloPeople - Estenda o Aprendizado de Inglês Além da Sala de Aula" />
         <meta property="og:description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional." />
         <meta property="og:image" content="/og-image.png" />
         
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://hellopeople.com.br/" />
-        <meta property="twitter:title" content="HelloPeople - Prática de Inglês Para Além da Sala de Aula" />
+        <meta property="twitter:title" content="HelloPeople - Estenda o Aprendizado de Inglês Além da Sala de Aula" />
         <meta property="twitter:description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional." />
         <meta property="twitter:image" content="/og-image.png" />
       </Helmet>

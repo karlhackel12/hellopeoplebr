@@ -1,97 +1,109 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Clipboard, Settings, LogOut, LayoutDashboard } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import StudentSidebar from './StudentSidebar';
 
 interface StudentLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
+  const [authorized, setAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Check if on mobile and collapse sidebar by default
+    const handleResize = () => {
+      setSidebarCollapsed(window.innerWidth < 1024);
+    };
+    
+    // Set initial state
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const checkStudentRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          toast.error('Please log in to access student pages');
+          navigate('/login');
+          return;
+        }
+        
+        // Check if user is a student
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (profile?.role !== 'student') {
+          toast.error('Access Denied', {
+            description: 'Only students can access this page',
+          });
+          navigate('/');
+          return;
+        }
+        
+        setAuthorized(true);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkStudentRole();
+  }, [navigate]);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
-  
-  const menuItems = [
-    { 
-      name: 'Dashboard', 
-      path: '/student/dashboard', 
-      icon: <LayoutDashboard className="h-4 w-4 mr-2" /> 
-    },
-    { 
-      name: 'Quizzes', 
-      path: '/student/quizzes', 
-      icon: <Clipboard className="h-4 w-4 mr-2" /> 
-    },
-    { 
-      name: 'Settings', 
-      path: '/student/settings', 
-      icon: <Settings className="h-4 w-4 mr-2" /> 
-    },
-  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="glass animate-pulse-light rounded-md p-6">
+          <div className="h-8 w-32 bg-muted/50 rounded-md mb-4"></div>
+          <div className="h-24 w-64 bg-muted/50 rounded-md"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return null; // Will redirect in the useEffect
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background">
-        <div className="container flex h-16 items-center px-4 sm:px-6">
-          <div className="flex items-center font-semibold text-lg">
-            <Link to="/student/dashboard">LearnSmart</Link>
-          </div>
-          
-          <nav className="ml-auto flex items-center space-x-1">
-            {menuItems.map((item) => (
-              <Button 
-                key={item.name}
-                variant="ghost" 
-                asChild
-              >
-                <Link to={item.path} className="flex items-center">
-                  {item.icon}
-                  <span className="hidden sm:inline">{item.name}</span>
-                </Link>
-              </Button>
-            ))}
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleSignOut}
-              aria-label="Sign out"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen flex bg-background">
+      <StudentSidebar 
+        collapsed={sidebarCollapsed} 
+        onToggle={toggleSidebar}
+      />
       
-      <main className="flex-1 bg-muted/40">
-        <div className="container mx-auto py-6 px-4 sm:px-6">
-          {children}
-        </div>
+      <main 
+        className={`flex-grow transition-all duration-300 pt-16 md:pt-6 px-4 md:px-6 lg:px-8 pb-16 md:pb-10 overflow-x-hidden ${
+          sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
+        }`}
+      >
+        <div className="w-full">{children}</div>
       </main>
-      
-      <footer className="border-t py-4 bg-background">
-        <div className="container flex flex-col sm:flex-row items-center justify-between px-4">
-          <p className="text-sm text-muted-foreground">
-            © 2023 LearnSmart. All rights reserved.
-          </p>
-          <div className="flex items-center space-x-4">
-            <Link to="/terms" className="text-sm text-muted-foreground hover:underline">
-              Terms
-            </Link>
-            <Link to="/privacy" className="text-sm text-muted-foreground hover:underline">
-              Privacy
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

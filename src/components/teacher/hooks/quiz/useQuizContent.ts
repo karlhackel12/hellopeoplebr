@@ -1,22 +1,34 @@
 
 import { useState } from 'react';
+import { fetchLessonContent } from './api/lessonContentApi';
 
-export const useQuizContent = () => {
-  const [isContentLoaded, setIsContentLoaded] = useState(true);
+export const useQuizContent = (lessonId: string) => {
+  const [lessonContent, setLessonContent] = useState<string | null>(null);
+  const [isContentLoaded, setIsContentLoaded] = useState(false);
 
-  // This function now handles quiz content generation
-  const getQuizContent = async (): Promise<string | null> => {
+  const getLessonContent = async (): Promise<string | null> => {
     try {
-      // We can use this function for AI-generated quiz content in the future
-      return "Quiz content will be generated here";
+      if (lessonContent && isContentLoaded) {
+        return lessonContent;
+      }
+      
+      const content = await fetchLessonContent(lessonId);
+      
+      if (content) {
+        setLessonContent(content);
+        setIsContentLoaded(true);
+        return content;
+      }
+      
+      return null;
     } catch (error) {
-      console.error("Error getting quiz content:", error);
+      console.error("Error getting lesson content:", error);
       return null;
     }
   };
 
   return {
-    getQuizContent,
+    getLessonContent,
     isContentLoaded
   };
 };

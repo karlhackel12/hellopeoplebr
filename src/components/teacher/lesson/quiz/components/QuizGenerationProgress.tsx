@@ -1,120 +1,122 @@
 
 import React from 'react';
-import { AlertCircle, CheckCircle, Clock, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import { Brain, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
-export type GenerationPhase = 
-  | 'idle' 
-  | 'content-loading' 
-  | 'analyzing' 
-  | 'generating' 
-  | 'saving' 
-  | 'complete' 
-  | 'error';
+export type GenerationPhase = 'idle' | 'content-loading' | 'analyzing' | 'generating' | 'saving' | 'complete' | 'error';
+
+interface PhaseInfo {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+}
 
 interface QuizGenerationProgressProps {
   currentPhase: GenerationPhase;
-  loadingMessage?: string | null;
-  error?: string | null;
   isRetrying?: boolean;
+  errorMessage?: string | null;
 }
 
 const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
   currentPhase,
-  loadingMessage,
-  error,
-  isRetrying = false
+  isRetrying = false,
+  errorMessage = null
 }) => {
-  const getPhaseStatus = (phase: string) => {
-    if (currentPhase === 'error') {
-      return phase === 'error' ? 'current' : 'incomplete';
-    }
-    
-    const phases: GenerationPhase[] = ['content-loading', 'analyzing', 'generating', 'saving', 'complete'];
-    const currentIndex = phases.indexOf(currentPhase);
-    const phaseIndex = phases.indexOf(phase as GenerationPhase);
-    
-    if (currentIndex === -1 || phaseIndex === -1) {
-      return 'incomplete';
-    }
-    
-    if (phaseIndex < currentIndex) {
-      return 'complete';
-    } else if (phaseIndex === currentIndex) {
-      return 'current';
-    } else {
-      return 'incomplete';
+  const phases: Record<GenerationPhase, PhaseInfo> = {
+    'idle': {
+      icon: <div className="w-5 h-5" />,
+      label: 'Waiting to start',
+      description: 'Quiz generation has not started yet'
+    },
+    'content-loading': {
+      icon: <FileText className="h-5 w-5 text-blue-500" />,
+      label: 'Loading lesson content',
+      description: 'Retrieving your lesson content for analysis'
+    },
+    'analyzing': {
+      icon: <Brain className="h-5 w-5 text-purple-500" />,
+      label: 'Analyzing content',
+      description: 'Identifying key concepts and learning objectives'
+    },
+    'generating': {
+      icon: isRetrying 
+        ? <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />
+        : <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />,
+      label: isRetrying ? 'Retrying generation' : 'Generating questions',
+      description: isRetrying 
+        ? 'Refining questions for better quality' 
+        : 'Creating quiz questions based on lesson content'
+    },
+    'saving': {
+      icon: <Loader2 className="h-5 w-5 text-green-500 animate-spin" />,
+      label: 'Saving quiz',
+      description: 'Storing questions in the database'
+    },
+    'complete': {
+      icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+      label: 'Complete',
+      description: 'Quiz has been successfully generated'
+    },
+    'error': {
+      icon: <AlertCircle className="h-5 w-5 text-red-500" />,
+      label: 'Error',
+      description: errorMessage || 'There was a problem generating the quiz'
     }
   };
 
-  const renderPhaseIcon = (phase: string, status: string) => {
-    if (status === 'complete') {
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
-    } else if (status === 'current') {
-      if (phase === 'error') {
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
-      }
-      return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
-    } else {
-      return <Clock className="h-5 w-5 text-muted-foreground/50" />;
-    }
+  // Calculate progress percentage based on current phase
+  const getProgressPercentage = () => {
+    const phaseValues: GenerationPhase[] = ['idle', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
+    const currentIndex = phaseValues.indexOf(currentPhase);
+    
+    if (currentPhase === 'error') return 100;
+    if (currentIndex === -1) return 0;
+    
+    return Math.round((currentIndex / (phaseValues.length - 1)) * 100);
   };
 
-  if (currentPhase === 'idle') {
-    return null;
-  }
+  const progressPercentage = getProgressPercentage();
+  const currentInfo = phases[currentPhase];
+  const phaseValues: GenerationPhase[] = ['idle', 'content-loading', 'analyzing', 'generating', 'saving', 'complete'];
 
   return (
-    <div className="space-y-4 my-4">
-      <div className="flex items-center justify-center space-x-2">
-        {isRetrying && (
-          <span className="text-sm text-amber-600 font-medium">
-            Retrying generation with improved parameters...
-          </span>
-        )}
+    <div className="space-y-4 p-4 bg-muted/30 rounded-md border">
+      <div className="flex items-center gap-3">
+        <div className="shrink-0">
+          {currentInfo.icon}
+        </div>
+        <div>
+          <h4 className="font-medium">{currentInfo.label}</h4>
+          <p className="text-sm text-muted-foreground">{currentInfo.description}</p>
+        </div>
       </div>
       
-      <div className="grid grid-cols-5 gap-2">
+      <Progress 
+        value={progressPercentage} 
+        className="h-2" 
+        indicatorClassName={currentPhase === 'error' ? 'bg-red-500' : undefined}
+      />
+      
+      <div className="grid grid-cols-5 gap-1 text-xs">
         {['content-loading', 'analyzing', 'generating', 'saving', 'complete'].map((phase) => {
-          const status = getPhaseStatus(phase);
+          const phaseInfo = phases[phase as GenerationPhase];
+          const isActive = phase === currentPhase;
+          const isPast = getProgressPercentage() > phaseValues.indexOf(phase as GenerationPhase) * 25;
+          
           return (
             <div 
               key={phase}
-              className={cn(
-                "flex flex-col items-center p-2 rounded-md transition-colors",
-                status === 'current' && phase !== 'error' && "bg-primary/10",
-                status === 'complete' && "bg-green-50/50 dark:bg-green-950/20"
-              )}
+              className={`text-center ${isActive ? 'text-primary font-medium' : isPast ? 'text-muted-foreground' : 'text-muted'}`}
             >
-              {renderPhaseIcon(phase, status)}
-              <span className={cn(
-                "text-xs mt-1 text-center capitalize",
-                status === 'current' && phase !== 'error' && "text-primary font-medium",
-                status === 'complete' && "text-green-600 dark:text-green-400",
-                status === 'incomplete' && "text-muted-foreground/50"
-              )}>
-                {phase.replace(/-/g, ' ')}
-              </span>
+              {phaseInfo.label.split(' ')[0]}
             </div>
           );
         })}
       </div>
       
-      {loadingMessage && currentPhase !== 'complete' && (
-        <div className="text-center text-sm text-muted-foreground animate-pulse">
-          {loadingMessage}
-        </div>
-      )}
-      
-      {currentPhase === 'complete' && (
-        <div className="text-center text-sm text-green-600 dark:text-green-400">
-          Quiz generation complete!
-        </div>
-      )}
-      
-      {currentPhase === 'error' && error && (
-        <div className="text-center text-sm text-red-500">
-          {error}
+      {currentPhase === 'error' && errorMessage && (
+        <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+          {errorMessage}
         </div>
       )}
     </div>
