@@ -1,114 +1,127 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuizAnalytics } from '../hooks/quiz/useQuizAnalytics';
 import { Progress } from '@/components/ui/progress';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer,
-  Cell
-} from 'recharts';
-
-interface QuestionDifficulty {
-  questionId: string;
-  questionText: string;
-  successRate: number;
-}
+import { Loader2, Award, BarChart3, Users, AlertTriangle } from 'lucide-react';
 
 interface QuizAnalyticsCardProps {
-  title: string;
-  totalAttempts: number;
-  averageScore: number;
-  completionRate: number;
-  questionDifficulty: QuestionDifficulty[];
+  quizId: string;
+  quizTitle: string;
 }
 
-const QuizAnalyticsCard: React.FC<QuizAnalyticsCardProps> = ({
-  title,
-  totalAttempts,
-  averageScore,
-  completionRate,
-  questionDifficulty
-}) => {
-  // Prepare chart data
-  const chartData = questionDifficulty.map((q, index) => ({
-    id: q.questionId,
-    name: `Q${index + 1}`,
-    rate: Math.round(q.successRate),
-    fullText: q.questionText
-  }));
-  
-  // Define color based on success rate
-  const getBarColor = (rate: number) => {
-    if (rate >= 80) return '#10b981'; // green
-    if (rate >= 60) return '#22c55e'; // green-500
-    if (rate >= 40) return '#eab308'; // yellow-500
-    if (rate >= 20) return '#f59e0b'; // amber-500
-    return '#ef4444'; // red-500
-  };
-  
+const QuizAnalyticsCard: React.FC<QuizAnalyticsCardProps> = ({ quizId, quizTitle }) => {
+  const analytics = useQuizAnalytics(quizId);
+
+  if (analytics.loading) {
+    return (
+      <Card className="w-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading Quiz Analytics
+          </CardTitle>
+          <CardDescription>
+            Gathering performance data for {quizTitle}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const hasAttempts = analytics.totalAttempts > 0;
+
   return (
-    <Card className="shadow-sm">
+    <Card className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">{title}</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          Quiz Analytics: {quizTitle}
+        </CardTitle>
+        <CardDescription>
+          Performance metrics and insights
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-4">
-          {/* Overall Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{totalAttempts}</p>
-              <p className="text-sm text-muted-foreground">Total Attempts</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{Math.round(averageScore)}%</p>
-              <p className="text-sm text-muted-foreground">Average Score</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{Math.round(completionRate)}%</p>
-              <p className="text-sm text-muted-foreground">Completion Rate</p>
+      <CardContent className="space-y-4">
+        {!hasAttempts ? (
+          <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground opacity-50" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">No attempts yet</p>
+              <p className="text-xs text-muted-foreground">
+                Analytics will appear once students start taking this quiz
+              </p>
             </div>
           </div>
-          
-          {/* Question Performance Chart */}
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">Question Performance</h4>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(value) => `${value}%`} />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-white p-2 shadow-lg border rounded">
-                            <p className="text-sm font-medium">{data.fullText}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Success rate: {data.rate}%
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="rate" fill="#10b981">
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getBarColor(entry.rate)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        ) : (
+          <>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+              <MetricCard 
+                title="Total Attempts" 
+                value={analytics.totalAttempts.toString()} 
+                icon={<Users className="h-4 w-4" />}
+              />
+              <MetricCard 
+                title="Pass Rate" 
+                value={`${Math.round(analytics.passRate)}%`} 
+                icon={<Award className="h-4 w-4" />}
+              />
+              <MetricCard 
+                title="Avg. Score" 
+                value={`${Math.round(analytics.averageScore)}%`} 
+                icon={<BarChart3 className="h-4 w-4" />}
+              />
             </div>
-          </div>
-        </div>
+
+            <div className="space-y-3 pt-2">
+              <h4 className="text-sm font-medium">Completion Rate</h4>
+              <div className="space-y-1">
+                <Progress value={analytics.completionRate} className="h-2" />
+                <p className="text-xs text-muted-foreground text-right">
+                  {Math.round(analytics.completionRate)}% of students complete the quiz
+                </p>
+              </div>
+            </div>
+
+            {analytics.difficultQuestions.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <h4 className="text-sm font-medium">Most Challenging Questions</h4>
+                <div className="space-y-2">
+                  {analytics.difficultQuestions.map((q) => (
+                    <div key={q.questionId} className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="truncate max-w-[80%]">{q.questionText}</span>
+                        <span className="font-medium">{Math.round(q.correctRate)}%</span>
+                      </div>
+                      <Progress value={q.correctRate} className="h-1" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
+  );
+};
+
+// Helper component for metrics
+const MetricCard: React.FC<{ title: string; value: string; icon: React.ReactNode }> = ({ 
+  title, 
+  value, 
+  icon 
+}) => {
+  return (
+    <div className="bg-muted/40 p-3 rounded-lg">
+      <div className="flex justify-between items-start">
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <div className="bg-primary/10 p-1 rounded text-primary">
+          {icon}
+        </div>
+      </div>
+      <p className="text-2xl font-semibold mt-2">{value}</p>
+    </div>
   );
 };
 

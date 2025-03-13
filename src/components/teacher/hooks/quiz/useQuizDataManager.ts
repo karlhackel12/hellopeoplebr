@@ -1,140 +1,231 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Question } from '@/components/teacher/quiz/types';
-import { executeDbOperationWithRetry } from './utils/retryLogic';
+import { Question, QuestionOption } from '../../quiz/types';
 import { toast } from 'sonner';
 
+interface QuizData {
+  title: string;
+  questions: Question[];
+  passPercent: number;
+  isPublished: boolean;
+}
+
 export const useQuizDataManager = (lessonId: string) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  
-  /**
-   * Fetch questions for a specific quiz
-   */
-  const fetchQuizQuestions = async (quizId?: string): Promise<Question[]> => {
-    if (!quizId) return [];
-    
-    setIsLoading(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchQuestions = async (): Promise<Question[] | null> => {
     try {
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .select(`
-          id,
-          quiz_id,
-          question_text,
-          question_type,
-          points,
-          order_index,
-          options:quiz_question_options(*)
-        `)
-        .eq('quiz_id', quizId)
-        .order('order_index');
+      setLoading(true);
+      setError(null);
       
-      if (error) throw error;
-      
-      // Transform the data to match our Question type
-      const formattedQuestions: Question[] = data.map(q => ({
-        id: q.id,
-        quiz_id: q.quiz_id,
-        question_text: q.question_text,
-        question_type: q.question_type,
-        points: q.points,
-        order_index: q.order_index,
-        options: q.options.map(o => ({
-          id: o.id,
-          option_text: o.option_text,
-          is_correct: o.is_correct,
-          quiz_question_id: o.quiz_question_id
-        }))
-      }));
-      
-      setQuestions(formattedQuestions);
-      return formattedQuestions;
-    } catch (error: any) {
-      console.error('Error fetching quiz questions:', error);
-      toast.error('Failed to load quiz questions');
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  /**
-   * Save a new quiz with its questions
-   */
-  const saveQuiz = async (title: string, questions: Question[], isPublished: boolean = false): Promise<boolean> => {
-    if (!lessonId) return false;
-    setIsLoading(true);
-    
-    try {
-      // Create or update the quiz
+      // First get the quiz for this lesson
       const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
-        .upsert({
+        .select('id')
+        .eq('lesson_id', lessonId)
+        .maybeSingle();
+        
+      if (quizError) throw quizError;
+      if (!quiz) return null;
+      
+      // Then get questions and options
+      const { data: questions, error: questionsError } = await supabase
+        .from('quiz_questions')
+        .select(`
+          id, quiz_id, question_text, question_type, points, order_index,
+          options:quiz_question_options(*)
+        `)
+        .eq('quiz_id', quiz.id)
+        .order('order_index');
+        
+      if (questionsError) throw questionsError;
+      
+      // Map to the expected Question format
+      return questions.map(question => {
+        // Map options to the expected QuestionOption format
+        const mappedOptions: QuestionOption[] = question.options.map(option => ({
+          id: option.id,
+          option_text: option.option_text,
+          is_correct: option.is_correct,
+          order_index: option.order_index || 0,
+          question_id: option.question_id
+        }));
+        
+        return {
+          id: question.id,
+          quiz_id: question.quiz_id,
+          question_text: question.question_text,
+          question_type: question.question_type,
+          points: question.points,
+          order_index: question.order_index,
+          options: mappedOptions
+        };
+      });
+      
+    } catch (error) {
+      console.error('Error fetching quiz questions:', error);
+      setError('Failed to load quiz questions');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createQuiz = async (title: string, passPercent: number = 70): Promise<string | null> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      // Create quiz
+      const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .insert({
           lesson_id: lessonId,
           title,
-          pass_percent: 70,
-          is_published: isPublished
+          pass_percent: passPercent,
+          is_published: false,
+          created_by: user.id
         })
-        .select()
+        .select('id')
         .single();
-      
+        
       if (quizError) throw quizError;
       
-      // Save the questions
-      const quizId = quiz.id;
+      return quiz.id;
+    } catch (error) {
+      console.error('Error creating quiz:', error);
+      setError('Failed to create quiz');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveQuestions = async (quizId: string, questions: Question[]): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      // Create questions with the proper structure
-      for (let i = 0; i < questions.length; i++) {
-        const q = questions[i];
-        
-        // Insert the question
-        const { data: questionData, error: questionError } = await supabase
+      // For each question
+      for (const question of questions) {
+        // Insert question
+        const { data: savedQuestion, error: questionError } = await supabase
           .from('quiz_questions')
-          .upsert({
+          .insert({
             quiz_id: quizId,
-            question_text: q.question_text,
-            question_type: q.question_type,
-            points: q.points,
-            order_index: i
+            question_text: question.question_text,
+            question_type: question.question_type,
+            points: question.points,
+            order_index: question.order_index
           })
-          .select()
+          .select('id')
           .single();
-        
+          
         if (questionError) throw questionError;
         
-        // Insert the options
-        if (q.options && q.options.length > 0) {
-          const options = q.options.map(opt => ({
-            quiz_question_id: questionData.id,
-            option_text: opt.option_text,
-            is_correct: opt.is_correct
-          }));
+        // Insert options for this question
+        const optionsToInsert = question.options.map(option => ({
+          question_id: savedQuestion.id,
+          option_text: option.option_text,
+          is_correct: option.is_correct,
+          order_index: option.order_index || 0
+        }));
+        
+        const { error: optionsError } = await supabase
+          .from('quiz_question_options')
+          .insert(optionsToInsert);
           
-          const { error: optionsError } = await supabase
-            .from('quiz_question_options')
-            .upsert(options);
+        if (optionsError) throw optionsError;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving quiz questions:', error);
+      setError('Failed to save quiz questions');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveQuizData = async (data: QuizData): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get quiz ID if it exists
+      const { data: existingQuiz, error: quizQueryError } = await supabase
+        .from('quizzes')
+        .select('id')
+        .eq('lesson_id', lessonId)
+        .maybeSingle();
+        
+      if (quizQueryError) throw quizQueryError;
+      
+      let quizId: string;
+      
+      if (existingQuiz) {
+        // Update existing quiz
+        quizId = existingQuiz.id;
+        const { error: updateError } = await supabase
+          .from('quizzes')
+          .update({
+            title: data.title,
+            pass_percent: data.passPercent,
+            is_published: data.isPublished
+          })
+          .eq('id', quizId);
           
-          if (optionsError) throw optionsError;
+        if (updateError) throw updateError;
+        
+        // Clear existing questions
+        const { error: deleteError } = await supabase
+          .from('quiz_questions')
+          .delete()
+          .eq('quiz_id', quizId);
+          
+        if (deleteError) throw deleteError;
+      } else {
+        // Create new quiz
+        const newQuizId = await createQuiz(data.title, data.passPercent);
+        if (!newQuizId) {
+          throw new Error('Failed to create quiz');
+        }
+        quizId = newQuizId;
+      }
+      
+      // Save questions
+      if (data.questions.length > 0) {
+        const saveSuccess = await saveQuestions(quizId, data.questions);
+        if (!saveSuccess) {
+          throw new Error('Failed to save questions');
         }
       }
       
       toast.success('Quiz saved successfully');
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving quiz:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save quiz');
       toast.error('Failed to save quiz');
       return false;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-  
+
   return {
-    questions,
-    isLoading,
-    fetchQuizQuestions,
-    saveQuiz
+    fetchQuestions,
+    createQuiz,
+    saveQuestions,
+    saveQuizData,
+    loading,
+    error
   };
 };

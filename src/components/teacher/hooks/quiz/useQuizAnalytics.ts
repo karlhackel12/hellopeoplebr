@@ -1,159 +1,154 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 interface QuizAnalytics {
   totalAttempts: number;
-  averageScore: number;
   completionRate: number;
-  questionDifficulty: {
-    questionId: string;
-    questionText: string;
-    successRate: number;
-  }[];
-  studentPerformance: {
-    studentId: string;
-    studentName: string;
-    averageScore: number;
-    completedQuizzes: number;
-  }[];
+  averageScore: number;
+  topQuestions: { questionId: string, questionText: string, correctRate: number }[];
+  difficultQuestions: { questionId: string, questionText: string, correctRate: number }[];
+  studentPerformance: { studentId: string, name: string, avgScore: number }[];
+  passRate: number;
+  loading: boolean;
 }
 
 export const useQuizAnalytics = (quizId?: string) => {
-  const [analytics, setAnalytics] = useState<QuizAnalytics | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAnalytics = async () => {
-    if (!quizId) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Fetch quiz attempt data
-      const { data: attempts, error: attemptsError } = await supabase
-        .from('quiz_attempts')
-        .select(`
-          id,
-          score,
-          completed,
-          created_at,
-          student:profiles!quiz_attempts_student_id_fkey(id, full_name)
-        `)
-        .eq('quiz_id', quizId);
-      
-      if (attemptsError) throw attemptsError;
-      
-      // Fetch question performance data
-      const { data: questionStats, error: questionsError } = await supabase
-        .from('quiz_question_responses')
-        .select(`
-          id,
-          is_correct,
-          question:quiz_questions!quiz_question_responses_question_id_fkey(id, question_text)
-        `)
-        .eq('quiz_id', quizId);
-      
-      if (questionsError) throw questionsError;
-      
-      // Process the analytics data
-      const totalAttempts = attempts?.length || 0;
-      const completedAttempts = attempts?.filter(a => a.completed) || [];
-      const completionRate = totalAttempts > 0 
-        ? (completedAttempts.length / totalAttempts) * 100 
-        : 0;
-      
-      const totalScore = completedAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0);
-      const averageScore = completedAttempts.length > 0 
-        ? totalScore / completedAttempts.length 
-        : 0;
-      
-      // Process question difficulty data
-      const questionMap = new Map();
-      questionStats?.forEach(response => {
-        const questionId = response.question.id;
-        if (!questionMap.has(questionId)) {
-          questionMap.set(questionId, {
-            id: questionId,
-            text: response.question.question_text,
-            correct: 0,
-            total: 0
-          });
-        }
-        
-        const question = questionMap.get(questionId);
-        question.total++;
-        if (response.is_correct) {
-          question.correct++;
-        }
-      });
-      
-      const questionDifficulty = Array.from(questionMap.values()).map(q => ({
-        questionId: q.id,
-        questionText: q.text,
-        successRate: q.total > 0 ? (q.correct / q.total) * 100 : 0
-      }));
-      
-      // Process student performance data
-      const studentMap = new Map();
-      attempts?.forEach(attempt => {
-        const studentId = attempt.student?.id;
-        if (studentId && !studentMap.has(studentId)) {
-          studentMap.set(studentId, {
-            studentId,
-            studentName: attempt.student?.full_name || 'Unknown',
-            totalScore: 0,
-            attemptCount: 0,
-            completedCount: 0
-          });
-        }
-        
-        if (studentId) {
-          const student = studentMap.get(studentId);
-          student.attemptCount++;
-          if (attempt.completed) {
-            student.completedCount++;
-            student.totalScore += attempt.score || 0;
-          }
-        }
-      });
-      
-      const studentPerformance = Array.from(studentMap.values()).map(s => ({
-        studentId: s.studentId,
-        studentName: s.studentName,
-        averageScore: s.completedCount > 0 ? s.totalScore / s.completedCount : 0,
-        completedQuizzes: s.completedCount
-      }));
-      
-      // Set the analytics data
-      setAnalytics({
-        totalAttempts,
-        averageScore,
-        completionRate,
-        questionDifficulty,
-        studentPerformance
-      });
-    } catch (err: any) {
-      console.error('Error fetching quiz analytics:', err);
-      setError(err.message || 'Failed to load quiz analytics');
-      toast.error('Failed to load quiz analytics');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [analytics, setAnalytics] = useState<QuizAnalytics>({
+    totalAttempts: 0,
+    completionRate: 0,
+    averageScore: 0,
+    topQuestions: [],
+    difficultQuestions: [],
+    studentPerformance: [],
+    passRate: 0,
+    loading: true
+  });
   
   useEffect(() => {
-    if (quizId) {
-      fetchAnalytics();
-    }
+    const fetchAnalytics = async () => {
+      if (!quizId) {
+        setAnalytics(prev => ({ ...prev, loading: false }));
+        return;
+      }
+      
+      try {
+        // Fetch quiz attempts
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('user_quiz_attempts')
+          .select('*')
+          .eq('quiz_id', quizId);
+          
+        if (attemptsError) throw attemptsError;
+        
+        // Fetch quiz answers
+        const { data: answers, error: answersError } = await supabase
+          .from('user_quiz_answers')
+          .select(`
+            *,
+            question:quiz_questions(id, question_text)
+          `)
+          .eq('quiz_questions.quiz_id', quizId);
+          
+        if (answersError) throw answersError;
+        
+        // Calculate analytics
+        const totalAttempts = attempts?.length || 0;
+        const completedAttempts = attempts?.filter(a => a.completed_at !== null).length || 0;
+        const completionRate = totalAttempts > 0 ? (completedAttempts / totalAttempts) * 100 : 0;
+        
+        // Calculate average score
+        const avgScore = attempts && attempts.length > 0
+          ? attempts.reduce((sum, attempt) => sum + attempt.score, 0) / attempts.length
+          : 0;
+          
+        // Question performance
+        const questionPerformance: Record<string, { correct: number, total: number, text: string }> = {};
+        
+        if (answers) {
+          for (const answer of answers) {
+            if (!answer.question) continue;
+            
+            const questionId = answer.question.id;
+            const questionText = answer.question.question_text;
+            
+            if (!questionPerformance[questionId]) {
+              questionPerformance[questionId] = { correct: 0, total: 0, text: questionText };
+            }
+            
+            questionPerformance[questionId].total += 1;
+            if (answer.is_correct) {
+              questionPerformance[questionId].correct += 1;
+            }
+          }
+        }
+        
+        // Calculate pass rate
+        const passedAttempts = attempts?.filter(a => a.passed).length || 0;
+        const passRate = totalAttempts > 0 ? (passedAttempts / totalAttempts) * 100 : 0;
+        
+        // Process question performance
+        const questionStats = Object.entries(questionPerformance).map(([questionId, stats]) => ({
+          questionId,
+          questionText: stats.text,
+          correctRate: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0
+        }));
+        
+        // Top and difficult questions
+        const topQuestions = [...questionStats]
+          .sort((a, b) => b.correctRate - a.correctRate)
+          .slice(0, 3);
+          
+        const difficultQuestions = [...questionStats]
+          .sort((a, b) => a.correctRate - b.correctRate)
+          .slice(0, 3);
+        
+        // Student performance (simplified for now)
+        const studentPerformance: { studentId: string, name: string, avgScore: number }[] = [];
+        
+        if (attempts) {
+          const studentScores: Record<string, { totalScore: number, attempts: number }> = {};
+          
+          for (const attempt of attempts) {
+            if (!attempt.user_id) continue;
+            
+            if (!studentScores[attempt.user_id]) {
+              studentScores[attempt.user_id] = { totalScore: 0, attempts: 0 };
+            }
+            
+            studentScores[attempt.user_id].totalScore += attempt.score;
+            studentScores[attempt.user_id].attempts += 1;
+          }
+          
+          for (const [studentId, stats] of Object.entries(studentScores)) {
+            studentPerformance.push({
+              studentId,
+              name: `Student ${studentId.substring(0, 4)}`, // This would be replaced with actual names
+              avgScore: stats.attempts > 0 ? stats.totalScore / stats.attempts : 0
+            });
+          }
+        }
+        
+        // Update analytics state
+        setAnalytics({
+          totalAttempts,
+          completionRate,
+          averageScore: avgScore,
+          topQuestions,
+          difficultQuestions,
+          studentPerformance,
+          passRate,
+          loading: false
+        });
+        
+      } catch (error) {
+        console.error('Error fetching quiz analytics:', error);
+        setAnalytics(prev => ({ ...prev, loading: false }));
+      }
+    };
+    
+    fetchAnalytics();
   }, [quizId]);
   
-  return {
-    analytics,
-    loading,
-    error,
-    refreshAnalytics: fetchAnalytics
-  };
+  return analytics;
 };

@@ -46,11 +46,6 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     );
   }
 
-  // Function to handle save that conforms to the expected void return type
-  const handleSaveQuizVoid = async (): Promise<void> => {
-    await handleSaveQuiz();
-  };
-
   return (
     <div className="space-y-6">
       {loadingError && currentPhase !== 'error' && (
@@ -90,7 +85,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           togglePreview={() => setShowPreview(!showPreview)}
           quizTitle={quizTitle}
           setQuizTitle={setQuizTitle}
-          handleSaveQuiz={handleSaveQuizVoid}
+          handleSaveQuiz={handleSaveQuiz}
           handleDiscardQuiz={handleDiscardQuiz}
           saving={saving}
           existingQuiz={existingQuiz}
