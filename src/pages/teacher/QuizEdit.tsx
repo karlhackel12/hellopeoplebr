@@ -3,18 +3,26 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap } from 'lucide-react';
 import QuizEditor from '@/components/teacher/QuizEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LessonSelect from '@/components/teacher/quiz/LessonSelect';
 import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
+import { QuizGenerationService } from '@/components/teacher/quiz/services/QuizGenerationService';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 const QuizEdit: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [quizTitle, setQuizTitle] = useState('');
+  const [quizDescription, setQuizDescription] = useState('');
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [isSavingLesson, setIsSavingLesson] = useState(false);
@@ -29,7 +37,7 @@ const QuizEdit: React.FC = () => {
         setLoading(true);
         const { data, error } = await supabase
           .from('quizzes')
-          .select('title, lesson_id')
+          .select('title, description, lesson_id')
           .eq('id', quizId)
           .single();
 
@@ -37,6 +45,7 @@ const QuizEdit: React.FC = () => {
         
         if (data) {
           setQuizTitle(data.title);
+          setQuizDescription(data.description || '');
           setLessonId(data.lesson_id);
         }
       } catch (error) {
@@ -123,6 +132,57 @@ const QuizEdit: React.FC = () => {
     }
   };
 
+  const handleGenerateWithReplicate = async () => {
+    if (!quizId) return;
+    
+    try {
+      setGenerating(true);
+      
+      // First clear existing questions
+      const { error: clearError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .eq('quiz_id', quizId);
+      
+      if (clearError) throw clearError;
+      
+      // Generate with Replicate
+      const generatedQuestions = await QuizGenerationService.generateWithReplicate(
+        quizTitle,
+        quizDescription,
+        5 // Default to 5 questions
+      );
+      
+      if (!generatedQuestions) {
+        throw new Error('Failed to generate questions');
+      }
+      
+      // Save the generated questions
+      const success = await QuizGenerationService.saveGeneratedQuestions(
+        quizId,
+        generatedQuestions
+      );
+      
+      if (success) {
+        toast.success('Questions generated with AI', {
+          description: `${generatedQuestions.length} questions have been created based on the quiz title and description`,
+        });
+        
+        // Refresh the page to show new questions
+        window.location.reload();
+      } else {
+        throw new Error('Failed to save generated questions');
+      }
+    } catch (error) {
+      console.error('Error generating questions with Replicate:', error);
+      toast.error('Error', {
+        description: 'Failed to generate questions',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <TeacherLayout>
       <div className="container mx-auto p-4 md:p-8 space-y-6">
@@ -137,16 +197,29 @@ const QuizEdit: React.FC = () => {
             </h1>
           </div>
           
-          {lessonId && (
-            <Button 
-              onClick={handleGenerateQuestions} 
-              disabled={generating || !lessonId}
-              className="gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              {generating ? 'Generating...' : 'Generate New Questions'}
-            </Button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                disabled={generating}
+                className="gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                {generating ? 'Generating...' : 'Generate Questions'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {lessonId && (
+                <DropdownMenuItem onClick={handleGenerateQuestions}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  From Lesson Content
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={handleGenerateWithReplicate}>
+                <Zap className="h-4 w-4 mr-2" />
+                From Quiz Title & Description
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="bg-muted/30 p-4 rounded-lg">
@@ -161,7 +234,7 @@ const QuizEdit: React.FC = () => {
             <p>Loading quiz data...</p>
           </div>
         ) : (
-          <QuizEditor quizId={quizId} />
+          <QuizEditor quizId={quizId} lessonId={lessonId} />
         )}
       </div>
     </TeacherLayout>

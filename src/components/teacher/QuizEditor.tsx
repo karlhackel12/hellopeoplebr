@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import QuizSettings from './quiz/QuizSettings';
 import QuestionManager from './quiz/components/QuestionManager';
 import QuizCreationPanel from './quiz/components/QuizCreationPanel';
@@ -9,6 +9,7 @@ import { useQuizGenerationState } from './hooks/quiz/useQuizGenerationState';
 import { useQuizGenerationWorkflow } from './hooks/quiz/useQuizGenerationWorkflow';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { QuizGenerationService } from './quiz/services/QuizGenerationService';
 
 interface QuizEditorProps {
   quizId?: string;
@@ -64,6 +65,9 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     setError
   } = useQuizGenerationState();
 
+  // For Replicate-based generation
+  const [generatingWithAI, setGeneratingWithAI] = useState(false);
+
   // Define these functions before they're used in useQuizGenerationWorkflow
   const fetchLessonContent = async (lessonId: string): Promise<string | null> => {
     try {
@@ -107,7 +111,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     }
   };
 
-  // Quiz generation workflow
+  // Quiz generation workflow (legacy)
   const { generateQuiz } = useQuizGenerationWorkflow(
     () => fetchLessonContent(lessonId || ''),
     generateSmartQuiz,
@@ -121,19 +125,83 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     setContentLoading
   );
 
-  const handleGenerateQuestions = async () => {
-    if (!lessonId) {
-      toast.error('Missing lesson', {
-        description: 'A lesson must be selected to generate quiz questions',
+  // New method to generate quiz with Replicate
+  const handleGenerateWithReplicate = async () => {
+    if (!quiz) {
+      toast.error('No quiz selected', {
+        description: 'Please create or select a quiz first',
       });
       return;
     }
 
-    const success = await generateQuiz(numQuestions);
-    if (success) {
-      toast.success('Quiz generated', {
-        description: 'Your quiz questions have been generated successfully',
+    try {
+      setGeneratingWithAI(true);
+      setGenerationPhase('analyzing');
+      
+      const generatedQuestions = await QuizGenerationService.generateWithReplicate(
+        title,
+        description,
+        parseInt(numQuestions.toString())
+      );
+      
+      if (!generatedQuestions) {
+        setGenerationPhase('error');
+        return;
+      }
+      
+      setGenerationPhase('saving');
+      
+      // Save the generated questions to the database
+      const success = await QuizGenerationService.saveGeneratedQuestions(
+        quiz.id,
+        generatedQuestions
+      );
+      
+      if (success) {
+        setGenerationPhase('complete');
+        
+        // Reload the questions from the database
+        await fetchQuizData();
+        
+        toast.success('Quiz generated successfully', {
+          description: `${generatedQuestions.length} questions have been created using AI`,
+        });
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+          setGenerationPhase('idle');
+        }, 2000);
+      } else {
+        setGenerationPhase('error');
+      }
+    } catch (error: any) {
+      console.error('Error generating quiz with AI:', error);
+      setError('Generation failed', error.message);
+      setGenerationPhase('error');
+    } finally {
+      setGeneratingWithAI(false);
+    }
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (!lessonId && !quiz) {
+      toast.error('Missing requirements', {
+        description: 'A lesson or existing quiz must be available to generate questions',
       });
+      return;
+    }
+
+    if (lessonId) {
+      // Use legacy generation with lesson content
+      const success = await generateQuiz(numQuestions);
+      if (success) {
+        toast.success('Quiz generated', {
+          description: 'Your quiz questions have been generated successfully from lesson content',
+        });
+      }
+    } else {
+      // Use Replicate generation with quiz title/description
+      await handleGenerateWithReplicate();
     }
   };
 
@@ -178,7 +246,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
           onGenerateQuestions={handleGenerateQuestions}
           generationPhase={currentPhase}
           isRetrying={isRetrying}
-          showGenerateButton={!!lessonId}
+          showGenerateButton={true} // Always show the generate button
         />
       ) : (
         <QuizCreationPanel
