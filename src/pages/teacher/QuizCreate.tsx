@@ -15,6 +15,7 @@ import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizGenerationState } from '@/components/teacher/hooks/quiz/useQuizGenerationState';
 import { useQuizGenerationWorkflow } from '@/components/teacher/hooks/quiz/useQuizGenerationWorkflow';
 import QuizGenerationProgress from '@/components/teacher/lesson/quiz/components/QuizGenerationProgress';
+import { QuizGenerationService } from '@/components/teacher/quiz/services/QuizGenerationService';
 
 const QuizCreate: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -50,7 +51,7 @@ const QuizCreate: React.FC = () => {
     return result !== null && Array.isArray(result) && result.length > 0;
   };
 
-  // Quiz generation workflow
+  // Quiz generation workflow (legacy)
   const { generateQuiz } = useQuizGenerationWorkflow(
     fetchLessonContent,
     generateQuizWrapper,
@@ -119,17 +120,49 @@ const QuizCreate: React.FC = () => {
     }
   };
 
+  // New function to generate quiz with Replicate
+  const handleGenerateWithReplicate = async (newQuizId: string) => {
+    setGenerationPhase('analyzing');
+    
+    try {
+      // Generate questions using title and description
+      const generatedQuestions = await QuizGenerationService.generateWithReplicate(
+        title,
+        description,
+        parseInt(numQuestions.toString())
+      );
+      
+      if (!generatedQuestions) {
+        setGenerationPhase('error');
+        throw new Error('Failed to generate questions');
+      }
+      
+      setGenerationPhase('saving');
+      
+      // Save the generated questions to the database
+      const success = await QuizGenerationService.saveGeneratedQuestions(
+        newQuizId,
+        generatedQuestions
+      );
+      
+      if (success) {
+        setGenerationPhase('complete');
+        return true;
+      } else {
+        setGenerationPhase('error');
+        throw new Error('Failed to save generated questions');
+      }
+    } catch (error) {
+      console.error('Error generating with Replicate:', error);
+      setGenerationPhase('error');
+      return false;
+    }
+  };
+
   const handleGenerateAndSave = async () => {
     if (!title.trim()) {
       toast.error('Error', {
         description: 'Title is required',
-      });
-      return;
-    }
-
-    if (!selectedLessonId) {
-      toast.error('Error', {
-        description: 'Lesson selection is required for AI generation',
       });
       return;
     }
@@ -148,7 +181,7 @@ const QuizCreate: React.FC = () => {
         return;
       }
 
-      // Create the quiz with lesson_id
+      // Create the quiz with lesson_id if available
       const { data, error } = await supabase
         .from('quizzes')
         .insert({
@@ -157,16 +190,24 @@ const QuizCreate: React.FC = () => {
           created_by: user.user.id,
           pass_percent: 70,
           is_published: false,
-          lesson_id: selectedLessonId
+          lesson_id: selectedLessonId || null
         })
         .select();
 
       if (error) throw error;
       
       setQuizId(data[0].id);
-
-      // Generate questions
-      const success = await generateQuiz(numQuestions);
+      
+      let success = false;
+      
+      // Generate questions based on available data
+      if (selectedLessonId) {
+        // Use legacy generation with lesson content
+        success = await generateQuiz(numQuestions);
+      } else {
+        // Use Replicate generation with quiz title/description
+        success = await handleGenerateWithReplicate(data[0].id);
+      }
       
       if (success) {
         toast.success('Quiz created with AI questions', {
@@ -208,22 +249,20 @@ const QuizCreate: React.FC = () => {
             <h1 className="text-3xl font-bold">Create New Quiz</h1>
           </div>
           <div className="flex gap-2">
-            {selectedLessonId && (
-              <Button 
-                onClick={handleGenerateAndSave} 
-                disabled={isProcessing || !title.trim()}
-                className="gap-2"
-                variant="default"
-              >
-                <Sparkles className="h-4 w-4" />
-                {saving ? 'Processing...' : 'Generate & Save'}
-              </Button>
-            )}
+            <Button 
+              onClick={handleGenerateAndSave} 
+              disabled={isProcessing || !title.trim()}
+              className="gap-2"
+              variant="default"
+            >
+              <Sparkles className="h-4 w-4" />
+              {saving ? 'Processing...' : 'Generate & Save'}
+            </Button>
             <Button 
               onClick={handleSave} 
               disabled={isProcessing || !title.trim()}
               className="gap-2"
-              variant={selectedLessonId ? "outline" : "default"}
+              variant="outline"
             >
               <Save className="h-4 w-4" />
               {saving ? 'Saving...' : 'Save Quiz'}
@@ -278,7 +317,7 @@ const QuizCreate: React.FC = () => {
           <p className="text-muted-foreground">
             {selectedLessonId 
               ? "Save with 'Generate & Save' to automatically create questions based on the lesson content"
-              : "After creating the quiz, you can add questions on the edit page"}
+              : "Enter a quiz title and description to generate questions with AI, or select a lesson for content-based generation"}
           </p>
         </div>
       </div>
