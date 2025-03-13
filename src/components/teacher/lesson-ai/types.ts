@@ -1,8 +1,6 @@
 
 export interface GeneratedLessonContent {
   description: string;
-  objectives: string[];
-  practicalSituations: string[];
   keyPhrases: Array<{
     phrase: string;
     translation: string;
@@ -13,6 +11,4 @@ export interface GeneratedLessonContent {
     translation: string;
     partOfSpeech: string;
   }>;
-  explanations: string[];
-  tips: string[];
 }

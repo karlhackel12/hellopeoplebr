@@ -197,16 +197,11 @@ serve(async (req) => {
       // Extract quiz questions and transform to the expected format
       const quizQuestions = transformQuizQuestionsFormat(validatedOutput.quiz.questions || []);
       
-      // Create the lesson content structure (without quiz questions)
+      // Create the lesson content structure (with only the required fields)
       const lessonContent = {
         description: validatedOutput.description,
         keyPhrases: validatedOutput.keyPhrases,
         vocabulary: validatedOutput.vocabulary,
-        // Add any other lesson fields from the validated output
-        practicalSituations: validatedOutput.practicalSituations || ["Everyday conversation"],
-        explanations: validatedOutput.explanations || ["No detailed explanation provided"],
-        tips: validatedOutput.tips || ["Practice regularly"],
-        objectives: validatedOutput.objectives || ["Learn key vocabulary", "Practice essential phrases"]
       };
       
       return new Response(

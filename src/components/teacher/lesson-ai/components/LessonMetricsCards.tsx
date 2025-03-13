@@ -41,12 +41,12 @@ const LessonMetricsCards: React.FC<LessonMetricsCardsProps> = ({ generatedConten
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center">
             <FileText className="h-4 w-4 mr-2" />
-            Lesson Contents
+            Lesson Overview
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-xs text-muted-foreground">
-            {generatedContent.objectives.length} objectives, {generatedContent.explanations.length} explanations
+            {generatedContent.description.slice(0, 50)}...
           </p>
         </CardContent>
       </Card>
