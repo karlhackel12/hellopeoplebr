@@ -57,7 +57,6 @@ const AssignmentsFilter: React.FC<AssignmentsFilterProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="lesson">Lessons</SelectItem>
             <SelectItem value="quiz">Quizzes</SelectItem>
           </SelectContent>
         </Select>

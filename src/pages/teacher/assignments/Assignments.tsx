@@ -4,8 +4,8 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
-import AssignmentForm from '@/components/teacher/AssignmentForm';
-import AssignmentsList from '@/components/teacher/AssignmentsList';
+import AssignmentForm from '@/components/teacher/assignments/assignment-list/AssignmentForm';
+import AssignmentsList from '@/components/teacher/assignments/assignment-list/AssignmentsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 
@@ -43,7 +43,6 @@ const Assignments = () => {
           description,
           student_id,
           assigned_by,
-          lesson_id,
           quiz_id,
           due_date,
           started_at,
@@ -52,7 +51,6 @@ const Assignments = () => {
           updated_at,
           status,
           student:student_id(id, first_name, last_name, avatar_url),
-          lesson:lesson_id(id, title),
           quiz:quiz_id(id, title)
         `)
         .eq('assigned_by', user.user.id);
@@ -98,31 +96,7 @@ const Assignments = () => {
     }
   });
 
-  // Improved lesson and quiz fetching - separate queries for better performance
-  const { 
-    data: lessons = [],
-    isLoading: loadingLessons
-  } = useQuery({
-    queryKey: ['assignable-lessons'],
-    queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return [];
-
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('id, title, is_published')
-        .eq('created_by', user.user.id)
-        .order('title');
-
-      if (error) {
-        console.error('Error fetching lessons:', error);
-        return [];
-      }
-      
-      return data || [];
-    }
-  });
-
+  // Fetch quizzes
   const { 
     data: quizzes = [],
     isLoading: loadingQuizzes
@@ -134,7 +108,7 @@ const Assignments = () => {
 
       const { data, error } = await supabase
         .from('quizzes')
-        .select('id, title, is_published, lesson_id')
+        .select('id, title, is_published')
         .eq('created_by', user.user.id)
         .order('title');
 
@@ -154,7 +128,7 @@ const Assignments = () => {
     setActiveTab('view');
   };
 
-  const isLoading = loadingStudents || loadingLessons || loadingQuizzes;
+  const isLoading = loadingStudents || loadingQuizzes;
 
   return (
     <TeacherLayout>
@@ -174,7 +148,6 @@ const Assignments = () => {
               <h2 className="text-xl font-semibold mb-4">Assign Content to Student</h2>
               <AssignmentForm 
                 students={students}
-                lessons={lessons}
                 quizzes={quizzes}
                 onSuccess={handleAssignmentSuccess}
                 initialStudentId={initialStudentId}
