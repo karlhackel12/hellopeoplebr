@@ -95,10 +95,10 @@ export const useQuizTabState = (lessonId?: string) => {
   );
 
   // Type-aligned versions of the actions
-  const handleSaveQuizWrapper = async (title: string): Promise<boolean> => {
+  const handleSaveQuizWrapper = async (): Promise<boolean> => {
     try {
       if (!lessonId) return false;
-      return await saveQuizTitle(title);
+      return await saveQuizTitle(quizTitle);
     } catch (error) {
       console.error("Error in handleSaveQuizWrapper:", error);
       return false;
@@ -119,9 +119,9 @@ export const useQuizTabState = (lessonId?: string) => {
   );
 
   // Create a wrapped version of handleGenerateQuiz that implements the expected interface
-  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<void> => {
+  const wrappedHandleGenerateQuiz = async (): Promise<void> => {
     try {
-      await handleGenerateQuiz(setContentLoadingMessage);
+      await handleGenerateQuiz();
     } catch (error) {
       console.error("Error in wrappedHandleGenerateQuiz:", error);
     }

@@ -1,134 +1,70 @@
-
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
+  ChevronLeft,
   BookOpen,
-  BookCheck,
-  FileQuestion,
   Users,
   Mail,
+  ClipboardList,
   Settings,
-  ListTodo,
   Home,
-  GraduationCap,
-  BookText
+  Menu,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Logo from '@/components/ui/Logo';
-import ThemeSwitcher from '@/components/ui/ThemeSwitcher';
+import { cn } from '@/lib/utils';
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 
-interface SidebarProps {
-  isMobileOpen: boolean;
-  setIsMobileOpen: (isOpen: boolean) => void;
+export interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
-const TeacherSidebar: React.FC<SidebarProps> = ({ isMobileOpen, setIsMobileOpen }) => {
-  const navItems = [
-    { icon: Home, label: 'Dashboard', href: '/teacher/dashboard' },
-    { icon: BookOpen, label: 'Lessons', href: '/teacher/lessons' },
-    { icon: FileQuestion, label: 'Quizzes', href: '/teacher/quizzes' },
-    { icon: BookCheck, label: 'Assignments', href: '/teacher/assignments' },
-    { icon: GraduationCap, label: 'Students', href: '/teacher/students' },
-    { icon: Mail, label: 'Invitations', href: '/teacher/invitations' },
-    { icon: Settings, label: 'Settings', href: '/teacher/settings' },
-  ];
+const TeacherSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
+  const location = useLocation();
   
-  // Group for quick actions
-  const quickActions = [
-    { icon: BookOpen, label: 'Create Lesson', href: '/teacher/lessons/create' },
-    { icon: FileQuestion, label: 'Assign Quizzes', href: '/teacher/quizzes/assign' },
-  ];
-
-  const closeMobileMenu = () => {
-    if (isMobileOpen) {
-      setIsMobileOpen(false);
-    }
-  };
-
   return (
-    <>
-      {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
-          onClick={closeMobileMenu}
-        />
+    <div
+      className={cn(
+        "h-screen fixed left-0 top-0 z-40 flex flex-col border-r bg-background transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
       )}
-      
-      {/* Sidebar container */}
-      <div
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 border-r bg-card transition-transform duration-300 ease-in-out ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
-      >
-        <div className="flex h-full flex-col">
-          {/* Sidebar header */}
-          <div className="px-6 py-5 flex items-center">
-            <Logo />
-          </div>
-          
-          {/* Sidebar content */}
-          <div className="flex-1 overflow-y-auto py-4 px-4">
-            {/* Teacher type label */}
-            <div className="mb-2 px-2">
-              <p className="text-xs font-medium text-muted-foreground tracking-wider">
-                TEACHER DASHBOARD
-              </p>
-            </div>
-            
-            {/* Main navigation */}
-            <nav className="space-y-1 mb-6">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`
-                  }
-                  onClick={closeMobileMenu}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-            
-            {/* Quick actions section */}
-            <div className="mb-2 px-2 mt-8">
-              <p className="text-xs font-medium text-muted-foreground tracking-wider">
-                QUICK ACTIONS
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              {quickActions.map((action) => (
-                <Button
-                  key={action.href}
-                  variant="ghost"
-                  className="w-full justify-start text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    window.location.href = action.href;
-                    closeMobileMenu();
-                  }}
-                >
-                  <action.icon className="h-4 w-4 mr-2" />
-                  {action.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Sidebar footer */}
-          <div className="p-4 border-t">
-            <ThemeSwitcher />
-          </div>
-        </div>
+    >
+      <div className="flex items-center justify-between p-4 border-b">
+        <h1 className={cn("text-lg font-bold", collapsed && "hidden")}>Teacher Dashboard</h1>
+        <button onClick={onToggle} className="p-2">
+          <Menu className="h-5 w-5" />
+        </button>
       </div>
-    </>
+      
+      <div className="flex-1 overflow-y-auto py-2">
+        <nav>
+          <NavLink to="/" className={cn("flex items-center p-2", location.pathname === '/' && "bg-muted")}>
+            <Home className="h-5 w-5" />
+            {!collapsed && <span className="ml-2">Home</span>}
+          </NavLink>
+          <NavLink to="/quizzes" className={cn("flex items-center p-2", location.pathname.includes('/quizzes') && "bg-muted")}>
+            <ClipboardList className="h-5 w-5" />
+            {!collapsed && <span className="ml-2">Quizzes</span>}
+          </NavLink>
+          <NavLink to="/students" className={cn("flex items-center p-2", location.pathname.includes('/students') && "bg-muted")}>
+            <Users className="h-5 w-5" />
+            {!collapsed && <span className="ml-2">Students</span>}
+          </NavLink>
+          <NavLink to="/messages" className={cn("flex items-center p-2", location.pathname.includes('/messages') && "bg-muted")}>
+            <Mail className="h-5 w-5" />
+            {!collapsed && <span className="ml-2">Messages</span>}
+          </NavLink>
+          <NavLink to="/settings" className={cn("flex items-center p-2", location.pathname.includes('/settings') && "bg-muted")}>
+            <Settings className="h-5 w-5" />
+            {!collapsed && <span className="ml-2">Settings</span>}
+          </NavLink>
+        </nav>
+      </div>
+      
+      <div className="p-4 border-t flex items-center justify-between">
+        <ThemeSwitcher />
+        {!collapsed && <span className="text-sm text-muted-foreground">Theme</span>}
+      </div>
+    </div>
   );
 };
 
