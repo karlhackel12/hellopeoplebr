@@ -1,29 +1,86 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Question } from '../quiz/types';
 import QuizPreview from '../quiz/QuizPreview';
+import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 
 interface QuizTabProps {
   lessonId?: string;
-  loadingQuiz: boolean;
-  quizExists: boolean;
-  quizQuestions: Question[];
-  quizTitle: string;
-  quizPassPercent: number;
-  isQuizPublished: boolean;
+  loadingQuiz?: boolean;
+  quizExists?: boolean;
+  quizQuestions?: Question[];
+  quizTitle?: string;
+  quizPassPercent?: number;
+  isQuizPublished?: boolean;
 }
 
 const QuizTab: React.FC<QuizTabProps> = ({
   lessonId,
-  loadingQuiz,
-  quizExists,
-  quizQuestions,
-  quizTitle,
-  quizPassPercent,
-  isQuizPublished
+  loadingQuiz: propLoadingQuiz,
+  quizExists: propQuizExists,
+  quizQuestions: propQuizQuestions,
+  quizTitle: propQuizTitle,
+  quizPassPercent: propQuizPassPercent,
+  isQuizPublished: propIsQuizPublished
 }) => {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [title, setTitle] = useState('Quiz');
+  const [passPercent, setPassPercent] = useState(70);
+  const [isPublished, setIsPublished] = useState(false);
+  const [quizExists, setQuizExists] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const { 
+    fetchQuizQuestions, 
+    fetchQuizDetails,
+    loading: handlerLoading
+  } = useQuizHandler(lessonId || '');
+
+  const usingProps = propQuizQuestions !== undefined;
+  
+  useEffect(() => {
+    if (usingProps) {
+      if (propQuizQuestions) setQuestions(propQuizQuestions);
+      if (propQuizTitle) setTitle(propQuizTitle);
+      if (propQuizPassPercent) setPassPercent(propQuizPassPercent);
+      if (propIsQuizPublished !== undefined) setIsPublished(propIsQuizPublished);
+      if (propQuizExists !== undefined) setQuizExists(propQuizExists);
+      return;
+    }
+    
+    if (lessonId) {
+      const fetchQuizData = async () => {
+        try {
+          setLoading(true);
+          const quizDetails = await fetchQuizDetails();
+          
+          if (quizDetails) {
+            setQuizExists(true);
+            setTitle(quizDetails.title || 'Quiz');
+            setPassPercent(quizDetails.pass_percent || 70);
+            setIsPublished(quizDetails.is_published || false);
+            
+            const fetchedQuestions = await fetchQuizQuestions();
+            if (fetchedQuestions) {
+              setQuestions(fetchedQuestions);
+            }
+          } else {
+            setQuizExists(false);
+          }
+        } catch (error) {
+          console.error("Error fetching quiz data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchQuizData();
+    }
+  }, [lessonId, usingProps, propQuizQuestions, propQuizTitle, propQuizPassPercent, propIsQuizPublished, propQuizExists]);
+
+  const loadingQuiz = usingProps ? (propLoadingQuiz || false) : (loading || handlerLoading);
+  
   if (!lessonId) {
     return (
       <div className="text-center py-8">
@@ -41,7 +98,7 @@ const QuizTab: React.FC<QuizTabProps> = ({
     );
   }
 
-  if (!quizExists) {
+  if (!quizExists && !(usingProps && propQuizExists)) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">No quiz has been created for this lesson yet</p>
@@ -49,7 +106,8 @@ const QuizTab: React.FC<QuizTabProps> = ({
     );
   }
 
-  if (quizQuestions.length === 0) {
+  const quizQuestions = usingProps ? propQuizQuestions : questions;
+  if (!quizQuestions || quizQuestions.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">This lesson has a quiz, but no questions have been added yet</p>
@@ -59,7 +117,7 @@ const QuizTab: React.FC<QuizTabProps> = ({
 
   return (
     <div>
-      {!isQuizPublished && (
+      {!isPublished && (
         <div className="mb-4 p-2 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <div className="flex items-center gap-2">
@@ -74,8 +132,8 @@ const QuizTab: React.FC<QuizTabProps> = ({
       )}
       <QuizPreview 
         questions={quizQuestions} 
-        title={quizTitle}
-        passPercent={quizPassPercent}
+        title={usingProps ? propQuizTitle || 'Quiz' : title}
+        passPercent={usingProps ? propQuizPassPercent || 70 : passPercent}
         isPreview={true}
       />
     </div>
