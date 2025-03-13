@@ -8,6 +8,7 @@ import { useQuestionEditor } from './quiz/hooks/useQuestionEditor';
 import { useQuizGenerationState } from './hooks/quiz/useQuizGenerationState';
 import { useQuizGenerationWorkflow } from './hooks/quiz/useQuizGenerationWorkflow';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QuizEditorProps {
   quizId?: string;
@@ -30,21 +31,9 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     loading,
     saving,
     fetchQuizData,
-    saveQuiz
+    saveQuiz,
+    setQuiz
   } = useQuizEditor(quizId, lessonId);
-
-  // Generation state
-  const {
-    numQuestions,
-    setNumQuestions,
-    clearErrors,
-    isRetrying,
-    contentLoadingMessage,
-    setContentLoading,
-    currentPhase,
-    setGenerationPhase,
-    setError
-  } = useQuizGenerationState();
 
   // Question editing state and operations
   const {
@@ -62,21 +51,20 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
     deleteQuestion
   } = useQuestionEditor(quiz?.id || '', fetchQuizData);
 
-  // Quiz generation workflow
-  const { generateQuiz } = useQuizGenerationWorkflow(
-    () => fetchLessonContent(lessonId || ''),
-    generateSmartQuiz,
-    loadQuizPreview,
-    (value) => setQuiz(value ? (quiz || { id: 'temp' }) : null),
-    setIsPublished,
+  // Generation state
+  const {
+    numQuestions,
+    setNumQuestions,
+    clearErrors,
+    isRetrying,
+    contentLoadingMessage,
+    setContentLoading,
     currentPhase,
     setGenerationPhase,
-    setError,
-    clearErrors,
-    setContentLoading
-  );
+    setError
+  } = useQuizGenerationState();
 
-  // Functions needed for the workflow, to be implemented in a real app
+  // Define these functions before they're used in useQuizGenerationWorkflow
   const fetchLessonContent = async (lessonId: string): Promise<string | null> => {
     try {
       // This would call an API to fetch the lesson content
@@ -118,6 +106,20 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ quizId, lessonId }) => {
       return null;
     }
   };
+
+  // Quiz generation workflow
+  const { generateQuiz } = useQuizGenerationWorkflow(
+    () => fetchLessonContent(lessonId || ''),
+    generateSmartQuiz,
+    loadQuizPreview,
+    (value) => setQuiz(value ? (quiz || { id: 'temp' }) : null),
+    setIsPublished,
+    currentPhase,
+    setGenerationPhase,
+    setError,
+    clearErrors,
+    setContentLoading
+  );
 
   const handleGenerateQuestions = async () => {
     if (!lessonId) {

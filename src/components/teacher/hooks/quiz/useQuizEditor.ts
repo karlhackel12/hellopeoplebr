@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Quiz, Question } from '../types';
+import { Quiz, Question } from '../../quiz/types';
 
 export const useQuizEditor = (quizId?: string, lessonId?: string) => {
   const [loading, setLoading] = useState(true);
@@ -150,6 +150,7 @@ export const useQuizEditor = (quizId?: string, lessonId?: string) => {
 
   return {
     quiz,
+    setQuiz,
     questions,
     title,
     setTitle,
