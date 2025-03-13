@@ -79,8 +79,8 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
     try {
       setShowPreview(false);
       
-      const questions = await generateQuiz();
-      if (questions && questions.length > 0) {
+      const questions = await generateQuiz(parseInt(numQuestions));
+      if (questions && Array.isArray(questions) && questions.length > 0) {
         setPreviewQuestions(questions);
         setShowPreview(true);
       }

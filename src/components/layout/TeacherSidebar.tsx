@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -13,9 +14,11 @@ import {
 
 interface TeacherSidebarProps {
   className?: string;
+  collapsed?: boolean;
+  onToggle?: () => void;
 }
 
-const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ className }) => {
+const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ className, collapsed = false, onToggle }) => {
   const location = useLocation();
   
   const isActive = (path: string) => {
