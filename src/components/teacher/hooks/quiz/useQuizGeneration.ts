@@ -4,19 +4,18 @@ import { toast } from 'sonner';
 import { executeWithRetry } from './utils/retryLogic';
 import { generateQuizContent, fetchLessonContent, handleQuizGenerationError } from './api/quizGenerationApi';
 import { getExistingQuiz, createNewQuiz, clearExistingQuestions, saveQuestionWithOptions } from './api/quizDatabaseOps';
-import { Question } from '../../quiz/types';
 
 export const useQuizGeneration = (lessonId: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const generateQuiz = async (numQuestions: number = 5, optimizedContent?: string): Promise<Question[] | null> => {
-    if (!lessonId && !optimizedContent) {
-      toast.error('Missing content', {
-        description: 'Cannot generate quiz without lesson content',
+  const generateQuiz = async (numQuestions: number = 5, optimizedContent?: string): Promise<boolean> => {
+    if (!lessonId) {
+      toast.error('Missing lesson ID', {
+        description: 'Cannot generate quiz without a lesson ID',
       });
-      return null;
+      return false;
     }
     
     try {
@@ -25,7 +24,7 @@ export const useQuizGeneration = (lessonId: string) => {
       
       // Get lesson content if not provided
       let lessonContent = optimizedContent;
-      if (!lessonContent && lessonId) {
+      if (!lessonContent) {
         lessonContent = await fetchLessonContent(lessonId);
       }
 
@@ -33,7 +32,7 @@ export const useQuizGeneration = (lessonId: string) => {
         toast.error('Insufficient lesson content', {
           description: 'The lesson needs more content before generating a quiz.',
         });
-        return null;
+        return false;
       }
 
       console.log('Content length for quiz generation:', lessonContent.length);
@@ -64,7 +63,7 @@ export const useQuizGeneration = (lessonId: string) => {
       let quizId = existingQuiz?.id;
 
       // If no existing quiz, create a new one
-      if (!quizId && lessonId) {
+      if (!quizId) {
         const newQuiz = await createNewQuiz(lessonId);
         quizId = newQuiz.id;
       }
@@ -82,14 +81,14 @@ export const useQuizGeneration = (lessonId: string) => {
         toast.success('Quiz generated successfully', {
           description: `${data.questions.length} questions have been created.`,
         });
-        return data.questions;
+        return true;
       }
       
-      return data?.questions || null;
+      return false;
     } catch (error: any) {
       handleQuizGenerationError(error);
       setError(error.message);
-      return null;
+      return false;
     } finally {
       setLoading(false);
       setIsRetrying(false);

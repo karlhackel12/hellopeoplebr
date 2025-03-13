@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import LessonEditor from "./components/teacher/LessonEditor";
+import Invitations from "./pages/teacher/Invitations";
 import Students from "./pages/teacher/Students";
 import Assignments from "./pages/teacher/Assignments";
 import Lessons from "./pages/teacher/Lessons";
@@ -23,15 +24,12 @@ import SidebarDemoPage from "./pages/SidebarDemo";
 import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 import LessonQuizPage from "./pages/teacher/LessonQuizPage";
-import TeacherQuiz from "./pages/teacher/Quiz";
-import QuizCreate from "./pages/teacher/QuizCreate";
-import QuizEdit from "./pages/teacher/QuizEdit";
 
-// Import student pages
+// Student Pages
 import StudentDashboard from "./pages/student/Dashboard";
 import StudentLessons from "./pages/student/Lessons";
-import LessonView from "./pages/student/LessonView";
 import StudentSettings from "./pages/student/Settings";
+import LessonView from "./pages/student/LessonView";
 
 const queryClient = new QueryClient();
 
@@ -66,9 +64,11 @@ const App = () => (
             } />
             <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
             
+            {/* Invitation routes - both with and without code parameter */}
             <Route path="/invitation" element={<InvitationAcceptancePage />} />
             <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
             
+            {/* Teacher Routes */}
             <Route path="/teacher/dashboard" element={
               <PageTransitionWrapper>
                 <TeacherDashboard />
@@ -94,24 +94,14 @@ const App = () => (
                 <LessonPreviewPage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons/quiz/:lessonId" element={
+            <Route path="/teacher/lessons/:lessonId/quiz" element={
               <PageTransitionWrapper>
                 <LessonQuizPage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/quiz" element={
+            <Route path="/teacher/invitations" element={
               <PageTransitionWrapper>
-                <TeacherQuiz />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/quiz/create" element={
-              <PageTransitionWrapper>
-                <QuizCreate />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/quiz/:quizId/edit" element={
-              <PageTransitionWrapper>
-                <QuizEdit />
+                <Invitations />
               </PageTransitionWrapper>
             } />
             <Route path="/teacher/students" element={
@@ -130,6 +120,7 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
+            {/* Student Routes */}
             <Route path="/student/dashboard" element={
               <PageTransitionWrapper>
                 <StudentDashboard />
@@ -151,6 +142,7 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

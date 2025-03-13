@@ -286,7 +286,7 @@ export type Database = {
           description: string | null
           id: string
           is_published: boolean
-          lesson_id: string | null
+          lesson_id: string
           pass_percent: number
           title: string
           updated_at: string
@@ -297,7 +297,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean
-          lesson_id?: string | null
+          lesson_id: string
           pass_percent?: number
           title: string
           updated_at?: string
@@ -308,7 +308,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean
-          lesson_id?: string | null
+          lesson_id?: string
           pass_percent?: number
           title?: string
           updated_at?: string
