@@ -14,7 +14,7 @@ const corsHeaders = {
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
-  let prompt = `Create a comprehensive English lesson with 25 quiz questions about "${title}" for ${level} level students.`;
+  let prompt = `Create a comprehensive English lesson with 25 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
@@ -24,12 +24,12 @@ function buildPrompt(requestData: any): string {
 {
   "description": "A brief overview of the English lesson (2-3 sentences)",
   "keyPhrases": [
-    {"phrase": "Key phrase 1", "translation": "Translation", "usage": "Example of how to use this phrase"},
-    {"phrase": "Key phrase 2", "translation": "Translation", "usage": "Example of how to use this phrase"}
+    {"phrase": "Key phrase 1", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 2", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"}
   ],
   "vocabulary": [
-    {"word": "Word 1", "translation": "Translation", "partOfSpeech": "noun/verb/adj"},
-    {"word": "Word 2", "translation": "Translation", "partOfSpeech": "noun/verb/adj"}
+    {"word": "Word 1", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 2", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"}
   ],
   "quiz": {
     "questions": [
@@ -44,7 +44,7 @@ function buildPrompt(requestData: any): string {
   }
 }
 
-Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic. Include exactly 25 quiz questions.`;
+Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic. Include exactly 25 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese, not any other language.`;
 
   return prompt;
 }
