@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,7 +41,10 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
     statusMessage
   } = useAIGeneration(form, title);
 
-  const { quizQuestions, quizTitle, quizPassPercent, loadingQuiz, quizExists, isQuizPublished } = useQuizData(form.getValues().id);
+  // Get the form values and use optional chaining for id
+  const formValues = form.getValues();
+  const lessonId = formValues.id;
+  const { quizQuestions, quizTitle, quizPassPercent, loadingQuiz, quizExists, isQuizPublished } = useQuizData(lessonId);
 
   useEffect(() => {
     if (generatedContent && activeTab === 'generate' && generationStatus === 'completed') {
@@ -136,7 +140,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
                   <h2 className="text-xl font-semibold mb-4">Lesson Quiz</h2>
                   <div className="bg-card rounded-lg shadow-sm p-4">
                     <QuizTab 
-                      lessonId={form.getValues().id} 
+                      lessonId={lessonId || ''} 
                       loadingQuiz={loadingQuiz}
                       quizExists={quizExists}
                       quizQuestions={quizQuestions}

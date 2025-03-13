@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GeneratedLessonContent } from '../types';
 import { formatContent } from '../contentUtils';
 import QuizTab from './QuizTab';
+import { useQuizData } from '../../preview/useQuizData';
 
 interface ContentEditorProps {
   form: UseFormReturn<LessonFormValues>;
@@ -16,6 +17,8 @@ interface ContentEditorProps {
 
 const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
   const structuredContent = form.watch('structuredContent') as GeneratedLessonContent | null;
+  const lessonId = form.watch('id');
+  const { quizQuestions, quizTitle, loadingQuiz, quizExists } = useQuizData(lessonId);
   
   const handleContentChange = (field: keyof GeneratedLessonContent, value: any) => {
     if (!structuredContent) return;
@@ -154,7 +157,19 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
         </TabsContent>
         
         <TabsContent value="quiz" className="mt-4">
-          <QuizTab form={form} />
+          {lessonId ? (
+            <QuizTab 
+              lessonId={lessonId} 
+              loadingQuiz={loadingQuiz}
+              quizExists={quizExists}
+              quizQuestions={quizQuestions}
+              quizTitle={quizTitle}
+            />
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Quiz will be available after you save the lesson</p>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
