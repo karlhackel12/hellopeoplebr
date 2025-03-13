@@ -1,33 +1,24 @@
-
 import React from 'react';
 import { Clock, DollarSign, TrendingUp, Users } from 'lucide-react';
-
 const Benefits: React.FC = () => {
-  const benefits = [
-    {
-      icon: <Clock className="h-12 w-12 text-[#1E88E5]" />,
-      title: "Economize Tempo",
-      description: "Reduza 3-5 horas de preparação por semana com nosso gerador de lições e atividades com IA"
-    },
-    {
-      icon: <TrendingUp className="h-12 w-12 text-[#26A69A]" />,
-      title: "Melhore Resultados",
-      description: "Ajude seus alunos a progredirem 3x mais rápido entre as aulas com prática consistente e personalizada"
-    },
-    {
-      icon: <DollarSign className="h-12 w-12 text-[#FF8F00]" />,
-      title: "Aumente sua Renda",
-      description: "Ganhe R$15,96 por aluno/mês com nosso modelo de comissão (40% do valor da assinatura)"
-    },
-    {
-      icon: <Users className="h-12 w-12 text-[#9c27b0]" />,
-      title: "Retenha mais Alunos",
-      description: "Aumente o engajamento e retenção dos alunos através de atividades gamificadas e feedback constante"
-    }
-  ];
-
-  return (
-    <section id="beneficios" className="py-20 md:py-28 bg-[#F5F7FA]">
+  const benefits = [{
+    icon: <Clock className="h-12 w-12 text-[#1E88E5]" />,
+    title: "Economize Tempo",
+    description: "Reduza 3-5 horas de preparação por semana com nosso gerador de lições e atividades com IA"
+  }, {
+    icon: <TrendingUp className="h-12 w-12 text-[#26A69A]" />,
+    title: "Melhore Resultados",
+    description: "Ajude seus alunos a progredirem 3x mais rápido entre as aulas com prática consistente e personalizada"
+  }, {
+    icon: <DollarSign className="h-12 w-12 text-[#FF8F00]" />,
+    title: "Aumente sua Renda",
+    description: "Ganhe R$15,96 por aluno/mês com nosso modelo de comissão (40% do valor da assinatura)"
+  }, {
+    icon: <Users className="h-12 w-12 text-[#9c27b0]" />,
+    title: "Retenha mais Alunos",
+    description: "Aumente o engajamento e retenção dos alunos através de atividades gamificadas e feedback constante"
+  }];
+  return <section id="beneficios" className="py-20 md:py-28 bg-[#F5F7FA]">
       <div className="container px-6 md:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 font-display">
@@ -39,19 +30,14 @@ const Benefits: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-6 max-w-6xl mx-auto">
-          {benefits.map((benefit, index) => (
-            <div 
-              key={index} 
-              className="relative bg-white border border-border/60 rounded-xl p-8 transition-all duration-300 hover:shadow-md group"
-            >
-              <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {benefits.map((benefit, index) => <div key={index} className="relative bg-white border border-border/60 rounded-xl p-8 transition-all duration-300 hover:shadow-md group">
+              
               <div className="relative">
                 <div className="mb-5 flex justify-center">{benefit.icon}</div>
                 <h3 className="text-xl font-semibold mb-3 text-center font-display">{benefit.title}</h3>
                 <p className="text-muted-foreground text-center">{benefit.description}</p>
               </div>
-            </div>
-          ))}
+            </div>)}
         </div>
         
         <div className="mt-16 max-w-4xl mx-auto bg-white border border-border/60 rounded-xl p-8 shadow-sm">
@@ -97,8 +83,6 @@ const Benefits: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Benefits;
