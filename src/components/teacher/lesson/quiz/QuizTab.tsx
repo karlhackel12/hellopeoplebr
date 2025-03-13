@@ -1,13 +1,15 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuizTabState } from '@/components/teacher/hooks/useQuizTabState';
 import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewSection from './components/QuizPreviewSection';
 import QuizPublishAlert from './components/QuizPublishAlert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import QuizGenerationProgress from './components/QuizGenerationProgress';
 import { GenerationPhase } from './components/QuizGenerationProgress';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -15,6 +17,10 @@ interface QuizTabProps {
 }
 
 const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
+  const navigate = useNavigate();
+  const [initError, setInitError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
   const {
     numQuestions,
     setNumQuestions,
@@ -37,6 +43,54 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     handleDiscardQuiz,
     togglePublishStatus,
   } = useQuizTabState(lessonId);
+
+  // Add initialization check
+  useEffect(() => {
+    const checkInitialization = async () => {
+      try {
+        setIsInitializing(true);
+        // Simulate initialization check
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsInitializing(false);
+      } catch (error) {
+        console.error("Failed to initialize quiz tab:", error);
+        setInitError("Failed to initialize quiz component");
+        setIsInitializing(false);
+      }
+    };
+    
+    checkInitialization();
+  }, [lessonId]);
+
+  if (isInitializing) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg">
+        <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+        <p className="text-muted-foreground text-center">
+          Initializing quiz editor...
+        </p>
+      </div>
+    );
+  }
+
+  if (initError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-red-50 border border-red-200 rounded-lg">
+        <AlertCircle className="h-6 w-6 text-red-500 mb-2" />
+        <p className="text-red-700 font-medium mb-2">Error Loading Quiz Editor</p>
+        <p className="text-red-600 text-sm mb-4">{initError}</p>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+          <Button onClick={() => window.location.reload()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isEditMode || !lessonId) {
     return (

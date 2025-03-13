@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
-import { BookText, Eye, Edit, Trash2 } from 'lucide-react';
+import { BookText, Eye, Edit, Trash2, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 
 interface QuizData {
   id: string;
@@ -22,6 +22,8 @@ interface QuizData {
 const QuizListPage: React.FC = () => {
   const [quizzes, setQuizzes] = useState<QuizData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,12 +33,24 @@ const QuizListPage: React.FC = () => {
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
-      const { data: user } = await supabase.auth.getUser();
+      setError(null);
+      
+      console.log("Fetching quizzes for list page...");
+      
+      const { data: user, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw new Error('Authentication error: ' + authError.message);
+      }
       
       if (!user.user) {
+        console.log("No authenticated user found, redirecting to login");
         navigate('/login');
         return;
       }
+
+      console.log("User authenticated, fetching quizzes list...");
 
       const { data, error } = await supabase
         .from('quizzes')
@@ -49,7 +63,10 @@ const QuizListPage: React.FC = () => {
         .eq('created_by', user.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
       
       // Transform data to include lesson title
       const formattedData = data?.map(quiz => ({
@@ -57,15 +74,24 @@ const QuizListPage: React.FC = () => {
         lesson_title: quiz.lessons.title
       })) || [];
 
+      console.log(`Successfully fetched ${formattedData.length} quizzes`);
       setQuizzes(formattedData);
-    } catch (error) {
-      toast.error('Error', {
-        description: 'Failed to load quizzes',
-      });
+      
+    } catch (error: any) {
       console.error('Error fetching quizzes:', error);
+      setError(error.message || 'Failed to load quizzes');
+      toast.error('Error', {
+        description: 'Failed to load quizzes: ' + (error.message || 'Unknown error')
+      });
     } finally {
       setLoading(false);
+      setRetrying(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetrying(true);
+    fetchQuizzes();
   };
 
   const handleEdit = (quizId: string, lessonId: string) => {
@@ -102,10 +128,10 @@ const QuizListPage: React.FC = () => {
         });
         
         fetchQuizzes();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error deleting quiz:', error);
         toast.error('Error', {
-          description: 'Failed to delete quiz'
+          description: 'Failed to delete quiz: ' + (error.message || 'Unknown error')
         });
       }
     }
@@ -116,11 +142,46 @@ const QuizListPage: React.FC = () => {
       <div className="container mx-auto p-4 md:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Quiz Management</h1>
+          {error && (
+            <Button 
+              onClick={handleRetry} 
+              variant="outline" 
+              className="gap-2"
+              disabled={retrying}
+            >
+              {retrying ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {retrying ? 'Retrying...' : 'Retry'}
+            </Button>
+          )}
         </div>
 
         {loading ? (
-          <div className="flex justify-center my-12">
-            <p>Loading quizzes...</p>
+          <div className="flex flex-col items-center justify-center my-12 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading quizzes...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 p-8 rounded-lg text-center border border-red-200">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+            <h3 className="text-xl font-medium mb-2 text-red-700">Error Loading Quizzes</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={handleRetry} disabled={retrying}>
+              {retrying ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </>
+              )}
+            </Button>
           </div>
         ) : quizzes.length === 0 ? (
           <div className="bg-muted p-8 rounded-lg text-center">

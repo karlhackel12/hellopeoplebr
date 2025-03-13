@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherSidebar from './TeacherSidebar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -16,6 +16,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     // Check if on mobile and collapse sidebar by default
@@ -39,7 +40,9 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
         setLoading(true);
         setAuthError(null);
         
+        console.log("Checking if user is a teacher...");
         const userIsTeacher = await isTeacher();
+        console.log("Is teacher result:", userIsTeacher);
         
         if (!userIsTeacher) {
           console.log("User is not a teacher, redirecting to login");
@@ -58,6 +61,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
         navigate('/login');
       } finally {
         setLoading(false);
+        setAuthChecked(true);
       }
     };
 
@@ -84,6 +88,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="glass rounded-md p-6 text-center">
+            <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
             <p className="text-destructive mb-4">{authError}</p>
             <button 
               onClick={() => navigate('/login')}

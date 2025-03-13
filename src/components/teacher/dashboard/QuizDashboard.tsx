@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Loader2, AlertCircle, BookOpen, Plus, FileQuestion } from 'lucide-react';
+import { Loader2, AlertCircle, BookOpen, Plus, FileQuestion, RefreshCw } from 'lucide-react';
 import QuizAnalyticsCard from '../analytics/QuizAnalyticsCard';
 import { useQuery } from '@tanstack/react-query';
 
@@ -20,12 +20,19 @@ interface Quiz {
 }
 
 const QuizDashboard = () => {
-  const { data: quizzes = [], isLoading, error } = useQuery({
-    queryKey: ['dashboard-quizzes'],
+  const [retryCount, setRetryCount] = useState(0);
+
+  const { data: quizzes = [], isLoading, error, refetch, isRefetching } = useQuery({
+    queryKey: ['dashboard-quizzes', retryCount],
     queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
+      console.log("Fetching quiz dashboard data...");
+      // Check auth first
+      const { data: user, error: authError } = await supabase.auth.getUser();
+      if (authError) throw new Error('Authentication error: ' + authError.message);
       if (!user.user) throw new Error('User not authenticated');
 
+      console.log("User authenticated, fetching quizzes...");
+      
       const { data, error } = await supabase
         .from('quizzes')
         .select(`
@@ -40,10 +47,22 @@ const QuizDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(5);
           
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching quizzes:", error);
+        throw error;
+      }
+      
+      console.log("Quizzes fetched successfully:", data?.length);
       return data || [];
     },
+    retry: 2,
+    retryDelay: 1000,
   });
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    refetch();
+  };
 
   return (
     <div className="space-y-6">
@@ -77,9 +96,23 @@ const QuizDashboard = () => {
         </div>
       ) : error ? (
         <Card>
-          <CardContent className="flex items-center gap-2 py-6">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-            <p className="text-sm">Failed to load quizzes. Please try again later.</p>
+          <CardContent className="flex flex-col items-center gap-4 py-8">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+            <div className="text-center">
+              <p className="font-medium mb-2">Failed to load quizzes</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {error instanceof Error ? error.message : 'Please try again later'}
+              </p>
+              <Button 
+                onClick={handleRetry} 
+                variant="outline" 
+                disabled={isRefetching}
+                className="gap-2"
+              >
+                {isRefetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {isRefetching ? 'Retrying...' : 'Retry'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : quizzes.length === 0 ? (
