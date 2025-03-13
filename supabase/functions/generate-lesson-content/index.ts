@@ -14,7 +14,7 @@ const corsHeaders = {
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
-  let prompt = `Create an English language lesson content with the title "${title}" for ${level} level students.`;
+  let prompt = `Create a comprehensive English lesson with 25 quiz questions about "${title}" for ${level} level students.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
@@ -23,8 +23,6 @@ function buildPrompt(requestData: any): string {
   prompt += `\n\nFormat the response as JSON with the following structure:
 {
   "description": "A brief overview of the English lesson (2-3 sentences)",
-  "objectives": ["List of 3-5 learning objectives for English learners"],
-  "practicalSituations": ["List of 2-4 practical situations where this language would be used"],
   "keyPhrases": [
     {"phrase": "Key phrase 1", "translation": "Translation", "usage": "Example of how to use this phrase"},
     {"phrase": "Key phrase 2", "translation": "Translation", "usage": "Example of how to use this phrase"}
@@ -33,11 +31,20 @@ function buildPrompt(requestData: any): string {
     {"word": "Word 1", "translation": "Translation", "partOfSpeech": "noun/verb/adj"},
     {"word": "Word 2", "translation": "Translation", "partOfSpeech": "noun/verb/adj"}
   ],
-  "explanations": ["1-2 paragraphs explaining important grammar or language concepts"],
-  "tips": ["2-3 tips for mastering this language aspect"]
+  "quiz": {
+    "questions": [
+      {
+        "question": "Question text",
+        "type": "multiple_choice",
+        "options": ["option1", "option2", "option3", "option4"],
+        "correct_answer": "correct option",
+        "explanation": "Why this is correct"
+      }
+    ]
+  }
 }
 
-Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
+Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic. Include exactly 25 quiz questions.`;
 
   return prompt;
 }
@@ -64,6 +71,43 @@ function parseOutput(output: any): any {
     console.error("Error parsing output:", error);
     throw new Error("Failed to parse model output as JSON");
   }
+}
+
+function validateOutput(parsedOutput: any): any {
+  // Check for required fields
+  const requiredFields = ["description", "keyPhrases", "vocabulary", "quiz"];
+  const missingFields = requiredFields.filter(field => !parsedOutput[field]);
+  
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+  }
+  
+  // Check quiz questions
+  if (!parsedOutput.quiz.questions || !Array.isArray(parsedOutput.quiz.questions)) {
+    throw new Error("Quiz questions missing or not an array");
+  }
+  
+  // Verify quiz question count (should be 25)
+  const questionCount = parsedOutput.quiz.questions.length;
+  if (questionCount < 10) {
+    console.warn(`Only ${questionCount} quiz questions generated, expected 25`);
+  }
+  
+  // Default values if any key properties are missing
+  const defaultContent = {
+    description: "No description provided",
+    keyPhrases: [{ phrase: "Example phrase", translation: "Translation", usage: "Basic usage" }],
+    vocabulary: [{ word: "Example", translation: "Translation", partOfSpeech: "noun" }],
+    quiz: {
+      questions: []
+    }
+  };
+  
+  // Merge with defaults to ensure all required fields exist
+  return {
+    ...defaultContent,
+    ...parsedOutput,
+  };
 }
 
 serve(async (req) => {
@@ -103,10 +147,10 @@ serve(async (req) => {
     console.log("Generated prompt:", prompt);
 
     try {
-      // Set up model parameters
+      // Set up model parameters with increased token limit for quiz generation
       const modelInput = {
         prompt: prompt,
-        max_new_tokens: 2048,
+        max_new_tokens: 4096,  // Increased for quiz content
         temperature: 0.5,
         top_p: 0.9,
         top_k: 50
@@ -123,11 +167,12 @@ serve(async (req) => {
       
       // Parse and validate the output
       const parsedOutput = parseOutput(output);
+      const validatedOutput = validateOutput(parsedOutput);
       
       return new Response(
         JSON.stringify({
           status: "succeeded",
-          lesson: parsedOutput
+          lesson: validatedOutput
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
