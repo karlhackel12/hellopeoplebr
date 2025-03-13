@@ -14,21 +14,30 @@ const corsHeaders = {
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
-  let prompt = `Create an English lesson quiz with 25 question using as basis the title "${title}" for ${level} level students.`;
+  let prompt = `Create an English language lesson content with the title "${title}" for ${level} level students.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
   }
   
-  prompt += `\n\nFormat the response as JSON, breaking down question separatly with the following structure:
+  prompt += `\n\nFormat the response as JSON with the following structure:
 {
   "description": "A brief overview of the English lesson (2-3 sentences)",
   "objectives": ["List of 3-5 learning objectives for English learners"],
-  "Quiz": ["Quiz questions and answers, variang the formmat between multiple choice and fill blank "]
+  "practicalSituations": ["List of 2-4 practical situations where this language would be used"],
+  "keyPhrases": [
+    {"phrase": "Key phrase 1", "translation": "Translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 2", "translation": "Translation", "usage": "Example of how to use this phrase"}
+  ],
+  "vocabulary": [
+    {"word": "Word 1", "translation": "Translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 2", "translation": "Translation", "partOfSpeech": "noun/verb/adj"}
+  ],
+  "explanations": ["1-2 paragraphs explaining important grammar or language concepts"],
+  "tips": ["2-3 tips for mastering this language aspect"]
 }
 
 Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
-
 
   return prompt;
 }
