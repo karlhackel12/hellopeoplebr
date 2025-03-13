@@ -25,6 +25,8 @@ import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 import LessonQuizPage from "./pages/teacher/LessonQuizPage";
 import TeacherQuiz from "./pages/teacher/Quiz";
+import QuizCreate from "./pages/teacher/QuizCreate";
+import QuizEdit from "./pages/teacher/QuizEdit";
 
 // Import student pages
 import StudentDashboard from "./pages/student/Dashboard";
@@ -93,7 +95,7 @@ const App = () => (
                 <LessonPreviewPage />
               </PageTransitionWrapper>
             } />
-            <Route path="/teacher/lessons/:lessonId/quiz" element={
+            <Route path="/teacher/lessons/quiz/:lessonId" element={
               <PageTransitionWrapper>
                 <LessonQuizPage />
               </PageTransitionWrapper>
@@ -101,6 +103,16 @@ const App = () => (
             <Route path="/teacher/quiz" element={
               <PageTransitionWrapper>
                 <TeacherQuiz />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/quiz/create" element={
+              <PageTransitionWrapper>
+                <QuizCreate />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/quiz/:quizId/edit" element={
+              <PageTransitionWrapper>
+                <QuizEdit />
               </PageTransitionWrapper>
             } />
             <Route path="/teacher/invitations" element={

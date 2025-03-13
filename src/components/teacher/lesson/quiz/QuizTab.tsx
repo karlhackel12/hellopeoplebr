@@ -95,7 +95,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
 
   const handleSaveQuiz = async () => {
     try {
-      await saveQuizTitle(quizTitle, previewQuestions);
+      await saveQuizTitle(quizTitle);
       setExistingQuiz(true);
       await loadQuizDetails();
     } catch (err) {
