@@ -1,13 +1,17 @@
 
 import React from 'react';
 import TeacherLayout from '@/components/layout/TeacherLayout';
+import DashboardHeader from '@/components/teacher/dashboard/DashboardHeader';
+import StatCards from '@/components/teacher/dashboard/StatCards';
+import RecentLessons from '@/components/teacher/dashboard/RecentLessons';
 
 const TeacherDashboard: React.FC = () => {
   return (
     <TeacherLayout>
       <div className="w-full animate-fade-in">
-        <h1 className="text-3xl font-bold mb-6">Teacher Dashboard</h1>
-        <p>Welcome to your teacher dashboard. From here, you can manage your students, quizzes, and assignments.</p>
+        <DashboardHeader />
+        <StatCards />
+        <RecentLessons />
       </div>
     </TeacherLayout>
   );
