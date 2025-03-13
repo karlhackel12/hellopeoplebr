@@ -12,9 +12,10 @@ export const lessonFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
   is_published: z.boolean().default(false),
-  contentSource: z.enum(['ai_generated']).default('ai_generated'),
+  contentSource: z.enum(['ai_generated', 'mixed']).default('ai_generated'),
   structuredContent: z.any().optional(),
   generationMetadata: z.any().optional(),
+  estimated_minutes: z.number().optional(),
 });
 
 export type LessonFormValues = z.infer<typeof lessonFormSchema>;
@@ -36,6 +37,7 @@ export const useLessonForm = () => {
       contentSource: 'ai_generated',
       structuredContent: null,
       generationMetadata: null,
+      estimated_minutes: 15,
     },
   });
 
@@ -98,6 +100,7 @@ export const useLessonForm = () => {
             content_source: values.contentSource,
             structured_content: values.structuredContent,
             generation_metadata: values.generationMetadata,
+            estimated_minutes: values.estimated_minutes || 15,
             updated_at: new Date().toISOString(),
           })
           .eq('id', id);
@@ -118,6 +121,7 @@ export const useLessonForm = () => {
             content_source: values.contentSource,
             structured_content: values.structuredContent,
             generation_metadata: values.generationMetadata,
+            estimated_minutes: values.estimated_minutes || 15,
             created_by: user.user.id,
             order_index: 0, // Default order, can be adjusted later
           })

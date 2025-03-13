@@ -51,9 +51,9 @@ const AILessonGenerator: React.FC<AILessonGeneratorProps> = ({ onSubmit, isLoadi
         const lessonFormValues: LessonFormValues = {
             title: values.title,
             content: values.content || '',
-            estimated_minutes: 15, // Default value
             is_published: false,
             contentSource: 'ai_generated',
+            estimated_minutes: 15,
             // Store additional generator values in metadata
             generationMetadata: {
                 level: values.level,
