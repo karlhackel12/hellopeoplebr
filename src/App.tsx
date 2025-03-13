@@ -1,175 +1,279 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { PageTransitionWrapper } from "@/components/ui/page-transition";
 
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import TeacherDashboard from "./pages/teacher/Dashboard";
-import Students from "./pages/teacher/students/Students";
-import Assignments from "./pages/teacher/assignments/Assignments";
-import Settings from "./pages/teacher/settings/Settings";
-import SidebarDemoPage from "./pages/SidebarDemo";
-import InvitationAcceptancePage from "./pages/InvitationAcceptance";
-import { OnboardingProvider } from "./components/student/OnboardingContext";
+import { useEffect } from 'react';
+import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Quiz pages
-import QuizManagementPage from "./pages/teacher/quizzes/QuizManagementPage";
-import QuizCreatePage from "./pages/teacher/quizzes/QuizCreatePage";
-import QuizEditPage from "./pages/teacher/quizzes/QuizEditPage";
-import QuizPreviewPage from "./pages/teacher/quizzes/QuizPreviewPage";
+// Auth components
+import Login from '@/pages/auth/Login';
+import Register from '@/pages/auth/Register';
+import ForgotPassword from '@/pages/auth/ForgotPassword';
+import ResetPassword from '@/pages/auth/ResetPassword';
+import AuthCallback from '@/pages/auth/AuthCallback';
+import StudentSignup from '@/pages/auth/StudentSignup';
 
-// Lesson pages
-import Lessons from "./pages/teacher/lessons/Lessons";
-import LessonEditor from "./pages/teacher/lessons/LessonEditor";
-import LessonQuizPage from "./pages/teacher/lessons/LessonQuizPage";
+// Teacher pages
+import TeacherDashboard from '@/pages/teacher/dashboard/Dashboard';
+import Students from '@/pages/teacher/students/Students';
+import StudentDetail from '@/pages/teacher/students/StudentDetail';
+import Quizzes from '@/pages/teacher/quizzes/Quizzes';
+import QuizDetail from '@/pages/teacher/quizzes/QuizDetail';
+import QuizCreate from '@/pages/teacher/quizzes/QuizCreate';
+import QuizEdit from '@/pages/teacher/quizzes/QuizEdit';
+import TeacherProfile from '@/pages/teacher/settings/Profile';
+import TeacherSettings from '@/pages/teacher/settings/Settings';
+import Assignments from '@/pages/teacher/assignments/Assignments';
 
-// Student Pages
-import StudentDashboard from "./pages/student/Dashboard";
-import StudentSettings from "./pages/student/Settings";
-import StudentQuizList from "./pages/student/QuizList";
-import TakeQuizPage from "./pages/student/TakeQuizPage";
+// Student pages
+import StudentDashboard from '@/pages/student/dashboard/Dashboard';
+import StudentAssignments from '@/pages/student/assignments/Assignments';
+import StudentAssignmentDetail from '@/pages/student/assignments/AssignmentDetail';
+import StudentQuizzes from '@/pages/student/quizzes/Quizzes';
+import StudentQuiz from '@/pages/student/quizzes/Quiz';
+import StudentQuizResults from '@/pages/student/quizzes/QuizResults';
+import StudentProfile from '@/pages/student/profile/Profile';
+import StudentSettings from '@/pages/student/settings/Settings';
 
-const queryClient = new QueryClient();
+// Protected route components
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import TeacherRoute from '@/components/auth/TeacherRoute';
+import StudentRoute from '@/components/auth/StudentRoute';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <OnboardingProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={
-              <PageTransitionWrapper>
-                <Login />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/register" element={
-              <PageTransitionWrapper>
-                <Register />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/forgot-password" element={
-              <PageTransitionWrapper>
-                <ForgotPassword />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/dashboard" element={
-              <PageTransitionWrapper>
-                <Dashboard />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
-            
-            {/* Invitation routes - both with and without code parameter */}
-            <Route path="/invitation" element={<InvitationAcceptancePage />} />
-            <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
-            
-            {/* Teacher Routes */}
-            <Route path="/teacher/dashboard" element={
-              <PageTransitionWrapper>
-                <TeacherDashboard />
-              </PageTransitionWrapper>
-            } />
-            
-            {/* Lesson Routes */}
-            <Route path="/teacher/lessons" element={
-              <PageTransitionWrapper>
-                <Lessons />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/lessons/create" element={
-              <PageTransitionWrapper>
-                <LessonEditor />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/lessons/edit/:lessonId" element={
-              <PageTransitionWrapper>
-                <LessonEditor />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/lessons/:lessonId/quiz" element={
-              <PageTransitionWrapper>
-                <LessonQuizPage />
-              </PageTransitionWrapper>
-            } />
-            
-            {/* Quiz Management Routes */}
-            <Route path="/teacher/quizzes" element={
-              <PageTransitionWrapper>
-                <QuizManagementPage />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/quizzes/create" element={
-              <PageTransitionWrapper>
-                <QuizCreatePage />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/quizzes/edit/:quizId" element={
-              <PageTransitionWrapper>
-                <QuizEditPage />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/quizzes/preview/:quizId" element={
-              <PageTransitionWrapper>
-                <QuizPreviewPage />
-              </PageTransitionWrapper>
-            } />
-            
-            {/* Other Teacher Routes */}
-            <Route path="/teacher/students" element={
-              <PageTransitionWrapper>
-                <Students />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/assignments" element={
-              <PageTransitionWrapper>
-                <Assignments />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/settings" element={
-              <PageTransitionWrapper>
-                <Settings />
-              </PageTransitionWrapper>
-            } />
-            
-            {/* Student Routes */}
-            <Route path="/student/dashboard" element={
-              <PageTransitionWrapper>
-                <StudentDashboard />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/student/quizzes" element={
-              <PageTransitionWrapper>
-                <StudentQuizList />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/student/quizzes/take/:quizId" element={
-              <PageTransitionWrapper>
-                <TakeQuizPage />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/student/settings" element={
-              <PageTransitionWrapper>
-                <StudentSettings />
-              </PageTransitionWrapper>
-            } />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </OnboardingProvider>
-  </QueryClientProvider>
-);
+// Create a React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
+const router = createBrowserRouter([
+  // Auth routes
+  {
+    path: '/login',
+    element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />,
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallback />,
+  },
+  {
+    path: '/student/signup/:code',
+    element: <StudentSignup />,
+  },
+
+  // Teacher routes
+  {
+    path: '/teacher/dashboard',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <TeacherDashboard />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/students',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <Students />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/students/:id',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <StudentDetail />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/quizzes',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <Quizzes />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/quizzes/create',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <QuizCreate />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/quizzes/:id',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <QuizDetail />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/quizzes/:id/edit',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <QuizEdit />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/assignments',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <Assignments />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/settings',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <TeacherSettings />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/teacher/profile',
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <TeacherProfile />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+
+  // Student routes
+  {
+    path: '/student/dashboard',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentDashboard />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/assignments',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentAssignments />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/assignments/:id',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentAssignmentDetail />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/quizzes',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentQuizzes />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/quizzes/:id',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentQuiz />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/quizzes/:id/results/:attemptId',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentQuizResults />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/profile',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentProfile />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/student/settings',
+    element: (
+      <ProtectedRoute>
+        <StudentRoute>
+          <StudentSettings />
+        </StudentRoute>
+      </ProtectedRoute>
+    ),
+  },
+  
+  // Default redirect
+  {
+    path: '*',
+    element: <Login />,
+  },
+]);
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" />
+    </QueryClientProvider>
+  );
+}
 
 export default App;
