@@ -92,6 +92,11 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       icon: BookOpen 
     },
     { 
+      name: 'Quizzes', 
+      href: '/teacher/quiz', 
+      icon: FileQuestion 
+    },
+    { 
       name: 'Students', 
       href: '/teacher/students', 
       icon: Users 
@@ -100,11 +105,6 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       name: 'Assignments', 
       href: '/teacher/assignments', 
       icon: ClipboardList 
-    },
-    { 
-      name: 'Quizzes', 
-      href: '/teacher/quiz', 
-      icon: FileQuestion 
     },
     { 
       name: 'Settings', 
