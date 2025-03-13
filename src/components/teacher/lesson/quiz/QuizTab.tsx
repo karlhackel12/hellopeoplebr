@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { useQuizTabState } from '../../hooks/useQuizTabState';
+import { useQuizHandler } from '../../hooks/useQuizHandler';
 import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewSection from './components/QuizPreviewSection';
 import QuizPlaceholder from './QuizPlaceholder';
+import { Question } from '@/components/teacher/quiz/types';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -12,28 +13,49 @@ interface QuizTabProps {
 
 const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) => {
   const [loaded, setLoaded] = useState(false);
+  const [quizTitle, setQuizTitle] = useState('');
+  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [existingQuiz, setExistingQuiz] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+  const [contentLoaded, setContentLoaded] = useState(false);
+  
   const {
-    quizTitle,
-    setQuizTitle,
+    fetchQuizDetails,
+    fetchQuizQuestions,
+    generateQuiz,
+    saveQuizTitle,
+    deleteQuiz,
+    publishQuiz,
+    unpublishQuiz,
     loading,
     saving,
-    previewQuestions,
-    showPreview,
-    togglePreview,
-    existingQuiz,
-    isPublished,
-    contentLoaded,
-    contentLoadingMessage,
     isRetrying,
-    error,
-    handleGenerateQuiz,
-    handleSmartGeneration,
-    handleGenerateFromLesson,
-    handleSaveQuiz,
-    handleDiscardQuiz,
-    handleTogglePublish,
-    loadQuizDetails
-  } = useQuizTabState(lessonId, isEditMode);
+    error
+  } = useQuizHandler(lessonId);
+
+  const loadQuizDetails = async () => {
+    try {
+      const quiz = await fetchQuizDetails();
+      
+      if (quiz) {
+        setQuizTitle(quiz.title);
+        setExistingQuiz(true);
+        setIsPublished(quiz.is_published);
+        
+        // Load questions if quiz exists
+        const questions = await fetchQuizQuestions();
+        if (questions && questions.length > 0) {
+          setPreviewQuestions(questions);
+        }
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error loading quiz details:', err);
+      return false;
+    }
+  };
 
   // Initial data loading
   useEffect(() => {
@@ -45,7 +67,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
     };
 
     loadInitialData();
-  }, [lessonId, loadQuizDetails]);
+  }, [lessonId]);
 
   if (!lessonId && !isEditMode) {
     return <QuizPlaceholder />;
@@ -53,13 +75,62 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
 
   // Wrap the handleGenerateQuiz function to make it compatible with Promise<void>
   const handleGenerate = async () => {
-    await handleGenerateQuiz();
-    return;
+    try {
+      setShowPreview(false);
+      
+      const questions = await generateQuiz();
+      if (questions && questions.length > 0) {
+        setPreviewQuestions(questions);
+        setShowPreview(true);
+      }
+    } catch (err) {
+      console.error('Failed to generate quiz:', err);
+    }
   };
 
-  const handleGenerateFrom = async (setMessage: (msg: string) => void) => {
-    const result = await handleGenerateFromLesson(setMessage);
-    return result;
+  const togglePreview = () => {
+    setShowPreview(!showPreview);
+  };
+
+  const handleSaveQuiz = async () => {
+    try {
+      await saveQuizTitle(quizTitle, previewQuestions);
+      setExistingQuiz(true);
+      await loadQuizDetails();
+    } catch (err) {
+      console.error('Failed to save quiz:', err);
+    }
+  };
+
+  const handleDiscardQuiz = async () => {
+    if (existingQuiz) {
+      try {
+        await deleteQuiz();
+        setExistingQuiz(false);
+        setShowPreview(false);
+        setPreviewQuestions([]);
+        setQuizTitle('');
+      } catch (err) {
+        console.error('Failed to discard quiz:', err);
+      }
+    } else {
+      setShowPreview(false);
+      setPreviewQuestions([]);
+      setQuizTitle('');
+    }
+  };
+  
+  const handleTogglePublish = async () => {
+    try {
+      if (isPublished) {
+        await unpublishQuiz();
+      } else {
+        await publishQuiz();
+      }
+      setIsPublished(!isPublished);
+    } catch (err) {
+      console.error('Failed to toggle publish status:', err);
+    }
   };
 
   return (
@@ -74,7 +145,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
           error={error}
           errorDetails={null}
           existingQuiz={existingQuiz}
-          currentPhase={contentLoaded ? 'completed' : 'idle'}
+          currentPhase={contentLoaded ? "complete" : "idle"}
         />
       )}
       
