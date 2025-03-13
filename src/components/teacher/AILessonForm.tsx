@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,10 +9,12 @@ import ContentPreview from './lesson-ai/ContentPreview';
 import { useAIGeneration } from './lesson-ai/useAIGeneration';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
 interface AILessonFormProps {
   form: UseFormReturn<LessonFormValues>;
   title: string;
 }
+
 const AILessonForm: React.FC<AILessonFormProps> = ({
   form,
   title
@@ -46,6 +49,7 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
       clearErrors();
     }
   }, [activeTab, clearErrors]);
+
   const toggleEditMode = () => {
     setEditMode(!editMode);
     if (!editMode) {
@@ -59,7 +63,9 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
       setEditMode(false);
     }
   }, [activeTab]);
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {!import.meta.env.VITE_REPLICATE_API_KEY}
       
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)}>
@@ -76,19 +82,47 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
         </TabsList>
         
         <TabsContent value="generate" className="pt-4">
-          <GenerationSettingsForm title={title} level={level} setLevel={setLevel} instructions={instructions} setInstructions={setInstructions} handleGenerate={handleGenerate} handleCancel={generating ? handleCancelGeneration : undefined} generating={generating} error={error} generationStatus={generationStatus} progress={progress} />
+          <GenerationSettingsForm 
+            title={title} 
+            level={level} 
+            setLevel={setLevel} 
+            instructions={instructions} 
+            setInstructions={setInstructions} 
+            handleGenerate={handleGenerate} 
+            handleCancel={generating ? handleCancelGeneration : undefined} 
+            generating={generating} 
+            error={error} 
+            generationStatus={generationStatus} 
+            progress={progress} 
+          />
         </TabsContent>
         
         <TabsContent value="preview" className="pt-4">
-          {generatedContent && <ContentPreview form={form} generatedContent={generatedContent} editMode={editMode} toggleEditMode={toggleEditMode} />}
+          {generatedContent && (
+            <ContentPreview 
+              form={form} 
+              generatedContent={generatedContent} 
+              editMode={editMode} 
+              toggleEditMode={toggleEditMode} 
+            />
+          )}
         </TabsContent>
         
         <TabsContent value="student" className="pt-4">
-          {generatedContent ? <LessonPreview content={form.watch('content')} title={form.watch('title')} /> : <div className="text-center py-12 border rounded-md bg-muted">
+          {generatedContent ? (
+            <LessonPreview 
+              content={form.watch('content')} 
+              title={form.watch('title')} 
+            />
+          ) : (
+            <div className="text-center py-12 border rounded-md bg-muted">
               <p className="text-muted-foreground">Generate content first to see student view</p>
-            </div>}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
-    </div>;
+    </div>
+  );
 };
+
 export default AILessonForm;
