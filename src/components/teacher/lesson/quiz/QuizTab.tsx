@@ -7,6 +7,7 @@ import QuizPublishAlert from './components/QuizPublishAlert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import QuizGenerationProgress from './components/QuizGenerationProgress';
+import { GenerationPhase } from './components/QuizGenerationProgress';
 
 interface QuizTabProps {
   lessonId?: string;
@@ -72,7 +73,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       {/* Generation progress indicator */}
       {currentPhase !== 'idle' && (
         <QuizGenerationProgress 
-          currentPhase={currentPhase}
+          currentPhase={currentPhase as GenerationPhase}
           isRetrying={isRetrying}
           errorMessage={loadingError}
         />
@@ -88,7 +89,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
         error={loadingError}
         errorDetails={errorDetails}
         existingQuiz={existingQuiz}
-        currentPhase={currentPhase}
+        currentPhase={currentPhase as GenerationPhase}
       />
       
       {/* Quiz preview section */}

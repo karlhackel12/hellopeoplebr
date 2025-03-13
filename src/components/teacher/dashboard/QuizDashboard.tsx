@@ -24,7 +24,7 @@ const QuizDashboard = () => {
     queryKey: ['dashboard-quizzes'],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return [];
+      if (!user.user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('quizzes')
@@ -112,7 +112,7 @@ const QuizDashboard = () => {
         </div>
       )}
       
-      {quizzes.length > 0 && (
+      {quizzes && quizzes.length > 0 && (
         <div className="pt-6">
           <h3 className="text-lg font-medium mb-4">Quiz Analytics</h3>
           <div className="space-y-6">

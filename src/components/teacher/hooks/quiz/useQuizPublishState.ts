@@ -1,37 +1,53 @@
 
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export const useQuizPublishState = (
-  publishQuiz: () => Promise<void>,
-  unpublishQuiz: () => Promise<void>,
-  isPublished: boolean,
+  publishQuiz: () => Promise<boolean>, 
+  unpublishQuiz: () => Promise<boolean>, 
+  isPublished: boolean, 
   setIsPublished: (value: boolean) => void
 ) => {
-  const togglePublishStatus = useCallback(async () => {
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const togglePublishStatus = async (): Promise<void> => {
     try {
+      setIsPublishing(true);
+      
       if (isPublished) {
-        await unpublishQuiz();
-        setIsPublished(false);
-        toast.success('Quiz unpublished', {
-          description: 'The quiz is now in draft mode and not visible to students',
-        });
+        const success = await unpublishQuiz();
+        if (success) {
+          setIsPublished(false);
+          toast.success('Quiz unpublished', {
+            description: 'The quiz is now in draft mode and not visible to students',
+          });
+        } else {
+          throw new Error('Failed to unpublish quiz');
+        }
       } else {
-        await publishQuiz();
-        setIsPublished(true);
-        toast.success('Quiz published', {
-          description: 'The quiz is now published and visible to students',
-        });
+        const success = await publishQuiz();
+        if (success) {
+          setIsPublished(true);
+          toast.success('Quiz published', {
+            description: 'The quiz is now visible to students',
+          });
+        } else {
+          throw new Error('Failed to publish quiz');
+        }
       }
     } catch (error) {
       console.error('Error toggling publish status:', error);
       toast.error('Failed to change publish status', {
-        description: 'There was an error updating the quiz status',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
       });
+      throw error;
+    } finally {
+      setIsPublishing(false);
     }
-  }, [isPublished, publishQuiz, unpublishQuiz, setIsPublished]);
+  };
 
   return {
-    togglePublishStatus
+    togglePublishStatus,
+    isPublishing,
   };
 };
