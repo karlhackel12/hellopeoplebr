@@ -42,7 +42,7 @@ const LessonFormBasicFields: React.FC<LessonFormBasicFieldsProps> = ({ form }) =
       
       <FormField
         control={form.control}
-        name="isPublished"
+        name="is_published"
         render={({ field }) => (
           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
@@ -55,7 +55,7 @@ const LessonFormBasicFields: React.FC<LessonFormBasicFieldsProps> = ({ form }) =
             </div>
             <FormControl>
               <Switch
-                checked={field.value}
+                checked={Boolean(field.value)}
                 onCheckedChange={field.onChange}
               />
             </FormControl>

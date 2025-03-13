@@ -4,6 +4,15 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// Auth Components
+import Login from 'src/pages/auth/Login';
+// Teacher Components
+import TeacherDashboard from 'src/pages/teacher/dashboard/Dashboard';
+// Protected Route Components
+import ProtectedRoute from 'src/components/auth/ProtectedRoute';
+import TeacherRoute from 'src/components/auth/TeacherRoute';
+import StudentRoute from 'src/components/auth/StudentRoute';
+
 // Create a React Query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,19 +23,28 @@ const queryClient = new QueryClient({
   },
 });
 
-// Simplified router config - temporary placeholder components
-const PlaceholderComponent = () => <div>This page is under construction</div>;
-
+// Simplified router config with placeholder components
 const router = createBrowserRouter([
-  // Default route
+  // Auth routes
   {
-    path: '*',
-    element: <div>Welcome to the application. Please login to continue.</div>,
+    path: '/login',
+    element: <Login />,
   },
-  // Teacher dashboard as the main entry point for now
+  // Teacher routes
   {
     path: '/teacher/dashboard',
-    element: <div>Teacher Dashboard</div>,
+    element: (
+      <ProtectedRoute>
+        <TeacherRoute>
+          <TeacherDashboard />
+        </TeacherRoute>
+      </ProtectedRoute>
+    ),
+  },
+  // Default redirect
+  {
+    path: '*',
+    element: <Login />,
   },
 ]);
 

@@ -18,23 +18,23 @@ const LessonEditor: React.FC = () => {
   const isEditMode = !!lessonId;
   const id = lessonId || '';
   
-  const { form, onSubmit, loading, saving } = useLessonForm(id, isEditMode);
+  const { form, onSubmit, loading, saving } = useLessonForm({ lessonId: id });
   const [lessonType, setLessonType] = useState<'manual' | 'ai'>('manual');
 
   useEffect(() => {
-    const contentSource = form.watch('contentSource');
+    const contentSource = form.watch('content_source');
     if (contentSource === 'ai_generated' || contentSource === 'mixed') {
       setLessonType('ai');
     } else {
       setLessonType('manual');
     }
-  }, [form.watch('contentSource')]);
+  }, [form]);
 
   const handleLessonTypeChange = (type: 'manual' | 'ai') => {
     setLessonType(type);
     
     if (type === 'manual') {
-      form.setValue('contentSource', 'manual');
+      form.setValue('content_source', 'manual');
     }
   };
 

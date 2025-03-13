@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewContent from './QuizPreviewContent';
@@ -323,8 +322,8 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode = false }) => {
           quiz_id: quizId,
           question_text: 'New question',
           order_index: highestOrder + 1,
-          options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
-          correct_option: 0,
+          question_type: 'multiple_choice',
+          points: 1
         })
         .select();
         
