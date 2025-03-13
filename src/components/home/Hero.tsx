@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { ArrowRight, PlayCircle } from 'lucide-react';
+import { ArrowRight, PlayCircle, Clock, BarChart } from 'lucide-react';
 
 const Hero: React.FC = () => {
   return (
@@ -17,35 +17,35 @@ const Hero: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto">
           <div className="inline-block mb-5 py-1 px-3 border border-border bg-background/80 backdrop-blur-sm rounded-full animate-fade-in">
             <p className="text-sm font-medium text-foreground/80">
-              Plataforma Para Professores de Inglês
+              Plataforma para Professores de Inglês Independentes
             </p>
           </div>
           
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display tracking-tight mb-6 animate-slide-up">
-            Revolucione Suas Aulas de Inglês com IA - <span className="text-[#1E88E5]">100% Grátis</span> para Professores
+            Estenda o Aprendizado de Inglês <span className="text-[#1E88E5]">Além da Sala de Aula</span>
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up animate-delay-100">
-            Economize horas de preparação, melhore os resultados dos alunos e aumente sua renda mensal
+            Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-slide-up animate-delay-200">
             <Link to="/register">
               <Button size="lg" className="font-medium w-full sm:w-auto px-8 bg-[#36B37E] hover:bg-[#36B37E]/90">
-                Comece Gratuitamente
+                Comece Gratuitamente como Professor
                 <ArrowRight size={16} className="ml-2" />
               </Button>
             </Link>
             <a href="#como-funciona">
               <Button size="lg" variant="outline" className="font-medium w-full sm:w-auto px-8">
-                Saiba Como Funciona
+                Veja Como Funciona
                 <PlayCircle size={16} className="ml-2" />
               </Button>
             </a>
           </div>
           
           <p className="mt-6 text-sm text-muted-foreground animate-fade-in animate-delay-300">
-            Sem cartão de crédito. Sem custos ocultos. Acesso completo.
+            Sem cartão de crédito. Sem custos ocultos. 100% gratuito para professores.
           </p>
         </div>
         
@@ -55,7 +55,7 @@ const Hero: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <img 
                 src="/placeholder.svg" 
-                alt="Interface do HelloPeople" 
+                alt="Dashboard do professor mostrando progresso dos alunos" 
                 className="w-full h-full object-cover"
               />
             </div>
@@ -64,38 +64,60 @@ const Hero: React.FC = () => {
         
         {/* Teacher and Student Info Cards */}
         <div className="mt-16 grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* Problem Section Card */}
           <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-[#1E88E5]/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#1E88E5]"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <div className="h-10 w-10 rounded-full bg-[#FF8F00]/10 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-[#FF8F00]" />
               </div>
-              <h3 className="text-xl font-semibold">Para Professores</h3>
+              <h3 className="text-xl font-semibold">Por que Alunos Têm Dificuldade</h3>
             </div>
             <p className="text-muted-foreground mb-4">
-              Acesso 100% gratuito. Crie lições personalizadas, avaliações, e convide seus alunos.
+              Apenas 1-2 horas por semana em sala de aula não são suficientes. 80% do que é aprendido é esquecido após uma semana sem prática.
             </p>
-            <Link to="/register">
-              <Button className="w-full bg-[#1E88E5] hover:bg-[#1E88E5]/90">
-                Criar Conta de Professor
-              </Button>
-            </Link>
+            <div className="pt-2 flex items-center justify-between">
+              <div className="text-center flex-1">
+                <div className="text-2xl font-bold text-[#FF5630]">80%</div>
+                <div className="text-sm text-muted-foreground">do aprendizado perdido</div>
+              </div>
+              <div className="h-10 border-r border-border/60"></div>
+              <div className="text-center flex-1">
+                <div className="text-2xl font-bold text-[#FF8F00]">1-2h</div>
+                <div className="text-sm text-muted-foreground">aulas por semana</div>
+              </div>
+              <div className="h-10 border-r border-border/60"></div>
+              <div className="text-center flex-1">
+                <div className="text-2xl font-bold text-[#36B37E]">3x</div>
+                <div className="text-sm text-muted-foreground">mais rápido com prática</div>
+              </div>
+            </div>
           </div>
           
+          {/* Solution Overview Card */}
           <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-[#26A69A]/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#26A69A]"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path></svg>
+                <BarChart className="h-6 w-6 text-[#26A69A]" />
               </div>
-              <h3 className="text-xl font-semibold">Para Alunos</h3>
+              <h3 className="text-xl font-semibold">Nossa Solução</h3>
             </div>
             <p className="text-muted-foreground mb-4">
-              Se seu professor te convidou, acesse a plataforma usando o código de convite.
+              Atividades personalizadas de 5-15 minutos diários, otimizadas por IA e repetição espaçada, com acompanhamento automático do progresso.
             </p>
-            <Link to="/invitation">
-              <Button variant="outline" className="w-full">
-                Inserir Código de Convite
-              </Button>
-            </Link>
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              <div className="bg-[#1E88E5]/5 p-3 rounded-lg text-center">
+                <div className="text-sm font-semibold text-[#1E88E5]">Prática Diária</div>
+                <div className="text-xs text-muted-foreground mt-1">5-15 min/dia</div>
+              </div>
+              <div className="bg-[#26A69A]/5 p-3 rounded-lg text-center">
+                <div className="text-sm font-semibold text-[#26A69A]">Repetição Espaçada</div>
+                <div className="text-xs text-muted-foreground mt-1">Retenção científica</div>
+              </div>
+              <div className="bg-[#FF8F00]/5 p-3 rounded-lg text-center">
+                <div className="text-sm font-semibold text-[#FF8F00]">Progresso</div>
+                <div className="text-xs text-muted-foreground mt-1">Rastreamento automático</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

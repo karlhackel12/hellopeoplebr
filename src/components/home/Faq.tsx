@@ -15,19 +15,31 @@ const Faq: React.FC = () => {
     },
     {
       question: "Como funciona o modelo de comissão?",
-      answer: "Você recebe 40% de cada assinatura de aluno (R$15,96 por aluno/mês). Por exemplo, com 5 alunos, você ganha R$79,80 extras todo mês."
+      answer: "Você recebe 40% de cada assinatura de aluno (R$15,96 por aluno/mês). Por exemplo, com 5 alunos, você ganha R$79,80 extras todo mês. As comissões são transferidas automaticamente para sua conta bancária no início de cada mês."
+    },
+    {
+      question: "Quanto tempo precisarei dedicar como professor?",
+      answer: "O HelloPeople foi projetado para economizar seu tempo, não consumir mais dele. Após a configuração inicial (cerca de 30 minutos), você gastará apenas 15-20 minutos por semana revisando o progresso dos alunos e ajustando as atividades conforme necessário."
     },
     {
       question: "Posso personalizar o conteúdo gerado por IA?",
-      answer: "Sim! Você tem controle total para editar, ajustar e personalizar todo o conteúdo antes de enviar aos alunos."
+      answer: "Sim! Você tem controle total para editar, ajustar e personalizar todo o conteúdo antes de enviar aos alunos. Nossa IA é uma ferramenta para economizar seu tempo, não para substituir sua expertise."
     },
     {
       question: "Meus alunos atuais podem usar a plataforma?",
-      answer: "Absolutamente. Você convida seus alunos existentes para a plataforma e eles acessam o conteúdo que você criar especificamente para eles."
+      answer: "Absolutamente. Você convida seus alunos existentes para a plataforma e eles acessam o conteúdo que você criar especificamente para eles. A plataforma complementa suas aulas presenciais ou online."
+    },
+    {
+      question: "Existe um número mínimo de alunos para começar?",
+      answer: "Não, você pode começar a usar a plataforma com apenas um aluno. Não há requisitos mínimos ou taxas mensais."
     },
     {
       question: "Quanto tempo economizarei na preparação de aulas?",
-      answer: "Professores relatam uma economia média de 3-5 horas por semana usando nossa plataforma para criar e gerenciar lições."
+      answer: "Professores relatam uma economia média de 3-5 horas por semana usando nossa plataforma para criar e gerenciar lições, exercícios e avaliações."
+    },
+    {
+      question: "Como a plataforma complementa minhas aulas existentes?",
+      answer: "O HelloPeople não substitui suas aulas, mas as estende para além da sala de aula. Ele reforça o que você ensina através de prática consistente, permite acompanhar o progresso dos alunos, e identifica áreas que precisam de mais atenção nas próximas aulas."
     },
     {
       question: "Como recebo minhas comissões?",

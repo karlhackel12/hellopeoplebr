@@ -16,9 +16,23 @@ const Index: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>HelloPeople - Revolucione Suas Aulas de Inglês com IA</title>
-        <meta name="description" content="Economize horas de preparação, melhore os resultados dos alunos e aumente sua renda mensal com HelloPeople - plataforma de IA para professores de inglês." />
-        <meta name="keywords" content="professores de inglês, ensino com IA, ferramentas para professores de inglês, IA para ensino de inglês" />
+        <title>HelloPeople - Estenda o Aprendizado de Inglês Além da Sala de Aula</title>
+        <meta name="description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional. Plataforma 100% gratuita para professores de inglês." />
+        <meta name="keywords" content="professores de inglês, ensino com IA, ferramentas para professores de inglês, IA para ensino de inglês, extensão de aprendizado" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://hellopeople.com.br/" />
+        <meta property="og:title" content="HelloPeople - Estenda o Aprendizado de Inglês Além da Sala de Aula" />
+        <meta property="og:description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional." />
+        <meta property="og:image" content="/og-image.png" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://hellopeople.com.br/" />
+        <meta property="twitter:title" content="HelloPeople - Estenda o Aprendizado de Inglês Além da Sala de Aula" />
+        <meta property="twitter:description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional." />
+        <meta property="twitter:image" content="/og-image.png" />
       </Helmet>
       <div className="min-h-screen flex flex-col">
         <Navbar />
