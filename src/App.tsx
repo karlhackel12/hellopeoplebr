@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,13 +24,11 @@ import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 import LessonQuizPage from "./pages/teacher/LessonQuizPage";
 
-// Student Pages
 import StudentDashboard from "./pages/student/Dashboard";
 import StudentLessons from "./pages/student/Lessons";
 import StudentSettings from "./pages/student/Settings";
 import LessonView from "./pages/student/LessonView";
 
-// New Pages from Refactoring
 import QuizDashboardPage from "./pages/teacher/QuizDashboardPage";
 import QuizListPage from "./pages/teacher/QuizListPage";
 import QuizAssignmentPage from "./pages/teacher/QuizAssignmentPage";
@@ -69,11 +66,9 @@ const App = () => (
             } />
             <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
             
-            {/* Invitation routes - both with and without code parameter */}
             <Route path="/invitation" element={<InvitationAcceptancePage />} />
             <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
             
-            {/* Teacher Routes */}
             <Route path="/teacher/dashboard" element={
               <PageTransitionWrapper>
                 <TeacherDashboard />
@@ -101,11 +96,10 @@ const App = () => (
             } />
             <Route path="/teacher/lessons/:lessonId/quiz" element={
               <PageTransitionWrapper>
-                <QuizManagementPage />
+                <LessonQuizPage />
               </PageTransitionWrapper>
             } />
             
-            {/* Quiz Management Routes */}
             <Route path="/teacher/quizzes" element={
               <PageTransitionWrapper>
                 <QuizDashboardPage />
@@ -143,7 +137,6 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
-            {/* Student Routes */}
             <Route path="/student/dashboard" element={
               <PageTransitionWrapper>
                 <StudentDashboard />
@@ -165,7 +158,6 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
