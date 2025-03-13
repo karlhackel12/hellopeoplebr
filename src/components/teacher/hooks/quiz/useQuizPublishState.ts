@@ -10,7 +10,7 @@ export const useQuizPublishState = (
 ) => {
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const togglePublishStatus = async (): Promise<void> => {
+  const togglePublishStatus = async (): Promise<boolean> => {
     try {
       setIsPublishing(true);
       
@@ -24,6 +24,7 @@ export const useQuizPublishState = (
         } else {
           throw new Error('Failed to unpublish quiz');
         }
+        return success;
       } else {
         const success = await publishQuiz();
         if (success) {
@@ -34,13 +35,14 @@ export const useQuizPublishState = (
         } else {
           throw new Error('Failed to publish quiz');
         }
+        return success;
       }
     } catch (error) {
       console.error('Error toggling publish status:', error);
       toast.error('Failed to change publish status', {
         description: error instanceof Error ? error.message : 'An unexpected error occurred',
       });
-      throw error;
+      return false;
     } finally {
       setIsPublishing(false);
     }
