@@ -29,6 +29,7 @@ function buildPrompt(requestData: any): string {
 
 Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic.`;
 
+
   return prompt;
 }
 
@@ -97,7 +98,7 @@ serve(async (req) => {
       const modelInput = {
         prompt: prompt,
         max_new_tokens: 2048,
-        temperature: 0.3,
+        temperature: 0.5,
         top_p: 0.9,
         top_k: 50
       };
