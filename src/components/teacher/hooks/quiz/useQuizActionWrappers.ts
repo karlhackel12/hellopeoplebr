@@ -1,6 +1,6 @@
 
 export const useQuizActionWrappers = (
-  handleGenerateQuiz: (setContentLoadingMessage: (msg: string | null) => void) => Promise<boolean>,
+  handleGenerateQuiz: (setContentLoadingMessage: (msg: string | null) => void) => Promise<void>,
   handleSaveQuiz: (quizTitle: string) => Promise<boolean>,
   handleDiscardQuiz: () => Promise<boolean>,
   resetPreview: () => void,

@@ -40,7 +40,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg">
         <p className="text-muted-foreground text-center">
-          Save the lesson first to enable quiz generation.
+          Save first to enable quiz generation.
         </p>
       </div>
     );

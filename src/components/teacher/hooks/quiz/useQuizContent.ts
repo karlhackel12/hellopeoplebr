@@ -4,7 +4,7 @@ import { useState } from 'react';
 export const useQuizContent = () => {
   const [isContentLoaded, setIsContentLoaded] = useState(true);
 
-  // This function now handles quiz content generation instead of fetching lesson content
+  // This function now handles quiz content generation
   const getQuizContent = async (): Promise<string | null> => {
     try {
       // We can use this function for AI-generated quiz content in the future

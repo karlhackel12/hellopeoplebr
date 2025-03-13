@@ -1,23 +1,16 @@
 
-import { QuizContentAnalyzer } from '../../quiz/services/QuizContentAnalyzer';
-
 export const useSmartQuizGeneration = (
-  generateQuiz: (numQuestions: number, content: string) => Promise<boolean>,
-  getLessonContent: () => Promise<string | null>
+  generateQuiz: (numQuestions: number, content?: string) => Promise<boolean>,
+  getQuizContent: () => Promise<string | null>
 ) => {
   const generateSmartQuiz = async (numQuestions: number): Promise<boolean> => {
     try {
-      const content = await getLessonContent();
+      const content = await getQuizContent();
       if (!content) {
         return false;
       }
       
-      const optimizedContent = QuizContentAnalyzer.prepareContentForQuizGeneration(
-        content, 
-        numQuestions
-      );
-      
-      return await generateQuiz(numQuestions, optimizedContent);
+      return await generateQuiz(numQuestions, content);
     } catch (error) {
       console.error("Error in smart quiz generation:", error);
       return false;

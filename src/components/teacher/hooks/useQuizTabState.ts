@@ -19,7 +19,7 @@ export const useQuizTabState = (lessonId?: string) => {
     generateSmartQuiz,
     fetchQuizQuestions, 
     fetchQuizDetails,
-    fetchLessonContent,
+    getQuizContent,
     saveQuizTitle,
     deleteQuiz,
     publishQuiz,
@@ -56,7 +56,7 @@ export const useQuizTabState = (lessonId?: string) => {
   } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
 
   const { generateQuiz } = useQuizGenerationWorkflow(
-    fetchLessonContent,
+    getQuizContent,
     generateSmartQuiz,
     loadQuizPreview,
     setExistingQuiz,
@@ -100,7 +100,7 @@ export const useQuizTabState = (lessonId?: string) => {
     saveQuizTitle, 
     deleteQuiz, 
     generateSmartQuiz, 
-    fetchLessonContent,
+    getQuizContent,
     fetchQuizQuestions
   );
 
