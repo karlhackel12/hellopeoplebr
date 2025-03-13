@@ -5,7 +5,7 @@ export const useSmartQuizGeneration = (
   generateQuiz: (numQuestions: number, content: string) => Promise<boolean>,
   getLessonContent: () => Promise<string | null>
 ) => {
-  const generateSmartQuiz = async (numQuestions: number): Promise<boolean> => {
+  const generateSmartQuiz = async (numQuestions: number): Promise<void> => {
     try {
       // First check if we have pre-generated quiz questions from the lesson generation
       const storedQuizData = getStoredQuizData();
@@ -13,13 +13,14 @@ export const useSmartQuizGeneration = (
       if (storedQuizData && storedQuizData.questions && storedQuizData.questions.length > 0) {
         console.log("Using pre-generated quiz questions:", storedQuizData.questions.length);
         // Use the existing quiz data directly
-        return await generateQuiz(numQuestions, JSON.stringify(storedQuizData));
+        await generateQuiz(numQuestions, JSON.stringify(storedQuizData));
+        return;
       }
       
       // Fallback to regular content analysis if no pre-generated questions exist
       const content = await getLessonContent();
       if (!content) {
-        return false;
+        return;
       }
       
       const optimizedContent = QuizContentAnalyzer.prepareContentForQuizGeneration(
@@ -27,10 +28,9 @@ export const useSmartQuizGeneration = (
         numQuestions
       );
       
-      return await generateQuiz(numQuestions, optimizedContent);
+      await generateQuiz(numQuestions, optimizedContent);
     } catch (error) {
       console.error("Error in smart quiz generation:", error);
-      return false;
     }
   };
 
