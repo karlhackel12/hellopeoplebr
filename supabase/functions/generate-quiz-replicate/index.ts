@@ -40,22 +40,35 @@ serve(async (req) => {
     // Create a prompt for quiz generation
     const prompt = generatePrompt(quizTitle, quizDescription, numQuestions);
     
-    // Call the Replicate API
-    const output = await replicate.run(
-      "meta/llama-3-8b-instruct:20440e4fdbb7e4a9e2d652737bb3fb87b08b9e759a37f97adcd2d5bd9b6c5ea1",
-      {
-        input: {
-          prompt: prompt,
-          system_prompt: "You are an expert educational quiz creator that creates high-quality quiz questions for students. Always respond with valid JSON.",
-          max_tokens: 3000,
-          temperature: 0.3,
-          top_p: 0.9
+    // Call the DeepSeek model using streaming
+    console.log("Starting streaming call to DeepSeek model");
+    let fullResponse = "";
+    
+    try {
+      const stream = await replicate.stream(
+        "deepseek-ai/deepseek-r1",
+        {
+          input: {
+            prompt: prompt,
+            max_tokens: 4000,
+            temperature: 0.2,
+          }
         }
+      );
+
+      // Collect all streamed responses
+      for await (const chunk of stream) {
+        fullResponse += chunk;
       }
-    );
+      
+      console.log("Streaming complete, response length:", fullResponse.length);
+    } catch (streamError) {
+      console.error("Streaming error:", streamError);
+      throw new Error(`Streaming failed: ${streamError.message}`);
+    }
 
     // Parse and clean the output
-    const parsedResponse = parseModelOutput(output);
+    const parsedResponse = parseModelOutput(fullResponse);
     
     return new Response(
       JSON.stringify(parsedResponse),
@@ -66,7 +79,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error:", error.message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        status: "error"
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -111,52 +127,57 @@ Make the questions challenging but appropriate for students. Ensure the JSON is 
 }
 
 // Helper function to parse and clean the model output
-function parseModelOutput(output: any): any {
-  let combinedOutput = "";
-  
-  if (Array.isArray(output)) {
-    combinedOutput = output.join("");
-  } else if (typeof output === "string") {
-    combinedOutput = output;
-  } else {
-    throw new Error("Unexpected output format from Replicate");
-  }
-  
-  // Find JSON in the response
-  const jsonMatch = combinedOutput.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("No valid JSON found in the response");
-  }
-  
-  let parsedJson;
+function parseModelOutput(output: string): any {
   try {
-    parsedJson = JSON.parse(jsonMatch[0]);
+    let cleanedOutput = output;
+    
+    // Filter out thinking sections if they exist
+    if (cleanedOutput.includes("<think>") && cleanedOutput.includes("</think>")) {
+      const thinkMatches = cleanedOutput.match(/<think>([\s\S]*?)<\/think>/g) || [];
+      for (const match of thinkMatches) {
+        cleanedOutput = cleanedOutput.replace(match, "");
+      }
+    }
+    
+    // Find JSON in the response
+    const jsonMatch = cleanedOutput.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("No valid JSON found in the response");
+    }
+    
+    let parsedJson;
+    try {
+      parsedJson = JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      // Try to fix common JSON issues and parse again
+      const fixedJson = fixJsonString(jsonMatch[0]);
+      parsedJson = JSON.parse(fixedJson);
+    }
+    
+    // Validate and fix the questions if needed
+    if (!parsedJson.questions || !Array.isArray(parsedJson.questions)) {
+      throw new Error("Invalid JSON structure: missing questions array");
+    }
+    
+    // Ensure each question has the required fields
+    parsedJson.questions = parsedJson.questions.map((q: any) => {
+      return {
+        question_text: q.question_text || "No question text provided",
+        question_type: q.question_type || "multiple_choice",
+        points: q.points || 1,
+        options: (q.options || []).map((o: any) => ({
+          option_text: o.option_text || "No option text provided",
+          is_correct: !!o.is_correct
+        }))
+      };
+    });
+    
+    return parsedJson;
   } catch (error) {
-    console.error("Error parsing JSON:", error);
-    // Try to fix common JSON issues and parse again
-    const fixedJson = fixJsonString(jsonMatch[0]);
-    parsedJson = JSON.parse(fixedJson);
+    console.error("Error parsing model output:", error);
+    throw new Error("Failed to parse AI response");
   }
-  
-  // Validate and fix the questions if needed
-  if (!parsedJson.questions || !Array.isArray(parsedJson.questions)) {
-    throw new Error("Invalid JSON structure: missing questions array");
-  }
-  
-  // Ensure each question has the required fields
-  parsedJson.questions = parsedJson.questions.map((q: any) => {
-    return {
-      question_text: q.question_text || "No question text provided",
-      question_type: q.question_type || "multiple_choice",
-      points: q.points || 1,
-      options: (q.options || []).map((o: any) => ({
-        option_text: o.option_text || "No option text provided",
-        is_correct: !!o.is_correct
-      }))
-    };
-  });
-  
-  return parsedJson;
 }
 
 // Helper function to fix common JSON issues
