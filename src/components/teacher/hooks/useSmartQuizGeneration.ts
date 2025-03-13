@@ -1,6 +1,6 @@
 
-import { Question } from '../../quiz/types';
-import { QuizContentAnalyzer } from '../../quiz/services/QuizContentAnalyzer';
+import { Question } from '../quiz/types';
+import { QuizContentAnalyzer } from '../quiz/services/QuizContentAnalyzer';
 
 export const useSmartQuizGeneration = (
   generateQuiz: (numQuestions: number, content: string) => Promise<Question[] | null>,
