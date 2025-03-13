@@ -151,6 +151,7 @@ export const useQuizEditor = (quizId?: string, lessonId?: string) => {
 
   return {
     quiz,
+    setQuiz, // Add setQuiz to the return object
     questions,
     title,
     setTitle,
