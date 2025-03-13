@@ -1,42 +1,36 @@
 
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useQuizExistingData = (
   lessonId: string | undefined,
+  fetchQuizDetails: () => Promise<any>,
   setExistingQuiz: (value: boolean) => void,
+  setQuizTitle: (title: string) => void,
   setIsPublished: (value: boolean) => void,
-  loadQuizPreview: () => Promise<void>
+  loadQuizPreview: () => Promise<any[] | null>,
+  setLoadingError: (error: string | null) => void
 ) => {
   useEffect(() => {
-    const checkExistingQuiz = async () => {
-      if (!lessonId) return;
+    if (lessonId) {
+      const checkExistingQuiz = async () => {
+        try {
+          setLoadingError(null);
+          const quizDetails = await fetchQuizDetails();
+          
+          if (quizDetails) {
+            setExistingQuiz(true);
+            setQuizTitle(quizDetails.title);
+            setIsPublished(quizDetails.is_published || false);
+            
+            await loadQuizPreview();
+          }
+        } catch (error: any) {
+          console.error("Error checking existing quiz:", error);
+          setLoadingError(error.message);
+        }
+      };
       
-      try {
-        const { data, error } = await supabase
-          .from('quizzes')
-          .select('id, is_published')
-          .eq('lesson_id', lessonId)
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error checking existing quiz:', error);
-          return;
-        }
-        
-        if (data) {
-          setExistingQuiz(true);
-          setIsPublished(data.is_published);
-          await loadQuizPreview();
-        } else {
-          setExistingQuiz(false);
-          setIsPublished(false);
-        }
-      } catch (error) {
-        console.error('Error in checkExistingQuiz:', error);
-      }
-    };
-    
-    checkExistingQuiz();
-  }, [lessonId, setExistingQuiz, setIsPublished, loadQuizPreview]);
+      checkExistingQuiz();
+    }
+  }, [lessonId]);
 };

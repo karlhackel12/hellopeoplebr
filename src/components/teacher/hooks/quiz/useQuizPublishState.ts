@@ -1,55 +1,34 @@
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 export const useQuizPublishState = (
-  publishQuiz: () => Promise<boolean>, 
-  unpublishQuiz: () => Promise<boolean>, 
-  isPublished: boolean, 
+  publishQuiz: () => Promise<void>,
+  unpublishQuiz: () => Promise<void>,
+  isPublished: boolean,
   setIsPublished: (value: boolean) => void
 ) => {
-  const [isPublishing, setIsPublishing] = useState(false);
-
-  const togglePublishStatus = async (): Promise<boolean> => {
+  const [publishLoading, setPublishLoading] = useState(false);
+  
+  const togglePublishStatus = async (): Promise<void> => {
     try {
-      setIsPublishing(true);
+      setPublishLoading(true);
       
       if (isPublished) {
-        const success = await unpublishQuiz();
-        if (success) {
-          setIsPublished(false);
-          toast.success('Quiz unpublished', {
-            description: 'The quiz is now in draft mode and not visible to students',
-          });
-          return true;
-        } else {
-          throw new Error('Failed to unpublish quiz');
-        }
+        await unpublishQuiz();
+        setIsPublished(false);
       } else {
-        const success = await publishQuiz();
-        if (success) {
-          setIsPublished(true);
-          toast.success('Quiz published', {
-            description: 'The quiz is now visible to students',
-          });
-          return true;
-        } else {
-          throw new Error('Failed to publish quiz');
-        }
+        await publishQuiz();
+        setIsPublished(true);
       }
     } catch (error) {
-      console.error('Error toggling publish status:', error);
-      toast.error('Failed to change publish status', {
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-      });
-      return false;
+      console.error("Error toggling publish status:", error);
     } finally {
-      setIsPublishing(false);
+      setPublishLoading(false);
     }
   };
 
   return {
     togglePublishStatus,
-    isPublishing,
+    publishLoading
   };
 };

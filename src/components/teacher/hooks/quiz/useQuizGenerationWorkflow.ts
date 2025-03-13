@@ -5,71 +5,80 @@ import { GenerationPhase } from '../../lesson/quiz/components/QuizGenerationProg
 
 export const useQuizGenerationWorkflow = (
   fetchLessonContent: () => Promise<string | null>,
-  generateSmartQuiz: (numQuestions: string) => Promise<boolean>,
-  loadQuizPreview: () => Promise<void>,
+  generateSmartQuiz: (numQuestions: number) => Promise<boolean>,
+  loadQuizPreview: () => Promise<any[] | null>,
   setExistingQuiz: (value: boolean) => void,
   setIsPublished: (value: boolean) => void,
   currentPhase: GenerationPhase,
   setGenerationPhase: (phase: GenerationPhase) => void,
-  setError: (message: string | null, details?: string) => void,
+  setError: (message: string, details?: string) => void,
   clearErrors: () => void,
-  setContentLoading: (loading: string | null) => void
+  setContentLoading: (msg: string | null) => void,
 ) => {
-  const [numQuestionsToGenerate, setNumQuestionsToGenerate] = useState<string>('5');
-
-  const generateQuiz = async (numQuestions: string = '5'): Promise<void> => {
+  const generateQuiz = async (numQuestions: string): Promise<boolean> => {
+    clearErrors();
+    setGenerationPhase('content-loading');
+    
     try {
-      clearErrors();
-      setNumQuestionsToGenerate(numQuestions);
-      
-      // Step 1: Fetch lesson content
-      setContentLoading('Fetching lesson content...');
-      setGenerationPhase('loading-lesson');
+      // Load content phase
       const content = await fetchLessonContent();
       
       if (!content) {
-        setError('Failed to fetch lesson content', 'The lesson content could not be retrieved');
-        setGenerationPhase('error');
-        return;
+        setError('Could not load lesson content', 'Make sure your lesson has sufficient content before generating a quiz.');
+        return false;
       }
       
-      // Step 2: Generate quiz
-      setContentLoading('Generating quiz questions...');
+      if (content.length < 100) {
+        setError('Lesson content too short', 'Your lesson needs more content to generate meaningful quiz questions.');
+        return false;
+      }
+
+      // Analyzing phase
+      setGenerationPhase('analyzing');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
+      
+      // Generation phase
       setGenerationPhase('generating');
-      const generated = await generateSmartQuiz(numQuestions);
-      
-      if (!generated) {
-        setError('Failed to generate quiz', 'The quiz generation process encountered an error');
-        setGenerationPhase('error');
-        return;
+      try {
+        const success = await generateSmartQuiz(parseInt(numQuestions));
+        
+        if (success) {
+          setGenerationPhase('saving');
+          await loadQuizPreview();
+          setExistingQuiz(true);
+          setIsPublished(false);
+          setGenerationPhase('complete');
+          
+          setTimeout(() => {
+            if (currentPhase === 'complete') {
+              setGenerationPhase('idle');
+            }
+          }, 2000);
+          
+          return true;
+        } else {
+          setError('Failed to generate quiz', 'The quiz generation process failed. Please try again later.');
+          return false;
+        }
+      } catch (genError: any) {
+        console.error("Error during quiz generation:", genError);
+        setError(
+          genError.message || 'Quiz generation failed', 
+          genError.details || 'An unexpected error occurred during quiz generation.'
+        );
+        return false;
       }
-      
-      // Step 3: Load the preview
-      setContentLoading('Preparing quiz preview...');
-      setGenerationPhase('validating');
-      await loadQuizPreview();
-      
-      // Mark as existing quiz and set published status
-      setExistingQuiz(true);
-      setIsPublished(false);
-      
-      // Completed
-      setContentLoading(null);
-      setGenerationPhase('complete');
-      
-      toast.success('Quiz generated successfully', {
-        description: `${numQuestions} questions have been created`,
-      });
     } catch (error: any) {
-      console.error('Error in quiz generation workflow:', error);
-      setError('Quiz generation failed', error.message || 'An unexpected error occurred');
-      setGenerationPhase('error');
-      setContentLoading(null);
+      console.error("Error in quiz generation flow:", error);
+      setError(
+        'Quiz generation error', 
+        error.message || 'An unexpected error occurred during the quiz generation process.'
+      );
+      return false;
     }
   };
 
   return {
-    generateQuiz,
-    numQuestionsToGenerate
+    generateQuiz
   };
 };

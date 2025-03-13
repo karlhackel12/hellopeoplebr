@@ -1,133 +1,80 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { GenerationPhase } from '../../lesson/quiz/components/QuizGenerationProgress';
 
-export interface QuizGenerationState {
-  loadingError: string | null;
-  errorDetails: string | null;
-  isRetrying: boolean;
-  contentLoadingMessage: string | null;
-  currentPhase: GenerationPhase;
-  generationStartTime: number | null;
-  processingTime: number | null;
-  hasCompletedOnce: boolean;
-}
-
 export const useQuizGenerationState = () => {
-  const [state, setState] = useState<QuizGenerationState>({
-    loadingError: null,
-    errorDetails: null,
-    isRetrying: false,
-    contentLoadingMessage: null,
-    currentPhase: 'idle',
-    generationStartTime: null,
-    processingTime: null,
-    hasCompletedOnce: false
-  });
+  const [numQuestions, setNumQuestions] = useState('5');
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [contentLoadingMessage, setContentLoadingMessage] = useState<string | null>(null);
+  const [currentPhase, setCurrentPhase] = useState<GenerationPhase>('idle');
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
-  const setLoadingError = useCallback((error: string | null) => {
-    setState(prev => ({ ...prev, loadingError: error }));
-  }, []);
+  const clearErrors = () => {
+    setLoadingError(null);
+    setErrorDetails(null);
+    if (currentPhase === 'error') {
+      setCurrentPhase('idle');
+    }
+  };
 
-  const setErrorDetails = useCallback((details: string | null) => {
-    setState(prev => ({ ...prev, errorDetails: details }));
-  }, []);
+  const setRetrying = (isRetrying: boolean) => {
+    setIsRetrying(isRetrying);
+  };
 
-  const setRetrying = useCallback((retrying: boolean) => {
-    setState(prev => ({ ...prev, isRetrying: retrying }));
-  }, []);
+  const setContentLoading = (message: string | null) => {
+    setContentLoadingMessage(message);
+  };
 
-  const setContentLoading = useCallback((message: string | null) => {
-    setState(prev => ({ ...prev, contentLoadingMessage: message }));
-  }, []);
+  const setError = (message: string, details?: string) => {
+    setLoadingError(message);
+    setErrorDetails(details || null);
+    setCurrentPhase('error');
+  };
 
-  const setGenerationPhase = useCallback((phase: GenerationPhase) => {
-    setState(prev => {
-      // Record start time when transitioning from idle to any active state
-      let startTime = prev.generationStartTime;
-      if (prev.currentPhase === 'idle' && phase !== 'idle') {
-        startTime = Date.now();
-      }
-      
-      // Calculate processing time when completing or erroring
-      let processingTime = prev.processingTime;
-      if ((phase === 'complete' || phase === 'error') && startTime) {
-        processingTime = Date.now() - startTime;
-      }
-      
-      // Track if we've ever completed a generation
-      const hasCompletedOnce = phase === 'complete' ? true : prev.hasCompletedOnce;
-      
-      return {
-        ...prev,
-        currentPhase: phase,
-        generationStartTime: startTime,
-        processingTime,
-        hasCompletedOnce
-      };
-    });
-  }, []);
-
-  const setError = useCallback((message: string | null, details?: string) => {
-    setState(prev => ({
-      ...prev,
-      loadingError: message,
-      errorDetails: details || null
-    }));
-  }, []);
-
-  const clearErrors = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      loadingError: null,
-      errorDetails: null
-    }));
-  }, []);
-
-  const resetState = useCallback(() => {
-    setState({
-      loadingError: null,
-      errorDetails: null,
-      isRetrying: false,
-      contentLoadingMessage: null,
-      currentPhase: 'idle',
-      generationStartTime: null,
-      processingTime: null,
-      hasCompletedOnce: state.hasCompletedOnce // Keep this value
-    });
-  }, [state.hasCompletedOnce]);
-
-  // Calculate generation metrics
-  const metrics = {
-    isInProgress: state.currentPhase !== 'idle' && state.currentPhase !== 'complete' && state.currentPhase !== 'error',
-    hasError: state.currentPhase === 'error',
-    isComplete: state.currentPhase === 'complete',
-    processingTimeMs: state.processingTime,
-    processingTimeFormatted: state.processingTime 
-      ? `${(state.processingTime / 1000).toFixed(1)}s` 
-      : null,
-    hasCompletedOnce: state.hasCompletedOnce
+  const setGenerationPhase = (phase: GenerationPhase) => {
+    setCurrentPhase(phase);
+    
+    // Set appropriate loading message based on phase
+    switch (phase) {
+      case 'content-loading':
+        setContentLoadingMessage('Loading lesson content for analysis...');
+        break;
+      case 'analyzing':
+        setContentLoadingMessage('Analyzing lesson content to identify key concepts...');
+        break;
+      case 'generating':
+        setContentLoadingMessage(isRetrying 
+          ? 'Improving quiz questions for better quality...' 
+          : 'Generating quiz questions based on content analysis...');
+        break;
+      case 'saving':
+        setContentLoadingMessage('Saving quiz questions to database...');
+        break;
+      case 'complete':
+      case 'idle':
+        setContentLoadingMessage(null);
+        break;
+      case 'error':
+        // Keep existing error message
+        break;
+    }
   };
 
   return {
-    // State values
-    loadingError: state.loadingError,
-    errorDetails: state.errorDetails,
-    isRetrying: state.isRetrying,
-    contentLoadingMessage: state.contentLoadingMessage,
-    currentPhase: state.currentPhase,
-    
-    // State setters
+    numQuestions,
+    setNumQuestions,
+    loadingError,
     setLoadingError,
+    errorDetails,
     setErrorDetails,
-    setRetrying,
-    setContentLoading,
-    setGenerationPhase,
-    setError,
     clearErrors,
-    resetState,
-    
-    // Computed metrics
-    ...metrics
+    isRetrying,
+    setRetrying,
+    contentLoadingMessage,
+    setContentLoading,
+    currentPhase,
+    setGenerationPhase,
+    setError
   };
 };

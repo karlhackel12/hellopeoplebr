@@ -5,7 +5,6 @@ import { Question } from '@/components/teacher/quiz/types';
 import QuizPreviewHeader from '../QuizPreviewHeader';
 import QuizPreviewContent from '../QuizPreviewContent';
 import QuizPublishSwitch from './QuizPublishSwitch';
-import QuizPublishAlert from './QuizPublishAlert';
 
 interface QuizPreviewSectionProps {
   previewQuestions: Question[];
@@ -47,12 +46,6 @@ const QuizPreviewSection: React.FC<QuizPreviewSectionProps> = ({
           onTogglePublish={onTogglePublish}
           saving={saving}
         />
-      )}
-      
-      {existingQuiz && !isPublished && showPreview && (
-        <div className="px-6 py-3 border-b">
-          <QuizPublishAlert />
-        </div>
       )}
       
       <QuizPreviewContent

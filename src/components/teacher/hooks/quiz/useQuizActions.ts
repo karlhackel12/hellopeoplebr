@@ -1,77 +1,90 @@
 
 import { toast } from 'sonner';
-import { Question } from '../../quiz/types';
 
 export const useQuizActions = (
   lessonId: string | undefined,
-  saveQuizTitle: (title: string) => Promise<boolean>,
-  deleteQuiz: () => Promise<boolean>,
-  generateSmartQuiz: (numQuestions: string) => Promise<boolean>,
+  saveQuizTitle: (title: string) => Promise<void>,
+  deleteQuiz: () => Promise<void>,
+  generateSmartQuiz: (numQuestions: number) => Promise<boolean>,
   fetchLessonContent: () => Promise<string | null>,
-  fetchQuizQuestions: () => Promise<Question[] | null>
+  fetchQuizQuestions: () => Promise<any[]>
 ) => {
-  const handleSaveQuiz = async (title: string): Promise<boolean> => {
-    if (!lessonId) {
-      toast.error('Missing lesson ID', {
-        description: 'Cannot save quiz without a lesson ID',
-      });
-      return false;
-    }
-
+  const handleSaveQuiz = async (quizTitle: string): Promise<boolean> => {
     try {
-      return await saveQuizTitle(title);
-    } catch (error) {
-      console.error('Error saving quiz:', error);
+      await saveQuizTitle(quizTitle);
+      toast.success('Quiz saved', {
+        description: 'Your quiz has been saved successfully.',
+      });
+      return true;
+    } catch (error: any) {
+      console.error("Error saving quiz:", error);
+      toast.error('Failed to save quiz', {
+        description: error.message || 'An unexpected error occurred',
+      });
       return false;
     }
   };
 
   const handleDiscardQuiz = async (): Promise<boolean> => {
-    if (!lessonId) {
-      toast.error('Missing lesson ID', {
-        description: 'Cannot discard quiz without a lesson ID',
-      });
-      return false;
-    }
-
+    if (!lessonId) return false;
+    
     try {
-      return await deleteQuiz();
-    } catch (error) {
-      console.error('Error discarding quiz:', error);
+      await deleteQuiz();
+      toast.success('Quiz deleted', {
+        description: 'Your quiz has been deleted successfully.',
+      });
+      return true;
+    } catch (error: any) {
+      console.error("Error deleting quiz:", error);
+      toast.error('Failed to delete quiz', {
+        description: error.message || 'An unexpected error occurred',
+      });
       return false;
     }
   };
 
-  const handleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<void> => {
+  const handleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<boolean> => {
     if (!lessonId) {
-      toast.error('Missing lesson ID', {
-        description: 'Cannot generate quiz without a lesson ID',
+      toast.error('Missing lesson', {
+        description: 'Please save the lesson before generating a quiz.',
       });
-      return;
+      return false;
     }
-
+    
     try {
-      setContentLoadingMessage('Fetching lesson content...');
+      // First check if we have lesson content
+      setContentLoadingMessage('Analyzing lesson content...');
       const content = await fetchLessonContent();
+      setContentLoadingMessage(null);
       
       if (!content) {
-        toast.error('No lesson content', {
-          description: 'The lesson needs content before generating a quiz',
+        toast.error('Missing content', {
+          description: 'Cannot find lesson content to generate quiz questions.',
         });
-        setContentLoadingMessage(null);
-        return;
+        return false;
       }
       
-      setContentLoadingMessage('Generating quiz questions...');
-      await generateSmartQuiz('5');
+      // Generate the quiz with smart content analysis
+      const result = await generateSmartQuiz(5); // Default to 5 questions if none specified
       
-      setContentLoadingMessage('Loading quiz preview...');
-      await fetchQuizQuestions();
-      
-      setContentLoadingMessage(null);
-    } catch (error) {
-      console.error('Error generating quiz:', error);
-      setContentLoadingMessage(null);
+      if (result) {
+        const questions = await fetchQuizQuestions();
+        
+        if (questions && questions.length > 0) {
+          toast.success('Quiz generated', {
+            description: 'Your quiz questions have been generated. Review them below.',
+          });
+          return true;
+        } else {
+          toast.error('No questions generated', {
+            description: 'The quiz was created but no questions were generated. Please try again.',
+          });
+        }
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Error handling quiz generation:", error);
+      return false;
     }
   };
 

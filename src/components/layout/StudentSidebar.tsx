@@ -1,95 +1,191 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import Logo from '@/components/ui/Logo';
 import { 
+  LayoutDashboard, 
   BookOpen, 
-  GraduationCap, 
-  Home, 
-  Menu, 
-  Settings, 
-  X 
+  Settings,
+  LogOut,
+  ChevronLeft,
+  Menu,
+  X
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-export interface StudentSidebarProps {
-  collapsed: boolean;
-  onToggle: () => void;
+interface SidebarLinkProps {
+  href: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  active?: boolean;
+  collapsed?: boolean;
 }
 
-const StudentSidebar: React.FC<StudentSidebarProps> = ({ collapsed, onToggle }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ 
+  href, 
+  icon: Icon, 
+  children, 
+  active,
+  collapsed
+}) => {
+  return (
+    <Link to={href} className="block w-full">
+      <Button
+        variant="ghost"
+        className={cn(
+          "w-full justify-start gap-3 px-3 py-2 mb-1 transition-all duration-200",
+          active ? "bg-primary/15 text-primary hover:bg-primary/20" : "hover:bg-secondary",
+          collapsed ? "justify-center px-2" : ""
+        )}
+      >
+        <Icon className="h-5 w-5" />
+        {!collapsed && <span className="font-medium truncate">{children}</span>}
+      </Button>
+    </Link>
+  );
+};
+
+interface StudentSidebarProps {
+  collapsed?: boolean;
+  onToggle?: () => void;
+}
+
+const StudentSidebar: React.FC<StudentSidebarProps> = ({ 
+  collapsed = false, 
+  onToggle 
+}) => {
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    setMobileOpen(false);
+  }, [location.pathname]);
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully');
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
+  };
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  const sidebarItems = [
-    {
-      name: 'Dashboard',
-      href: '/student/dashboard',
-      icon: Home,
+  const navigationLinks = [
+    { 
+      name: 'Dashboard', 
+      href: '/student/dashboard', 
+      icon: LayoutDashboard 
     },
-    {
-      name: 'Lessons',
-      href: '/student/lessons',
-      icon: BookOpen,
+    { 
+      name: 'My Lessons', 
+      href: '/student/lessons', 
+      icon: BookOpen 
     },
-    {
-      name: 'My Courses',
-      href: '/student/courses',
-      icon: GraduationCap,
-    },
-    {
-      name: 'Settings',
-      href: '/student/settings',
-      icon: Settings,
-    },
+    { 
+      name: 'Settings', 
+      href: '/student/settings', 
+      icon: Settings 
+    }
   ];
 
-  return (
-    <div
-      className={`fixed inset-y-0 left-0 z-40 w-64 bg-background border-r border-r-border transition-transform duration-300 transform ${
-        collapsed ? '-translate-x-full' : 'translate-x-0'
-      } ${isMobile ? '' : 'hidden'}`}
-    >
-      <div className="flex items-center justify-between p-4">
-        <Link to="/" className="font-bold text-2xl">
-          LearnAI
-        </Link>
-        <button onClick={onToggle} className="md:hidden">
-          <X className="h-6 w-6" />
-        </button>
-      </div>
-      <nav className="py-6">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.href;
+  const isRouteActive = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+  };
 
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md hover:bg-secondary ${
-                isActive ? 'bg-secondary text-foreground font-medium' : 'text-muted-foreground'
-              }`}
+  const sidebarClasses = cn(
+    "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
+    collapsed ? "w-20" : "w-64",
+    mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+  );
+
+  const sidebarStyles = {
+    backgroundColor: "var(--sidebar-background)",
+    backdropFilter: "blur(8px)"
+  };
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        size="icon" 
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="fixed top-4 left-4 z-50 md:hidden shadow-md"
+      >
+        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      <aside className={sidebarClasses} style={sidebarStyles}>
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
+            <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
+              <Logo size="sm" />
+            </div>
+            {collapsed ? (
+              <div className="mx-auto">
+                <Logo iconOnly size="sm" />
+              </div>
+            ) : null}
+            
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onToggle}
+              className="hidden md:flex"
             >
-              <Icon className="h-4 w-4" />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
+              <ChevronLeft
+                className={cn("h-5 w-5 transition-transform", 
+                  collapsed ? "rotate-180" : ""
+                )}
+              />
+            </Button>
+          </div>
+          
+          <nav className="flex-grow p-3 overflow-y-auto">
+            <div className="space-y-1">
+              {navigationLinks.map((link) => (
+                <SidebarLink
+                  key={link.name}
+                  href={link.href}
+                  icon={link.icon}
+                  active={isRouteActive(link.href)}
+                  collapsed={collapsed}
+                >
+                  {link.name}
+                </SidebarLink>
+              ))}
+            </div>
+          </nav>
+          
+          <div className="p-3 border-t border-sidebar-border">
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
+                collapsed ? "justify-center" : "justify-start gap-3"
+              )}
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              {!collapsed && <span className="font-medium">Logout</span>}
+            </Button>
+          </div>
+        </div>
+      </aside>
+      
+      {mobileOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

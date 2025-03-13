@@ -4,8 +4,10 @@ import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
 import { useQuizPreviewState } from './quiz/useQuizPreviewState';
 import { useQuizGenerationState } from './quiz/useQuizGenerationState';
 import { useQuizPublishState } from './quiz/useQuizPublishState';
-import { useQuizExistingData } from './quiz/useQuizExistingData';
+import { useQuizActions } from './quiz/useQuizActions';
 import { useQuizGenerationWorkflow } from './quiz/useQuizGenerationWorkflow';
+import { useQuizExistingData } from './quiz/useQuizExistingData';
+import { useQuizActionWrappers } from './quiz/useQuizActionWrappers';
 import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgress';
 
 export const useQuizTabState = (lessonId?: string) => {
@@ -66,39 +68,74 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
-  // Setup quiz existing data check
-  useQuizExistingData(lessonId, setExistingQuiz, setIsPublished, loadQuizPreview);
+  const publishQuizWithVoid = async (): Promise<void> => {
+    try {
+      await publishQuiz();
+    } catch (error) {
+      console.error("Error publishing quiz:", error);
+    }
+  };
+
+  const unpublishQuizWithVoid = async (): Promise<void> => {
+    try {
+      await unpublishQuiz();
+    } catch (error) {
+      console.error("Error unpublishing quiz:", error);
+    }
+  };
 
   const { togglePublishStatus } = useQuizPublishState(
-    publishQuiz, 
-    unpublishQuiz, 
+    publishQuizWithVoid, 
+    unpublishQuizWithVoid, 
     isPublished, 
     setIsPublished
   );
 
-  // Implementation of action wrappers to provide the expected interface
-  const handleGenerateQuiz = async (): Promise<void> => {
-    if (!lessonId) return;
-    await generateQuiz(numQuestions);
-  };
+  const {
+    handleSaveQuiz,
+    handleDiscardQuiz,
+    handleGenerateQuiz
+  } = useQuizActions(
+    lessonId, 
+    saveQuizTitle, 
+    deleteQuiz, 
+    generateSmartQuiz, 
+    fetchLessonContent,
+    fetchQuizQuestions
+  );
 
-  const handleSaveQuiz = async (): Promise<void> => {
-    if (!lessonId) return;
-    await saveQuizTitle(quizTitle);
-  };
-
-  const handleDiscardQuiz = async (): Promise<void> => {
-    if (!lessonId) return;
+  // Create a wrapped version of handleGenerateQuiz that implements the expected interface
+  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<void> => {
     try {
-      await deleteQuiz();
-      resetPreview();
-      setExistingQuiz(false);
-      setIsPublished(false);
-      setShowPreview(false);
+      await handleGenerateQuiz(setContentLoadingMessage);
     } catch (error) {
-      console.error("Error discarding quiz:", error);
+      console.error("Error in wrappedHandleGenerateQuiz:", error);
     }
   };
+
+  // This wrapper just calls the generate function without the message setter
+  const generateQuizWrapper = async (): Promise<void> => {
+    try {
+      await generateQuiz(numQuestions);
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+    }
+  };
+
+  const {
+    wrappedGenerateQuiz,
+    wrappedSaveQuiz,
+    wrappedDiscardQuiz
+  } = useQuizActionWrappers(
+    wrappedHandleGenerateQuiz,
+    handleSaveQuiz,
+    handleDiscardQuiz,
+    resetPreview,
+    setExistingQuiz,
+    setIsPublished,
+    setShowPreview,
+    setContentLoading
+  );
 
   useEffect(() => {
     setRetrying(isGenerationRetrying);
@@ -121,9 +158,9 @@ export const useQuizTabState = (lessonId?: string) => {
     errorDetails,
     contentLoadingMessage,
     currentPhase,
-    handleGenerateQuiz,
-    handleSaveQuiz,
-    handleDiscardQuiz,
+    handleGenerateQuiz: generateQuizWrapper,
+    handleSaveQuiz: wrappedSaveQuiz,
+    handleDiscardQuiz: wrappedDiscardQuiz,
     togglePublishStatus,
   };
 };

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherSidebar from './TeacherSidebar';
-import { Loader2, AlertCircle } from 'lucide-react';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -15,8 +14,6 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     // Check if on mobile and collapse sidebar by default
@@ -37,31 +34,20 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        setLoading(true);
-        setAuthError(null);
-        
-        console.log("Checking if user is a teacher...");
         const userIsTeacher = await isTeacher();
-        console.log("Is teacher result:", userIsTeacher);
-        
         if (!userIsTeacher) {
-          console.log("User is not a teacher, redirecting to login");
-          setAuthError("Only teachers can access this page");
           toast.error('Access Denied', {
             description: 'Only teachers can access this page',
           });
-          navigate('/login');
+          navigate('/');
           return;
         }
-        
         setAuthorized(true);
       } catch (error) {
         console.error('Auth check error:', error);
-        setAuthError("Authentication error. Please log in again.");
         navigate('/login');
       } finally {
         setLoading(false);
-        setAuthChecked(true);
       }
     };
 
@@ -75,31 +61,15 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Verifying your access...</p>
+        <div className="glass animate-pulse-light rounded-md p-6">
+          <div className="h-8 w-32 bg-muted/50 rounded-md mb-4"></div>
+          <div className="h-24 w-64 bg-muted/50 rounded-md"></div>
         </div>
       </div>
     );
   }
 
   if (!authorized) {
-    if (authError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="glass rounded-md p-6 text-center">
-            <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
-            <p className="text-destructive mb-4">{authError}</p>
-            <button 
-              onClick={() => navigate('/login')}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-            >
-              Go to Login
-            </button>
-          </div>
-        </div>
-      );
-    }
     return null; // Will redirect in the useEffect
   }
 

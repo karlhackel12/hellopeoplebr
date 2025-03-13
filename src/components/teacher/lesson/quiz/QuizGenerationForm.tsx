@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
+
+import React from 'react';
+import { RefreshCw, RotateCcw, Sparkles, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 import QuizGenerationProgress, { GenerationPhase } from './components/QuizGenerationProgress';
-import QuestionSelector from './components/QuestionSelector';
-import AdvancedOptionsPopover from './components/AdvancedOptionsPopover';
-import GenerateQuizButton from './components/GenerateQuizButton';
-import FormErrorDisplay from './components/FormErrorDisplay';
-import GenerationWarning from './components/GenerationWarning';
 
 interface QuizGenerationFormProps {
   numQuestions: string;
@@ -31,10 +37,6 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
   existingQuiz,
   currentPhase
 }) => {
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [optimizeContent, setOptimizeContent] = useState(true);
-  const [questionDifficulty, setQuestionDifficulty] = useState<string>("balanced");
-  
   const showProgress = currentPhase !== 'idle' && currentPhase !== 'error';
 
   return (
@@ -50,34 +52,72 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <FormErrorDisplay error={error} errorDetails={errorDetails} />
-        
-        <div className="grid gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <QuestionSelector 
-              numQuestions={numQuestions}
-              setNumQuestions={setNumQuestions}
-              disabled={loading}
-            />
+        {error && (
+          <div className="p-3 border rounded-md bg-red-50 text-red-800 flex flex-col gap-2 text-sm">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
             
-            <AdvancedOptionsPopover
-              optimizeContent={optimizeContent}
-              setOptimizeContent={setOptimizeContent}
-              questionDifficulty={questionDifficulty}
-              setQuestionDifficulty={setQuestionDifficulty}
-              showAdvancedOptions={showAdvancedOptions}
-              setShowAdvancedOptions={setShowAdvancedOptions}
-              disabled={loading}
-            />
-            
-            <GenerateQuizButton
-              onClick={onGenerateQuiz}
-              loading={loading}
-              isRetrying={isRetrying}
-              existingQuiz={existingQuiz}
-              disabled={loading}
-            />
+            {errorDetails && (
+              <div className="text-xs text-red-700 pl-6 mt-1 bg-red-100/50 p-2 rounded">
+                <details>
+                  <summary className="cursor-pointer">Technical details</summary>
+                  <div className="mt-1 whitespace-pre-wrap">{errorDetails}</div>
+                </details>
+              </div>
+            )}
           </div>
+        )}
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="num-questions">Number of Questions:</Label>
+            <Select
+              value={numQuestions}
+              onValueChange={setNumQuestions}
+              disabled={loading}
+            >
+              <SelectTrigger id="num-questions" className="w-24">
+                <SelectValue placeholder="5" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="7">7</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <Button 
+            onClick={onGenerateQuiz} 
+            variant="default"
+            disabled={loading}
+            className="gap-2"
+            type="button"
+          >
+            {loading ? (
+              <>
+                {isRetrying ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 animate-pulse" />
+                )}
+                {isRetrying ? 'Retrying...' : 'Generating...'}
+              </>
+            ) : existingQuiz ? (
+              <>
+                <RotateCcw className="h-4 w-4" />
+                Regenerate Quiz
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Generate Quiz
+              </>
+            )}
+          </Button>
         </div>
         
         {showProgress && (
@@ -88,16 +128,21 @@ const QuizGenerationForm: React.FC<QuizGenerationFormProps> = ({
           />
         )}
         
-        {currentPhase === 'error' && <GenerationWarning />}
+        {currentPhase === 'error' && (
+          <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <p>You can try again with fewer questions or a simpler lesson content.</p>
+          </div>
+        )}
+        
+        <div className="border-t pt-4 text-sm text-muted-foreground">
+          <p>
+            Our smart AI looks at your lesson content and creates targeted questions to help
+            students test their understanding. The better your lesson content, the better the
+            questions will be.
+          </p>
+        </div>
       </CardContent>
-      
-      <CardFooter className="border-t pt-4 text-sm text-muted-foreground flex flex-col items-start">
-        <p>
-          Our smart AI looks at your lesson content and creates targeted questions to help
-          students test their understanding. The better your lesson content, the better the
-          questions will be.
-        </p>
-      </CardFooter>
     </Card>
   );
 };
