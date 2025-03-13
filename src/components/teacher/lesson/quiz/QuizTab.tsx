@@ -1,88 +1,87 @@
 
-import React from 'react';
-import { useQuizTabState } from '@/components/teacher/hooks/useQuizTabState';
+import React, { useEffect, useState } from 'react';
+import { useQuizTabState } from '../../hooks/useQuizTabState';
 import QuizGenerationForm from './QuizGenerationForm';
 import QuizPreviewSection from './components/QuizPreviewSection';
-import QuizPublishAlert from './components/QuizPublishAlert';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import QuizPlaceholder from './quiz/QuizPlaceholder';
 
 interface QuizTabProps {
   lessonId?: string;
-  isEditMode: boolean;
+  isEditMode?: boolean;
 }
 
-const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
+const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) => {
+  const [loaded, setLoaded] = useState(false);
   const {
-    numQuestions,
-    setNumQuestions,
-    previewQuestions,
-    showPreview,
-    setShowPreview,
     quizTitle,
     setQuizTitle,
-    existingQuiz,
-    isPublished,
     loading,
     saving,
-    isRetrying,
-    loadingError,
-    errorDetails,
+    previewQuestions,
+    showPreview,
+    togglePreview,
+    existingQuiz,
+    isPublished,
+    contentLoaded,
     contentLoadingMessage,
-    currentPhase,
+    isRetrying,
+    error,
     handleGenerateQuiz,
+    handleSmartGeneration,
+    handleGenerateFromLesson,
     handleSaveQuiz,
     handleDiscardQuiz,
-    togglePublishStatus,
-  } = useQuizTabState(lessonId);
+    handleTogglePublish,
+    loadQuizDetails
+  } = useQuizTabState(lessonId, isEditMode);
 
-  if (!isEditMode || !lessonId) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg">
-        <p className="text-muted-foreground text-center">
-          Save the lesson first to enable quiz generation.
-        </p>
-      </div>
-    );
+  // Initial data loading
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (lessonId) {
+        await loadQuizDetails();
+        setLoaded(true);
+      }
+    };
+
+    loadInitialData();
+  }, [lessonId, loadQuizDetails]);
+
+  if (!lessonId && !isEditMode) {
+    return <QuizPlaceholder />;
   }
 
+  // Wrap the handleGenerateQuiz function to make it compatible with Promise<void>
+  const handleGenerate = async () => {
+    await handleGenerateQuiz();
+    return;
+  };
+
+  const handleGenerateFrom = async (setMessage: (msg: string) => void) => {
+    const result = await handleGenerateFromLesson(setMessage);
+    return result;
+  };
+
   return (
-    <div className="space-y-6">
-      {loadingError && currentPhase !== 'error' && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {loadingError} {errorDetails && <span className="text-xs opacity-80">({errorDetails})</span>}
-          </AlertDescription>
-        </Alert>
+    <div className="space-y-8">
+      {!showPreview && (
+        <QuizGenerationForm
+          onGenerateQuiz={handleGenerate}
+          onSmartGeneration={handleSmartGeneration}
+          onGenerateFromLesson={handleGenerateFrom}
+          loading={loading}
+          contentLoaded={contentLoaded}
+          contentLoadingMessage={contentLoadingMessage}
+          isRetrying={isRetrying}
+          error={error}
+        />
       )}
       
-      {contentLoadingMessage && currentPhase !== 'idle' && currentPhase !== 'error' && (
-        <Alert className="mb-4 bg-blue-50 border-blue-200">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-          <AlertDescription className="text-blue-700">
-            {contentLoadingMessage}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <QuizGenerationForm
-        numQuestions={numQuestions}
-        setNumQuestions={setNumQuestions}
-        onGenerateQuiz={handleGenerateQuiz}
-        loading={loading}
-        isRetrying={isRetrying}
-        error={loadingError}
-        errorDetails={errorDetails}
-        existingQuiz={existingQuiz}
-        currentPhase={currentPhase}
-      />
-      
-      {previewQuestions.length > 0 && (
+      {(previewQuestions.length > 0 || existingQuiz) && (
         <QuizPreviewSection
           previewQuestions={previewQuestions}
           showPreview={showPreview}
-          togglePreview={() => setShowPreview(!showPreview)}
+          togglePreview={togglePreview}
           quizTitle={quizTitle}
           setQuizTitle={setQuizTitle}
           handleSaveQuiz={handleSaveQuiz}
@@ -90,11 +89,9 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
           saving={saving}
           existingQuiz={existingQuiz}
           isPublished={isPublished}
-          onTogglePublish={togglePublishStatus}
+          onTogglePublish={handleTogglePublish}
         />
       )}
-      
-      {existingQuiz && !isPublished && <QuizPublishAlert />}
     </div>
   );
 };
