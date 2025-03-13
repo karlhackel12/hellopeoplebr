@@ -19,6 +19,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
   const [existingQuiz, setExistingQuiz] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
+  const [numQuestions, setNumQuestions] = useState('5');
   
   const {
     fetchQuizDetails,
@@ -137,8 +138,8 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId = '', isEditMode = false }) 
     <div className="space-y-8">
       {!showPreview && (
         <QuizGenerationForm
-          numQuestions="5"
-          setNumQuestions={() => {}}
+          numQuestions={numQuestions}
+          setNumQuestions={setNumQuestions}
           onGenerateQuiz={handleGenerate}
           loading={loading}
           isRetrying={isRetrying}

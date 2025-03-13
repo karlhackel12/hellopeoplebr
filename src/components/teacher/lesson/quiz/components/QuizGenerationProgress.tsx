@@ -2,7 +2,7 @@
 import React from 'react';
 import { Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 
-export type GenerationPhase = 'idle' | 'analyzing' | 'generating' | 'complete' | 'error';
+export type GenerationPhase = 'idle' | 'analyzing' | 'generating' | 'complete' | 'error' | 'content-loading' | 'saving';
 
 interface QuizGenerationProgressProps {
   currentPhase: GenerationPhase;
@@ -24,9 +24,9 @@ const QuizGenerationProgress: React.FC<QuizGenerationProgressProps> = ({
 
   // Get active index
   const getActiveIndex = () => {
-    if (currentPhase === 'analyzing') return 0;
+    if (currentPhase === 'analyzing' || currentPhase === 'content-loading') return 0;
     if (currentPhase === 'generating') return 1;
-    if (currentPhase === 'complete') return 2;
+    if (currentPhase === 'complete' || currentPhase === 'saving') return 2;
     return -1;
   };
 
