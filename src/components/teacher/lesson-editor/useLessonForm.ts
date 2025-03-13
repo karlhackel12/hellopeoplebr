@@ -11,9 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 export const lessonFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
-  estimated_minutes: z.coerce.number().int().min(1).optional(),
   is_published: z.boolean().default(false),
-  contentSource: z.enum(['manual', 'ai_generated', 'mixed']).default('manual'),
+  contentSource: z.enum(['ai_generated']).default('ai_generated'),
   structuredContent: z.any().optional(),
   generationMetadata: z.any().optional(),
 });
@@ -33,9 +32,8 @@ export const useLessonForm = () => {
     defaultValues: {
       title: '',
       content: '',
-      estimated_minutes: 15,
       is_published: false,
-      contentSource: 'manual',
+      contentSource: 'ai_generated',
       structuredContent: null,
       generationMetadata: null,
     },
@@ -57,20 +55,11 @@ export const useLessonForm = () => {
         if (error) throw error;
         
         if (data) {
-          // Fix for type error: ensure contentSource is one of the expected values
-          const contentSource = data.content_source as string;
-          let validContentSource: 'manual' | 'ai_generated' | 'mixed' = 'manual';
-          
-          if (contentSource === 'ai_generated' || contentSource === 'mixed') {
-            validContentSource = contentSource;
-          }
-          
           form.reset({
             title: data.title,
             content: data.content || '',
-            estimated_minutes: data.estimated_minutes || 15,
             is_published: data.is_published,
-            contentSource: validContentSource,
+            contentSource: 'ai_generated',
             structuredContent: data.structured_content,
             generationMetadata: data.generation_metadata,
           });
@@ -105,7 +94,6 @@ export const useLessonForm = () => {
           .update({
             title: values.title,
             content: values.content,
-            estimated_minutes: values.estimated_minutes,
             is_published: values.is_published,
             content_source: values.contentSource,
             structured_content: values.structuredContent,
@@ -126,7 +114,6 @@ export const useLessonForm = () => {
           .insert({
             title: values.title,
             content: values.content,
-            estimated_minutes: values.estimated_minutes,
             is_published: values.is_published,
             content_source: values.contentSource,
             structured_content: values.structuredContent,
