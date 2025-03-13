@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -11,7 +12,8 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  X
+  X,
+  FileQuestion
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,6 +100,11 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       name: 'Assignments', 
       href: '/teacher/assignments', 
       icon: ClipboardList 
+    },
+    { 
+      name: 'Quizzes', 
+      href: '/teacher/quiz', 
+      icon: FileQuestion 
     },
     { 
       name: 'Settings', 

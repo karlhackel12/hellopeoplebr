@@ -1,166 +1,188 @@
 
-import { useState, useEffect } from 'react';
-import { useQuizHandler } from '@/components/teacher/hooks/useQuizHandler';
-import { useQuizPreviewState } from './quiz/useQuizPreviewState';
-import { useQuizGenerationState } from './quiz/useQuizGenerationState';
-import { useQuizPublishState } from './quiz/useQuizPublishState';
-import { useQuizActions } from './quiz/useQuizActions';
-import { useQuizGenerationWorkflow } from './quiz/useQuizGenerationWorkflow';
-import { useQuizExistingData } from './quiz/useQuizExistingData';
-import { useQuizActionWrappers } from './quiz/useQuizActionWrappers';
-import { GenerationPhase } from '../lesson/quiz/components/QuizGenerationProgress';
+import { useState, useCallback } from 'react';
+import { useQuizHandler } from './useQuizHandler';
+import { Quiz, Question } from '@/components/teacher/quiz/types';
 
-export const useQuizTabState = (lessonId?: string) => {
+export const useQuizTabState = (lessonId: string, isEditMode: boolean = false) => {
+  const [quizTitle, setQuizTitle] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
   const [existingQuiz, setExistingQuiz] = useState(false);
-  const [numQuestions, setNumQuestions] = useState('5');
+  const [quizDetails, setQuizDetails] = useState<Quiz | null>(null);
+  const [contentLoaded, setContentLoaded] = useState(false);
+  const [contentLoadingMessage, setContentLoadingMessage] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
 
-  const { 
-    generateSmartQuiz,
-    fetchQuizQuestions, 
-    fetchQuizDetails,
+  const {
     fetchLessonContent,
+    generateSmartQuiz,
+    generateQuiz,
+    fetchQuizQuestions,
+    fetchQuizDetails,
     saveQuizTitle,
     deleteQuiz,
     publishQuiz,
     unpublishQuiz,
-    loading, 
+    loading: apiLoading,
     saving,
-    isRetrying: isGenerationRetrying,
-    error: quizError 
-  } = useQuizHandler(lessonId || '');
-
-  const {
-    loadingError,
-    setLoadingError,
-    errorDetails,
-    setErrorDetails,
-    clearErrors,
     isRetrying,
-    setRetrying,
-    contentLoadingMessage,
-    setContentLoading,
-    currentPhase,
-    setGenerationPhase,
-    setError
-  } = useQuizGenerationState();
+    error
+  } = useQuizHandler(lessonId);
 
-  const {
-    previewQuestions,
-    showPreview,
-    setShowPreview,
-    quizTitle,
-    setQuizTitle,
-    loadQuizPreview,
-    resetPreview
-  } = useQuizPreviewState(existingQuiz, fetchQuizQuestions);
-
-  const { generateQuiz } = useQuizGenerationWorkflow(
-    fetchLessonContent,
-    generateSmartQuiz,
-    loadQuizPreview,
-    setExistingQuiz,
-    setIsPublished,
-    currentPhase,
-    setGenerationPhase,
-    setError,
-    clearErrors,
-    setContentLoading
-  );
-
-  const publishQuizWithVoid = async (): Promise<void> => {
+  const loadQuizDetails = useCallback(async () => {
     try {
-      await publishQuiz();
-    } catch (error) {
-      console.error("Error publishing quiz:", error);
+      setLoading(true);
+      const quiz = await fetchQuizDetails();
+      
+      if (quiz) {
+        setQuizTitle(quiz.title);
+        setExistingQuiz(true);
+        setQuizDetails(quiz);
+        setIsPublished(quiz.is_published);
+        
+        // Load questions if quiz exists
+        const questions = await fetchQuizQuestions();
+        if (questions.length > 0) {
+          setPreviewQuestions(questions);
+        }
+      } else {
+        setExistingQuiz(false);
+        setQuizDetails(null);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error loading quiz details:', err);
+      return false;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [fetchQuizDetails, fetchQuizQuestions]);
 
-  const unpublishQuizWithVoid = async (): Promise<void> => {
+  const handleGenerateQuiz = useCallback(async () => {
     try {
-      await unpublishQuiz();
-    } catch (error) {
-      console.error("Error unpublishing quiz:", error);
+      setLoading(true);
+      setShowPreview(false);
+      
+      const questions = await generateQuiz();
+      if (questions && questions.length > 0) {
+        setPreviewQuestions(questions);
+        setShowPreview(true);
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Failed to generate quiz:', err);
+      return false;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [generateQuiz]);
 
-  const { togglePublishStatus } = useQuizPublishState(
-    publishQuizWithVoid, 
-    unpublishQuizWithVoid, 
-    isPublished, 
-    setIsPublished
-  );
-
-  const {
-    handleSaveQuiz,
-    handleDiscardQuiz,
-    handleGenerateQuiz
-  } = useQuizActions(
-    lessonId, 
-    saveQuizTitle, 
-    deleteQuiz, 
-    generateSmartQuiz, 
-    fetchLessonContent,
-    fetchQuizQuestions
-  );
-
-  // Create a wrapped version of handleGenerateQuiz that implements the expected interface
-  const wrappedHandleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<void> => {
+  const handleSmartGeneration = useCallback(async () => {
+    setLoading(true);
+    setShowPreview(false);
     try {
-      await handleGenerateQuiz(setContentLoadingMessage);
-    } catch (error) {
-      console.error("Error in wrappedHandleGenerateQuiz:", error);
+      // Void the return value to make it compatible with Promise<void>
+      await generateSmartQuiz((msg) => {
+        if (msg) {
+          setContentLoadingMessage(msg);
+        } else {
+          setContentLoadingMessage(null);
+        }
+      });
+      return;
+    } catch (err) {
+      console.error('Smart generation failed:', err);
+      return;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [generateSmartQuiz]);
 
-  // This wrapper just calls the generate function without the message setter
-  const generateQuizWrapper = async (): Promise<void> => {
+  const handleGenerateFromLesson = useCallback(async (setMessage: (msg: string) => void) => {
     try {
-      await generateQuiz(numQuestions);
-    } catch (error) {
-      console.error("Error generating quiz:", error);
+      setContentLoaded(false);
+      
+      const content = await fetchLessonContent(setMessage);
+      setContentLoaded(!!content);
+      
+      return !!content; // Return boolean indicating success
+    } catch (err) {
+      console.error('Failed to load lesson content:', err);
+      return false;
     }
-  };
+  }, [fetchLessonContent]);
 
-  const {
-    wrappedGenerateQuiz,
-    wrappedSaveQuiz,
-    wrappedDiscardQuiz
-  } = useQuizActionWrappers(
-    wrappedHandleGenerateQuiz,
-    handleSaveQuiz,
-    handleDiscardQuiz,
-    resetPreview,
-    setExistingQuiz,
-    setIsPublished,
-    setShowPreview,
-    setContentLoading
-  );
+  const togglePreview = useCallback(() => {
+    setShowPreview(!showPreview);
+  }, [showPreview]);
 
-  useEffect(() => {
-    setRetrying(isGenerationRetrying);
-  }, [isGenerationRetrying, setRetrying]);
+  const handleSaveQuiz = useCallback(async (title: string) => {
+    try {
+      await saveQuizTitle(title, previewQuestions);
+      setExistingQuiz(true);
+      await loadQuizDetails();
+    } catch (err) {
+      console.error('Failed to save quiz:', err);
+    }
+  }, [saveQuizTitle, previewQuestions, loadQuizDetails]);
+
+  const handleDiscardQuiz = useCallback(async () => {
+    try {
+      if (existingQuiz && quizDetails?.id) {
+        await deleteQuiz(quizDetails.id);
+        setExistingQuiz(false);
+        setQuizDetails(null);
+        setShowPreview(false);
+        setPreviewQuestions([]);
+        setQuizTitle('');
+      } else {
+        setShowPreview(false);
+        setPreviewQuestions([]);
+        setQuizTitle('');
+      }
+    } catch (err) {
+      console.error('Failed to discard quiz:', err);
+    }
+  }, [existingQuiz, quizDetails, deleteQuiz]);
+  
+  const handleTogglePublish = useCallback(async () => {
+    if (!quizDetails?.id) return;
+    
+    try {
+      if (isPublished) {
+        await unpublishQuiz(quizDetails.id);
+      } else {
+        await publishQuiz(quizDetails.id);
+      }
+      setIsPublished(!isPublished);
+    } catch (err) {
+      console.error('Failed to toggle publish status:', err);
+    }
+  }, [quizDetails, isPublished, publishQuiz, unpublishQuiz]);
 
   return {
-    numQuestions,
-    setNumQuestions,
-    previewQuestions,
-    showPreview,
-    setShowPreview,
     quizTitle,
     setQuizTitle,
+    loading: loading || apiLoading,
+    saving,
+    previewQuestions,
+    showPreview,
+    togglePreview,
     existingQuiz,
     isPublished,
-    loading,
-    saving,
-    isRetrying,
-    loadingError,
-    errorDetails,
+    contentLoaded,
     contentLoadingMessage,
-    currentPhase,
-    handleGenerateQuiz: generateQuizWrapper,
-    handleSaveQuiz: wrappedSaveQuiz,
-    handleDiscardQuiz: wrappedDiscardQuiz,
-    togglePublishStatus,
+    isRetrying,
+    error,
+    handleGenerateQuiz,
+    handleSmartGeneration,
+    handleGenerateFromLesson,
+    handleSaveQuiz,
+    handleDiscardQuiz,
+    handleTogglePublish,
+    loadQuizDetails
   };
 };

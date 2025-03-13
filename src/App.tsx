@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,12 +23,7 @@ import SidebarDemoPage from "./pages/SidebarDemo";
 import InvitationAcceptancePage from "./pages/InvitationAcceptance";
 import { OnboardingProvider } from "./components/student/OnboardingContext";
 import LessonQuizPage from "./pages/teacher/LessonQuizPage";
-
-// Student Pages
-import StudentDashboard from "./pages/student/Dashboard";
-import StudentLessons from "./pages/student/Lessons";
-import StudentSettings from "./pages/student/Settings";
-import LessonView from "./pages/student/LessonView";
+import TeacherQuiz from "./pages/teacher/Quiz";
 
 const queryClient = new QueryClient();
 
@@ -64,11 +58,9 @@ const App = () => (
             } />
             <Route path="/sidebar-demo" element={<SidebarDemoPage />} />
             
-            {/* Invitation routes - both with and without code parameter */}
             <Route path="/invitation" element={<InvitationAcceptancePage />} />
             <Route path="/invitation/:code" element={<InvitationAcceptancePage />} />
             
-            {/* Teacher Routes */}
             <Route path="/teacher/dashboard" element={
               <PageTransitionWrapper>
                 <TeacherDashboard />
@@ -99,6 +91,11 @@ const App = () => (
                 <LessonQuizPage />
               </PageTransitionWrapper>
             } />
+            <Route path="/teacher/quiz" element={
+              <PageTransitionWrapper>
+                <TeacherQuiz />
+              </PageTransitionWrapper>
+            } />
             <Route path="/teacher/invitations" element={
               <PageTransitionWrapper>
                 <Invitations />
@@ -120,7 +117,6 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
-            {/* Student Routes */}
             <Route path="/student/dashboard" element={
               <PageTransitionWrapper>
                 <StudentDashboard />
@@ -142,7 +138,6 @@ const App = () => (
               </PageTransitionWrapper>
             } />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
