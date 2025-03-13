@@ -39,7 +39,7 @@ export const useResponseParser = () => {
           throw new Error(`Failed to extract JSON: ${jsonError.message}`);
         }
       } else if (typeof output === 'object' && output !== null) {
-        // Check if the lesson property exists in response
+        // Check for lesson property in response structure
         if (output.lesson) {
           parsedContent = output.lesson;
           console.log("Using lesson property from response");
