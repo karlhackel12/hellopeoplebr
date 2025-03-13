@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils';
 import Logo from '@/components/ui/Logo';
 import { 
   LayoutDashboard, 
+  BookOpen, 
   Settings,
   LogOut,
   ChevronLeft,
   Menu,
-  X,
-  Clipboard
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,9 +84,9 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
       icon: LayoutDashboard 
     },
     { 
-      name: 'Quizzes', 
-      href: '/student/quizzes', 
-      icon: Clipboard 
+      name: 'My Lessons', 
+      href: '/student/lessons', 
+      icon: BookOpen 
     },
     { 
       name: 'Settings', 

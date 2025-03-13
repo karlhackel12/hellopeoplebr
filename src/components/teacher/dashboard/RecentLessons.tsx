@@ -2,33 +2,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, PlusCircle } from 'lucide-react';
+import { BookOpen, PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import LessonCard from '@/components/teacher/LessonCard';
 
-type Assignment = {
+type Lesson = {
   id: string;
   title: string;
-  status: string;
+  is_published: boolean;
   created_at: string;
-  quiz: {
-    title: string;
-  } | null;
 };
 
-const RecentAssignments: React.FC = () => {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+const RecentLessons: React.FC = () => {
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAssignments();
+    fetchLessons();
   }, []);
 
-  const fetchAssignments = async () => {
+  const fetchLessons = async () => {
     try {
       setLoading(true);
       const { data: user } = await supabase.auth.getUser();
@@ -39,62 +34,40 @@ const RecentAssignments: React.FC = () => {
       }
 
       const { data, error } = await supabase
-        .from('student_assignments')
-        .select('id, title, status, created_at, quiz:quiz_id(title)')
-        .eq('assigned_by', user.user.id)
+        .from('lessons')
+        .select('*')
+        .eq('created_by', user.user.id)
         .order('created_at', { ascending: false })
         .limit(6);
 
       if (error) throw error;
-      setAssignments(data || []);
+      setLessons(data || []);
     } catch (error) {
       toast.error('Error', {
-        description: 'Failed to load assignments',
+        description: 'Failed to load lessons',
       });
-      console.error('Error fetching assignments:', error);
+      console.error('Error fetching lessons:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateAssignment = () => {
-    navigate('/teacher/assignments/create');
+  const handleCreateLesson = () => {
+    navigate('/teacher/lessons/create');
   };
 
-  const handleViewAllAssignments = () => {
-    navigate('/teacher/assignments');
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'default';
-      case 'in_progress':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Completed';
-      case 'in_progress':
-        return 'In Progress';
-      default:
-        return 'Not Started';
-    }
+  const handleViewAllLessons = () => {
+    navigate('/teacher/lessons');
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold flex items-center">
-          <ClipboardList className="h-4 w-4 mr-2" />
-          Recent Assignments
+          <BookOpen className="h-4 w-4 mr-2" />
+          Recent Lessons
         </h2>
-        <Button variant="link" onClick={handleViewAllAssignments} className="story-link text-primary">
+        <Button variant="link" onClick={handleViewAllLessons} className="story-link text-primary">
           View All
         </Button>
       </div>
@@ -115,50 +88,19 @@ const RecentAssignments: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : assignments.length === 0 ? (
+      ) : lessons.length === 0 ? (
         <div className="glass p-8 rounded-lg text-center animate-fade-in">
-          <h3 className="text-xl font-medium mb-2">No assignments created yet</h3>
-          <p className="text-muted-foreground mb-6">Start creating your first assignment to help students learn.</p>
-          <Button onClick={handleCreateAssignment} className="hover:scale-105 transition-transform">
+          <h3 className="text-xl font-medium mb-2">No lessons created yet</h3>
+          <p className="text-muted-foreground mb-6">Start creating your first lesson to help students learn.</p>
+          <Button onClick={handleCreateLesson} className="hover:scale-105 transition-transform">
             <PlusCircle className="h-4 w-4 mr-2" />
-            Create Your First Assignment
+            Create Your First Lesson
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 animate-fade-in">
-          {assignments.map((assignment) => (
-            <Card key={assignment.id} className="glass overflow-hidden flex flex-col h-full transition-all hover:shadow-md">
-              <CardContent className="p-6 flex-grow">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-lg line-clamp-2">{assignment.title}</h3>
-                  <Badge variant={getStatusBadgeVariant(assignment.status)}>
-                    {getStatusLabel(assignment.status)}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Created on {format(new Date(assignment.created_at), "MMM d, yyyy")}
-                </p>
-                {assignment.quiz && (
-                  <p className="text-sm mt-2">Quiz: {assignment.quiz.title}</p>
-                )}
-              </CardContent>
-              <CardFooter className="px-6 py-4 bg-muted/10 flex justify-between">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate(`/teacher/assignments/${assignment.id}`)}
-                >
-                  View
-                </Button>
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  onClick={() => navigate(`/teacher/assignments/edit/${assignment.id}`)}
-                >
-                  Edit
-                </Button>
-              </CardFooter>
-            </Card>
+          {lessons.map((lesson) => (
+            <LessonCard key={lesson.id} lesson={lesson} onUpdate={fetchLessons} />
           ))}
         </div>
       )}
@@ -166,4 +108,4 @@ const RecentAssignments: React.FC = () => {
   );
 };
 
-export default RecentAssignments;
+export default RecentLessons;

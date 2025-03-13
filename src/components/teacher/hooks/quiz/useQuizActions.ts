@@ -6,7 +6,7 @@ export const useQuizActions = (
   saveQuizTitle: (title: string) => Promise<void>,
   deleteQuiz: () => Promise<void>,
   generateSmartQuiz: (numQuestions: number) => Promise<boolean>,
-  getQuizContent: () => Promise<string | null>,
+  fetchLessonContent: () => Promise<string | null>,
   fetchQuizQuestions: () => Promise<any[]>
 ) => {
   const handleSaveQuiz = async (quizTitle: string): Promise<boolean> => {
@@ -45,21 +45,21 @@ export const useQuizActions = (
 
   const handleGenerateQuiz = async (setContentLoadingMessage: (msg: string | null) => void): Promise<boolean> => {
     if (!lessonId) {
-      toast.error('Missing quiz identifier', {
-        description: 'Please save before generating a quiz.',
+      toast.error('Missing lesson', {
+        description: 'Please save the lesson before generating a quiz.',
       });
       return false;
     }
     
     try {
-      // First check if we have content
-      setContentLoadingMessage('Analyzing content...');
-      const content = await getQuizContent();
+      // First check if we have lesson content
+      setContentLoadingMessage('Analyzing lesson content...');
+      const content = await fetchLessonContent();
       setContentLoadingMessage(null);
       
       if (!content) {
         toast.error('Missing content', {
-          description: 'Cannot find content to generate quiz questions.',
+          description: 'Cannot find lesson content to generate quiz questions.',
         });
         return false;
       }

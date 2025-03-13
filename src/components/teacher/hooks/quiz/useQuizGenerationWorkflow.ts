@@ -1,8 +1,10 @@
 
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { GenerationPhase } from '../../lesson/quiz/components/QuizGenerationProgress';
 
 export const useQuizGenerationWorkflow = (
-  fetchContent: () => Promise<string | null>,
+  fetchLessonContent: () => Promise<string | null>,
   generateSmartQuiz: (numQuestions: number) => Promise<boolean>,
   loadQuizPreview: () => Promise<any[] | null>,
   setExistingQuiz: (value: boolean) => void,
@@ -13,22 +15,22 @@ export const useQuizGenerationWorkflow = (
   clearErrors: () => void,
   setContentLoading: (msg: string | null) => void,
 ) => {
-  const generateQuiz = async (numQuestions: string): Promise<void> => {
+  const generateQuiz = async (numQuestions: string): Promise<boolean> => {
     clearErrors();
     setGenerationPhase('content-loading');
     
     try {
       // Load content phase
-      const content = await fetchContent();
+      const content = await fetchLessonContent();
       
       if (!content) {
-        setError('Could not load content', 'Make sure you have sufficient content before generating a quiz.');
-        return;
+        setError('Could not load lesson content', 'Make sure your lesson has sufficient content before generating a quiz.');
+        return false;
       }
       
       if (content.length < 100) {
-        setError('Content too short', 'You need more content to generate meaningful quiz questions.');
-        return;
+        setError('Lesson content too short', 'Your lesson needs more content to generate meaningful quiz questions.');
+        return false;
       }
 
       // Analyzing phase
@@ -53,10 +55,10 @@ export const useQuizGenerationWorkflow = (
             }
           }, 2000);
           
-          return;
+          return true;
         } else {
           setError('Failed to generate quiz', 'The quiz generation process failed. Please try again later.');
-          return;
+          return false;
         }
       } catch (genError: any) {
         console.error("Error during quiz generation:", genError);
@@ -64,7 +66,7 @@ export const useQuizGenerationWorkflow = (
           genError.message || 'Quiz generation failed', 
           genError.details || 'An unexpected error occurred during quiz generation.'
         );
-        return;
+        return false;
       }
     } catch (error: any) {
       console.error("Error in quiz generation flow:", error);
@@ -72,7 +74,7 @@ export const useQuizGenerationWorkflow = (
         'Quiz generation error', 
         error.message || 'An unexpected error occurred during the quiz generation process.'
       );
-      return;
+      return false;
     }
   };
 
