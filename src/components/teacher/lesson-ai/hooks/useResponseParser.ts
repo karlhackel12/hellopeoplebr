@@ -54,12 +54,8 @@ export const useResponseParser = () => {
       // Default values if any key properties are missing
       const defaultContent: GeneratedLessonContent = {
         description: "No description provided",
-        objectives: ["Learn key vocabulary", "Practice essential phrases"],
-        practicalSituations: ["Everyday conversation"],
         keyPhrases: [{ phrase: "Example phrase", translation: "Translation", usage: "Basic usage" }],
-        vocabulary: [{ word: "Example", translation: "Translation", partOfSpeech: "noun" }],
-        explanations: ["No detailed explanation provided"],
-        tips: ["Practice regularly"]
+        vocabulary: [{ word: "Example", translation: "Translation", partOfSpeech: "noun" }]
       };
       
       // Merge with defaults to ensure all required fields exist

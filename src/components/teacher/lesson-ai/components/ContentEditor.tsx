@@ -82,56 +82,46 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Learning Objectives</CardTitle>
+                <CardTitle>Key Phrases</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea 
-                  value={structuredContent.objectives.join('\n')}
-                  onChange={(e) => handleContentChange('objectives', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                  className="min-h-[100px]"
-                  placeholder="Add each objective on a new line"
-                />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Practical Situations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea 
-                  value={structuredContent.practicalSituations.join('\n')}
-                  onChange={(e) => handleContentChange('practicalSituations', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                  className="min-h-[100px]"
-                  placeholder="Add each situation on a new line"
-                />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Explanations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea 
-                  value={structuredContent.explanations.join('\n\n')}
-                  onChange={(e) => handleContentChange('explanations', e.target.value.split('\n\n').filter(line => line.trim() !== ''))}
+                  value={structuredContent.keyPhrases.map(phrase => 
+                    `${phrase.phrase} | ${phrase.translation} | ${phrase.usage}`
+                  ).join('\n')}
+                  onChange={(e) => {
+                    const lines = e.target.value.split('\n').filter(line => line.trim() !== '');
+                    const phrases = lines.map(line => {
+                      const [phrase = '', translation = '', usage = ''] = line.split('|').map(part => part.trim());
+                      return { phrase, translation, usage };
+                    });
+                    handleContentChange('keyPhrases', phrases);
+                  }}
                   className="min-h-[150px]"
-                  placeholder="Add each explanation with a blank line between them"
+                  placeholder="Format: Phrase | Translation | Usage"
                 />
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle>Tips</CardTitle>
+                <CardTitle>Vocabulary</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea 
-                  value={structuredContent.tips.join('\n')}
-                  onChange={(e) => handleContentChange('tips', e.target.value.split('\n').filter(line => line.trim() !== ''))}
-                  className="min-h-[100px]"
-                  placeholder="Add each tip on a new line"
+                  value={structuredContent.vocabulary.map(word => 
+                    `${word.word} | ${word.translation} | ${word.partOfSpeech}`
+                  ).join('\n')}
+                  onChange={(e) => {
+                    const lines = e.target.value.split('\n').filter(line => line.trim() !== '');
+                    const words = lines.map(line => {
+                      const [word = '', translation = '', partOfSpeech = ''] = line.split('|').map(part => part.trim());
+                      return { word, translation, partOfSpeech };
+                    });
+                    handleContentChange('vocabulary', words);
+                  }}
+                  className="min-h-[150px]"
+                  placeholder="Format: Word | Translation | Part of Speech"
                 />
               </CardContent>
             </Card>
