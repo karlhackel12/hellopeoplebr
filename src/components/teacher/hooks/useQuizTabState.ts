@@ -68,6 +68,9 @@ export const useQuizTabState = (lessonId?: string) => {
     setContentLoading
   );
 
+  // Setup quiz existing data check
+  useQuizExistingData(lessonId, setExistingQuiz, setIsPublished, loadQuizPreview);
+
   const publishQuizWithVoid = async (): Promise<void> => {
     try {
       await publishQuiz();

@@ -1,32 +1,36 @@
 
 import { useState } from 'react';
-import { fetchLessonContent } from './api/lessonContentApi';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useQuizContent = (lessonId: string) => {
-  const [lessonContent, setLessonContent] = useState<string | null>(null);
   const [isContentLoaded, setIsContentLoaded] = useState(false);
-
+  
   const getLessonContent = async (): Promise<string | null> => {
     try {
-      if (lessonContent && isContentLoaded) {
-        return lessonContent;
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('content')
+        .eq('id', lessonId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching lesson content:', error);
+        return null;
       }
       
-      const content = await fetchLessonContent(lessonId);
-      
-      if (content) {
-        setLessonContent(content);
-        setIsContentLoaded(true);
-        return content;
+      if (!data.content) {
+        console.warn('Lesson has no content');
+        return null;
       }
       
-      return null;
+      setIsContentLoaded(true);
+      return data.content;
     } catch (error) {
-      console.error("Error getting lesson content:", error);
+      console.error('Error in getLessonContent:', error);
       return null;
     }
   };
-
+  
   return {
     getLessonContent,
     isContentLoaded

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Question } from '../../quiz/types';
 
 export const useQuizPreviewState = (
@@ -7,47 +7,28 @@ export const useQuizPreviewState = (
   fetchQuizQuestions: () => Promise<Question[] | null>
 ) => {
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
-  const [showPreview, setShowPreview] = useState(true);
-  const [quizTitle, setQuizTitle] = useState<string>('Lesson Quiz');
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [quizTitle, setQuizTitle] = useState('Lesson Quiz');
 
-  const loadQuizPreview = async (): Promise<Question[] | null> => {
-    try {
-      if (!existingQuiz) return [];
-      
-      setPreviewLoading(true);
-      setPreviewError(null);
-      
-      const questions = await fetchQuizQuestions();
-      
-      if (questions) {
-        setPreviewQuestions(questions);
-        return questions;
-      } else {
-        setPreviewError('Failed to load quiz questions');
-        return null;
-      }
-    } catch (error: any) {
-      console.error("Error loading quiz preview:", error);
-      setPreviewError(error.message || 'An unexpected error occurred');
-      return null;
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
-  const resetPreview = () => {
-    setPreviewQuestions([]);
-    setQuizTitle('Lesson Quiz');
-  };
-
-  // Load quiz when existingQuiz changes
-  useEffect(() => {
+  const loadQuizPreview = useCallback(async () => {
     if (existingQuiz) {
-      loadQuizPreview();
+      try {
+        const questions = await fetchQuizQuestions();
+        if (questions) {
+          setPreviewQuestions(questions);
+          setShowPreview(true);
+        }
+      } catch (error) {
+        console.error('Error loading quiz preview:', error);
+      }
     }
-  }, [existingQuiz]);
+  }, [existingQuiz, fetchQuizQuestions]);
+
+  const resetPreview = useCallback(() => {
+    setPreviewQuestions([]);
+    setShowPreview(false);
+    setQuizTitle('Lesson Quiz');
+  }, []);
 
   return {
     previewQuestions,
@@ -56,8 +37,6 @@ export const useQuizPreviewState = (
     quizTitle,
     setQuizTitle,
     loadQuizPreview,
-    resetPreview,
-    previewLoading,
-    previewError
+    resetPreview
   };
 };

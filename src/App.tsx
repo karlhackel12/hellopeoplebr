@@ -31,6 +31,11 @@ import StudentLessons from "./pages/student/Lessons";
 import StudentSettings from "./pages/student/Settings";
 import LessonView from "./pages/student/LessonView";
 
+// New Pages from Refactoring
+import QuizManagementPage from "./pages/teacher/QuizManagementPage";
+import QuizListPage from "./pages/teacher/QuizListPage";
+import QuizAssignmentPage from "./pages/teacher/QuizAssignmentPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -96,9 +101,22 @@ const App = () => (
             } />
             <Route path="/teacher/lessons/:lessonId/quiz" element={
               <PageTransitionWrapper>
-                <LessonQuizPage />
+                <QuizManagementPage />
               </PageTransitionWrapper>
             } />
+            
+            {/* New Quiz Management Routes */}
+            <Route path="/teacher/quizzes" element={
+              <PageTransitionWrapper>
+                <QuizListPage />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/quizzes/assign" element={
+              <PageTransitionWrapper>
+                <QuizAssignmentPage />
+              </PageTransitionWrapper>
+            } />
+            
             <Route path="/teacher/invitations" element={
               <PageTransitionWrapper>
                 <Invitations />
