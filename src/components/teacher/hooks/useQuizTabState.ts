@@ -94,13 +94,24 @@ export const useQuizTabState = (lessonId?: string) => {
     setIsPublished
   );
 
+  // Type-aligned versions of the actions
+  const handleSaveQuizWrapper = async (title: string): Promise<boolean> => {
+    try {
+      if (!lessonId) return false;
+      return await saveQuizTitle(title);
+    } catch (error) {
+      console.error("Error in handleSaveQuizWrapper:", error);
+      return false;
+    }
+  };
+
   const {
     handleSaveQuiz,
     handleDiscardQuiz,
     handleGenerateQuiz
   } = useQuizActions(
     lessonId, 
-    saveQuizTitle, 
+    handleSaveQuizWrapper,
     deleteQuiz, 
     generateSmartQuiz, 
     fetchLessonContent,

@@ -24,7 +24,7 @@ export const useQuizGenerationWorkflow = (
       
       // Step 1: Fetch lesson content
       setContentLoading('Fetching lesson content...');
-      setGenerationPhase('fetching_content');
+      setGenerationPhase('content-loading');
       const content = await fetchLessonContent();
       
       if (!content) {
@@ -46,7 +46,7 @@ export const useQuizGenerationWorkflow = (
       
       // Step 3: Load the preview
       setContentLoading('Preparing quiz preview...');
-      setGenerationPhase('loading_preview');
+      setGenerationPhase('saving');
       await loadQuizPreview();
       
       // Mark as existing quiz and set published status
@@ -55,7 +55,7 @@ export const useQuizGenerationWorkflow = (
       
       // Completed
       setContentLoading(null);
-      setGenerationPhase('completed');
+      setGenerationPhase('complete');
       
       toast.success('Quiz generated successfully', {
         description: `${numQuestions} questions have been created`,
