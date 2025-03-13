@@ -23,13 +23,11 @@ export const useQuizPublishState = (
           description: 'The quiz is now published and visible to students',
         });
       }
-      return true;
     } catch (error) {
       console.error('Error toggling publish status:', error);
       toast.error('Failed to change publish status', {
         description: 'There was an error updating the quiz status',
       });
-      return false;
     }
   }, [isPublished, publishQuiz, unpublishQuiz, setIsPublished]);
 
