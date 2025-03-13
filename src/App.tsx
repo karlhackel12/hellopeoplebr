@@ -14,7 +14,6 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import LessonEditor from "./components/teacher/LessonEditor";
-import Invitations from "./pages/teacher/Invitations";
 import Students from "./pages/teacher/Students";
 import Assignments from "./pages/teacher/Assignments";
 import Lessons from "./pages/teacher/Lessons";
@@ -113,11 +112,6 @@ const App = () => (
             <Route path="/teacher/quiz/:quizId/edit" element={
               <PageTransitionWrapper>
                 <QuizEdit />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/invitations" element={
-              <PageTransitionWrapper>
-                <Invitations />
               </PageTransitionWrapper>
             } />
             <Route path="/teacher/students" element={
