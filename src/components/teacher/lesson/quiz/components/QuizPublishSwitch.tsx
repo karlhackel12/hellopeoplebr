@@ -20,6 +20,8 @@ const QuizPublishSwitch: React.FC<QuizPublishSwitchProps> = ({
   const [localSaving, setLocalSaving] = useState(false);
   
   const handleTogglePublish = async () => {
+    if (saving || localSaving) return;
+    
     try {
       setLocalSaving(true);
       await onTogglePublish();

@@ -8,6 +8,17 @@ import { Loader2, AlertCircle, BookOpen, Plus, FileQuestion } from 'lucide-react
 import QuizAnalyticsCard from '../analytics/QuizAnalyticsCard';
 import { useQuery } from '@tanstack/react-query';
 
+interface Quiz {
+  id: string;
+  title: string;
+  lesson_id: string;
+  is_published: boolean;
+  pass_percent: number;
+  lesson?: {
+    title: string;
+  };
+}
+
 const QuizDashboard = () => {
   const { data: quizzes = [], isLoading, error } = useQuery({
     queryKey: ['dashboard-quizzes'],
@@ -105,10 +116,12 @@ const QuizDashboard = () => {
         <div className="pt-6">
           <h3 className="text-lg font-medium mb-4">Quiz Analytics</h3>
           <div className="space-y-6">
-            <QuizAnalyticsCard 
-              quizId={quizzes[0].id} 
-              quizTitle={quizzes[0].title} 
-            />
+            {quizzes[0] && (
+              <QuizAnalyticsCard 
+                quizId={quizzes[0].id} 
+                quizTitle={quizzes[0].title} 
+              />
+            )}
           </div>
         </div>
       )}

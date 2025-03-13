@@ -71,7 +71,11 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
       
       {/* Generation progress indicator */}
       {currentPhase !== 'idle' && (
-        <QuizGenerationProgress currentPhase={currentPhase} />
+        <QuizGenerationProgress 
+          currentPhase={currentPhase}
+          isRetrying={isRetrying}
+          errorMessage={loadingError}
+        />
       )}
       
       {/* Quiz generator form */}
