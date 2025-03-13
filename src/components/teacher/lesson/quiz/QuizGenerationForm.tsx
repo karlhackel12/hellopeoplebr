@@ -17,7 +17,7 @@ import QuizGenerationProgress, { GenerationPhase } from './components/QuizGenera
 interface QuizGenerationFormProps {
   numQuestions: string;
   setNumQuestions: (value: string) => void;
-  onGenerateQuiz: () => void;
+  onGenerateQuiz: () => Promise<void>;
   loading: boolean;
   isRetrying?: boolean;
   error?: string | null;
