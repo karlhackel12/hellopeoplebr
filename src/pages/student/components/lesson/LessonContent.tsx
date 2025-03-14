@@ -33,22 +33,13 @@ const LessonContent: React.FC<LessonContentProps> = ({
   completionPercentage,
   totalPages
 }) => {
-  const isIntroPage = currentSectionIndex === 0;
-  const currentSection = isIntroPage ? null : sections[currentSectionIndex - 1];
+  // Since we're skipping the intro page, we'll directly show sections
+  const currentSection = sections[currentSectionIndex];
   
   return (
     <Card className="border shadow-sm">
       <CardContent className="p-6">
-        {/* Show intro content on first page, or section content for other pages */}
-        {isIntroPage ? (
-          <div className="prose max-w-none mb-6 animate-fade-in">
-            <div 
-              dangerouslySetInnerHTML={{ 
-                __html: formatMarkdownToHtml(introContent) 
-              }} 
-            />
-          </div>
-        ) : currentSection && (
+        {currentSection && (
           <LessonSectionPage
             id={currentSection.id}
             title={currentSection.title}

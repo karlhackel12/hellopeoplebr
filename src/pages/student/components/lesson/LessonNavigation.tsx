@@ -55,25 +55,18 @@ const LessonNavigation: React.FC<LessonNavigationProps> = ({
         <div className="space-y-1 border rounded-md p-3">
           <h3 className="text-sm font-medium mb-2">Contents</h3>
           
-          <Button
-            variant={currentSectionIndex === 0 ? "secondary" : "ghost"}
-            size="sm"
-            className="w-full justify-start text-sm"
-            onClick={() => goToSection(0)}
-          >
-            Introduction
-          </Button>
+          {/* We'll remove the Introduction button since we're filtering that out */}
           
           {sections.map((section, index) => (
             <Button
               key={section.id}
-              variant={currentSectionIndex === index + 1 ? "secondary" : "ghost"}
+              variant={currentSectionIndex === index ? "secondary" : "ghost"}
               size="sm"
               className={cn(
                 "w-full justify-start text-sm group",
                 completedSections.includes(section.title) && "text-muted-foreground"
               )}
-              onClick={() => goToSection(index + 1)}
+              onClick={() => goToSection(index)}
             >
               <span className="truncate">{section.title}</span>
               {completedSections.includes(section.title) && (

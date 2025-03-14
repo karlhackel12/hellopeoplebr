@@ -34,6 +34,11 @@ export const extractSections = (markdown: string): {id: string, title: string, c
     const content = match[2].trim();
     const id = title.toLowerCase().replace(/[^\w]+/g, '-');
     
+    // Skip sections with titles: Introduction, Learning Objectives, Explanation, Tips
+    if (['Introduction', 'Learning Objectives', 'Explanation', 'Tips'].includes(title)) {
+      continue;
+    }
+    
     sections.push({
       id,
       title,
