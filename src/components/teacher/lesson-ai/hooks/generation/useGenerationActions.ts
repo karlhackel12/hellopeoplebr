@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
-import { LessonFormValues } from '../useAIGeneration';
+import { LessonFormValues } from '../../../lesson-editor/useLessonForm';
 import { GenerationPhase } from '../types';
 
 /**
@@ -21,7 +21,7 @@ export const useGenerationActions = (
   generationHandler: any
 ) => {
   // Handle generation start
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     // Validate input
     if (!title || title.trim() === '') {
       toast.error('Missing title', {
@@ -38,12 +38,12 @@ export const useGenerationActions = (
     setError(null);
 
     // Call the generation handler
-    generationHandler.handleGenerate();
+    return generationHandler.handleGenerate();
   }, [title, setGenerating, setGenerationStatus, setGenerationPhase, setProgressPercentage, setError, generationHandler]);
 
   // Handle generation cancellation
-  const handleCancelGeneration = useCallback(() => {
-    generationHandler.cancelGeneration();
+  const handleCancelGeneration = useCallback(async () => {
+    await generationHandler.cancelGeneration();
     setGenerating(false);
     setGenerationStatus('idle');
     setGenerationPhase('idle');
@@ -55,9 +55,9 @@ export const useGenerationActions = (
   }, [generationHandler, setGenerating, setGenerationStatus, setGenerationPhase, setProgressPercentage]);
 
   // Handle generation retry
-  const handleRetryGeneration = useCallback(() => {
+  const handleRetryGeneration = useCallback(async () => {
     setError(null);
-    generationHandler.retryGeneration();
+    await generationHandler.retryGeneration();
     setGenerating(true);
     setGenerationStatus('pending');
     setGenerationPhase('starting');

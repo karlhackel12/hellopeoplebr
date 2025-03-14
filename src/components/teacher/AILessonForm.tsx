@@ -5,11 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LessonPreview } from './LessonPreview';
 import GenerationSettingsForm from './lesson-ai/GenerationSettingsForm';
 import ContentPreview from './lesson-ai/ContentPreview';
-import { useAIGeneration, LessonFormValues } from './lesson-ai/hooks/useAIGeneration';
+import { useAIGeneration } from './lesson-ai/hooks/useAIGeneration';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuizData } from './preview/useQuizData';
 import QuizTab from './preview/QuizTab';
+import { LessonFormValues } from './lesson-editor/useLessonForm';
 
 interface AILessonFormProps {
   form: UseFormReturn<LessonFormValues>;

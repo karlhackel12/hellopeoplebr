@@ -2,7 +2,7 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import AILessonForm from '../AILessonForm';
-import { LessonFormValues } from '../lesson-ai/hooks/useAIGeneration';
+import { LessonFormValues } from './useLessonForm';
 
 interface LessonContentTabsProps {
   form: UseFormReturn<LessonFormValues>;
