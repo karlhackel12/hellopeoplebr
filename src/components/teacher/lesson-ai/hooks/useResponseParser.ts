@@ -6,6 +6,8 @@ export const useResponseParser = () => {
     try {
       let parsedContent;
       
+      console.log("Parsing AI response:", typeof output, output ? output.substring ? output.substring(0, 100) + "..." : JSON.stringify(output).substring(0, 100) + "..." : "null");
+      
       // Handle different output formats
       if (typeof output === 'string') {
         // First, try to extract JSON from the string
@@ -17,7 +19,7 @@ export const useResponseParser = () => {
               parsedContent = JSON.parse(jsonMatch[1]);
               console.log("Extracted JSON from code block");
             } catch (e) {
-              console.log("Failed to parse JSON from code block");
+              console.log("Failed to parse JSON from code block:", e);
             }
           }
           
@@ -28,8 +30,13 @@ export const useResponseParser = () => {
             
             if (match) {
               const jsonString = match[0];
-              console.log("Extracted JSON:", jsonString.substring(0, 100) + "...");
-              parsedContent = JSON.parse(jsonString);
+              console.log("Extracted JSON string (preview):", jsonString.substring(0, 100) + "...");
+              try {
+                parsedContent = JSON.parse(jsonString);
+              } catch (parseError) {
+                console.error("Failed to parse extracted JSON:", parseError);
+                throw new Error(`Invalid JSON format: ${parseError.message}`);
+              }
             } else {
               throw new Error("Could not extract valid JSON from string output");
             }
@@ -63,6 +70,21 @@ export const useResponseParser = () => {
         ...defaultContent,
         ...parsedContent,
       };
+      
+      // Validate the structure before returning
+      if (!parsedContent.description || typeof parsedContent.description !== 'string') {
+        parsedContent.description = defaultContent.description;
+      }
+      
+      // Ensure keyPhrases is an array
+      if (!Array.isArray(parsedContent.keyPhrases) || parsedContent.keyPhrases.length === 0) {
+        parsedContent.keyPhrases = defaultContent.keyPhrases;
+      }
+      
+      // Ensure vocabulary is an array
+      if (!Array.isArray(parsedContent.vocabulary) || parsedContent.vocabulary.length === 0) {
+        parsedContent.vocabulary = defaultContent.vocabulary;
+      }
       
       return parsedContent as GeneratedLessonContent;
     } catch (error: any) {

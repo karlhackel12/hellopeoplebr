@@ -60,18 +60,32 @@ export const useGenerationHandler = (
         return;
       }
       
-      // Ensure instructions is a properly formatted string or undefined
-      const formattedInstructions = instructions 
-        ? typeof instructions === 'string' 
-          ? instructions.trim() 
-          : typeof instructions === 'object' && instructions !== null && 'value' in instructions 
-            ? String((instructions as {value: string}).value).trim()
-            : undefined
-        : undefined;
+      // Validate and sanitize instructions to prevent errors
+      let sanitizedInstructions: string | undefined = undefined;
       
-      console.log("Formatting instructions:", { 
-        original: instructions, 
-        formatted: formattedInstructions,
+      if (instructions) {
+        if (typeof instructions === 'string') {
+          // Trim and limit length of instructions
+          sanitizedInstructions = instructions.trim().substring(0, 1000);
+        } else if (typeof instructions === 'object' && instructions !== null && 'value' in instructions) {
+          // Handle object with value property
+          const value = instructions.value;
+          if (typeof value === 'string') {
+            sanitizedInstructions = value.trim().substring(0, 1000);
+          } else if (value !== null && value !== undefined) {
+            sanitizedInstructions = String(value).trim().substring(0, 1000);
+          }
+        }
+        
+        // Additional validation - ensure it's not just whitespace
+        if (sanitizedInstructions && sanitizedInstructions.length === 0) {
+          sanitizedInstructions = undefined;
+        }
+      }
+      
+      console.log("Validated instructions:", {
+        original: instructions,
+        sanitized: sanitizedInstructions,
         type: typeof instructions
       });
       
@@ -80,7 +94,7 @@ export const useGenerationHandler = (
         title,
         level,
         language: 'english',
-        instructions: formattedInstructions,
+        instructions: sanitizedInstructions,
       };
       
       console.log("Generation params prepared:", generationParams);

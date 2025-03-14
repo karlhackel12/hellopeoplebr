@@ -17,10 +17,23 @@ export const useGenerationApi = () => {
         throw new Error("Title is required for lesson generation");
       }
 
-      if (generationParams.instructions && typeof generationParams.instructions !== 'string') {
+      // Ensure instructions is undefined or a string (not null or other types)
+      if (generationParams.instructions !== undefined && typeof generationParams.instructions !== 'string') {
         console.warn("Instructions is not a string, converting to string:", generationParams.instructions);
         generationParams.instructions = String(generationParams.instructions);
       }
+      
+      // Clean params object to ensure only valid data is sent
+      const cleanParams = {
+        ...generationParams,
+        title: generationParams.title.trim(),
+        level: generationParams.level,
+        language: generationParams.language,
+        instructions: generationParams.instructions ? generationParams.instructions.trim() : undefined,
+        timestamp: generationParams.timestamp
+      };
+      
+      console.log("Cleaned params for edge function:", cleanParams);
       
       // Create a timeout promise
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -32,7 +45,7 @@ export const useGenerationApi = () => {
       // Create the actual request promise with explicit function name
       console.log("Calling Supabase edge function: generate-lesson-content");
       const edgeFunctionPromise = supabase.functions.invoke('generate-lesson-content', {
-        body: generationParams,
+        body: cleanParams,
       });
       
       // Race the promises - whichever resolves/rejects first wins

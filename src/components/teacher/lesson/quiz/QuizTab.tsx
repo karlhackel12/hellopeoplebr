@@ -114,9 +114,9 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
   }
 
   // Create a properly typed wrapper function for onGenerateQuiz
-  const onGenerateQuiz = (numQuestionsParam: string, existingQuestions?: any[]) => {
-    // Convert numQuestions to a number before passing
-    handleGenerateQuiz(numQuestionsParam, existingQuestions);
+  const onGenerateQuiz = () => {
+    // Directly call handleGenerateQuiz with numQuestions
+    handleGenerateQuiz(numQuestions);
   };
 
   return (
