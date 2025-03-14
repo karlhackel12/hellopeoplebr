@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -10,13 +11,13 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  Menu,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SidebarLinkProps {
   href: string;
@@ -24,6 +25,7 @@ interface SidebarLinkProps {
   children: React.ReactNode;
   active?: boolean;
   collapsed?: boolean;
+  onClick?: () => void;
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({ 
@@ -31,10 +33,11 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   icon: Icon, 
   children, 
   active,
-  collapsed
+  collapsed,
+  onClick
 }) => {
   return (
-    <Link to={href} className="block w-full">
+    <Link to={href} className="block w-full" onClick={onClick}>
       <Button
         variant="ghost"
         className={cn(
@@ -53,19 +56,25 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
 interface TeacherSidebarProps {
   collapsed?: boolean;
   onToggle?: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ 
   collapsed = false, 
-  onToggle 
+  onToggle,
+  mobileOpen = false,
+  onMobileClose
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+    if (isMobile && onMobileClose) {
+      onMobileClose();
+    }
+  }, [location.pathname, isMobile, onMobileClose]);
 
   const handleLogout = async () => {
     try {
@@ -115,51 +124,102 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
-  const sidebarClasses = cn(
-    "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
-    collapsed ? "w-20" : "w-64",
-    mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+  // Desktop sidebar
+  const renderDesktopSidebar = () => (
+    <aside 
+      className={cn(
+        "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md hidden md:block",
+        collapsed ? "w-20" : "w-64"
+      )}
+      style={{
+        backgroundColor: "var(--sidebar-background)",
+        backdropFilter: "blur(8px)"
+      }}
+    >
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
+          <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
+            <Logo size="sm" />
+          </div>
+          {collapsed ? (
+            <div className="mx-auto">
+              <Logo iconOnly size="sm" />
+            </div>
+          ) : null}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="focus:outline-none"
+          >
+            <ChevronLeft
+              className={cn("h-5 w-5 transition-transform", 
+                collapsed ? "rotate-180" : ""
+              )}
+            />
+          </Button>
+        </div>
+        
+        <nav className="flex-grow p-3 overflow-y-auto">
+          <div className="space-y-1">
+            {navigationLinks.map((link) => (
+              <SidebarLink
+                key={link.name}
+                href={link.href}
+                icon={link.icon}
+                active={isRouteActive(link.href)}
+                collapsed={collapsed}
+              >
+                {link.name}
+              </SidebarLink>
+            ))}
+          </div>
+        </nav>
+        
+        <div className="p-3 border-t border-sidebar-border">
+          <Button 
+            variant="ghost" 
+            className={cn(
+              "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
+              collapsed ? "justify-center" : "justify-start gap-3"
+            )}
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5" />
+            {!collapsed && <span className="font-medium">Logout</span>}
+          </Button>
+        </div>
+      </div>
+    </aside>
   );
 
-  const sidebarStyles = {
-    backgroundColor: "var(--sidebar-background)",
-    backdropFilter: "blur(8px)"
-  };
-
-  return (
+  // Mobile sidebar (drawer style)
+  const renderMobileSidebar = () => (
     <>
-      <Button 
-        variant="outline" 
-        size="icon" 
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden shadow-md"
+      {mobileOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" 
+          onClick={onMobileClose}
+        />
+      )}
+      
+      <aside 
+        className={cn(
+          "fixed top-0 left-0 z-50 h-screen w-64 bg-background border-r border-sidebar-border transition-all duration-300 transform md:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
       >
-        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
-
-      <aside className={sidebarClasses} style={sidebarStyles}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
-            <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
-              <Logo size="sm" />
-            </div>
-            {collapsed ? (
-              <div className="mx-auto">
-                <Logo iconOnly size="sm" />
-              </div>
-            ) : null}
-            
+            <Logo size="sm" />
             <Button
               variant="ghost"
               size="icon"
-              onClick={onToggle}
-              className="hidden md:flex"
+              onClick={onMobileClose}
+              className="focus:outline-none"
             >
-              <ChevronLeft
-                className={cn("h-5 w-5 transition-transform", 
-                  collapsed ? "rotate-180" : ""
-                )}
-              />
+              <X className="h-5 w-5" />
             </Button>
           </div>
           
@@ -171,7 +231,8 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
                   href={link.href}
                   icon={link.icon}
                   active={isRouteActive(link.href)}
-                  collapsed={collapsed}
+                  collapsed={false}
+                  onClick={onMobileClose}
                 >
                   {link.name}
                 </SidebarLink>
@@ -182,25 +243,22 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           <div className="p-3 border-t border-sidebar-border">
             <Button 
               variant="ghost" 
-              className={cn(
-                "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
-                collapsed ? "justify-center" : "justify-start gap-3"
-              )}
+              className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
-              {!collapsed && <span className="font-medium">Logout</span>}
+              <span className="font-medium">Logout</span>
             </Button>
           </div>
         </div>
       </aside>
-      
-      {mobileOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+    </>
+  );
+
+  return (
+    <>
+      {renderDesktopSidebar()}
+      {renderMobileSidebar()}
     </>
   );
 };

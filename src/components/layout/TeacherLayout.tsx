@@ -4,16 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherSidebar from './TeacherSidebar';
+import TeacherBottomNavigation from './TeacherBottomNavigation';
+import MobileHeader from './MobileHeader';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TeacherLayoutProps {
   children: ReactNode;
+  pageTitle?: string;
 }
 
-const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
+const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Check if on mobile and collapse sidebar by default
@@ -58,6 +64,10 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -75,18 +85,31 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen flex bg-background">
+      {isMobile && (
+        <MobileHeader 
+          onMenuToggle={toggleMobileMenu}
+          pageTitle={pageTitle}
+        />
+      )}
+      
       <TeacherSidebar 
         collapsed={sidebarCollapsed} 
         onToggle={toggleSidebar}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
       />
       
       <main 
-        className={`flex-grow transition-all duration-300 pt-16 md:pt-6 px-4 md:px-6 lg:px-8 pb-16 md:pb-10 overflow-x-hidden ${
-          sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
-        }`}
+        className={`flex-grow transition-all duration-300 ${
+          isMobile ? 'pt-16 pb-20 px-4' : 'pt-6 pb-10'
+        } ${
+          isMobile ? '' : sidebarCollapsed ? 'md:ml-20 md:px-6' : 'md:ml-64 md:px-8'
+        } overflow-x-hidden`}
       >
         <div className="w-full">{children}</div>
       </main>
+      
+      <TeacherBottomNavigation />
     </div>
   );
 };
