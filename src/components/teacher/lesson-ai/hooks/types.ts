@@ -6,7 +6,7 @@ export interface GenerationParams {
   title: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   language: string;
-  instructions?: string;
+  instructions?: string; // Make sure this is explicitly defined as string or undefined
 }
 
 export interface PredictionResponse {
@@ -36,7 +36,6 @@ export interface GenerationState {
   progressPercentage: number;
   statusMessage: string;
   isCancelled: boolean;
-  // Add the missing properties that are causing TypeScript errors
   generationId?: string;
   pollingInterval: number;
   pollCount: number;
