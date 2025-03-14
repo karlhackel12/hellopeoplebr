@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +34,7 @@ export const useSpacedRepetition = () => {
           next_review_date,
           question_id,
           lesson_id,
-          question:question_id(
+          question:quiz_questions(
             id,
             question_text,
             question_type,
@@ -47,7 +46,7 @@ export const useSpacedRepetition = () => {
               order_index
             )
           ),
-          lesson:lesson_id(
+          lesson:lessons(
             id,
             title,
             content
@@ -59,6 +58,7 @@ export const useSpacedRepetition = () => {
       
       if (error) {
         toast.error('Failed to fetch review items');
+        console.error('Error fetching spaced repetition items:', error);
         throw error;
       }
       
@@ -252,7 +252,11 @@ export const useSpacedRepetition = () => {
       
       if (updateError) throw updateError;
       
-      return { reviewStat, points, nextReviewDate };
+      return { 
+        reviewStat,
+        points,
+        nextReviewDate
+      };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spaced-repetition-due-items'] });

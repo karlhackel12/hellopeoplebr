@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
@@ -93,7 +92,7 @@ const SpacedRepetitionReview: React.FC = () => {
     );
   }
   
-  const currentItem = dueItems[currentItemIndex];
+  const currentItem = dueItems?.[currentItemIndex];
   const currentQuestion = currentItem?.question;
   
   const handleSelectOption = (optionId: string) => {
@@ -133,7 +132,7 @@ const SpacedRepetitionReview: React.FC = () => {
         setCorrectCount(prev => prev + 1);
       }
       
-      if (result?.points) {
+      if (result && result.points) {
         setPoints(result.points);
         setTotalPointsEarned(prev => prev + result.points);
       }
