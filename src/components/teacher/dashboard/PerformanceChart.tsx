@@ -14,14 +14,14 @@ const PerformanceChart: React.FC = () => {
       // Get quiz attempts
       const { data: quizAttempts } = await supabase
         .from('user_quiz_attempts')
-        .select('quiz_id, score, user_id, profiles(first_name, last_name)')
+        .select('quiz_id, score, user_id')
         .order('created_at', { ascending: false })
         .limit(50);
       
       // Get voice practice analytics
       const { data: voicePractice } = await supabase
         .from('voice_practice_feedback')
-        .select('user_id, fluency_score, pronunciation_score, grammar_score, profiles(first_name, last_name)')
+        .select('user_id, fluency_score, pronunciation_score, grammar_score')
         .order('created_at', { ascending: false })
         .limit(50);
       
@@ -30,7 +30,8 @@ const PerformanceChart: React.FC = () => {
       
       quizAttempts?.forEach(attempt => {
         const studentId = attempt.user_id;
-        const studentName = `${attempt.profiles?.first_name || ''} ${attempt.profiles?.last_name || ''}`.trim();
+        // Use student ID as name since we can't access profiles data
+        const studentName = `Student ${studentId.slice(0, 5)}`;
         
         if (!studentPerformance[studentId]) {
           studentPerformance[studentId] = {
@@ -55,7 +56,8 @@ const PerformanceChart: React.FC = () => {
       
       voicePractice?.forEach(practice => {
         const studentId = practice.user_id;
-        const studentName = `${practice.profiles?.first_name || ''} ${practice.profiles?.last_name || ''}`.trim();
+        // Use student ID as name since we can't access profiles data
+        const studentName = `Student ${studentId.slice(0, 5)}`;
         
         if (!studentPerformance[studentId]) {
           studentPerformance[studentId] = {
