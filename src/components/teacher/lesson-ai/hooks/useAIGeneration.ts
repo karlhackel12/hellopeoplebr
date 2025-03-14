@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from '../../lesson-editor/useLessonForm';
 import { useGenerationState } from './useGenerationState';
@@ -9,6 +9,7 @@ import { GeneratedLessonContent } from '../types';
 export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: string) => {
   // Get all generation state and state updaters
   const generationState = useGenerationState();
+  const [lastTitleUsed, setLastTitleUsed] = useState<string>('');
   
   const {
     generating,
@@ -67,6 +68,20 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
 
   // Get the generation handler with required methods
   const generationHandler = useGenerationHandler();
+  
+  // Synchronize the title with the generation handler whenever it changes
+  useEffect(() => {
+    if (title && title !== lastTitleUsed) {
+      console.log('Title changed, updating generation settings:', title);
+      generationHandler.handleSettingsChange({
+        title: title,
+        grade: level,
+        subject: 'English',
+        additionalInstructions: instructions
+      });
+      setLastTitleUsed(title);
+    }
+  }, [title, level, instructions, lastTitleUsed]);
 
   // Function to start generation with proper sequence
   const handleGenerate = async () => {
@@ -81,7 +96,7 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setError(null);
     
     try {
-      // First update settings
+      // First update settings with current values
       generationHandler.handleSettingsChange({
         title: title,
         grade: level,

@@ -9,10 +9,10 @@ interface GenerationSettings {
   title: string;
   grade: string;
   subject: string;
-  length: string;
-  tone: string;
-  focusAreas: string;
-  additionalInstructions: string;
+  length?: string;
+  tone?: string;
+  focusAreas?: string;
+  additionalInstructions?: string;
 }
 
 interface GenerationState {
@@ -24,8 +24,8 @@ export const useGenerationHandler = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationSettings, setGenerationSettings] = useState<GenerationSettings>({
     title: '',
-    grade: '',
-    subject: '',
+    grade: 'beginner',
+    subject: 'English',
     length: '',
     tone: '',
     focusAreas: '',
@@ -68,6 +68,7 @@ export const useGenerationHandler = () => {
 
   // Handle settings changes
   const handleSettingsChange = (settings: Partial<GenerationSettings>) => {
+    console.log('handleSettingsChange called with:', settings);
     setGenerationSettings(prevSettings => {
       const newSettings = { ...prevSettings, ...settings };
       console.log('Updated generation settings:', newSettings);
@@ -103,7 +104,9 @@ export const useGenerationHandler = () => {
   const generateContent = async (settings: any) => {
     updateState({ phase: 'generating', error: null });
     try {
+      console.log('generateContent called with settings:', settings);
       const result = await generateLesson(settings);
+      console.log('generateLesson result:', result);
       return result;
     } catch (error) {
       handleApiError(error);

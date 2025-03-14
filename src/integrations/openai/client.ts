@@ -11,7 +11,7 @@ interface GenerationSettings {
   additional_instructions?: string;
 }
 
-// Mock function to simulate API call to OpenAI
+// Function to generate lesson with proper logging
 export const generateLesson = async (settings: GenerationSettings) => {
   try {
     console.log('Generating lesson with settings:', settings);
@@ -19,41 +19,75 @@ export const generateLesson = async (settings: GenerationSettings) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Mock response structure
+    // Create a more realistic lesson structure based on our GeneratedLessonContent type
     const mockResponse = {
       data: {
-        sections: [
+        description: `This is a comprehensive lesson about ${settings.title}. It is designed for ${settings.grade_level} level English learners.`,
+        objectives: [
+          "Learn key vocabulary related to the topic",
+          "Practice essential phrases for real-world situations",
+          "Understand grammatical concepts related to the lesson"
+        ],
+        keyPhrases: [
           {
-            title: 'Introduction',
-            content: `This is an introduction to ${settings.title}. The content is tailored for ${settings.grade_level} students studying ${settings.subject}.`,
-            type: 'introduction'
+            phrase: "Hello, how are you?",
+            translation: "Olá, como você está?",
+            usage: "Use this greeting when meeting someone"
           },
           {
-            title: 'Main Content',
-            content: 'This is the main content of the lesson, generated based on your specifications.',
-            type: 'content'
-          },
-          {
-            title: 'Exercise',
-            content: 'Here are some practice exercises related to the lesson.',
-            type: 'exercise'
-          },
-          {
-            title: 'Summary',
-            content: 'This is a summary of the key points in this lesson.',
-            type: 'summary'
+            phrase: "I would like to learn more",
+            translation: "Eu gostaria de aprender mais",
+            usage: "Use this phrase to express interest in learning"
           }
         ],
-        metadata: {
-          grade: settings.grade_level,
-          subject: settings.subject,
-          estimatedTime: settings.length || '30 minutes',
-          objectives: ['Learn key concepts', 'Practice skills', 'Apply knowledge'],
-          keywords: ['education', settings.subject || 'general', settings.title]
-        }
+        vocabulary: [
+          {
+            word: "Education",
+            translation: "Educação",
+            partOfSpeech: "noun",
+            example: "Quality education is important."
+          },
+          {
+            word: "Language",
+            translation: "Idioma",
+            partOfSpeech: "noun",
+            example: "English is a global language."
+          }
+        ],
+        practicalSituations: [
+          {
+            situation: "At a restaurant",
+            example: "Waiter: What would you like to order?\nCustomer: I would like the chicken, please."
+          },
+          {
+            situation: "Asking for directions",
+            example: "Excuse me, could you tell me how to get to the museum?"
+          }
+        ],
+        explanations: [
+          {
+            concept: "Present Simple",
+            explanation: "We use the present simple to talk about regular actions and facts."
+          },
+          {
+            concept: "Question Formation",
+            explanation: "To form questions in English, we typically use an auxiliary verb before the subject."
+          }
+        ],
+        tips: [
+          {
+            tip: "Practice speaking with native speakers when possible",
+            context: "Conversation practice"
+          },
+          {
+            tip: "Watch English movies with subtitles to improve comprehension",
+            context: "Listening practice"
+          }
+        ]
       }
     };
     
+    console.log('Generated mock lesson response:', mockResponse);
     return mockResponse;
   } catch (error) {
     console.error('Error generating lesson:', error);
