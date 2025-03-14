@@ -3,32 +3,36 @@ import React, { useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mic } from 'lucide-react';
 import { format } from 'date-fns';
 import { ConversationMessage } from '../../hooks/useVoiceConversation';
 
 interface ConversationDisplayProps {
   messages: ConversationMessage[];
   isLoading?: boolean;
+  isTranscribing?: boolean;
+  liveTranscript?: string;
   maxHeight?: string;
 }
 
 const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
   messages,
   isLoading = false,
+  isTranscribing = false,
+  liveTranscript = '',
   maxHeight = '400px'
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change or during live transcription
   useEffect(() => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current;
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, liveTranscript]);
 
-  if (messages.length === 0 && !isLoading) {
+  if (messages.length === 0 && !isLoading && !isTranscribing) {
     return (
       <Card className="p-6 flex items-center justify-center">
         <p className="text-muted-foreground text-center">
@@ -76,6 +80,23 @@ const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
               )}
             </div>
           ))}
+          
+          {/* Live transcription */}
+          {isTranscribing && liveTranscript && (
+            <div className="flex justify-end gap-3">
+              <div className="relative max-w-[80%] px-4 py-2 rounded-lg bg-primary/50 text-primary-foreground ml-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Mic className="h-3 w-3 animate-pulse" />
+                  <span className="text-xs">Transcribing...</span>
+                </div>
+                <p className="text-sm whitespace-pre-wrap">{liveTranscript}</p>
+              </div>
+              
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary/20 text-primary">ME</AvatarFallback>
+              </Avatar>
+            </div>
+          )}
           
           {isLoading && (
             <div className="flex justify-center p-2">
