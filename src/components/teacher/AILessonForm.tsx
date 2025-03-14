@@ -6,7 +6,7 @@ import { LessonFormValues } from './lesson-editor/useLessonForm';
 import { LessonPreview } from './LessonPreview';
 import GenerationSettingsForm from './lesson-ai/GenerationSettingsForm';
 import ContentPreview from './lesson-ai/ContentPreview';
-import { useAIGeneration } from './lesson-ai/useAIGeneration';
+import { useAIGeneration } from './lesson-ai/hooks/useAIGeneration';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuizData } from './preview/useQuizData';
@@ -23,6 +23,12 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'generate' | 'preview' | 'student'>('generate');
   const [editMode, setEditMode] = useState(false);
+  
+  // Log the title when it changes to help with debugging
+  useEffect(() => {
+    console.log('AILessonForm received title:', title);
+  }, [title]);
+  
   const {
     generating,
     generatedContent,
@@ -84,6 +90,9 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
   const isReplicateKeyMissing = !import.meta.env.VITE_REPLICATE_API_KEY;
   const isOpenAIKeyMissing = !import.meta.env.VITE_OPENAI_API_KEY;
 
+  // Alert for missing title
+  const isTitleMissing = !title || title.trim() === '';
+
   return <div className="space-y-6">
       {(isReplicateKeyMissing || isOpenAIKeyMissing) && (
         <Alert variant="destructive" className="mb-4">
@@ -92,6 +101,15 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
             {isReplicateKeyMissing && "Replicate API key is missing. Please set VITE_REPLICATE_API_KEY in your .env file."}
             {isOpenAIKeyMissing && !isReplicateKeyMissing && "OpenAI API key is missing. Please set VITE_OPENAI_API_KEY in your .env file."}
             {isReplicateKeyMissing && isOpenAIKeyMissing && " OpenAI API key is also missing. Both keys are required for full functionality."}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {isTitleMissing && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Please set a lesson title in the "Basic Information" tab before generating content.
           </AlertDescription>
         </Alert>
       )}

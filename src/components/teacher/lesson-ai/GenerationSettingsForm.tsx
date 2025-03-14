@@ -72,7 +72,9 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
             <p>Please set a title in the basic information tab first</p>
           </div>
         ) : (
-          <p className="p-3 bg-muted rounded-md">{title || "Untitled English Lesson"}</p>
+          <div className="p-3 bg-muted rounded-md flex">
+            <p className="font-medium">{title}</p>
+          </div>
         )}
       </div>
       
