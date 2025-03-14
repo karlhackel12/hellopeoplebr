@@ -4,11 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateNextReview, calculatePoints } from '@/utils/spacedRepetition';
 
+interface ReviewResult {
+  reviewStat: any;
+  points: number;
+  nextReviewDate: Date;
+}
+
 export const useSpacedRepetition = () => {
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Get current user ID on component mount
   useEffect(() => {
     const fetchUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -20,7 +25,6 @@ export const useSpacedRepetition = () => {
     fetchUser();
   }, []);
 
-  // Fetch due items for review
   const { data: dueItems, isLoading: isLoadingDueItems, refetch: refetchDueItems } = useQuery({
     queryKey: ['spaced-repetition-due-items', userId],
     queryFn: async () => {
@@ -67,7 +71,6 @@ export const useSpacedRepetition = () => {
     enabled: !!userId
   });
 
-  // Fetch stats for each item
   const { data: itemStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['spaced-repetition-stats', userId],
     queryFn: async () => {
@@ -84,7 +87,6 @@ export const useSpacedRepetition = () => {
         throw error;
       }
       
-      // Group stats by item_id
       const statsByItem = (data || []).reduce((acc, stat) => {
         if (!acc[stat.item_id]) {
           acc[stat.item_id] = [];
@@ -98,7 +100,6 @@ export const useSpacedRepetition = () => {
     enabled: !!userId
   });
 
-  // Get user's total points
   const { data: totalPoints } = useQuery({
     queryKey: ['spaced-repetition-points', userId],
     queryFn: async () => {
@@ -119,7 +120,6 @@ export const useSpacedRepetition = () => {
     enabled: !!userId
   });
 
-  // Get user's review streaks and stats
   const { data: userStats } = useQuery({
     queryKey: ['spaced-repetition-user-stats', userId],
     queryFn: async () => {
@@ -146,7 +146,6 @@ export const useSpacedRepetition = () => {
     enabled: !!userId
   });
 
-  // Add a question to the spaced repetition system
   const addItemMutation = useMutation({
     mutationFn: async ({ questionId, lessonId }: { questionId?: string, lessonId?: string }) => {
       if (!userId) throw new Error('User is not authenticated');
@@ -176,20 +175,18 @@ export const useSpacedRepetition = () => {
     }
   });
 
-  // Record a review of an item
-  const recordReviewMutation = useMutation({
+  const recordReviewMutation = useMutation<ReviewResult, Error, { 
+    itemId: string, 
+    qualityResponse: number, 
+    responseTimeMs: number 
+  }>({
     mutationFn: async ({ 
       itemId, 
       qualityResponse, 
       responseTimeMs 
-    }: { 
-      itemId: string, 
-      qualityResponse: number, 
-      responseTimeMs: number 
     }) => {
       if (!userId) throw new Error('User is not authenticated');
       
-      // Get the most recent stats for this item to use for calculations
       const { data: existingStats, error: statsError } = await supabase
         .from('spaced_repetition_stats')
         .select('*')
@@ -202,11 +199,6 @@ export const useSpacedRepetition = () => {
       
       const latestStat = existingStats && existingStats.length > 0 ? existingStats[0] : null;
       
-      // Calculate next review details using SM-2 algorithm
-      const previousEaseFactor = latestStat?.ease_factor || 2.5;
-      const previousInterval = latestStat?.interval_days || 1;
-      const previousStreak = latestStat?.streak || 0;
-      
       const {
         easeFactor: newEaseFactor,
         intervalDays: newInterval,
@@ -214,15 +206,13 @@ export const useSpacedRepetition = () => {
         nextReviewDate
       } = calculateNextReview(
         qualityResponse, 
-        previousEaseFactor, 
-        previousInterval, 
-        previousStreak
+        latestStat?.ease_factor || 2.5,
+        latestStat?.interval_days || 1,
+        latestStat?.streak || 0
       );
       
-      // Calculate points
       const points = calculatePoints(responseTimeMs, qualityResponse);
       
-      // Insert review statistics
       const { data: reviewStat, error: reviewError } = await supabase
         .from('spaced_repetition_stats')
         .insert({
@@ -240,12 +230,11 @@ export const useSpacedRepetition = () => {
       
       if (reviewError) throw reviewError;
       
-      // Update the item's next review date
       const { error: updateError } = await supabase
         .from('spaced_repetition_items')
         .update({
           next_review_date: nextReviewDate.toISOString(),
-          difficulty: 1 / newEaseFactor // Convert ease factor to difficulty (inverse relationship)
+          difficulty: 1 / newEaseFactor
         })
         .eq('id', itemId)
         .eq('user_id', userId);
@@ -270,7 +259,6 @@ export const useSpacedRepetition = () => {
     }
   });
 
-  // Find or add questions from a completed quiz
   const addQuestionsFromQuizMutation = useMutation({
     mutationFn: async ({ 
       quizId,
@@ -281,7 +269,6 @@ export const useSpacedRepetition = () => {
     }) => {
       if (!userId) throw new Error('User is not authenticated');
       
-      // Fetch all questions for the quiz
       const { data: questions, error: questionsError } = await supabase
         .from('quiz_questions')
         .select('id')
@@ -293,7 +280,6 @@ export const useSpacedRepetition = () => {
         return { added: 0 };
       }
       
-      // Check which questions are already in the system
       const questionIds = questions.map(q => q.id);
       const { data: existingItems, error: existingError } = await supabase
         .from('spaced_repetition_items')
@@ -303,7 +289,6 @@ export const useSpacedRepetition = () => {
       
       if (existingError) throw existingError;
       
-      // Filter out questions that are already in the system
       const existingQuestionIds = (existingItems || []).map(item => item.question_id);
       const newQuestionIds = questionIds.filter(id => !existingQuestionIds.includes(id));
       
@@ -311,7 +296,6 @@ export const useSpacedRepetition = () => {
         return { added: 0 };
       }
       
-      // Add new questions to the system
       const itemsToInsert = newQuestionIds.map(questionId => ({
         user_id: userId,
         question_id: questionId,
@@ -347,7 +331,7 @@ export const useSpacedRepetition = () => {
     userStats,
     isLoading: isLoadingDueItems || isLoadingStats,
     addItem: addItemMutation.mutate,
-    recordReview: recordReviewMutation.mutate,
+    recordReview: recordReviewMutation.mutateAsync,
     addQuestionsFromQuiz: addQuestionsFromQuizMutation.mutate,
     refetchDueItems
   };
