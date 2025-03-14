@@ -1,14 +1,15 @@
+
 import React from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { BookOpen, Clock, ArrowRight } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import AssignmentCard from '@/components/student/AssignmentCard';
 
 const StudentLessons: React.FC = () => {
   // Fetch student assignments (lessons and quizzes)
@@ -77,12 +78,9 @@ const StudentLessons: React.FC = () => {
   const isLoading = loadingAssignments || loadingProgress;
   
   // Filter assignments by type and status
-  const lessonAssignments = assignments?.filter(a => a.lesson_id) || [];
-  const quizAssignments = assignments?.filter(a => a.quiz_id) || [];
-  
+  const pendingAssignments = assignments?.filter(a => a.status === 'not_started') || [];
   const inProgressAssignments = assignments?.filter(a => a.status === 'in_progress') || [];
   const completedAssignments = assignments?.filter(a => a.status === 'completed') || [];
-  const pendingAssignments = assignments?.filter(a => a.status === 'not_started') || [];
 
   function getLessonProgress(lessonId: string) {
     if (!progressData) return null;
@@ -108,83 +106,38 @@ const StudentLessons: React.FC = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            <div className="grid grid-cols-1 gap-4">
-              {isLoading ? (
-                <div className="text-center py-8">Loading assignments...</div>
-              ) : assignments?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No assignments found
-                </div>
-              ) : (
-                assignments?.map((assignment) => (
-                  <AssignmentCard 
-                    key={assignment.id}
-                    assignment={assignment}
-                    progress={assignment.lesson_id ? getLessonProgress(assignment.lesson_id) : null}
-                  />
-                ))
-              )}
-            </div>
+            <RenderAssignments 
+              assignments={assignments} 
+              isLoading={isLoading} 
+              getProgress={getLessonProgress} 
+            />
           </TabsContent>
           
           <TabsContent value="pending" className="mt-6">
-            <div className="grid grid-cols-1 gap-4">
-              {isLoading ? (
-                <div className="text-center py-8">Loading...</div>
-              ) : pendingAssignments.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No pending assignments
-                </div>
-              ) : (
-                pendingAssignments.map((assignment) => (
-                  <AssignmentCard 
-                    key={assignment.id}
-                    assignment={assignment}
-                    progress={assignment.lesson_id ? getLessonProgress(assignment.lesson_id) : null}
-                  />
-                ))
-              )}
-            </div>
+            <RenderAssignments 
+              assignments={pendingAssignments} 
+              isLoading={isLoading} 
+              emptyMessage="No pending assignments"
+              getProgress={getLessonProgress} 
+            />
           </TabsContent>
           
           <TabsContent value="in-progress" className="mt-6">
-            <div className="grid grid-cols-1 gap-4">
-              {isLoading ? (
-                <div className="text-center py-8">Loading...</div>
-              ) : inProgressAssignments.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No assignments in progress
-                </div>
-              ) : (
-                inProgressAssignments.map((assignment) => (
-                  <AssignmentCard 
-                    key={assignment.id}
-                    assignment={assignment}
-                    progress={assignment.lesson_id ? getLessonProgress(assignment.lesson_id) : null}
-                  />
-                ))
-              )}
-            </div>
+            <RenderAssignments 
+              assignments={inProgressAssignments} 
+              isLoading={isLoading}
+              emptyMessage="No assignments in progress" 
+              getProgress={getLessonProgress} 
+            />
           </TabsContent>
           
           <TabsContent value="completed" className="mt-6">
-            <div className="grid grid-cols-1 gap-4">
-              {isLoading ? (
-                <div className="text-center py-8">Loading...</div>
-              ) : completedAssignments.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No completed assignments
-                </div>
-              ) : (
-                completedAssignments.map((assignment) => (
-                  <AssignmentCard 
-                    key={assignment.id}
-                    assignment={assignment}
-                    progress={assignment.lesson_id ? getLessonProgress(assignment.lesson_id) : null}
-                  />
-                ))
-              )}
-            </div>
+            <RenderAssignments 
+              assignments={completedAssignments} 
+              isLoading={isLoading}
+              emptyMessage="No completed assignments" 
+              getProgress={getLessonProgress} 
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -192,78 +145,45 @@ const StudentLessons: React.FC = () => {
   );
 };
 
-interface AssignmentCardProps {
-  assignment: any;
-  progress: any;
+interface RenderAssignmentsProps {
+  assignments?: any[];
+  isLoading: boolean;
+  emptyMessage?: string;
+  getProgress: (lessonId: string) => any;
 }
 
-const AssignmentCard: React.FC<AssignmentCardProps> = ({ assignment, progress }) => {
-  const isLesson = !!assignment.lesson_id;
-  const assignmentTitle = isLesson 
-    ? assignment.lessons?.title 
-    : assignment.quizzes?.title;
-  
-  const assignmentType = isLesson ? 'Lesson' : 'Quiz';
-  const viewPath = isLesson 
-    ? `/student/lessons/view/${assignment.lesson_id}` 
-    : `/student/quizzes/view/${assignment.quiz_id}`;
-  
-  let statusBadge;
-  switch (assignment.status) {
-    case 'not_started':
-      statusBadge = <Badge variant="outline">Not Started</Badge>;
-      break;
-    case 'in_progress':
-      statusBadge = <Badge variant="secondary">In Progress</Badge>;
-      break;
-    case 'completed':
-      statusBadge = <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>;
-      break;
-    default:
-      statusBadge = <Badge variant="outline">Pending</Badge>;
+const RenderAssignments: React.FC<RenderAssignmentsProps> = ({ 
+  assignments, 
+  isLoading, 
+  emptyMessage = "No assignments found", 
+  getProgress 
+}) => {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+      </div>
+    );
   }
-
+  
+  if (!assignments || assignments.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {emptyMessage}
+      </div>
+    );
+  }
+  
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <CardTitle>{assignment.title}</CardTitle>
-            <CardDescription>
-              {assignmentType}: {assignmentTitle}
-            </CardDescription>
-          </div>
-          {statusBadge}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {assignment.description && (
-          <p className="text-sm text-muted-foreground mb-4">{assignment.description}</p>
-        )}
-        
-        <div className="flex flex-wrap gap-2 mb-4">
-          {assignment.due_date && (
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="mr-1 h-4 w-4" />
-              Due: {format(new Date(assignment.due_date), 'MMM d, yyyy')}
-            </div>
-          )}
-          
-          {isLesson && assignment.lessons?.estimated_minutes && (
-            <div className="flex items-center text-sm text-muted-foreground">
-              <BookOpen className="mr-1 h-4 w-4" />
-              {assignment.lessons.estimated_minutes} min
-            </div>
-          )}
-        </div>
-        
-        <Button asChild>
-          <Link to={viewPath}>
-            View {assignmentType} <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 gap-4">
+      {assignments.map((assignment) => (
+        <AssignmentCard 
+          key={assignment.id}
+          assignment={assignment}
+          progress={assignment.lesson_id ? getProgress(assignment.lesson_id) : null}
+        />
+      ))}
+    </div>
   );
 };
 

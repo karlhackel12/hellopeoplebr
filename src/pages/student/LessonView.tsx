@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import LessonContentTab from '@/components/teacher/preview/LessonContentTab';
@@ -13,17 +13,27 @@ import { useAssignmentData } from './hooks/useAssignmentData';
 import LessonHeader from './components/LessonHeader';
 import LessonAssignmentCard from './components/LessonAssignmentCard';
 import LessonCardTransition from '@/components/student/LessonCardTransition';
+import ProgressTracker from '@/components/teacher/preview/ProgressTracker';
 
 const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = React.useState('content');
-  const [completedSections, setCompletedSections] = React.useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState('content');
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
   
   const { lesson, lessonLoading, quiz, quizQuestions } = useLessonData(lessonId);
   const { lessonProgress, updateProgress } = useLessonProgress(lessonId);
   const { assignment, updateAssignmentStatus } = useAssignmentData(lessonId);
+
+  // Calculate number of sections for the progress tracker
+  const calculateTotalSections = () => {
+    if (!lesson?.content) return 0;
+    
+    // Count level 2 headings (## Text) as they represent sections
+    const matches = lesson.content.match(/^## .+$/gm);
+    return matches ? matches.length : 0;
+  };
 
   useEffect(() => {
     if (lessonProgress?.completed_sections) {
@@ -39,7 +49,7 @@ const LessonView: React.FC = () => {
     }
   }, [assignment]);
 
-  const handleSectionComplete = (sectionId: string) => {
+  const handleSectionComplete = async (sectionId: string) => {
     let newCompletedSections: string[];
     
     if (completedSections.includes(sectionId)) {
@@ -49,18 +59,27 @@ const LessonView: React.FC = () => {
     }
     
     setCompletedSections(newCompletedSections);
-    setIsUpdating(true);
-    updateProgress({ completed: false, sections: newCompletedSections });
-    setIsUpdating(false);
-  };
-  
-  const handleMarkComplete = () => {
+    
     try {
       setIsUpdating(true);
-      updateProgress({ completed: true, sections: completedSections });
+      await updateProgress({ completed: false, sections: newCompletedSections });
+    } catch (error) {
+      console.error('Error updating section completion:', error);
+      toast.error('Failed to update progress');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+  const handleMarkComplete = async () => {
+    try {
+      setIsUpdating(true);
+      await updateProgress({ completed: true, sections: completedSections });
+      
       if (assignment) {
-        updateAssignmentStatus(assignment.id, 'completed', true);
+        await updateAssignmentStatus(assignment.id, 'completed', true);
       }
+      
       toast.success('Lesson marked as complete!');
     } catch (error) {
       console.error('Error marking lesson as complete:', error);
@@ -77,11 +96,8 @@ const LessonView: React.FC = () => {
   if (lessonLoading) {
     return (
       <StudentLayout>
-        <div className="text-center py-12">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
-          </div>
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
         </div>
       </StudentLayout>
     );
@@ -99,6 +115,8 @@ const LessonView: React.FC = () => {
       </StudentLayout>
     );
   }
+
+  const totalSections = calculateTotalSections();
 
   return (
     <StudentLayout>
@@ -122,6 +140,13 @@ const LessonView: React.FC = () => {
               title={assignment.title}
               description={assignment.description}
               dueDate={assignment.due_date}
+            />
+          )}
+
+          {totalSections > 0 && (
+            <ProgressTracker 
+              completedSections={completedSections} 
+              totalSections={totalSections}
             />
           )}
 
