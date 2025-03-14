@@ -1,116 +1,72 @@
 
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from '@/components/teacher/lesson-editor/useLessonForm';
+import { toast } from 'sonner';
+import { LessonFormValues } from '../useAIGeneration';
+import { GenerationPhase } from '../types';
 
 /**
- * Hook for handling generation actions like start, cancel, and retry
+ * Hook for handling generation actions
  */
 export const useGenerationActions = (
-  title: string, 
+  title: string,
   level: 'beginner' | 'intermediate' | 'advanced',
   instructions: string,
   form: UseFormReturn<LessonFormValues>,
   setGenerating: (generating: boolean) => void,
-  setGenerationStatus: (status: string) => void,
-  setGenerationPhase: (phase: string) => void,
+  setGenerationStatus: (status: 'idle' | 'pending' | 'processing' | 'completed' | 'failed') => void,
+  setGenerationPhase: (phase: GenerationPhase) => void,
   setProgressPercentage: (percentage: number) => void,
   setError: (error: string | null) => void,
   generationHandler: any
 ) => {
-  // Function to start generation with proper sequence
-  const handleGenerate = async () => {
-    // Check if title is valid first
-    if (!title?.trim()) {
-      setError('Please provide a lesson title before generating content');
+  // Handle generation start
+  const handleGenerate = useCallback(() => {
+    // Validate input
+    if (!title || title.trim() === '') {
+      toast.error('Missing title', {
+        description: 'Please enter a lesson title before generating content'
+      });
       return;
     }
 
+    // Start generation
     setGenerating(true);
     setGenerationStatus('pending');
     setGenerationPhase('starting');
     setProgressPercentage(10);
     setError(null);
-    
-    try {
-      // Generate a new timestamp for this generation
-      const timestamp = new Date().toISOString();
-      
-      // First update settings with current values
-      generationHandler.handleSettingsChange({
-        title: title,
-        grade: level,
-        subject: 'English',
-        language: 'English',
-        timestamp: timestamp,
-        additionalInstructions: instructions
-      });
-      
-      // Then start generation
-      console.log('Starting generation for:', {
-        title,
-        level,
-        instructions,
-        timestamp
-      });
-      
-      // Update phase to generate
-      setGenerationPhase('generating');
-      setProgressPercentage(30);
-      
-      const result = await generationHandler.handleGenerate();
-      
-      // If we get here, the generation was successful
-      setGenerationPhase('complete');
-      setProgressPercentage(100);
-      setGenerationStatus('completed');
-      
-      // Update form with generated content (this should be done by the handler)
-      const structuredContent = form.watch('structuredContent');
-      if (structuredContent) {
-        // Let the parent hook handle this
-      }
-      
-    } catch (error) {
-      console.error('Generation error:', error);
-      setError(error.message || 'An error occurred during generation');
-      setGenerationStatus('failed');
-      setGenerationPhase('error');
-      setGenerating(false);
-    }
-  };
 
-  // Function to cancel generation
-  const handleCancelGeneration = () => {
+    // Call the generation handler
+    generationHandler.handleGenerate();
+  }, [title, setGenerating, setGenerationStatus, setGenerationPhase, setProgressPercentage, setError, generationHandler]);
+
+  // Handle generation cancellation
+  const handleCancelGeneration = useCallback(() => {
     generationHandler.cancelGeneration();
-  };
-  
-  // Function to retry generation
-  const handleRetryGeneration = async () => {
+    setGenerating(false);
+    setGenerationStatus('idle');
+    setGenerationPhase('idle');
+    setProgressPercentage(0);
+    
+    toast.info('Generation cancelled', {
+      description: 'Content generation was cancelled'
+    });
+  }, [generationHandler, setGenerating, setGenerationStatus, setGenerationPhase, setProgressPercentage]);
+
+  // Handle generation retry
+  const handleRetryGeneration = useCallback(() => {
+    setError(null);
+    generationHandler.retryGeneration();
     setGenerating(true);
     setGenerationStatus('pending');
-    setError(null);
+    setGenerationPhase('starting');
+    setProgressPercentage(10);
     
-    try {
-      // Update settings before retrying
-      const timestamp = new Date().toISOString();
-      generationHandler.handleSettingsChange({
-        title: title,
-        grade: level,
-        subject: 'English',
-        language: 'English',
-        timestamp: timestamp,
-        additionalInstructions: instructions
-      });
-      
-      await generationHandler.retryGeneration();
-    } catch (error) {
-      console.error('Retry error:', error);
-      setError(error.message || 'An error occurred during retry');
-      setGenerationStatus('failed');
-      setGenerating(false);
-    }
-  };
+    toast.info('Retrying generation', {
+      description: 'Attempting to generate content again'
+    });
+  }, [generationHandler, setError, setGenerating, setGenerationStatus, setGenerationPhase, setProgressPercentage]);
 
   return {
     handleGenerate,

@@ -2,11 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LessonFormValues } from './lesson-editor/useLessonForm';
 import { LessonPreview } from './LessonPreview';
 import GenerationSettingsForm from './lesson-ai/GenerationSettingsForm';
 import ContentPreview from './lesson-ai/ContentPreview';
-import { useAIGeneration } from './lesson-ai/hooks/useAIGeneration';
+import { useAIGeneration, LessonFormValues } from './lesson-ai/hooks/useAIGeneration';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuizData } from './preview/useQuizData';

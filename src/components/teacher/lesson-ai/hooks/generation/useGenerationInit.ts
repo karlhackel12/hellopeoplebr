@@ -1,7 +1,7 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from '@/components/teacher/lesson-editor/useLessonForm';
+import { LessonFormValues } from '../useAIGeneration';
 import { GeneratedLessonContent } from '../../types';
 
 /**

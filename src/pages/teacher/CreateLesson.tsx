@@ -113,7 +113,7 @@ const CreateLesson: React.FC = () => {
                   title: 'Untitled Lesson',
                   content: '',
                   is_published: false,
-                  contentSource: 'ai_generated', // Changed from 'manual' to 'ai_generated' to fix type error
+                  contentSource: 'ai_generated', // Using the correct type
                 });
               }}
               className="mt-4"
