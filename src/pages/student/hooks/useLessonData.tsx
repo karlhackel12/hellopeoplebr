@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Question } from '@/components/teacher/quiz/types';
+import { Question, QuestionOption } from '@/components/teacher/quiz/types';
 
 export const useLessonData = (lessonId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -42,9 +42,9 @@ export const useLessonData = (lessonId: string | undefined) => {
         `)
         .eq('lesson_id', lessonId)
         .eq('is_published', true)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     },
     enabled: !!lessonId
@@ -67,7 +67,8 @@ export const useLessonData = (lessonId: string | undefined) => {
           options:quiz_question_options (
             id,
             option_text,
-            is_correct
+            is_correct,
+            order_index
           )
         `)
         .eq('quiz_id', quiz.id)
@@ -82,7 +83,12 @@ export const useLessonData = (lessonId: string | undefined) => {
         question_type: q.question_type,
         points: q.points,
         order_index: q.order_index,
-        options: q.options
+        options: q.options.map((option: any) => ({
+          id: option.id,
+          option_text: option.option_text,
+          is_correct: option.is_correct,
+          order_index: option.order_index || 0 // Add default value for order_index if it's missing
+        }))
       }));
       
       return formattedQuestions;
