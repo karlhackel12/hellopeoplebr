@@ -54,19 +54,20 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
 interface StudentSidebarProps {
   collapsed?: boolean;
   onToggle?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  isMobileView?: boolean;
 }
 
 const StudentSidebar: React.FC<StudentSidebarProps> = ({ 
   collapsed = false, 
-  onToggle 
+  onToggle,
+  isOpen = false,
+  onClose,
+  isMobileView = false
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -112,9 +113,9 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
   };
 
   const sidebarClasses = cn(
-    "fixed top-0 left-0 z-40 h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
-    collapsed ? "w-20" : "w-64",
-    mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+    "h-screen border-r border-sidebar-border transition-all duration-300 shadow-md",
+    isMobileView ? "w-full" : (collapsed ? "w-20" : "w-64"),
+    !isMobileView && "fixed top-0 left-0 z-40"
   );
 
   const sidebarStyles = {
@@ -123,28 +124,28 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
   };
 
   return (
-    <>
-      <Button 
-        variant="outline" 
-        size="icon" 
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden shadow-md"
-      >
-        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
-
-      <aside className={sidebarClasses} style={sidebarStyles}>
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
-            <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
-              <Logo size="sm" />
+    <aside className={sidebarClasses} style={sidebarStyles}>
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
+          <div className={cn("transition-opacity", collapsed ? "opacity-0 hidden" : "opacity-100")}>
+            <Logo size="sm" />
+          </div>
+          {collapsed ? (
+            <div className="mx-auto">
+              <Logo iconOnly size="sm" />
             </div>
-            {collapsed ? (
-              <div className="mx-auto">
-                <Logo iconOnly size="sm" />
-              </div>
-            ) : null}
-            
+          ) : null}
+          
+          {isMobileView ? (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onClose}
+              className="ml-auto"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          ) : (
             <Button
               variant="ghost"
               size="icon"
@@ -157,47 +158,40 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
                 )}
               />
             </Button>
-          </div>
-          
-          <nav className="flex-grow p-3 overflow-y-auto">
-            <div className="space-y-1">
-              {navigationLinks.map((link) => (
-                <SidebarLink
-                  key={link.name}
-                  href={link.href}
-                  icon={link.icon}
-                  active={isRouteActive(link.href)}
-                  collapsed={collapsed}
-                >
-                  {link.name}
-                </SidebarLink>
-              ))}
-            </div>
-          </nav>
-          
-          <div className="p-3 border-t border-sidebar-border">
-            <Button 
-              variant="ghost" 
-              className={cn(
-                "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
-                collapsed ? "justify-center" : "justify-start gap-3"
-              )}
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              {!collapsed && <span className="font-medium">Logout</span>}
-            </Button>
-          </div>
+          )}
         </div>
-      </aside>
-      
-      {mobileOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-    </>
+        
+        <nav className="flex-grow p-3 overflow-y-auto">
+          <div className="space-y-1">
+            {navigationLinks.map((link) => (
+              <SidebarLink
+                key={link.name}
+                href={link.href}
+                icon={link.icon}
+                active={isRouteActive(link.href)}
+                collapsed={collapsed}
+              >
+                {link.name}
+              </SidebarLink>
+            ))}
+          </div>
+        </nav>
+        
+        <div className="p-3 border-t border-sidebar-border">
+          <Button 
+            variant="ghost" 
+            className={cn(
+              "w-full text-destructive hover:text-destructive hover:bg-destructive/10", 
+              collapsed ? "justify-center" : "justify-start gap-3"
+            )}
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5" />
+            {!collapsed && <span className="font-medium">Logout</span>}
+          </Button>
+        </div>
+      </div>
+    </aside>
   );
 };
 

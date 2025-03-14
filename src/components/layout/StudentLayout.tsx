@@ -1,19 +1,31 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StudentSidebar from './StudentSidebar';
+import BottomNavigation from './BottomNavigation';
+import MobileHeader from './MobileHeader';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StudentLayoutProps {
   children: ReactNode;
+  pageTitle?: string;
 }
 
-const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
+const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    // Close mobile menu when route changes
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     // Check if on mobile and collapse sidebar by default
@@ -75,6 +87,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -92,18 +108,53 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <StudentSidebar 
-        collapsed={sidebarCollapsed} 
-        onToggle={toggleSidebar}
+      {!isMobile && (
+        <StudentSidebar 
+          collapsed={sidebarCollapsed} 
+          onToggle={toggleSidebar}
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+        />
+      )}
+      
+      <MobileHeader 
+        onMenuToggle={toggleMobileMenu} 
+        pageTitle={pageTitle} 
       />
       
       <main 
-        className={`flex-grow transition-all duration-300 pt-16 md:pt-6 px-4 md:px-6 lg:px-8 pb-16 md:pb-10 overflow-x-hidden ${
-          sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
+        className={`flex-grow transition-all duration-300 ${
+          isMobile 
+            ? 'pt-16 pb-20 px-4' 
+            : `pt-6 pb-10 px-4 md:px-6 lg:px-8 ${
+                sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
+              }`
         }`}
       >
         <div className="w-full">{children}</div>
       </main>
+      
+      <BottomNavigation />
+      
+      {isMobile && mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div 
+            className="absolute inset-y-0 left-0 w-64 bg-background border-r border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <StudentSidebar 
+              collapsed={false} 
+              onToggle={() => {}}
+              isOpen={true}
+              onClose={() => setMobileMenuOpen(false)}
+              isMobileView
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
