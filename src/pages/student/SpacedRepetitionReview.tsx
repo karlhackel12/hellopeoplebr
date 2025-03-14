@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
@@ -120,6 +121,7 @@ const SpacedRepetitionReview: React.FC = () => {
     const responseTimeMs = startTime ? endTime - startTime : 5000;
     
     try {
+      // recordReview now returns a Promise with a result
       const result = await recordReview({
         itemId: currentItem.id,
         qualityResponse: rating,
@@ -132,6 +134,7 @@ const SpacedRepetitionReview: React.FC = () => {
         setCorrectCount(prev => prev + 1);
       }
       
+      // Now we can safely access result.points
       if (result && result.points) {
         setPoints(result.points);
         setTotalPointsEarned(prev => prev + result.points);
