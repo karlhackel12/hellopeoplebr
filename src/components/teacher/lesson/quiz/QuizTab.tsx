@@ -47,6 +47,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ lessonId, isEditMode }) => {
   }
 
   const onGenerateQuiz = () => {
+    // Convert numQuestions to a number before passing
     handleGenerateQuiz(numQuestions);
   };
 

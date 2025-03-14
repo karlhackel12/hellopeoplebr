@@ -1,59 +1,56 @@
 
-import { useQuizGeneration } from './quiz/useQuizGeneration';
-import { useQuizFetching } from './quiz/useQuizFetching';
-import { useQuizManagement } from './quiz/useQuizManagement';
-import { useQuizContent } from './quiz/useQuizContent';
-import { useSmartQuizGeneration } from './quiz/useSmartQuizGeneration';
+import { useState, useEffect } from 'react';
+import { useQuizGenerationWorkflow } from './quiz/useQuizGenerationWorkflow';
 
-export const useQuizHandler = (lessonId: string) => {
-  const { 
-    generateQuiz, 
-    loading: generationLoading, 
-    isRetrying,
-    error: generationError 
-  } = useQuizGeneration();
-  
-  const { 
-    fetchQuizQuestions, 
-    fetchQuizDetails, 
-    loading: fetchLoading, 
-    error: fetchError 
-  } = useQuizFetching(lessonId);
-  
-  const { 
-    saveQuizTitle, 
-    deleteQuiz, 
-    publishQuiz,
-    unpublishQuiz,
-    saving, 
-    error: managementError 
-  } = useQuizManagement(lessonId);
+export const useQuizHandler = (lessonId?: string) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [quizGenerated, setQuizGenerated] = useState(false);
 
   const {
-    getLessonContent,
-    isContentLoaded
-  } = useQuizContent();
+    generateQuizFromPrompt,
+    loading,
+    isRetrying,
+    contentLoadingMessage,
+    loadingError,
+    numQuestions,
+    setNumQuestions,
+  } = useQuizGenerationWorkflow();
 
-  const { 
-    generateSmartQuiz,
-    isRetrying: smartQuizRetrying,
-    setIsRetrying: setSmartQuizRetrying
-  } = useSmartQuizGeneration();
+  // Update local loading state based on workflow loading state
+  useEffect(() => {
+    setIsLoading(loading);
+  }, [loading]);
+
+  // Update local error state based on workflow error state
+  useEffect(() => {
+    setError(loadingError);
+  }, [loadingError]);
+
+  const handleGenerateQuiz = async () => {
+    if (!lessonId) {
+      setError("Lesson ID is required to generate a quiz");
+      return;
+    }
+
+    try {
+      const result = await generateQuizFromPrompt(numQuestions);
+      if (result) {
+        setQuizGenerated(true);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to generate quiz");
+    }
+  };
 
   return {
-    fetchLessonContent: getLessonContent,
-    generateSmartQuiz,
-    generateQuiz,
-    fetchQuizQuestions,
-    fetchQuizDetails,
-    saveQuizTitle,
-    deleteQuiz,
-    publishQuiz,
-    unpublishQuiz,
-    loading: generationLoading || fetchLoading,
-    saving,
-    isRetrying: isRetrying || smartQuizRetrying,
-    setIsRetrying: setSmartQuizRetrying,
-    error: generationError || fetchError || managementError
+    isLoading,
+    error,
+    quizGenerated,
+    isRetrying,
+    contentLoadingMessage,
+    numQuestions,
+    setNumQuestions,
+    handleGenerateQuiz,
   };
 };

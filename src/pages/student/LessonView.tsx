@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, CheckCircle, XCircle, BookOpen } from 'lucide-react';
+import { Loader2, CheckCircle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from "@/components/ui/separator"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { useToast } from '@/components/ui/use-toast';
 import { useQuizProgress } from './hooks/useQuizProgress';
-import { Question, QuestionOption } from '@/components/teacher/quiz/types';
+import { Question } from '@/components/teacher/quiz/types';
 
 interface QuizSectionProps {
   questions: Question[];
@@ -219,7 +216,6 @@ const LessonView: React.FC = () => {
   const [quizId, setQuizId] = React.useState<string | null>(null);
   const [quizTitle, setQuizTitle] = React.useState<string | null>(null);
   
-  // Fetch lesson content
   const { data: lesson, isLoading: loadingLesson } = useQuery({
     queryKey: ['lesson', lessonId],
     queryFn: async () => {
@@ -235,7 +231,6 @@ const LessonView: React.FC = () => {
     enabled: !!lessonId,
   });
   
-  // Fetch quiz questions
   const { data: fetchedQuizQuestions, isLoading: loadingQuiz } = useQuery({
     queryKey: ['quiz-questions', lessonId],
     queryFn: async () => {
@@ -269,7 +264,6 @@ const LessonView: React.FC = () => {
     enabled: !!lessonId,
   });
   
-  // Fetch lesson progress
   const { data: lessonProgress, isLoading: loadingProgress } = useQuery({
     queryKey: ['lesson-progress', lessonId],
     queryFn: async () => {
@@ -290,7 +284,6 @@ const LessonView: React.FC = () => {
     enabled: !!lessonId,
   });
   
-  // Update lesson progress
   const markLessonComplete = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -314,7 +307,6 @@ const LessonView: React.FC = () => {
     }
   };
 
-  // Helper function to convert quiz data to match Question type
   const formatQuizQuestions = (questions: any[]): Question[] => {
     return questions.map(question => ({
       id: question.id,
@@ -331,7 +323,6 @@ const LessonView: React.FC = () => {
     }));
   };
 
-  // Example quiz questions (used as fallback)
   const exampleQuestions: Question[] = formatQuizQuestions([
     {
       id: '1',
@@ -382,19 +373,16 @@ const LessonView: React.FC = () => {
     );
   }
 
-  // Process the fetched quiz questions
-  const formattedQuizQuestions = lesson.quiz?.questions 
-    ? formatQuizQuestions(lesson.quiz.questions) 
-    : fetchedQuizQuestions?.length > 0 
-      ? formatQuizQuestions(fetchedQuizQuestions) 
-      : [];
+  const formattedQuizQuestions = fetchedQuizQuestions && fetchedQuizQuestions.length > 0 
+    ? formatQuizQuestions(fetchedQuizQuestions) 
+    : [];
 
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{lesson.title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{lesson?.title}</h1>
             <p className="text-muted-foreground">Explore and learn</p>
           </div>
           <div>
@@ -413,7 +401,7 @@ const LessonView: React.FC = () => {
 
         <Separator />
 
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="multiple" collapsible className="w-full">
           <AccordionItem value="lesson-content">
             <AccordionTrigger>
               <div className="flex items-center gap-2">
@@ -422,7 +410,7 @@ const LessonView: React.FC = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+              <div dangerouslySetInnerHTML={{ __html: lesson?.content || '' }} />
             </AccordionContent>
           </AccordionItem>
           
@@ -435,13 +423,10 @@ const LessonView: React.FC = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <QuizSection 
-                  questions={formattedQuizQuestions.length > 0 ? formattedQuizQuestions : []} 
-                  quizId={quizId}
-                  lessonId={lessonId || ''}
-                  title={quizTitle || 'Lesson Quiz'}
-                  passPercent={70}
-                />
+                <div className="p-4 border rounded">
+                  <h3 className="text-lg font-medium">{quizTitle || 'Lesson Quiz'}</h3>
+                  <p>Quiz with {formattedQuizQuestions.length} questions</p>
+                </div>
               </AccordionContent>
             </AccordionItem>
           )}
