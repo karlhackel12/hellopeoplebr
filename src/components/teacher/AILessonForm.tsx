@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,10 +11,12 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuizData } from './preview/useQuizData';
 import QuizTab from './preview/QuizTab';
+
 interface AILessonFormProps {
   form: UseFormReturn<LessonFormValues>;
   title: string;
 }
+
 const AILessonForm: React.FC<AILessonFormProps> = ({
   form,
   title
@@ -63,19 +66,35 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
       clearErrors();
     }
   }, [activeTab, error, clearErrors]);
+
   const toggleEditMode = () => {
     setEditMode(!editMode);
     if (!editMode) {
       form.setValue('contentSource', 'mixed');
     }
   };
+
   useEffect(() => {
     if (activeTab === 'student') {
       setEditMode(false);
     }
   }, [activeTab]);
+
+  // Check if the required API keys are set
+  const isReplicateKeyMissing = !import.meta.env.VITE_REPLICATE_API_KEY;
+  const isOpenAIKeyMissing = !import.meta.env.VITE_OPENAI_API_KEY;
+
   return <div className="space-y-6">
-      {!import.meta.env.VITE_REPLICATE_API_KEY}
+      {(isReplicateKeyMissing || isOpenAIKeyMissing) && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {isReplicateKeyMissing && "Replicate API key is missing. Please set VITE_REPLICATE_API_KEY in your .env file."}
+            {isOpenAIKeyMissing && !isReplicateKeyMissing && "OpenAI API key is missing. Please set VITE_OPENAI_API_KEY in your .env file."}
+            {isReplicateKeyMissing && isOpenAIKeyMissing && " OpenAI API key is also missing. Both keys are required for full functionality."}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">
@@ -91,7 +110,21 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
         </TabsList>
         
         <TabsContent value="generate" className="pt-4">
-          <GenerationSettingsForm title={title} level={level} setLevel={setLevel} instructions={instructions} setInstructions={setInstructions} handleGenerate={handleGenerate} handleCancel={generating ? handleCancelGeneration : undefined} handleRetry={generationPhase === 'error' ? handleRetryGeneration : undefined} generating={generating} error={error} generationPhase={generationPhase} progressPercentage={progressPercentage} statusMessage={statusMessage} />
+          <GenerationSettingsForm 
+            title={title} 
+            level={level} 
+            setLevel={setLevel} 
+            instructions={instructions} 
+            setInstructions={setInstructions} 
+            handleGenerate={handleGenerate} 
+            handleCancel={generating ? handleCancelGeneration : undefined} 
+            handleRetry={generationPhase === 'error' ? handleRetryGeneration : undefined} 
+            generating={generating} 
+            error={error} 
+            generationPhase={generationPhase} 
+            progressPercentage={progressPercentage} 
+            statusMessage={statusMessage} 
+          />
         </TabsContent>
         
         <TabsContent value="preview" className="pt-4">
@@ -115,4 +148,5 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
       </Tabs>
     </div>;
 };
+
 export default AILessonForm;
