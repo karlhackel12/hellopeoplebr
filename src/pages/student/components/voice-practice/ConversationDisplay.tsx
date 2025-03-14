@@ -3,9 +3,10 @@ import React, { useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Mic } from 'lucide-react';
+import { Loader2, Mic, Check, Clock, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { ConversationMessage } from '../../hooks/useVoiceConversation';
+import { Badge } from '@/components/ui/badge';
 
 interface ConversationDisplayProps {
   messages: ConversationMessage[];
@@ -13,6 +14,8 @@ interface ConversationDisplayProps {
   isTranscribing?: boolean;
   liveTranscript?: string;
   maxHeight?: string;
+  activeVocabulary?: string[];
+  highlightTopics?: boolean;
 }
 
 const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
@@ -20,7 +23,9 @@ const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
   isLoading = false,
   isTranscribing = false,
   liveTranscript = '',
-  maxHeight = '400px'
+  maxHeight = '400px',
+  activeVocabulary = [],
+  highlightTopics = false
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -32,12 +37,54 @@ const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
     }
   }, [messages, liveTranscript]);
 
+  // Highlight vocabulary words in message content
+  const highlightVocabulary = (content: string) => {
+    if (!highlightTopics || activeVocabulary.length === 0) {
+      return <p className="text-sm whitespace-pre-wrap">{content}</p>;
+    }
+
+    // Simple word highlighting (could be enhanced with proper tokenization)
+    const parts = [];
+    let lastIndex = 0;
+    
+    // Create a regex pattern with word boundaries
+    const pattern = new RegExp(`\\b(${activeVocabulary.join('|')})\\b`, 'gi');
+    
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(<span key={`text-${lastIndex}`}>{content.substring(lastIndex, match.index)}</span>);
+      }
+      parts.push(
+        <span 
+          key={`highlight-${match.index}`} 
+          className="bg-yellow-100 px-0.5 rounded"
+        >
+          {match[0]}
+        </span>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    
+    if (lastIndex < content.length) {
+      parts.push(<span key={`text-${lastIndex}`}>{content.substring(lastIndex)}</span>);
+    }
+    
+    return <p className="text-sm whitespace-pre-wrap">{parts}</p>;
+  };
+
   if (messages.length === 0 && !isLoading && !isTranscribing) {
     return (
-      <Card className="p-6 flex items-center justify-center">
-        <p className="text-muted-foreground text-center">
-          Your conversation will appear here. Start speaking to begin.
-        </p>
+      <Card className="p-6 flex flex-col items-center justify-center text-center gap-4">
+        <BookOpen className="h-8 w-8 text-muted-foreground opacity-50" />
+        <div>
+          <p className="text-muted-foreground">
+            Your conversation will appear here. Start speaking to begin.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            The AI will respond to your speech and help you practice.
+          </p>
+        </div>
       </Card>
     );
   }
@@ -65,11 +112,13 @@ const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
                     : 'bg-muted'
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {highlightVocabulary(message.content)}
+                
                 {message.timestamp && (
-                  <p className="text-[10px] opacity-70 mt-1">
+                  <div className="flex items-center gap-1 text-[10px] opacity-70 mt-1">
+                    <Clock className="h-3 w-3" />
                     {format(new Date(message.timestamp), 'h:mm a')}
-                  </p>
+                  </div>
                 )}
               </div>
               
@@ -95,6 +144,32 @@ const ConversationDisplay: React.FC<ConversationDisplayProps> = ({
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary/20 text-primary">ME</AvatarFallback>
               </Avatar>
+            </div>
+          )}
+          
+          {/* Used vocabulary badges */}
+          {activeVocabulary.length > 0 && (
+            <div className="border-t pt-2 mt-4">
+              <p className="text-xs text-muted-foreground mb-1">Target vocabulary:</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {activeVocabulary.map((word, i) => {
+                  const isUsed = messages.some(m => 
+                    m.role === 'user' && 
+                    new RegExp(`\\b${word}\\b`, 'i').test(m.content)
+                  );
+                  
+                  return (
+                    <Badge 
+                      key={i} 
+                      variant={isUsed ? "default" : "outline"}
+                      className={isUsed ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+                    >
+                      {isUsed && <Check className="h-3 w-3 mr-1" />}
+                      {word}
+                    </Badge>
+                  );
+                })}
+              </div>
             </div>
           )}
           
