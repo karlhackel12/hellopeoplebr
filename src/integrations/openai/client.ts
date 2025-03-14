@@ -4,11 +4,10 @@ import { GeneratedLessonContent } from '@/components/teacher/lesson-ai/types';
 
 interface GenerationSettings {
   title: string;
-  grade_level?: string;
-  subject?: string;
-  length?: string;
-  tone?: string;
-  focus_areas?: string;
+  grade_level: string;
+  subject: string;
+  language: string;
+  timestamp: string;
   additional_instructions?: string;
 }
 
@@ -20,9 +19,10 @@ export const generateLesson = async (settings: GenerationSettings) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Create a complete lesson structure based on GeneratedLessonContent type
-    const mockResponse = {
-      data: {
+    // Create a standardized lesson structure based on GeneratedLessonContent type
+    const response = {
+      status: 'succeeded',
+      lesson: {
         description: `This is a comprehensive lesson about ${settings.title}. It is designed for ${settings.grade_level || 'beginner'} level English learners.`,
         objectives: [
           "Learn key vocabulary related to the topic",
@@ -88,15 +88,32 @@ export const generateLesson = async (settings: GenerationSettings) => {
         metadata: {
           title: settings.title,
           level: settings.grade_level || 'beginner',
-          language: 'English',
+          language: settings.language || 'English',
           model: 'deepseek-r1',
-          generationTime: '1.5s'
+          status: 'succeeded',
+          timestamp: settings.timestamp,
+          completed: new Date().toISOString()
         }
+      },
+      // Include optional quiz data
+      quiz: {
+        questions: [
+          {
+            question: "What is the correct greeting?",
+            options: ["Hello, how are you?", "What is your name?", "Where are you from?", "What time is it?"],
+            correctAnswer: 0
+          },
+          {
+            question: "Which tense do we use for regular actions?",
+            options: ["Present Simple", "Present Continuous", "Past Simple", "Future"],
+            correctAnswer: 0
+          }
+        ]
       }
     };
     
-    console.log('Generated mock lesson response:', mockResponse);
-    return mockResponse;
+    console.log('Generated lesson response:', response);
+    return response;
   } catch (error) {
     console.error('Error generating lesson:', error);
     toast.error('Failed to generate lesson content');

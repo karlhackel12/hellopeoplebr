@@ -60,10 +60,15 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
   useEffect(() => {
     if (title && title !== lastTitleUsed) {
       console.log('Title changed, updating generation settings:', title);
+      // Generate a timestamp when updating title
+      const timestamp = new Date().toISOString();
+      
       generationHandler.handleSettingsChange({
         title: title,
         grade: level,
         subject: 'English',
+        language: 'English',
+        timestamp: timestamp,
         additionalInstructions: instructions
       });
       setLastTitleUsed(title);
@@ -78,6 +83,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
         title: lastTitleUsed,
         grade: level,
         subject: 'English',
+        language: 'English',
+        timestamp: new Date().toISOString(),
         additionalInstructions: instructions
       });
     }
@@ -98,11 +105,16 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     setError(null);
     
     try {
+      // Generate a new timestamp for this generation
+      const timestamp = new Date().toISOString();
+      
       // First update settings with current values
       generationHandler.handleSettingsChange({
         title: title,
         grade: level,
         subject: 'English',
+        language: 'English',
+        timestamp: timestamp,
         additionalInstructions: instructions
       });
       
@@ -110,7 +122,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
       console.log('Starting generation for:', {
         title,
         level,
-        instructions
+        instructions,
+        timestamp
       });
       
       // Update phase to generate
@@ -153,10 +166,13 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     
     try {
       // Update settings before retrying
+      const timestamp = new Date().toISOString();
       generationHandler.handleSettingsChange({
         title: title,
         grade: level,
         subject: 'English',
+        language: 'English',
+        timestamp: timestamp,
         additionalInstructions: instructions
       });
       

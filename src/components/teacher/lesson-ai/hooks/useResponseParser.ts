@@ -46,10 +46,13 @@ export const useResponseParser = () => {
           throw new Error(`Failed to extract JSON: ${jsonError.message}`);
         }
       } else if (typeof output === 'object' && output !== null) {
-        // Check for lesson property in response structure
+        // Check for different response structures
         if (output.lesson) {
           parsedContent = output.lesson;
           console.log("Using lesson property from response");
+        } else if (output.data) {
+          parsedContent = output.data;
+          console.log("Using data property from response");
         } else {
           // Direct object output
           parsedContent = output;
@@ -61,14 +64,27 @@ export const useResponseParser = () => {
       // Default values if any key properties are missing
       const defaultContent: GeneratedLessonContent = {
         description: "No description provided",
+        objectives: ["Learn key vocabulary", "Practice useful phrases", "Apply grammar concepts"],
         keyPhrases: [{ phrase: "Example phrase", translation: "Translation", usage: "Basic usage" }],
-        vocabulary: [{ word: "Example", translation: "Translation", partOfSpeech: "noun" }]
+        vocabulary: [{ word: "Example", translation: "Translation", partOfSpeech: "noun", example: "Example sentence" }],
+        practicalSituations: [{ situation: "Example situation", example: "Example dialogue" }],
+        explanations: [{ concept: "Grammar concept", explanation: "Explanation of the concept" }],
+        tips: [{ tip: "Practice regularly", context: "Learning strategy" }]
       };
+      
+      // Ensure all required arrays exist
+      const ensureArray = (field: any) => Array.isArray(field) ? field : (field ? [field] : []);
       
       // Merge with defaults to ensure all required fields exist
       parsedContent = {
         ...defaultContent,
         ...parsedContent,
+        objectives: ensureArray(parsedContent.objectives || defaultContent.objectives),
+        keyPhrases: ensureArray(parsedContent.keyPhrases || defaultContent.keyPhrases),
+        vocabulary: ensureArray(parsedContent.vocabulary || defaultContent.vocabulary),
+        practicalSituations: ensureArray(parsedContent.practicalSituations || defaultContent.practicalSituations),
+        explanations: ensureArray(parsedContent.explanations || defaultContent.explanations),
+        tips: ensureArray(parsedContent.tips || defaultContent.tips)
       };
       
       // Validate the structure before returning
@@ -76,12 +92,12 @@ export const useResponseParser = () => {
         parsedContent.description = defaultContent.description;
       }
       
-      // Ensure keyPhrases is an array
+      // Ensure keyPhrases is a valid array
       if (!Array.isArray(parsedContent.keyPhrases) || parsedContent.keyPhrases.length === 0) {
         parsedContent.keyPhrases = defaultContent.keyPhrases;
       }
       
-      // Ensure vocabulary is an array
+      // Ensure vocabulary is a valid array
       if (!Array.isArray(parsedContent.vocabulary) || parsedContent.vocabulary.length === 0) {
         parsedContent.vocabulary = defaultContent.vocabulary;
       }

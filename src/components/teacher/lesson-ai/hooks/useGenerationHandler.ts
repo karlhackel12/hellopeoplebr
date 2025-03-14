@@ -10,9 +10,8 @@ interface GenerationSettings {
   title: string;
   grade: string;
   subject: string;
-  length?: string;
-  tone?: string;
-  focusAreas?: string;
+  language: string;
+  timestamp: string;
   additionalInstructions?: string;
 }
 
@@ -27,6 +26,8 @@ export const useGenerationHandler = () => {
     title: '',
     grade: 'beginner',
     subject: 'English',
+    language: 'English',
+    timestamp: new Date().toISOString(),
     additionalInstructions: ''
   });
   const { updateContent, updateMetadata } = useLessonStore();
@@ -62,7 +63,11 @@ export const useGenerationHandler = () => {
   const handleSettingsChange = (settings: Partial<GenerationSettings>) => {
     console.log('handleSettingsChange called with:', settings);
     setGenerationSettings(prevSettings => {
-      const newSettings = { ...prevSettings, ...settings };
+      const newSettings = { 
+        ...prevSettings, 
+        ...settings,
+        timestamp: settings.timestamp || prevSettings.timestamp || new Date().toISOString()
+      };
       console.log('Updated generation settings:', newSettings);
       return newSettings;
     });
@@ -132,34 +137,38 @@ export const useGenerationHandler = () => {
     }
     
     try {
-      const { title, grade, subject, additionalInstructions } = currentSettings;
+      const { title, grade, subject, language, timestamp, additionalInstructions } = currentSettings;
 
       // Start the generation
       const result = await generateContent({
         title,
         grade_level: grade,
         subject,
+        language,
+        timestamp,
         additional_instructions: additionalInstructions
       });
 
       // Handle error from API
-      if (!result || !result.data) {
+      if (!result) {
         handleApiError(new Error('Failed to generate content'));
         setIsGenerating(false);
         return;
       }
 
       // Process successful response
-      const parsedContent = parseResponse(result.data);
+      const parsedContent = parseResponse(result);
       
       if (parsedContent) {
         // Store the structured content in the form
         updateMetadata({
           title,
           level: grade,
-          language: 'English',
-          timestamp: new Date().toISOString(),
-          model: 'deepseek-r1'
+          language: language || 'English',
+          timestamp: timestamp,
+          model: 'deepseek-r1',
+          status: result.status || 'succeeded',
+          completed: new Date().toISOString()
         });
         
         // Create sections from parsed content
