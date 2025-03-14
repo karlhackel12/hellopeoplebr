@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -50,7 +49,7 @@ const VoiceConversationSession: React.FC = () => {
     sendMessage,
     endConversation,
     analyzeConversation
-  } = useVoiceConversation(lessonIdParam, assignmentIdParam);
+  } = useVoiceConversation(lessonIdParam || undefined, assignmentIdParam || undefined);
   
   useEffect(() => {
     const fetchAssignmentData = async () => {
@@ -71,7 +70,6 @@ const VoiceConversationSession: React.FC = () => {
   }, [assignmentIdParam]);
   
   useEffect(() => {
-    // Check if minimum conversation turns have been reached (e.g., 5 user messages)
     const userMessageCount = messages.filter(m => m.role === 'user').length;
     setMinMessageCountReached(userMessageCount >= 3);
   }, [messages]);
@@ -88,7 +86,6 @@ const VoiceConversationSession: React.FC = () => {
   
   useEffect(() => {
     if (lesson) {
-      // Extract some vocabulary words from content
       const content = lesson.content || '';
       const words = content
         .split(/\s+/)
@@ -100,7 +97,6 @@ const VoiceConversationSession: React.FC = () => {
       
       setActiveVocabulary(words);
       
-      // Extract topics from lesson title or content
       const topics = [
         lesson.title,
         'Key Grammar Points',
@@ -110,10 +106,8 @@ const VoiceConversationSession: React.FC = () => {
       
       setLessonTopics(topics);
       
-      // Generate some suggested responses based on lesson content
       generateSuggestedResponses(content);
     } else if (topicParam) {
-      // For topic-based conversations, set a default set of vocabulary and topics
       setLessonTopics([topicParam]);
       generateGenericSuggestions(topicParam);
     }
@@ -121,7 +115,6 @@ const VoiceConversationSession: React.FC = () => {
   
   useEffect(() => {
     if (conversationAnalytics) {
-      // Transform the analytics data into the format expected by the feedback component
       setAnalyticsData({
         vocabulary: {
           used: activeVocabulary.filter(word => 
@@ -152,12 +145,10 @@ const VoiceConversationSession: React.FC = () => {
   };
   
   const calculateTotalSpeakingTime = () => {
-    // In a real app, this would be tracked more accurately
-    return messages.filter(m => m.role === 'user').length * 15; // Estimate 15 seconds per message
+    return messages.filter(m => m.role === 'user').length * 15;
   };
   
   const generateSuggestedResponses = (content: string) => {
-    // In a real app, this would use AI to generate contextual suggestions
     const genericSuggestions = [
       "Could you explain that in more detail?",
       "I'm not sure I understand. Can you clarify?",
@@ -214,14 +205,10 @@ const VoiceConversationSession: React.FC = () => {
     setLiveTranscript('');
     
     try {
-      // In a real app, we would send the actual audio blob
-      // Here we're just using the mock transcript from ConversationRecorder
       await sendMessage(transcript, lessonTopics, activeVocabulary, difficultyLevel);
       
-      // After a few messages, analyze the conversation
       if (messages.length % 3 === 0) {
         const analyticsResult = await analyzeConversation();
-        // Analytics will be picked up by the useEffect
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -238,7 +225,6 @@ const VoiceConversationSession: React.FC = () => {
       );
       
       if (success) {
-        // Mark the lesson session as completed if it's a lesson-based conversation
         if (lessonIdParam && lesson) {
           try {
             await completeSession({
@@ -259,7 +245,6 @@ const VoiceConversationSession: React.FC = () => {
         
         setSessionCompleted(true);
         
-        // Delay navigation to allow the user to see the completion message
         setTimeout(() => {
           navigate('/student/voice-practice');
         }, 3000);
@@ -273,7 +258,6 @@ const VoiceConversationSession: React.FC = () => {
   };
   
   const handleGoBack = () => {
-    // Ask for confirmation if there are messages and the session isn't completed
     if (messages.length > 0 && !sessionCompleted) {
       const confirm = window.confirm('Are you sure you want to leave? Your conversation progress will be saved, but not marked as completed.');
       if (!confirm) return;

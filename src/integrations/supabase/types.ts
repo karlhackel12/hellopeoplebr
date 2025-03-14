@@ -1007,6 +1007,7 @@ export type Database = {
       voice_practice_sessions: {
         Row: {
           analytics_data: Json | null
+          assignment_id: string | null
           completed_at: string | null
           conversation_topic: string | null
           created_at: string
@@ -1023,6 +1024,7 @@ export type Database = {
         }
         Insert: {
           analytics_data?: Json | null
+          assignment_id?: string | null
           completed_at?: string | null
           conversation_topic?: string | null
           created_at?: string
@@ -1039,6 +1041,7 @@ export type Database = {
         }
         Update: {
           analytics_data?: Json | null
+          assignment_id?: string | null
           completed_at?: string | null
           conversation_topic?: string | null
           created_at?: string
@@ -1054,6 +1057,13 @@ export type Database = {
           vocabulary_used?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "voice_practice_sessions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "student_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "voice_practice_sessions_lesson_id_fkey"
             columns: ["lesson_id"]

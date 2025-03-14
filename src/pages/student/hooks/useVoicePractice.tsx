@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,7 +69,6 @@ export const useVoicePractice = () => {
     fetchUser();
   }, []);
 
-  // Fetch all voice practice sessions
   const { data: sessions, isLoading: isLoadingSessions } = useQuery({
     queryKey: ['voice-practice-sessions', userId],
     queryFn: async () => {
@@ -114,7 +112,6 @@ export const useVoicePractice = () => {
     enabled: !!userId
   });
 
-  // Fetch assigned lessons that require conversation practice
   const { data: assignedLessons, isLoading: isLoadingAssignedLessons } = useQuery({
     queryKey: ['voice-practice-assigned-lessons', userId],
     queryFn: async () => {
@@ -150,7 +147,6 @@ export const useVoicePractice = () => {
     enabled: !!userId
   });
 
-  // Fetch confidence scores
   const { data: confidenceScores, isLoading: isLoadingScores } = useQuery({
     queryKey: ['voice-confidence-scores', userId],
     queryFn: async () => {
@@ -172,7 +168,6 @@ export const useVoicePractice = () => {
     enabled: !!userId
   });
 
-  // Fetch latest feedback
   const { data: recentFeedback, isLoading: isLoadingFeedback } = useQuery({
     queryKey: ['voice-practice-feedback', userId],
     queryFn: async () => {
@@ -195,7 +190,6 @@ export const useVoicePractice = () => {
     enabled: !!userId
   });
 
-  // Create a new session
   const createSessionMutation = useMutation({
     mutationFn: async ({ 
       lessonId, 
@@ -227,7 +221,6 @@ export const useVoicePractice = () => {
       
       if (error) throw error;
 
-      // If this is linked to an assignment, update the assignment status
       if (assignmentId) {
         await supabase
           .from('student_assignments')
@@ -247,7 +240,6 @@ export const useVoicePractice = () => {
     }
   });
 
-  // Complete a session
   const completeSessionMutation = useMutation({
     mutationFn: async ({ 
       sessionId,
@@ -260,7 +252,6 @@ export const useVoicePractice = () => {
     }) => {
       if (!userId) throw new Error('User is not authenticated');
       
-      // Get the session to check if it's assignment-related
       try {
         const { data: sessionData, error: sessionError } = await supabase
           .from('voice_practice_sessions')
@@ -275,7 +266,6 @@ export const useVoicePractice = () => {
         
         const assignmentId = sessionData?.assignment_id;
         
-        // Update session
         const { data, error } = await supabase
           .from('voice_practice_sessions')
           .update({
@@ -290,7 +280,6 @@ export const useVoicePractice = () => {
         
         if (error) throw error;
         
-        // If this was an assignment-related session, update the assignment
         if (assignmentId) {
           await supabase
             .from('student_assignments')
@@ -301,7 +290,6 @@ export const useVoicePractice = () => {
             .eq('id', assignmentId);
         }
         
-        // Update lesson progress if applicable
         if (sessionData?.lesson_id) {
           await updateLessonProgress(sessionData.lesson_id);
         }
@@ -322,11 +310,9 @@ export const useVoicePractice = () => {
     }
   });
 
-  // Update lesson progress helper function
   const updateLessonProgress = async (lessonId: string) => {
     if (!userId) return;
     
-    // Check if there's an existing progress record
     const { data: existingProgress } = await supabase
       .from('user_lesson_progress')
       .select('id, status')
@@ -335,7 +321,6 @@ export const useVoicePractice = () => {
       .maybeSingle();
     
     if (existingProgress) {
-      // Update existing progress
       await supabase
         .from('user_lesson_progress')
         .update({ 
@@ -345,7 +330,6 @@ export const useVoicePractice = () => {
         })
         .eq('id', existingProgress.id);
     } else {
-      // Insert new progress record
       await supabase
         .from('user_lesson_progress')
         .insert({
@@ -359,7 +343,6 @@ export const useVoicePractice = () => {
     }
   };
 
-  // Add feedback
   const addFeedbackMutation = useMutation({
     mutationFn: async ({ 
       sessionId,
@@ -401,7 +384,6 @@ export const useVoicePractice = () => {
     }
   });
 
-  // Record confidence score
   const recordConfidenceScoreMutation = useMutation({
     mutationFn: async ({ 
       overallScore,
@@ -439,8 +421,7 @@ export const useVoicePractice = () => {
       toast.error('Failed to record voice confidence score');
     }
   });
-  
-  // Calculate detailed analytics from feedback and scores
+
   const calculateDetailedStats = () => {
     if (!confidenceScores?.length && !recentFeedback?.length) {
       return {
@@ -452,7 +433,6 @@ export const useVoicePractice = () => {
       };
     }
     
-    // Combine data from both sources
     const allGrammarScores = [
       ...confidenceScores?.map(s => s.grammar_score) || [],
       ...recentFeedback?.filter(f => f.grammar_score).map(f => f.grammar_score as number) || []
@@ -468,7 +448,6 @@ export const useVoicePractice = () => {
       ...recentFeedback?.filter(f => f.pronunciation_score).map(f => f.pronunciation_score as number) || []
     ];
     
-    // Calculate averages
     const grammar = allGrammarScores.length ? 
       parseFloat((allGrammarScores.reduce((sum, score) => sum + score, 0) / allGrammarScores.length).toFixed(1)) : 0;
     
@@ -478,12 +457,10 @@ export const useVoicePractice = () => {
     const pronunciation = allPronunciationScores.length ? 
       parseFloat((allPronunciationScores.reduce((sum, score) => sum + score, 0) / allPronunciationScores.length).toFixed(1)) : 0;
     
-    // Calculate overall score
     const overall = [grammar, fluency, pronunciation].filter(Boolean).length ? 
       parseFloat(([grammar, fluency, pronunciation].reduce((sum, score) => sum + score, 0) / 
       [grammar, fluency, pronunciation].filter(Boolean).length).toFixed(1)) : 0;
     
-    // Estimate vocabulary score (typically a function of overall scores)
     const vocabulary = overall ? parseFloat((overall * 0.9).toFixed(1)) : 0;
     
     return {
@@ -495,7 +472,6 @@ export const useVoicePractice = () => {
     };
   };
 
-  // Get stats
   const stats = {
     totalSessions: sessions?.length || 0,
     completedSessions: sessions?.filter(session => session.completed_at).length || 0,
@@ -507,18 +483,16 @@ export const useVoicePractice = () => {
     assignedPractices: assignedLessons?.length || 0
   };
 
-  // Filter required sessions that are in progress or not started
   const requiredSessions = sessions
     ?.filter(session => session.lesson && !session.completed_at) || [];
 
-  // Get assigned lessons that don't already have a voice practice session
-  const assignedLessonsWithoutSessions = assignedLessons?.filter(assignment => 
+  const assignedLessonsWithoutSessions = sessions ? (assignedLessons?.filter(assignment => 
     assignment.lesson_id && 
-    !sessions?.some(session => 
+    !sessions.some(session => 
       (session.lesson_id === assignment.lesson_id || session.assignment_id === assignment.id) 
       && !session.completed_at
     )
-  ) || [];
+  ) || []) : [];
 
   return {
     sessions,
