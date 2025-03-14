@@ -9,10 +9,10 @@ import { useGenerationSettings } from './generation/useGenerationSettings';
 import { useGenerationActions } from './generation/useGenerationActions';
 import { useGenerationCleanup } from './generation/useGenerationCleanup';
 
-// Define LessonFormValues type directly here
+// Define consistent LessonFormValues type
 export type LessonFormValues = {
   id?: string;
-  title: string;
+  title: string;  // Making title required to match other definitions
   content: string;
   is_published: boolean;
   contentSource: 'ai_generated' | 'mixed';
