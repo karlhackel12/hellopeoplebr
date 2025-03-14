@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,54 +11,32 @@ import SpacedRepetitionCard from '@/pages/student/components/spaced-repetition/S
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-
-// This would be fetched from an API in a real app
-const mockAssignments = [
-  {
-    id: '1',
-    title: 'Present Simple Practice',
-    description: 'Complete the lesson about Present Simple tense',
-    status: 'not_started',
-    due_date: new Date(Date.now() + 86400000 * 2).toISOString(),
-    lesson_id: '123',
-    lessons: {
-      title: 'Present Simple Tense',
-      estimated_minutes: 15
-    }
-  }
-];
-
-const mockLessons = [
-  {
-    id: '123',
-    title: 'Present Simple Tense',
-    description: 'Learn when and how to use the present simple tense in English',
-    is_published: true
-  },
-  {
-    id: '124',
-    title: 'Common Phrasal Verbs',
-    description: 'The most important phrasal verbs for everyday conversation',
-    is_published: true
-  }
-];
+import { useStudentStreak } from './hooks/useStudentStreak';
+import { useStudentStats } from './hooks/useStudentStats';
+import { useDailyGoals } from './hooks/useDailyGoals';
+import { useStudentAssignments } from './hooks/useStudentAssignments';
+import { useRecentLessons } from './hooks/useRecentLessons';
+import { useUser } from './hooks/spaced-repetition/useUser';
+import { useSpacedRepetitionDueItems } from './hooks/spaced-repetition/useSpacedRepetitionDueItems';
+import { useSpacedRepetitionUserStats } from './hooks/spaced-repetition/useSpacedRepetitionUserStats';
+import { useSpacedRepetitionPoints } from './hooks/spaced-repetition/useSpacedRepetitionPoints';
 
 const Dashboard: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [streakCount, setStreakCount] = useState(5);
-  const [lessonsCompleted, setLessonsCompleted] = useState(8);
-  const [totalMinutes, setTotalMinutes] = useState(120);
+  const { userId } = useUser();
+  const { streak, isLoading: isLoadingStreak } = useStudentStreak();
+  const { stats, isLoading: isLoadingStats } = useStudentStats();
+  const { goals, isLoading: isLoadingGoals } = useDailyGoals();
+  const { dueAssignments, isLoading: isLoadingAssignments } = useStudentAssignments();
+  const { recentLessons, isLoading: isLoadingLessons } = useRecentLessons();
+  const { dueItems, isLoading: isLoadingDueItems } = useSpacedRepetitionDueItems(userId);
+  const { userStats } = useSpacedRepetitionUserStats(userId);
+  const { totalPoints } = useSpacedRepetitionPoints(userId);
+  
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
-  useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  const isLoading = isLoadingStreak || isLoadingStats || isLoadingGoals || 
+                    isLoadingAssignments || isLoadingLessons || isLoadingDueItems;
   
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -78,10 +56,20 @@ const Dashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-medium">Current Streak</h3>
-                <div className="text-2xl font-bold">{streakCount} days</div>
+                <div className="text-2xl font-bold">
+                  {isLoadingStreak ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    `${streak?.streakCount || 0} days`
+                  )}
+                </div>
               </div>
             </div>
-            <Button variant="outline" className="bg-background border-primary/20 text-primary hover:bg-primary/20">
+            <Button 
+              variant="outline" 
+              className="bg-background border-primary/20 text-primary hover:bg-primary/20"
+              onClick={() => navigate('/student/lessons')}
+            >
               Continue Streak
             </Button>
           </CardContent>
@@ -95,7 +83,13 @@ const Dashboard: React.FC = () => {
                 <BookOpen className="h-5 w-5 text-blue-500" />
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold">{lessonsCompleted}</div>
+                <div className="text-xl font-bold">
+                  {isLoadingStats ? (
+                    <Skeleton className="h-7 w-10 mx-auto" />
+                  ) : (
+                    stats?.lessonsCompleted || 0
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">Lessons Completed</div>
               </div>
             </CardContent>
@@ -107,7 +101,13 @@ const Dashboard: React.FC = () => {
                 <Clock className="h-5 w-5 text-purple-500" />
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold">{formatTime(totalMinutes)}</div>
+                <div className="text-xl font-bold">
+                  {isLoadingStats ? (
+                    <Skeleton className="h-7 w-16 mx-auto" />
+                  ) : (
+                    formatTime(stats?.totalMinutes || 0)
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">Total Learning Time</div>
               </div>
             </CardContent>
@@ -125,29 +125,23 @@ const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-3">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Vocabulary Practice</span>
-                  <span className="text-sm font-medium">10/20 words</span>
-                </div>
-                <Progress value={50} className="h-2" />
-              </div>
-              
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Voice Practice</span>
-                  <span className="text-sm font-medium">5/10 minutes</span>
-                </div>
-                <Progress value={50} className="h-2" />
-              </div>
-              
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Lessons</span>
-                  <span className="text-sm font-medium">1/2 completed</span>
-                </div>
-                <Progress value={50} className="h-2" />
-              </div>
+              {isLoadingGoals ? (
+                <>
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </>
+              ) : (
+                goals?.map((goal, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm">{goal.label}</span>
+                      <span className="text-sm font-medium">{goal.current}/{goal.target} {goal.label.includes('Voice') ? 'minutes' : goal.label.includes('Vocabulary') ? 'words' : 'completed'}</span>
+                    </div>
+                    <Progress value={goal.percentage} className="h-2" />
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -166,15 +160,15 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
           
-          {loading ? (
+          {isLoadingAssignments ? (
             <Skeleton className="h-40 w-full" />
-          ) : mockAssignments.length > 0 ? (
+          ) : dueAssignments && dueAssignments.length > 0 ? (
             <div className="space-y-4">
-              {mockAssignments.map(assignment => (
+              {dueAssignments.map(assignment => (
                 <AssignmentCard 
                   key={assignment.id} 
                   assignment={assignment}
-                  progress={{ completed: false }}
+                  progress={assignment.progress}
                 />
               ))}
             </div>
@@ -193,12 +187,12 @@ const Dashboard: React.FC = () => {
 
         {/* Spaced Repetition Card */}
         <SpacedRepetitionCard 
-          dueItemsCount={12}
-          totalReviews={64}
-          bestStreak={7}
-          averageScore={85}
-          totalPoints={420}
-          loading={loading}
+          dueItemsCount={dueItems?.length || 0}
+          totalReviews={userStats?.totalReviews || 0}
+          bestStreak={userStats?.bestStreak || 0}
+          averageScore={userStats?.averageScore || 0}
+          totalPoints={totalPoints || 0}
+          loading={isLoadingDueItems}
         />
 
         {/* Recent Lessons */}
@@ -215,21 +209,31 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
           
-          {loading ? (
+          {isLoadingLessons ? (
             <div className="grid grid-cols-1 gap-4">
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-40 w-full" />
             </div>
-          ) : (
+          ) : recentLessons && recentLessons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {mockLessons.map(lesson => (
+              {recentLessons.map(lesson => (
                 <LessonCard 
                   key={lesson.id} 
                   lesson={lesson}
-                  progress={{ completed: false }}
+                  progress={lesson.progress}
                 />
               ))}
             </div>
+          ) : (
+            <Card className="bg-muted/30">
+              <CardContent className="p-6 text-center">
+                <BookOpen className="h-12 w-12 text-primary/30 mx-auto mb-3" />
+                <h3 className="text-lg font-medium mb-1">No lessons yet</h3>
+                <p className="text-muted-foreground text-sm">
+                  You haven't started any lessons yet.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
