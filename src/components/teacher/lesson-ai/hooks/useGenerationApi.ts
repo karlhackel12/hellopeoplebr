@@ -39,9 +39,10 @@ export const useGenerationApi = () => {
       
       console.log("Cleaned params for edge function:", cleanParams);
       
-      // For development/testing, use mock API
-      if (import.meta.env.DEV || !import.meta.env.VITE_USE_EDGE_FUNCTIONS) {
-        console.log("Using mock API for lesson generation");
+      // Only use mock API when VITE_USE_EDGE_FUNCTIONS is explicitly set to 'false'
+      // This ensures we always use the edge function unless explicitly told not to
+      if (import.meta.env.VITE_USE_EDGE_FUNCTIONS === 'false') {
+        console.log("Using mock API for lesson generation as VITE_USE_EDGE_FUNCTIONS=false");
         
         // Import the generateLesson function
         const { generateLesson } = await import('@/integrations/openai/client');
@@ -79,8 +80,10 @@ export const useGenerationApi = () => {
         };
       }
       
-      // For production, use the actual edge function
+      // For all other cases, use the edge function
       console.log("Calling Supabase edge function: generate-lesson-content");
+      console.log("Edge function URL:", "https://roljsmhhptuwtsbirsxe.supabase.co/functions/v1/generate-lesson-content");
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();

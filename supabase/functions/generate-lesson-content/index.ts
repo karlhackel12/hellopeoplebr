@@ -166,9 +166,12 @@ function transformQuizQuestionsFormat(quizQuestions: any[]): any[] {
 
 serve(async (req) => {
   console.log("Edge function invoked: generate-lesson-content");
+  console.log("Request URL:", req.url);
+  console.log("Request method:", req.method);
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request with CORS headers");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -196,7 +199,7 @@ serve(async (req) => {
     let requestData;
     try {
       requestData = await req.json();
-      console.log("Request data:", requestData);
+      console.log("Request data received:", requestData);
     } catch (parseError) {
       console.error("Error parsing request body:", parseError);
       return new Response(
@@ -223,7 +226,7 @@ serve(async (req) => {
 
     // Build the prompt
     const prompt = buildPrompt(requestData);
-    console.log("Generated prompt:", prompt);
+    console.log("Generated prompt (truncated):", prompt.substring(0, 100) + "...");
 
     try {
       // Set up model parameters with increased token limit for quiz generation
@@ -236,20 +239,30 @@ serve(async (req) => {
       };
       
       console.log("Calling Replicate with model:", MODEL_ID);
+      console.log("Model input parameters:", JSON.stringify(modelInput, null, 2));
       
       // Run the model directly
+      console.log("Starting Replicate API call...");
       const output = await replicate.run(MODEL_ID, {
         input: modelInput
       });
       
       console.log("Model output received");
+      console.log("Output type:", typeof output);
+      console.log("Output sample:", Array.isArray(output) ? output.slice(0, 3) : output);
       
       // Parse and validate the output
+      console.log("Parsing model output...");
       const parsedOutput = parseOutput(output);
+      console.log("Output successfully parsed");
+      
       const validatedOutput = validateOutput(parsedOutput);
+      console.log("Output successfully validated");
       
       // Extract quiz questions and transform to the expected format
+      console.log("Transforming quiz questions...");
       const quizQuestions = transformQuizQuestionsFormat(validatedOutput.quiz.questions || []);
+      console.log(`Transformed ${quizQuestions.length} quiz questions`);
       
       // Create the lesson content structure (with only the required fields)
       const lessonContent = {
@@ -258,6 +271,7 @@ serve(async (req) => {
         vocabulary: validatedOutput.vocabulary,
       };
       
+      console.log("Returning successful response");
       // Return successful response
       return new Response(
         JSON.stringify({

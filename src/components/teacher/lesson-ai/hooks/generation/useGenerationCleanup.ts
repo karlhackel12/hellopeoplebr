@@ -10,8 +10,12 @@ export const useGenerationCleanup = (
 ) => {
   // Clean up any polling or resources when component unmounts
   useEffect(() => {
+    console.log("Setting up generation cleanup effect");
+    
     return () => {
+      console.log("Cleaning up generation resources");
       if (generating) {
+        console.log("Generation was in progress, canceling");
         cancelGeneration();
       }
     };
