@@ -27,20 +27,20 @@ export const useQuizTabState = (lessonId?: string) => {
     currentPhase,
     setGenerationPhase,
     isRetrying,
-    setRetrying
+    setIsRetrying: setRetrying
   } = useQuizGenerationState();
   
   // Quiz generation workflow
   const {
-    handleGenerateQuiz,
+    generateQuizFromPrompt,
     quizQuestions,
     loading,
-    setExistingQuiz: setWorkflowExistingQuiz
-  } = useQuizGenerationWorkflow(lessonId || '', setGenerationPhase, setError, clearErrors);
+    setExistingQuiz: setWorkflowExistingQuiz = () => {}
+  } = useQuizGenerationWorkflow();
   
   // Update preview whenever quiz questions change
   useEffect(() => {
-    if (quizQuestions.length > 0) {
+    if (quizQuestions && quizQuestions.length > 0) {
       setPreviewQuestions(quizQuestions);
     }
   }, [quizQuestions]);
@@ -61,7 +61,9 @@ export const useQuizTabState = (lessonId?: string) => {
       
       if (quizDetails) {
         setExistingQuiz(true);
-        setWorkflowExistingQuiz(true);
+        if (setWorkflowExistingQuiz) {
+          setWorkflowExistingQuiz(true);
+        }
         setQuizTitle(quizDetails.title);
         setIsPublished(quizDetails.is_published || false);
         
@@ -72,6 +74,22 @@ export const useQuizTabState = (lessonId?: string) => {
       }
     } catch (error) {
       console.error("Error loading existing quiz data:", error);
+    }
+  };
+
+  // Handle quiz generation
+  const handleGenerateQuiz = async (numQuestionsParam: string) => {
+    try {
+      const result = await generateQuizFromPrompt(numQuestionsParam);
+      if (result) {
+        setShowPreview(true);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Error generating quiz:", error);
+      setError(error.message || "Failed to generate quiz");
+      return false;
     }
   };
   
@@ -111,7 +129,9 @@ export const useQuizTabState = (lessonId?: string) => {
         }
         setPreviewQuestions([]);
         setExistingQuiz(false);
-        setWorkflowExistingQuiz(false);
+        if (setWorkflowExistingQuiz) {
+          setWorkflowExistingQuiz(false);
+        }
       } else {
         // Just clear the preview without database operations
         setPreviewQuestions([]);

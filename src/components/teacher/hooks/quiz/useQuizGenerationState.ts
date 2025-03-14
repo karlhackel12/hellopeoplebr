@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { GenerationPhase } from '../../quiz/types/quizGeneration';
 
@@ -73,10 +72,11 @@ export const useQuizGenerationState = () => {
     setErrorDetails,
     clearErrors,
     isRetrying,
-    setRetrying,
+    setIsRetrying,
     contentLoadingMessage,
-    setContentLoading,
+    setContentLoadingMessage,
     currentPhase,
+    setCurrentPhase,
     setGenerationPhase,
     setError
   };

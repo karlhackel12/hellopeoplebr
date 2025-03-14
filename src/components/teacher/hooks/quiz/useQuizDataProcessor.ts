@@ -1,13 +1,11 @@
 
-import { useCallback } from "react";
-import { useQuizPreviewState } from "./useQuizPreviewState";
+import { useCallback, useState } from "react";
 import { QuizQuestionData } from "../../quiz/types/quizGeneration";
+import { Question } from "../../quiz/types";
 
 export const useQuizDataProcessor = () => {
-  const { 
-    setPreviewQuestions, 
-    setShowPreview 
-  } = useQuizPreviewState();
+  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Process quiz questions from the API response
   const processQuizData = useCallback(async (
@@ -59,9 +57,13 @@ export const useQuizDataProcessor = () => {
       console.error("Error processing quiz data:", error);
       throw error;
     }
-  }, [setPreviewQuestions, setShowPreview]);
+  }, []);
 
   return {
-    processQuizData
+    processQuizData,
+    previewQuestions,
+    setPreviewQuestions,
+    showPreview,
+    setShowPreview
   };
 };

@@ -1,9 +1,10 @@
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useQuizGenerationState } from "./useQuizGenerationState";
 import { useSmartQuizGeneration } from "./useSmartQuizGeneration";
 import { useQuizActionWrappers } from "./useQuizActionWrappers";
 import { useQuizDataProcessor } from "./useQuizDataProcessor";
+import { Question } from "../../quiz/types";
 
 export const useQuizGenerationWorkflow = () => {
   const {
@@ -16,11 +17,15 @@ export const useQuizGenerationWorkflow = () => {
     setLoadingError,
     isRetrying,
     setIsRetrying,
+    setGenerationPhase,
+    setError
   } = useQuizGenerationState();
+
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
 
   const { generateSmartQuiz, loading } = useSmartQuizGeneration();
   const { wrappedGenerateQuiz, wrappedSaveQuiz, wrappedDiscardQuiz } = useQuizActionWrappers();
-  const { processQuizData } = useQuizDataProcessor();
+  const { processQuizData, previewQuestions } = useQuizDataProcessor();
 
   const generateQuizFromPrompt = useCallback(async (numQuestionsParam: string) => {
     try {
@@ -61,7 +66,8 @@ export const useQuizGenerationWorkflow = () => {
 
       if (result) {
         // Process the result
-        await processQuizData(result.questions);
+        const processedQuestions = await processQuizData(result.questions);
+        setQuizQuestions(processedQuestions);
         setCurrentPhase('complete');
         setContentLoadingMessage(null);
         return result;
@@ -88,5 +94,7 @@ export const useQuizGenerationWorkflow = () => {
     loadingError,
     numQuestions,
     setNumQuestions,
+    quizQuestions,
+    setExistingQuiz: (value: boolean) => {},
   };
 };
