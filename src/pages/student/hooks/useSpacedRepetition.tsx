@@ -27,7 +27,7 @@ export interface ReviewResult {
 }
 
 export const useSpacedRepetition = () => {
-  const { userId } = useUser();
+  const { userId, isLoading: isLoadingUser } = useUser();
   const { dueItems, isLoading: isLoadingDueItems, refetch: refetchDueItems } = useSpacedRepetitionDueItems(userId);
   const { itemStats, isLoading: isLoadingStats } = useSpacedRepetitionStats(userId);
   const { totalPoints } = useSpacedRepetitionPoints(userId);
@@ -36,12 +36,15 @@ export const useSpacedRepetition = () => {
   const { addQuestionsFromQuiz } = useAddQuestionsFromQuiz(userId);
   const { recordReview } = useRecordReview(userId);
 
+  // Combine all loading states
+  const isLoading = isLoadingUser || isLoadingDueItems || isLoadingStats;
+
   return {
     dueItems,
     itemStats,
     totalPoints,
     userStats,
-    isLoading: isLoadingDueItems || isLoadingStats,
+    isLoading,
     addItem,
     recordReview,
     addQuestionsFromQuiz,

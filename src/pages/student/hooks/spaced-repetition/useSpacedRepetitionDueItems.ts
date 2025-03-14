@@ -4,10 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const useSpacedRepetitionDueItems = (userId: string | null) => {
-  const { data: dueItems, isLoading, refetch } = useQuery({
+  const { data: dueItems, isLoading, error, refetch } = useQuery({
     queryKey: ['spaced-repetition-due-items', userId],
     queryFn: async () => {
       if (!userId) return [];
+      
+      // Validate userId is a valid UUID
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+        console.error('Invalid UUID format for userId:', userId);
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('spaced_repetition_items')
@@ -47,8 +53,8 @@ export const useSpacedRepetitionDueItems = (userId: string | null) => {
       
       return data || [];
     },
-    enabled: !!userId
+    enabled: !!userId && typeof userId === 'string'
   });
 
-  return { dueItems, isLoading, refetch };
+  return { dueItems, isLoading, error, refetch };
 };
