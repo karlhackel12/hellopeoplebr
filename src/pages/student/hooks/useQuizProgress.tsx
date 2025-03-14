@@ -1,153 +1,151 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { Question } from '@/components/teacher/quiz/types';
 
-interface QuizProgressData {
-  id?: string;
-  quiz_id: string;
-  user_id: string;
-  current_question: number;
-  answers: Record<string, string>;
-  started_at?: string;
-  completed_at?: string | null;
-  score?: number | null;
-  last_updated_at?: string;
+interface UserAnswers {
+  [questionId: string]: string;
 }
 
 export const useQuizProgress = (quizId: string) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
-  const [progressId, setProgressId] = useState<string | null>(null);
+  const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [completed, setCompleted] = useState(false);
   const [score, setScore] = useState<number | null>(null);
+  const [progressId, setProgressId] = useState<string | null>(null);
 
-  // Load quiz progress
-  const loadQuizProgress = async () => {
+  // Load existing progress when component mounts
+  useEffect(() => {
+    loadProgress();
+  }, [quizId]);
+
+  // Load user's quiz progress from the database
+  const loadProgress = async () => {
     try {
       setLoading(true);
       
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Query the user_quiz_progress table directly
-      const { data, error } = await supabase
+      if (!user) throw new Error('User not authenticated');
+      
+      // Check if there's existing progress for this quiz
+      const { data: progressData, error: progressError } = await supabase
         .from('user_quiz_progress')
         .select('*')
         .eq('quiz_id', quizId)
-        .eq('user_id', user.user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       
-      if (error) {
-        console.error("Error fetching quiz progress:", error);
-        throw error;
-      }
+      if (progressError) throw progressError;
       
-      if (data) {
-        setProgressId(data.id);
-        setCurrentQuestionIndex(data.current_question);
-        setUserAnswers(data.answers as Record<string, string>);
-        setCompleted(!!data.completed_at);
-        setScore(data.score);
-      } else {
-        // Create new progress record
-        await createProgress(user.user.id);
+      if (progressData) {
+        // Load existing progress
+        setProgressId(progressData.id);
+        setUserAnswers(progressData.answers || {});
+        setCompleted(progressData.completed || false);
+        setScore(progressData.score);
+        
+        // If the quiz is incomplete, set the current question to the next unanswered one
+        if (!progressData.completed) {
+          const answeredQuestions = Object.keys(progressData.answers || {}).length;
+          setCurrentQuestionIndex(Math.min(answeredQuestions, progressData.total_questions - 1));
+        }
       }
     } catch (error) {
       console.error('Error loading quiz progress:', error);
-      toast.error('Failed to load your quiz progress');
     } finally {
       setLoading(false);
     }
   };
 
-  // Create new progress record
-  const createProgress = async (userId: string) => {
-    try {
-      // Insert directly into the user_quiz_progress table
-      const { data, error } = await supabase
-        .from('user_quiz_progress')
-        .insert({
-          quiz_id: quizId,
-          user_id: userId,
-          current_question: 0,
-          answers: {}
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      setProgressId(data.id);
-    } catch (error) {
-      console.error('Error creating quiz progress:', error);
-      toast.error('Failed to initialize quiz');
-    }
-  };
-
-  // Save current progress
-  const saveProgress = async (questionIndex: number, answers: Record<string, string>) => {
-    if (!progressId) return;
-    
+  // Save user's progress to the database
+  const saveProgress = async (answers: UserAnswers, isCompleted: boolean = false, finalScore: number | null = null) => {
     try {
       setSaving(true);
       
-      // Update the user_quiz_progress table directly
-      const { error } = await supabase
-        .from('user_quiz_progress')
-        .update({
-          current_question: questionIndex,
-          answers: answers,
-          last_updated_at: new Date().toISOString()
-        })
-        .eq('id', progressId);
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (error) throw error;
+      if (!user) throw new Error('User not authenticated');
       
-      setCurrentQuestionIndex(questionIndex);
-      setUserAnswers(answers);
+      if (progressId) {
+        // Update existing progress
+        const { error: updateError } = await supabase
+          .from('user_quiz_progress')
+          .update({
+            answers,
+            completed: isCompleted,
+            score: finalScore,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', progressId);
+        
+        if (updateError) throw updateError;
+      } else {
+        // Create new progress record
+        const { data: newProgress, error: insertError } = await supabase
+          .from('user_quiz_progress')
+          .insert({
+            quiz_id: quizId,
+            user_id: user.id,
+            answers,
+            completed: isCompleted,
+            score: finalScore,
+            total_questions: 0, // This will be updated with actual count
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (insertError) throw insertError;
+        
+        if (newProgress) {
+          setProgressId(newProgress.id);
+        }
+      }
+      
+      return true;
     } catch (error) {
       console.error('Error saving quiz progress:', error);
-      toast.error('Failed to save your progress');
+      throw error;
     } finally {
       setSaving(false);
     }
   };
 
-  // Answer a question
+  // Record user's answer to a question
   const answerQuestion = async (questionId: string, optionId: string) => {
-    const updatedAnswers = { ...userAnswers, [questionId]: optionId };
-    setUserAnswers(updatedAnswers);
-    return updatedAnswers;
+    try {
+      const updatedAnswers = { ...userAnswers, [questionId]: optionId };
+      setUserAnswers(updatedAnswers);
+      
+      await saveProgress(updatedAnswers);
+      
+      return updatedAnswers;
+    } catch (error) {
+      console.error('Error answering question:', error);
+      throw error;
+    }
   };
 
-  // Go to next question
+  // Navigate to the next question
   const goToNextQuestion = async (questions: Question[]) => {
     if (currentQuestionIndex < questions.length - 1) {
-      const nextIndex = currentQuestionIndex + 1;
-      await saveProgress(nextIndex, userAnswers);
-      return nextIndex;
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
-    return currentQuestionIndex;
   };
 
-  // Go to previous question
+  // Navigate to the previous question
   const goToPreviousQuestion = async () => {
     if (currentQuestionIndex > 0) {
-      const prevIndex = currentQuestionIndex - 1;
-      await saveProgress(prevIndex, userAnswers);
-      return prevIndex;
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
-    return currentQuestionIndex;
   };
 
-  // Complete the quiz
-  const completeQuiz = async (questions: Question[]) => {
-    if (!progressId) return;
-    
+  // Calculate score and complete the quiz
+  const completeQuiz = async (questions: Question[]): Promise<number | null> => {
     try {
       setSaving(true);
       
@@ -159,82 +157,53 @@ export const useQuizProgress = (quizId: string) => {
         const userAnswer = userAnswers[question.id];
         const correctOption = question.options.find(option => option.is_correct);
         
-        if (correctOption && userAnswer === correctOption.id) {
+        if (userAnswer && correctOption && userAnswer === correctOption.id) {
           correctAnswers += question.points;
         }
         
         totalPoints += question.points;
       });
       
-      const calculatedScore = Math.round((correctAnswers / totalPoints) * 100);
+      const finalScore = totalPoints > 0 ? Math.round((correctAnswers / totalPoints) * 100) : 0;
       
-      // Update the quiz progress directly
-      const { error } = await supabase
-        .from('user_quiz_progress')
-        .update({
-          completed_at: new Date().toISOString(),
-          score: calculatedScore,
-          last_updated_at: new Date().toISOString()
-        })
-        .eq('id', progressId);
-      
-      if (error) throw error;
-      
+      // Update state
       setCompleted(true);
-      setScore(calculatedScore);
+      setScore(finalScore);
       
-      toast.success('Quiz completed!');
-      return calculatedScore;
+      // Save to database
+      await saveProgress(userAnswers, true, finalScore);
+      
+      return finalScore;
     } catch (error) {
       console.error('Error completing quiz:', error);
-      toast.error('Failed to submit your quiz');
-      return null;
+      throw error;
     } finally {
       setSaving(false);
     }
   };
 
-  // Reset the quiz
+  // Reset the quiz to start over
   const resetQuiz = async () => {
-    if (!progressId) return;
-    
     try {
       setSaving(true);
       
-      // Reset the quiz progress directly
-      const { error } = await supabase
-        .from('user_quiz_progress')
-        .update({
-          current_question: 0,
-          answers: {},
-          completed_at: null,
-          score: null,
-          last_updated_at: new Date().toISOString()
-        })
-        .eq('id', progressId);
-      
-      if (error) throw error;
-      
-      setCurrentQuestionIndex(0);
+      // Reset state
       setUserAnswers({});
       setCompleted(false);
       setScore(null);
+      setCurrentQuestionIndex(0);
       
-      toast.success('Quiz reset successfully');
+      // Save to database
+      await saveProgress({}, false, null);
+      
+      return true;
     } catch (error) {
       console.error('Error resetting quiz:', error);
-      toast.error('Failed to reset quiz');
+      throw error;
     } finally {
       setSaving(false);
     }
   };
-
-  // Load progress on component mount
-  useEffect(() => {
-    if (quizId) {
-      loadQuizProgress();
-    }
-  }, [quizId]);
 
   return {
     loading,
