@@ -1,10 +1,12 @@
 
+import { GenerationPhase } from '../types';
+
 // Constants for generation state
 export const DEFAULT_POLLING_INTERVAL = 3000; // 3 seconds
 export const MAX_POLL_COUNT = 40; // Maximum number of polling attempts (2 minutes at 3-second intervals)
 
 // Constants for status messages based on generation phase
-export const getPhaseStatusMessage = (phase: string): string => {
+export const getPhaseStatusMessage = (phase: GenerationPhase): string => {
   switch (phase) {
     case 'starting':
       return 'Initializing AI lesson generation...';
