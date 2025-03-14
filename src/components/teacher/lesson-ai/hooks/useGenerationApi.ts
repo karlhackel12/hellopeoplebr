@@ -17,6 +17,7 @@ export const useGenerationApi = () => {
         throw new Error("Title is required for lesson generation");
       }
       
+      // Ensure timestamp is set
       if (!generationParams.timestamp) {
         generationParams.timestamp = new Date().toISOString();
       }
@@ -40,7 +41,6 @@ export const useGenerationApi = () => {
       console.log("Cleaned params for edge function:", cleanParams);
       
       // Only use mock API when VITE_USE_EDGE_FUNCTIONS is explicitly set to 'false'
-      // This ensures we always use the edge function unless explicitly told not to
       if (import.meta.env.VITE_USE_EDGE_FUNCTIONS === 'false') {
         console.log("Using mock API for lesson generation as VITE_USE_EDGE_FUNCTIONS=false");
         
@@ -82,7 +82,6 @@ export const useGenerationApi = () => {
       
       // For all other cases, use the edge function
       console.log("Calling Supabase edge function: generate-lesson-content");
-      console.log("Edge function URL:", "https://roljsmhhptuwtsbirsxe.supabase.co/functions/v1/generate-lesson-content");
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
