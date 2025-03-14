@@ -1,14 +1,19 @@
 
 import { useState } from 'react';
 import { GeneratedLessonContent } from '../types';
-import { GenerationState, GenerationPhase } from './types';
-
-// Constants
-const DEFAULT_POLLING_INTERVAL = 3000; // 3 seconds
-const MAX_POLL_COUNT = 40; // Maximum number of polling attempts (2 minutes at 3-second intervals)
+import { GenerationPhase } from './types';
+import { GenerationState, GenerationStateValues } from './states/generationStateTypes';
+import { 
+  DEFAULT_POLLING_INTERVAL, 
+  MAX_POLL_COUNT,
+  getPhaseStatusMessage
+} from './states/generationStateConstants';
+import { 
+  calculatePollProgress
+} from './states/generationStateUtils';
 
 export const useGenerationState = () => {
-  const [state, setState] = useState<GenerationState>({
+  const [state, setState] = useState<GenerationStateValues>({
     generating: false,
     generatedContent: null,
     level: 'beginner',
@@ -20,7 +25,6 @@ export const useGenerationState = () => {
     progressPercentage: 0,
     statusMessage: '',
     isCancelled: false,
-    // Add the missing properties with their default values
     generationId: undefined,
     pollingInterval: DEFAULT_POLLING_INTERVAL,
     pollCount: 0,
@@ -73,7 +77,7 @@ export const useGenerationState = () => {
     setState(prev => ({ ...prev, error: null }));
   };
 
-  const setGenerationStatus = (status: GenerationState['generationStatus']) => {
+  const setGenerationStatus = (status: GenerationStateValues['generationStatus']) => {
     setState(prev => ({ ...prev, generationStatus: status }));
     
     // Update phase based on status
@@ -95,30 +99,7 @@ export const useGenerationState = () => {
     setState(prev => ({ ...prev, generationPhase: phase }));
     
     // Set appropriate status message based on phase
-    let message = '';
-    switch (phase) {
-      case 'starting':
-        message = 'Initializing AI lesson generation...';
-        break;
-      case 'analyzing':
-        message = 'Analyzing topic and requirements...';
-        break;
-      case 'generating':
-        message = 'Creating lesson content with AI...';
-        break;
-      case 'processing':
-        message = 'Processing and formatting content...';
-        break;
-      case 'complete':
-        message = 'Lesson content successfully generated!';
-        break;
-      case 'error':
-        message = 'There was an error generating content.';
-        break;
-      default:
-        message = '';
-    }
-    
+    const message = getPhaseStatusMessage(phase);
     setStatusMessage(message);
   };
 
@@ -142,7 +123,7 @@ export const useGenerationState = () => {
     setState(prev => {
       const newPollCount = prev.pollCount + 1;
       // Calculate progress based on poll count (25% to 90%)
-      const pollProgress = Math.min(25 + (newPollCount / prev.maxPollCount) * 65, 90);
+      const pollProgress = calculatePollProgress(newPollCount, prev.maxPollCount);
       
       return { 
         ...prev, 
