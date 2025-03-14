@@ -1,32 +1,20 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LessonFormValues } from '../lesson-editor/useLessonForm';
-import GenerationProgress from './components/GenerationProgress';
 import { useGenerationApi } from './hooks/useGenerationApi';
 import { toast } from 'sonner';
 
-// Define form validation schema
-const createLessonSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters." }),
-  level: z.enum(['beginner', 'intermediate', 'advanced'], { 
-    required_error: "Please select a level" 
-  }),
-  instructions: z.string().optional(),
-});
-
-type CreateLessonFormValues = z.infer<typeof createLessonSchema>;
+// Import our newly created components
+import GenerationProgress from './components/GenerationProgress';
+import LessonFormFields, { createLessonSchema, CreateLessonFormValues } from './components/LessonFormFields';
+import LessonFormTips from './components/LessonFormTips';
+import EdgeFunctionAlert from './components/EdgeFunctionAlert';
+import GenerateButton from './components/GenerateButton';
 
 interface AILessonCreateFormProps {
   onSubmit: (data: LessonFormValues) => void;
@@ -152,103 +140,25 @@ const AILessonCreateForm: React.FC<AILessonCreateFormProps> = ({ onSubmit, isLoa
           />
         )}
         
-        {!import.meta.env.VITE_USE_EDGE_FUNCTIONS && (
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Edge Functions Disabled</AlertTitle>
-            <AlertDescription>
-              Edge functions are currently disabled. AI generation will use the mock API instead.
-            </AlertDescription>
-          </Alert>
-        )}
+        <EdgeFunctionAlert />
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>English Lesson Title</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="e.g., Present Continuous Tense" 
-                      {...field} 
-                      disabled={generating || isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="level"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>English Proficiency Level</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                    disabled={generating || isLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a level" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="instructions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teaching Instructions (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add specific instructions for the English lesson, e.g., 'Focus on business vocabulary' or 'Include pronunciation tips'"
-                      className="min-h-[120px] resize-y"
-                      {...field}
-                      disabled={generating || isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <LessonFormFields
+              form={form}
+              generating={generating}
+              isLoading={isLoading}
             />
             
-            <div className="pt-4">
-              <Button 
-                type="submit" 
-                disabled={generating || isLoading || isFormInvalid}
-                className="w-full"
-              >
-                <Sparkles className="mr-2 h-4 w-4" /> 
-                {generating ? 'Generating...' : 'Generate English Lesson Content'}
-              </Button>
-            </div>
+            <GenerateButton
+              generating={generating}
+              isLoading={isLoading}
+              isFormInvalid={isFormInvalid}
+            />
           </form>
         </Form>
         
-        <div className="mt-4 text-sm text-muted-foreground">
-          <p className="font-medium">Tips for better English lessons:</p>
-          <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li>Be specific in your title (e.g., "Past Tense Verbs" instead of "Grammar")</li>
-            <li>Add clear instructions to focus on specific aspects (conversation, writing, etc.)</li>
-            <li>The generated lesson will include vocabulary, key phrases, and quiz questions</li>
-          </ul>
-        </div>
+        <LessonFormTips />
       </CardContent>
       <CardFooter className="bg-muted/30 flex justify-between text-sm text-muted-foreground px-6 py-3">
         <span>Content generated using Replicate AI (deepseek-r1 model)</span>
