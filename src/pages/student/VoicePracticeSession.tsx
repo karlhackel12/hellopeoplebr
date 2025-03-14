@@ -31,7 +31,7 @@ const VoicePracticeSession: React.FC = () => {
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(sessionId || null);
   const startTimeRef = useRef<Date | null>(null);
 
-  const { lessons, isLoading: isLoadingLessons } = useLessonData();
+  const { data: lessons, isLoading: isLoadingLessons } = useLessonData();
   const { 
     createSession,
     completeSession,
@@ -73,15 +73,17 @@ const VoicePracticeSession: React.FC = () => {
     
     // Create session if not exists
     if (!practiceSessionId) {
-      const newSession = await createSession({
+      createSession({
         lessonId: lessonId || undefined,
         topic: practiceTopic,
         difficultyLevel
+      }, {
+        onSuccess: (newSession) => {
+          if (newSession?.id) {
+            setPracticeSessionId(newSession.id);
+          }
+        }
       });
-      
-      if (newSession?.id) {
-        setPracticeSessionId(newSession.id);
-      }
     }
     
     // Process recorded audio
