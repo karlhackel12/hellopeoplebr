@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Loader2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import LessonContentTab from '@/components/teacher/preview/LessonContentTab';
 import { useLessonData } from './hooks/useLessonData';
@@ -14,6 +14,7 @@ import LessonHeader from './components/LessonHeader';
 import LessonAssignmentCard from './components/LessonAssignmentCard';
 import LessonCardTransition from '@/components/student/LessonCardTransition';
 import ProgressTracker from '@/components/teacher/preview/ProgressTracker';
+import QuizSection from '@/components/student/QuizSection';
 
 const LessonView: React.FC = () => {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -117,6 +118,7 @@ const LessonView: React.FC = () => {
   }
 
   const totalSections = calculateTotalSections();
+  const hasQuiz = quiz && quiz.is_published && quizQuestions && quizQuestions.length > 0;
 
   return (
     <StudentLayout>
@@ -143,6 +145,26 @@ const LessonView: React.FC = () => {
             />
           )}
 
+          {/* Quiz Section - Prominently displayed above the tabs */}
+          {hasQuiz && (
+            <div className="animate-fade-in">
+              <QuizSection
+                quizId={quiz.id}
+                title={quiz.title}
+                description={quiz.description || ''}
+                questions={quizQuestions}
+                isPublished={quiz.is_published}
+                passPercent={quiz.pass_percent}
+                progress={{
+                  attempts: 0,
+                  bestScore: 0,
+                  isCompleted: false,
+                  inProgress: false
+                }}
+              />
+            </div>
+          )}
+
           {totalSections > 0 && (
             <ProgressTracker 
               completedSections={completedSections} 
@@ -155,7 +177,7 @@ const LessonView: React.FC = () => {
               <TabsTrigger value="content">
                 <BookOpen className="h-4 w-4 mr-1" /> Lesson Content
               </TabsTrigger>
-              <TabsTrigger value="quiz" disabled={!quiz || !quiz.is_published}>
+              <TabsTrigger value="quiz" disabled={!hasQuiz}>
                 Quiz {!quiz && '(Not Available)'}
               </TabsTrigger>
             </TabsList>
@@ -169,25 +191,23 @@ const LessonView: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="quiz" className="mt-4">
-              {quiz ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{quiz.title}</CardTitle>
-                    {quiz.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{quiz.description}</p>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {quizQuestions && quizQuestions.length > 0 ? (
-                      <div className="space-y-4">
-                        <p>This quiz has {quizQuestions.length} questions</p>
-                        <p>Passing score: {quiz.pass_percent}%</p>
-                      </div>
-                    ) : (
-                      <p>No questions available for this quiz.</p>
-                    )}
-                  </CardContent>
-                </Card>
+              {hasQuiz ? (
+                <div className="animate-fade-in">
+                  <QuizSection
+                    quizId={quiz.id}
+                    title={quiz.title}
+                    description={quiz.description || ''}
+                    questions={quizQuestions}
+                    isPublished={quiz.is_published}
+                    passPercent={quiz.pass_percent}
+                    progress={{
+                      attempts: 0,
+                      bestScore: 0,
+                      isCompleted: false,
+                      inProgress: false
+                    }}
+                  />
+                </div>
               ) : (
                 <Card>
                   <CardContent className="p-6 text-center text-muted-foreground">
