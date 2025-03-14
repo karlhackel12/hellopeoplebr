@@ -238,7 +238,7 @@ const StudentLessons: React.FC = () => {
         </div>
 
         <Tabs defaultValue="all">
-          <TabsList>
+          <TabsList className="w-full sm:w-auto flex flex-wrap">
             <TabsTrigger value="all" className="flex items-center gap-1.5">
               <List className="h-4 w-4" /> All Lessons
             </TabsTrigger>
