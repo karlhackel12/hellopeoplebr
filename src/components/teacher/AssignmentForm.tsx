@@ -17,11 +17,11 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Modified schema to make quiz_id optional and not require content_type field
 const assignmentSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
   description: z.string().optional(),
   student_id: z.string().uuid({ message: 'Please select a student' }),
-  content_type: z.enum(['lesson']),
   lesson_id: z.string().uuid({ message: 'Please select a lesson to assign' }),
   due_date: z.date().optional(),
 });
@@ -60,13 +60,13 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
 }) => {
   const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
   const [hasRelatedQuiz, setHasRelatedQuiz] = useState<boolean>(false);
+  const [relatedQuizId, setRelatedQuizId] = useState<string | null>(null);
   
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
       title: '',
       description: '',
-      content_type: 'lesson',
       student_id: initialStudentId || '',
     },
   });
@@ -87,9 +87,11 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
     if (lessonId) {
       const relatedQuiz = quizzes.find(quiz => quiz.lesson_id === lessonId);
       setHasRelatedQuiz(!!relatedQuiz);
+      setRelatedQuizId(relatedQuiz?.id || null);
       setSelectedLesson(lessonId);
     } else {
       setHasRelatedQuiz(false);
+      setRelatedQuizId(null);
       setSelectedLesson(null);
     }
   }, [form.watch('lesson_id'), quizzes]);
@@ -119,11 +121,8 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         return;
       }
 
-      // Find related quiz if it exists
-      const relatedQuiz = quizzes.find(quiz => quiz.lesson_id === values.lesson_id);
-      const quizId = relatedQuiz?.id || null;
-
       // Create the assignment
+      // Important: only set quiz_id if it exists, otherwise set it to null
       const assignment = {
         title: values.title,
         description: values.description || null,
@@ -131,19 +130,24 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         assigned_by: userData.user.id,
         due_date: values.due_date ? values.due_date.toISOString() : null,
         lesson_id: values.lesson_id,
-        quiz_id: quizId,
+        quiz_id: relatedQuizId,
         status: 'not_started'
       };
+
+      console.log('Creating assignment with data:', assignment);
 
       // Insert assignment
       const { error } = await supabase
         .from('student_assignments')
         .insert(assignment);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Assignment creation error:', error);
+        throw error;
+      }
 
       toast.success('Assignment created', {
-        description: `Assignment has been successfully created${quizId ? ' with associated quiz' : ''}`,
+        description: `Assignment has been successfully created${hasRelatedQuiz ? ' with associated quiz' : ''}`,
       });
       
       form.reset();
