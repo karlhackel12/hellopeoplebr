@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from '../../lesson-editor/useLessonForm';
@@ -67,17 +68,36 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
   // Get the generation handler with required methods
   const generationHandler = useGenerationHandler();
 
-  // Function to start generation
+  // Function to start generation with proper sequence
   const handleGenerate = async () => {
-    // Update settings before generating
-    generationHandler.handleSettingsChange({
-      title: title,
-      grade: level,
-      subject: 'English',
-      additionalInstructions: instructions
-    });
+    // Check if title is valid first
+    if (!title?.trim()) {
+      setError('Please provide a lesson title before generating content');
+      return;
+    }
+
+    setGenerating(true);
+    setGenerationStatus('pending');
+    setError(null);
     
-    await generationHandler.handleGenerate();
+    try {
+      // First update settings
+      generationHandler.handleSettingsChange({
+        title: title,
+        grade: level,
+        subject: 'English',
+        additionalInstructions: instructions
+      });
+      
+      // Then start generation
+      console.log('Starting generation for:', title, level, instructions);
+      await generationHandler.handleGenerate();
+    } catch (error) {
+      console.error('Generation error:', error);
+      setError(error.message || 'An error occurred during generation');
+      setGenerationStatus('failed');
+      setGenerating(false);
+    }
   };
 
   // Function to cancel generation
@@ -88,15 +108,26 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
   
   // Function to retry generation
   const handleRetryGeneration = async () => {
-    // Update settings before retrying
-    generationHandler.handleSettingsChange({
-      title: title,
-      grade: level,
-      subject: 'English',
-      additionalInstructions: instructions
-    });
+    setGenerating(true);
+    setGenerationStatus('pending');
+    setError(null);
     
-    await generationHandler.retryGeneration();
+    try {
+      // Update settings before retrying
+      generationHandler.handleSettingsChange({
+        title: title,
+        grade: level,
+        subject: 'English',
+        additionalInstructions: instructions
+      });
+      
+      await generationHandler.retryGeneration();
+    } catch (error) {
+      console.error('Retry error:', error);
+      setError(error.message || 'An error occurred during retry');
+      setGenerationStatus('failed');
+      setGenerating(false);
+    }
   };
 
   // Clean up any polling or resources when component unmounts

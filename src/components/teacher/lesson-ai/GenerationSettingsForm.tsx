@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageSquare, StopCircle } from 'lucide-react';
+import { Sparkles, MessageSquare, StopCircle, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import GenerationProgress from './components/GenerationProgress';
@@ -38,6 +38,12 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
   progressPercentage,
   statusMessage,
 }) => {
+  // Check if the form has required fields filled
+  const isFormValid = Boolean(title?.trim()) && Boolean(level);
+  
+  // Show a user-friendly message when the title is missing
+  const showTitleWarning = !title?.trim();
+
   return (
     <div className="space-y-6">
       {generating && (
@@ -51,9 +57,23 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
         />
       )}
 
+      {error && !generating && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div>
         <h3 className="text-lg font-medium mb-2">English Lesson Title</h3>
-        <p className="p-3 bg-muted rounded-md">{title || "Untitled English Lesson"}</p>
+        {showTitleWarning ? (
+          <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <p>Please set a title in the basic information tab first</p>
+          </div>
+        ) : (
+          <p className="p-3 bg-muted rounded-md">{title || "Untitled English Lesson"}</p>
+        )}
       </div>
       
       <div className="space-y-2">
@@ -94,7 +114,7 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
         <Button 
           onClick={handleGenerate} 
           className="w-full"
-          disabled={generating || !title}
+          disabled={generating || !isFormValid}
         >
           <Sparkles className="mr-2 h-4 w-4" /> 
           Generate English Lesson Content

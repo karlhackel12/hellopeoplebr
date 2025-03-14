@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { generateLesson } from '@/integrations/openai/client';
 import { parseLesson } from '@/integrations/openai/parser';
@@ -39,8 +39,23 @@ export const useGenerationHandler = () => {
 
   // Validation function
   const validate = (): boolean => {
-    if (!generationSettings.title || !generationSettings.grade || !generationSettings.subject) {
-      toast.error('Please fill in all required fields (Title, Grade, Subject).');
+    console.log('Validating settings:', generationSettings);
+    if (!generationSettings.title) {
+      toast.error('Missing title', {
+        description: 'Please provide a lesson title before generating content.'
+      });
+      return false;
+    }
+    if (!generationSettings.grade) {
+      toast.error('Missing level', {
+        description: 'Please select an English proficiency level before generating content.'
+      });
+      return false;
+    }
+    if (!generationSettings.subject) {
+      toast.error('Missing subject', {
+        description: 'Subject information is required.'
+      });
       return false;
     }
     return true;
@@ -53,7 +68,11 @@ export const useGenerationHandler = () => {
 
   // Handle settings changes
   const handleSettingsChange = (settings: Partial<GenerationSettings>) => {
-    setGenerationSettings(prevSettings => ({ ...prevSettings, ...settings }));
+    setGenerationSettings(prevSettings => {
+      const newSettings = { ...prevSettings, ...settings };
+      console.log('Updated generation settings:', newSettings);
+      return newSettings;
+    });
   };
 
   // Handle API errors
@@ -106,13 +125,26 @@ export const useGenerationHandler = () => {
 
   // Handle complete generation process
   const handleGenerateContent = async () => {
-    if (!validate()) return;
-
+    setIsGenerating(true);
+    updateState({ phase: 'initializing' });
+    
+    // Important: Use the current state rather than potentially stale state
+    const currentSettings = { ...generationSettings };
+    console.log('Starting generation with settings:', currentSettings);
+    
+    // Validate with the current settings
+    if (!currentSettings.title || !currentSettings.grade || !currentSettings.subject) {
+      console.error('Validation failed:', currentSettings);
+      toast.error('Please fill in all required fields', {
+        description: 'Title, proficiency level, and subject are required.'
+      });
+      setIsGenerating(false);
+      updateState({ phase: 'idle', error: null });
+      return;
+    }
+    
     try {
-      setIsGenerating(true);
-      updateState({ phase: 'initializing' });
-
-      const { title, grade, subject, length, tone, focusAreas, additionalInstructions } = generationSettings;
+      const { title, grade, subject, length, tone, focusAreas, additionalInstructions } = currentSettings;
 
       // Start the generation
       const result = await generateContent({
