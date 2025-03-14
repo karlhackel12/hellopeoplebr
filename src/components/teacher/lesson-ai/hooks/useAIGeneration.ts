@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from '../lesson-editor/useLessonForm';
 import { useGenerationState } from './useGenerationState';
 import { useGenerationHandler } from './useGenerationHandler';
 import { GeneratedLessonContent } from '../types';
@@ -9,6 +8,18 @@ import { useGenerationInit } from './generation/useGenerationInit';
 import { useGenerationSettings } from './generation/useGenerationSettings';
 import { useGenerationActions } from './generation/useGenerationActions';
 import { useGenerationCleanup } from './generation/useGenerationCleanup';
+
+// Define LessonFormValues type directly here
+export type LessonFormValues = {
+  id?: string;
+  title: string;
+  content: string;
+  is_published: boolean;
+  contentSource: 'ai_generated' | 'mixed';
+  structuredContent?: any;
+  generationMetadata?: any;
+  estimated_minutes?: number;
+};
 
 export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: string) => {
   // Get all generation state and state updaters
