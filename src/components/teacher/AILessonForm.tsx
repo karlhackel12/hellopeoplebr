@@ -47,6 +47,14 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
     statusMessage
   } = useAIGeneration(form, title);
 
+  // Show form values for debugging
+  console.log('Form values:', {
+    id: form.getValues().id,
+    title: form.getValues().title,
+    structuredContent: form.getValues().structuredContent,
+    contentSource: form.getValues().contentSource
+  });
+
   // Get the form values and use optional chaining for id
   const formValues = form.getValues();
   const lessonId = formValues.id;

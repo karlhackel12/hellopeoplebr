@@ -1,9 +1,10 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { generateLesson } from '@/integrations/openai/client';
 import { parseLesson } from '@/integrations/openai/parser';
 import { useLessonStore } from '../store/lessonStore';
+import { GeneratedLessonContent } from '../types';
 
 interface GenerationSettings {
   title: string;
@@ -26,9 +27,6 @@ export const useGenerationHandler = () => {
     title: '',
     grade: 'beginner',
     subject: 'English',
-    length: '',
-    tone: '',
-    focusAreas: '',
     additionalInstructions: ''
   });
   const { updateContent, updateMetadata } = useLessonStore();
@@ -49,12 +47,6 @@ export const useGenerationHandler = () => {
     if (!generationSettings.grade) {
       toast.error('Missing level', {
         description: 'Please select an English proficiency level before generating content.'
-      });
-      return false;
-    }
-    if (!generationSettings.subject) {
-      toast.error('Missing subject', {
-        description: 'Subject information is required.'
       });
       return false;
     }
@@ -88,18 +80,6 @@ export const useGenerationHandler = () => {
     });
   };
 
-  // Handle parsing errors
-  const handleParsingError = (error: any) => {
-    console.error('Parsing Error:', error);
-    updateState({
-      phase: 'error',
-      error: 'Failed to parse generated content. The structure might be invalid.'
-    });
-    toast.error('Parsing Failed', {
-      description: 'Failed to parse generated content. The structure might be invalid.'
-    });
-  };
-
   // Generate content function
   const generateContent = async (settings: any) => {
     updateState({ phase: 'generating', error: null });
@@ -115,13 +95,18 @@ export const useGenerationHandler = () => {
   };
 
   // Parse response function
-  const parseResponse = (responseData: any) => {
+  const parseResponse = (responseData: any): GeneratedLessonContent | null => {
     updateState({ phase: 'parsing', error: null });
     try {
       const parsedContent = parseLesson(responseData);
+      console.log('Parsed content:', parsedContent);
       return parsedContent;
     } catch (error) {
-      handleParsingError(error);
+      console.error("Error parsing AI response:", error);
+      updateState({
+        phase: 'error',
+        error: `Failed to process the generated content: ${error.message}`
+      });
       return null;
     }
   };
@@ -129,17 +114,17 @@ export const useGenerationHandler = () => {
   // Handle complete generation process
   const handleGenerateContent = async () => {
     setIsGenerating(true);
-    updateState({ phase: 'initializing' });
+    updateState({ phase: 'initializing', error: null });
     
     // Important: Use the current state rather than potentially stale state
     const currentSettings = { ...generationSettings };
     console.log('Starting generation with settings:', currentSettings);
     
     // Validate with the current settings
-    if (!currentSettings.title || !currentSettings.grade || !currentSettings.subject) {
+    if (!currentSettings.title || !currentSettings.grade) {
       console.error('Validation failed:', currentSettings);
       toast.error('Please fill in all required fields', {
-        description: 'Title, proficiency level, and subject are required.'
+        description: 'Title and proficiency level are required.'
       });
       setIsGenerating(false);
       updateState({ phase: 'idle', error: null });
@@ -147,56 +132,64 @@ export const useGenerationHandler = () => {
     }
     
     try {
-      const { title, grade, subject, length, tone, focusAreas, additionalInstructions } = currentSettings;
+      const { title, grade, subject, additionalInstructions } = currentSettings;
 
       // Start the generation
       const result = await generateContent({
         title,
         grade_level: grade,
         subject,
-        length,
-        tone,
-        focus_areas: focusAreas,
         additional_instructions: additionalInstructions
       });
 
       // Handle error from API
       if (!result || !result.data) {
         handleApiError(new Error('Failed to generate content'));
+        setIsGenerating(false);
         return;
       }
 
       // Process successful response
-      await processResponse(result.data);
+      const parsedContent = parseResponse(result.data);
       
-    } catch (error) {
-      handleApiError(error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Process the response from the API
-  const processResponse = async (responseData: any) => {
-    try {
-      const parsedContent = parseResponse(responseData);
-      
-      // Fix: Check if parsedContent exists before accessing properties
-      if (parsedContent && parsedContent.sections) {
-        updateContent({
-          sections: parsedContent.sections,
-          metadata: parsedContent.metadata || {}
+      if (parsedContent) {
+        // Store the structured content in the form
+        updateMetadata({
+          title,
+          level: grade,
+          language: 'English',
+          timestamp: new Date().toISOString(),
+          model: 'deepseek-r1'
         });
+        
+        // Create sections from parsed content
+        const sections = {
+          description: parsedContent.description,
+          objectives: parsedContent.objectives,
+          keyPhrases: parsedContent.keyPhrases,
+          vocabulary: parsedContent.vocabulary,
+          practicalSituations: parsedContent.practicalSituations,
+          explanations: parsedContent.explanations,
+          tips: parsedContent.tips
+        };
+        
+        updateContent(parsedContent);
         
         updateState({ 
           phase: 'complete', 
           error: null 
         });
-      } else {
-        throw new Error('Invalid content structure received');
+        
+        toast.success('Content Generated', {
+          description: 'Your lesson content has been successfully generated'
+        });
       }
+      
+      setIsGenerating(false);
     } catch (error) {
-      handleParsingError(error);
+      console.error('Generation error:', error);
+      handleApiError(error);
+      setIsGenerating(false);
     }
   };
 
@@ -205,8 +198,6 @@ export const useGenerationHandler = () => {
     generationSettings,
     generationState,
     handleSettingsChange,
-    handleGenerateContent,
-    // Add these functions to fix useAIGeneration.ts errors
     handleGenerate: handleGenerateContent,
     cancelGeneration: () => {
       setIsGenerating(false);
