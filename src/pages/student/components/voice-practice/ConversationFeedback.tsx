@@ -98,7 +98,7 @@ const ConversationFeedback: React.FC<ConversationFeedbackProps> = ({
               variant={isCompleted ? "default" : canComplete ? "outline" : "secondary"}
               className={isCompleted ? "bg-green-100 text-green-700 border-green-200" : ""}
             >
-              {isCompleted ? "Finished" : canComplete ? "Requirements met" : "Need more practice"}
+              {isCompleted ? "Finished" : canComplete ? "Requirements met" : "Need more turns"}
             </Badge>
           </div>
           <div className="space-y-2">
@@ -142,7 +142,7 @@ const ConversationFeedback: React.FC<ConversationFeedbackProps> = ({
             className="w-full"
             variant={isCompleted ? "outline" : "default"}
           >
-            {isCompleted ? "Completed" : "Complete Conversation Practice"}
+            {isCompleted ? "Practice Completed" : "Complete Conversation Practice"}
           </Button>
         </CardFooter>
       </Card>
@@ -161,32 +161,39 @@ const ConversationFeedback: React.FC<ConversationFeedbackProps> = ({
             <div>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-medium">Grammar Quality</span>
-                <span className="text-sm">{(analyticsData.grammar.score * 10).toFixed(1)}/10</span>
+                <span className="text-sm">{(analyticsData.grammar?.score * 10 || 0).toFixed(1)}/10</span>
               </div>
-              {renderScore(analyticsData.grammar.score)}
+              {renderScore(analyticsData.grammar?.score || 0)}
             </div>
             
             {/* Fluency Score */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-medium">Speaking Fluency</span>
-                <span className="text-sm">{(analyticsData.fluency.score * 10).toFixed(1)}/10</span>
+                <span className="text-sm">{(analyticsData.fluency?.score * 10 || 0).toFixed(1)}/10</span>
               </div>
-              {renderScore(analyticsData.fluency.score)}
+              {renderScore(analyticsData.fluency?.score || 0)}
             </div>
             
             {/* Vocabulary Usage */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-medium">Vocabulary Usage</span>
-                <span className="text-sm">{analyticsData.vocabulary.used.length}/{analyticsData.vocabulary.unique} words</span>
+                <span className="text-sm">
+                  {analyticsData.vocabulary?.used?.length || 0}/{analyticsData.vocabulary?.unique || 0} words
+                </span>
               </div>
               <div className="flex flex-wrap gap-1 mt-2">
-                {analyticsData.vocabulary.used.map((word: string, i: number) => (
+                {analyticsData.vocabulary?.used?.slice(0, 10).map((word: string, i: number) => (
                   <Badge key={i} variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
                     {word}
                   </Badge>
                 ))}
+                {analyticsData.vocabulary?.used?.length > 10 && (
+                  <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-100">
+                    +{analyticsData.vocabulary.used.length - 10} more
+                  </Badge>
+                )}
               </div>
             </div>
             
@@ -194,19 +201,19 @@ const ConversationFeedback: React.FC<ConversationFeedbackProps> = ({
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <Clock className="h-5 w-5 text-slate-400 mb-1" />
-                <div className="text-lg font-semibold">{Math.round(analyticsData.speakingTime)}s</div>
+                <div className="text-lg font-semibold">{Math.round(analyticsData.speakingTime || 0)}s</div>
                 <div className="text-xs text-muted-foreground">Speaking Time</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <BarChart3 className="h-5 w-5 text-slate-400 mb-1" />
-                <div className="text-lg font-semibold">{analyticsData.fluency.wordsPerMinute}</div>
+                <div className="text-lg font-semibold">{analyticsData.fluency?.wordsPerMinute || 0}</div>
                 <div className="text-xs text-muted-foreground">Words per Minute</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <MessageCircle className="h-5 w-5 text-slate-400 mb-1" />
-                <div className="text-lg font-semibold">{analyticsData.conversationTurns || analyticsData.vocabulary.total}</div>
+                <div className="text-lg font-semibold">{analyticsData.conversationTurns || 0}</div>
                 <div className="text-xs text-muted-foreground">Total Responses</div>
               </div>
               

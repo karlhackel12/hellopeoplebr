@@ -19,10 +19,10 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const { transcript, lessonContent, difficulty } = await req.json();
+    const { transcript, lessonContent, difficulty, conversationHistory = [] } = await req.json();
 
-    if (!transcript || !lessonContent) {
-      throw new Error('Missing required parameters: transcript and lessonContent');
+    if (!transcript) {
+      throw new Error('Missing required parameter: transcript');
     }
 
     // Define difficulty levels in the system prompt
@@ -31,6 +31,12 @@ serve(async (req) => {
       2: "Intermediate level - Provide constructive feedback on grammar, vocabulary, and pronunciation.",
       3: "Advanced level - Be more critical and focus on nuanced language use, advanced vocabulary, and natural fluency.",
     }[difficulty || 1];
+
+    // Create a combined transcript if there's conversation history
+    let fullTranscript = transcript;
+    if (conversationHistory && conversationHistory.length > 0) {
+      fullTranscript = conversationHistory.map(msg => `${msg.role === 'user' ? 'Student' : 'AI'}: ${msg.content}`).join('\n') + `\nStudent: ${transcript}`;
+    }
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -46,24 +52,39 @@ serve(async (req) => {
             role: 'system',
             content: `You are a supportive language tutor evaluating a student's speaking practice.
               ${difficultyDescription}
-              Provide feedback in the following JSON format:
+              Analyze this conversation and provide detailed feedback and analytics in the following JSON format:
               {
                 "feedback": "Detailed feedback on pronunciation, grammar, and fluency",
-                "scores": {
-                  "pronunciation": 0-10 value with one decimal place,
-                  "grammar": 0-10 value with one decimal place,
-                  "fluency": 0-10 value with one decimal place,
-                  "overall": 0-10 value with one decimal place (average of the other three)
+                "grammar": {
+                  "score": 0-1 value (decimal between 0 and 1),
+                  "issues": ["List of specific grammar issues"],
+                  "strengths": ["List of grammar strengths"]
                 },
-                "corrections": ["List of specific corrections"],
-                "suggestions": ["List of improvement suggestions"]
+                "fluency": {
+                  "score": 0-1 value (decimal between 0 and 1),
+                  "wordsPerMinute": estimated speaking rate,
+                  "issues": ["List of fluency issues"],
+                  "strengths": ["List of fluency strengths"]
+                },
+                "vocabulary": {
+                  "score": 0-1 value (decimal between 0 and 1),
+                  "used": ["List of notable vocabulary words used"],
+                  "suggestions": ["Suggested words they could have used"],
+                  "unique": number of unique words used,
+                  "total": total word count
+                },
+                "suggestions": ["List of improvement suggestions"],
+                "conversationTurns": number of student responses in the conversation,
+                "speakingTime": estimated speaking time in seconds
               }
               
-              The lesson content context is: "${lessonContent.slice(0, 500)}..."`
+              The lesson content context is: "${lessonContent ? lessonContent.slice(0, 500) + '...' : 'General conversation practice'}"
+              
+              Only respond with the JSON. Do not include any other text in your response.`
           },
           {
             role: 'user',
-            content: `Here is my spoken practice transcript: "${transcript}"`
+            content: `Here is the conversation transcript:\n${fullTranscript}`
           }
         ],
         temperature: 0.7
@@ -84,14 +105,27 @@ serve(async (req) => {
       console.error('Error parsing OpenAI response as JSON:', parseError);
       return new Response(JSON.stringify({
         feedback: feedbackText,
-        scores: {
-          pronunciation: 7.0,
-          grammar: 7.0,
-          fluency: 7.0,
-          overall: 7.0
+        grammar: {
+          score: 0.7,
+          issues: [],
+          strengths: []
         },
-        corrections: [],
-        suggestions: ["The system couldn't generate structured feedback. Please try again."]
+        fluency: {
+          score: 0.7,
+          wordsPerMinute: 60,
+          issues: [],
+          strengths: []
+        },
+        vocabulary: {
+          score: 0.7,
+          used: [],
+          suggestions: [],
+          unique: 0,
+          total: 0
+        },
+        suggestions: ["The system couldn't generate structured feedback. Please try again."],
+        conversationTurns: conversationHistory ? conversationHistory.filter(msg => msg.role === 'user').length + 1 : 1,
+        speakingTime: 30
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

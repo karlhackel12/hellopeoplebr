@@ -720,8 +720,10 @@ export type Database = {
           completed_at: string | null
           completed_sections: string[] | null
           id: string
+          is_required: boolean | null
           last_accessed_at: string
           lesson_id: string
+          status: string | null
           user_id: string
         }
         Insert: {
@@ -729,8 +731,10 @@ export type Database = {
           completed_at?: string | null
           completed_sections?: string[] | null
           id?: string
+          is_required?: boolean | null
           last_accessed_at?: string
           lesson_id: string
+          status?: string | null
           user_id: string
         }
         Update: {
@@ -738,8 +742,10 @@ export type Database = {
           completed_at?: string | null
           completed_sections?: string[] | null
           id?: string
+          is_required?: boolean | null
           last_accessed_at?: string
           lesson_id?: string
+          status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1000,37 +1006,52 @@ export type Database = {
       }
       voice_practice_sessions: {
         Row: {
+          analytics_data: Json | null
           completed_at: string | null
+          conversation_topic: string | null
           created_at: string
           difficulty_level: number
           duration_seconds: number | null
           id: string
+          is_conversation: boolean | null
+          is_required: boolean | null
           lesson_id: string | null
           started_at: string
           topic: string
           user_id: string
+          vocabulary_used: string[] | null
         }
         Insert: {
+          analytics_data?: Json | null
           completed_at?: string | null
+          conversation_topic?: string | null
           created_at?: string
           difficulty_level?: number
           duration_seconds?: number | null
           id?: string
+          is_conversation?: boolean | null
+          is_required?: boolean | null
           lesson_id?: string | null
           started_at?: string
           topic: string
           user_id: string
+          vocabulary_used?: string[] | null
         }
         Update: {
+          analytics_data?: Json | null
           completed_at?: string | null
+          conversation_topic?: string | null
           created_at?: string
           difficulty_level?: number
           duration_seconds?: number | null
           id?: string
+          is_conversation?: boolean | null
+          is_required?: boolean | null
           lesson_id?: string | null
           started_at?: string
           topic?: string
           user_id?: string
+          vocabulary_used?: string[] | null
         }
         Relationships: [
           {
