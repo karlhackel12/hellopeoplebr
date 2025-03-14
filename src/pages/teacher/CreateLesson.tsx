@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import AILessonCreateForm from '@/components/teacher/lesson-ai/AILessonCreateForm';
 import LessonTypeSelector from '@/components/teacher/LessonTypeSelector';
-import { LessonFormValues } from '@/components/teacher/lesson-ai/hooks/useAIGeneration';
+import { LessonFormValues } from '@/components/teacher/lesson-editor/useLessonForm';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -113,7 +113,7 @@ const CreateLesson: React.FC = () => {
                   title: 'Untitled Lesson',
                   content: '',
                   is_published: false,
-                  contentSource: 'ai_generated', // Using the correct type
+                  contentSource: 'ai_generated',
                 });
               }}
               className="mt-4"
