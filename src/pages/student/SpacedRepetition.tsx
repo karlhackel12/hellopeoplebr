@@ -13,10 +13,12 @@ const SpacedRepetitionPage: React.FC = () => {
 
   return (
     <StudentLayout>
-      <div className="container mx-auto p-4 space-y-6">
-        <h1 className="text-2xl font-bold mt-4 flex items-center gap-2">
-          <Brain className="h-6 w-6" /> Spaced Repetition Dashboard
-        </h1>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Brain className="h-6 w-6" /> Spaced Repetition
+          </h1>
+        </div>
         
         <div className="grid md:grid-cols-2 gap-6">
           <SpacedRepetitionCard

@@ -272,8 +272,8 @@ const VoiceConversationSession: React.FC = () => {
         <title>Voice Conversation | Teachly</title>
       </Helmet>
       
-      <div className="container py-6 max-w-4xl">
-        <div className="flex justify-between items-center mb-6">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-4">
           <Button variant="ghost" onClick={handleGoBack} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Voice Practice
@@ -281,7 +281,7 @@ const VoiceConversationSession: React.FC = () => {
         </div>
         
         {assignmentData && (
-          <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
             <BookOpen className="h-4 w-4 text-blue-600" />
             <AlertTitle>Assignment Conversation Practice</AlertTitle>
             <AlertDescription>
@@ -294,7 +294,7 @@ const VoiceConversationSession: React.FC = () => {
         )}
         
         {sessionCompleted && (
-          <Alert className="mb-6 bg-green-50 border-green-200">
+          <Alert className="mb-4 bg-green-50 border-green-200">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertTitle>Practice Completed!</AlertTitle>
             <AlertDescription>

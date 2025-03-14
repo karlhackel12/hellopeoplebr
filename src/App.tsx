@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { PageTransitionWrapper } from "@/components/ui/page-transition";
 
 import Index from "./pages/Index";
@@ -145,6 +146,10 @@ const App = () => (
               <PageTransitionWrapper>
                 <StudentLessons />
               </PageTransitionWrapper>
+            } />
+            {/* Redirect from assignments to lessons */}
+            <Route path="/student/assignments" element={
+              <Navigate to="/student/lessons" replace />
             } />
             <Route path="/student/lessons/view/:lessonId" element={
               <PageTransitionWrapper>
