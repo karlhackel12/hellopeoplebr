@@ -1,10 +1,11 @@
 
 import { useState, useCallback } from 'react';
-import { QuizGenerationResponse } from '../quiz/types/quizGeneration';
+import { QuizGenerationResponse } from '../../quiz/types/quizGeneration';
 
 export const useSmartQuizGeneration = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const generateSmartQuiz = useCallback(async (
     generateQuizFunc: (numQuestions?: number) => Promise<QuizGenerationResponse>,
@@ -29,6 +30,8 @@ export const useSmartQuizGeneration = () => {
   return {
     generateSmartQuiz,
     loading,
-    error
+    error,
+    isRetrying,
+    setIsRetrying
   };
 };

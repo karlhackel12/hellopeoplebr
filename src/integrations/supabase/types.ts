@@ -665,6 +665,50 @@ export type Database = {
           },
         ]
       }
+      user_quiz_progress: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          current_question: number
+          id: string
+          last_updated_at: string
+          quiz_id: string
+          score: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          current_question?: number
+          id?: string
+          last_updated_at?: string
+          quiz_id: string
+          score?: number | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          current_question?: number
+          id?: string
+          last_updated_at?: string
+          quiz_id?: string
+          score?: number | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quiz_progress_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

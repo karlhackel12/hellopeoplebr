@@ -1,88 +1,68 @@
 
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useState, useCallback } from 'react';
 import { GenerationPhase } from '../../quiz/types/quizGeneration';
-import { useSmartQuizGeneration } from './useSmartQuizGeneration';
 import { Question } from '../../quiz/types';
+import { useQuizActionWrappers } from './useQuizActionWrappers';
+import { useQuizGeneration } from './useQuizGeneration';
+import { useQuizDataProcessor } from './useQuizDataProcessor';
+import { useQuizExistingData } from './useQuizExistingData';
 
 export const useQuizGenerationWorkflow = (
   lessonId: string,
   setGenerationPhase: (phase: GenerationPhase) => void,
-  setError: (message: string, details?: string) => void,
+  setError: (error: string) => void,
   clearErrors: () => void
 ) => {
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(false);
   const [existingQuiz, setExistingQuiz] = useState(false);
   
-  const {
-    generateSmartQuiz,
-    loading,
-    isRetrying,
-    error
-  } = useSmartQuizGeneration(lessonId);
-  
-  /**
-   * Main function to handle the entire quiz generation workflow
-   */
-  const handleGenerateQuiz = async (numQuestions: string): Promise<boolean> => {
-    if (!lessonId) {
-      toast.error("Lesson ID is required to generate a quiz");
-      return false;
-    }
-    
+  const { generateQuiz, isRetrying } = useQuizGeneration();
+  const { processQuizData } = useQuizDataProcessor();
+  const { checkExistingQuiz } = useQuizExistingData();
+  const { withErrorHandling } = useQuizActionWrappers();
+
+  // Function to handle quiz generation workflow
+  const handleGenerateQuiz = useCallback(async (numQuestions: number = 5) => {
+    setLoading(true);
     clearErrors();
-    setGenerationPhase('loading');
     
     try {
-      // Loading content phase
-      setGenerationPhase('content-loading');
-      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
+      // Check if quiz already exists
+      const hasExistingQuiz = await checkExistingQuiz(lessonId);
+      setExistingQuiz(hasExistingQuiz);
       
-      // Analysis phase
-      setGenerationPhase('analyzing');
-      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UI feedback
+      // Set generation phase
+      setGenerationPhase('generation');
       
-      // Generation phase
-      setGenerationPhase('generating');
+      // Generate quiz questions
+      const generationResponse = await generateQuiz(numQuestions);
       
-      // Generate the smart quiz
-      const questions = await generateSmartQuiz(parseInt(numQuestions));
-      
-      if (questions.length > 0) {
-        setQuizQuestions(questions);
-        setExistingQuiz(true);
-        setGenerationPhase('saving');
-        
-        // Brief delay to show the saving state
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-        
-        setGenerationPhase('complete');
-        
-        // Reset to idle after a delay
-        setTimeout(() => {
-          setGenerationPhase('idle');
-        }, 2000);
-        
-        return true;
-      } else {
-        setError('Failed to generate quiz', 'No questions were generated. Please try again.');
-        return false;
+      if (!generationResponse) {
+        throw new Error('Failed to generate quiz questions');
       }
+      
+      // Process and save quiz data
+      setGenerationPhase('saving');
+      const questions = await processQuizData(lessonId, generationResponse);
+      
+      if (!questions || questions.length === 0) {
+        throw new Error('Failed to process quiz data');
+      }
+      
+      setQuizQuestions(questions);
+      setGenerationPhase('completed');
+      return questions;
     } catch (error: any) {
-      console.error("Error in quiz generation workflow:", error);
-      setError(
-        'Quiz generation failed', 
-        error.message || 'An unexpected error occurred during the quiz generation process.'
-      );
-      return false;
+      console.error('Error in quiz generation workflow:', error);
+      setError(error.message || 'Quiz generation failed');
+      setGenerationPhase('failed');
+      return null;
+    } finally {
+      setLoading(false);
     }
-  };
-  
-  // Watch for errors from the underlying hooks
-  if (error) {
-    setError('Quiz generation failed', error);
-  }
-  
+  }, [lessonId, generateQuiz, processQuizData, setGenerationPhase, setError, clearErrors, checkExistingQuiz]);
+
   return {
     handleGenerateQuiz,
     quizQuestions,
