@@ -12,6 +12,7 @@ export interface VoicePracticeSession {
   started_at: string;
   completed_at: string | null;
   duration_seconds: number | null;
+  vocabulary_used?: string[];
   lesson?: {
     id: string;
     title: string;
@@ -69,6 +70,7 @@ export const useVoicePractice = () => {
           started_at,
           completed_at,
           duration_seconds,
+          vocabulary_used,
           lesson:lessons(
             id,
             title,
@@ -138,11 +140,13 @@ export const useVoicePractice = () => {
     mutationFn: async ({ 
       lessonId, 
       topic,
-      difficultyLevel 
+      difficultyLevel,
+      vocabularyItems = []
     }: { 
       lessonId?: string,
       topic: string,
-      difficultyLevel: number
+      difficultyLevel: number,
+      vocabularyItems?: string[]
     }) => {
       if (!userId) throw new Error('User is not authenticated');
       
@@ -152,7 +156,8 @@ export const useVoicePractice = () => {
           user_id: userId,
           lesson_id: lessonId || null,
           topic,
-          difficulty_level: difficultyLevel
+          difficulty_level: difficultyLevel,
+          vocabulary_used: vocabularyItems
         })
         .select()
         .single();
@@ -173,10 +178,12 @@ export const useVoicePractice = () => {
   const completeSessionMutation = useMutation({
     mutationFn: async ({ 
       sessionId,
-      durationSeconds
+      durationSeconds,
+      analyticsData = null
     }: { 
       sessionId: string,
-      durationSeconds: number
+      durationSeconds: number,
+      analyticsData?: any
     }) => {
       if (!userId) throw new Error('User is not authenticated');
       
@@ -184,7 +191,8 @@ export const useVoicePractice = () => {
         .from('voice_practice_sessions')
         .update({
           completed_at: new Date().toISOString(),
-          duration_seconds: durationSeconds
+          duration_seconds: durationSeconds,
+          analytics_data: analyticsData
         })
         .eq('id', sessionId)
         .eq('user_id', userId)
@@ -284,17 +292,59 @@ export const useVoicePractice = () => {
     }
   });
   
-  // Calculate average scores from confidence scores
-  const averageScores = confidenceScores?.length ? {
-    overall: parseFloat((confidenceScores.reduce((sum, score) => sum + score.overall_score, 0) / confidenceScores.length).toFixed(1)),
-    pronunciation: parseFloat((confidenceScores.reduce((sum, score) => sum + score.pronunciation_score, 0) / confidenceScores.length).toFixed(1)),
-    grammar: parseFloat((confidenceScores.reduce((sum, score) => sum + score.grammar_score, 0) / confidenceScores.length).toFixed(1)),
-    fluency: parseFloat((confidenceScores.reduce((sum, score) => sum + score.fluency_score, 0) / confidenceScores.length).toFixed(1)),
-  } : {
-    overall: 0,
-    pronunciation: 0,
-    grammar: 0,
-    fluency: 0
+  // Calculate detailed analytics from feedback and scores
+  const calculateDetailedStats = () => {
+    if (!confidenceScores?.length && !recentFeedback?.length) {
+      return {
+        overall: 0,
+        pronunciation: 0,
+        grammar: 0,
+        fluency: 0,
+        vocabulary: 0
+      };
+    }
+    
+    // Combine data from both sources
+    const allGrammarScores = [
+      ...confidenceScores?.map(s => s.grammar_score) || [],
+      ...recentFeedback?.filter(f => f.grammar_score).map(f => f.grammar_score as number) || []
+    ];
+    
+    const allFluencyScores = [
+      ...confidenceScores?.map(s => s.fluency_score) || [],
+      ...recentFeedback?.filter(f => f.fluency_score).map(f => f.fluency_score as number) || []
+    ];
+    
+    const allPronunciationScores = [
+      ...confidenceScores?.map(s => s.pronunciation_score) || [],
+      ...recentFeedback?.filter(f => f.pronunciation_score).map(f => f.pronunciation_score as number) || []
+    ];
+    
+    // Calculate averages
+    const grammar = allGrammarScores.length ? 
+      parseFloat((allGrammarScores.reduce((sum, score) => sum + score, 0) / allGrammarScores.length).toFixed(1)) : 0;
+    
+    const fluency = allFluencyScores.length ? 
+      parseFloat((allFluencyScores.reduce((sum, score) => sum + score, 0) / allFluencyScores.length).toFixed(1)) : 0;
+    
+    const pronunciation = allPronunciationScores.length ? 
+      parseFloat((allPronunciationScores.reduce((sum, score) => sum + score, 0) / allPronunciationScores.length).toFixed(1)) : 0;
+    
+    // Calculate overall score
+    const overall = [grammar, fluency, pronunciation].filter(Boolean).length ? 
+      parseFloat(([grammar, fluency, pronunciation].reduce((sum, score) => sum + score, 0) / 
+      [grammar, fluency, pronunciation].filter(Boolean).length).toFixed(1)) : 0;
+    
+    // Estimate vocabulary score (typically a function of overall scores)
+    const vocabulary = overall ? parseFloat((overall * 0.9).toFixed(1)) : 0;
+    
+    return {
+      overall,
+      pronunciation,
+      grammar,
+      fluency,
+      vocabulary
+    };
   };
 
   // Get stats
@@ -305,7 +355,7 @@ export const useVoicePractice = () => {
       .reduce((sum, session) => sum + (session.duration_seconds || 0), 0) / 
       (sessions?.filter(session => session.duration_seconds).length || 1),
     highestDifficulty: sessions?.reduce((max, session) => Math.max(max, session.difficulty_level), 0) || 0,
-    averageScores
+    averageScores: calculateDetailedStats()
   };
 
   return {

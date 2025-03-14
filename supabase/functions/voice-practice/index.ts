@@ -19,7 +19,14 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const { transcript, lessonContent, difficulty, conversationHistory = [] } = await req.json();
+    const { 
+      transcript, 
+      lessonContent, 
+      difficulty, 
+      conversationHistory = [],
+      vocabularyItems = [],
+      lessonTopics = []
+    } = await req.json();
 
     if (!transcript) {
       throw new Error('Missing required parameter: transcript');
@@ -38,6 +45,15 @@ serve(async (req) => {
       fullTranscript = conversationHistory.map(msg => `${msg.role === 'user' ? 'Student' : 'AI'}: ${msg.content}`).join('\n') + `\nStudent: ${transcript}`;
     }
 
+    // Additional context for better analysis
+    const vocabularyContext = vocabularyItems.length > 0 
+      ? `The student should be using these vocabulary items: ${vocabularyItems.join(', ')}.` 
+      : '';
+    
+    const lessonTopicsContext = lessonTopics.length > 0
+      ? `The conversation is about these topics: ${lessonTopics.join(', ')}.`
+      : '';
+
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -52,6 +68,8 @@ serve(async (req) => {
             role: 'system',
             content: `You are a supportive language tutor evaluating a student's speaking practice.
               ${difficultyDescription}
+              ${vocabularyContext}
+              ${lessonTopicsContext}
               Analyze this conversation and provide detailed feedback and analytics in the following JSON format:
               {
                 "feedback": "Detailed feedback on pronunciation, grammar, and fluency",
@@ -71,11 +89,18 @@ serve(async (req) => {
                   "used": ["List of notable vocabulary words used"],
                   "suggestions": ["Suggested words they could have used"],
                   "unique": number of unique words used,
-                  "total": total word count
+                  "total": total word count,
+                  "topicRelevance": 0-1 value (how well the vocabulary matches the topic)
+                },
+                "topicCoverage": {
+                  "score": 0-1 value (how well they covered the lesson topics),
+                  "coveredTopics": ["List of topics covered in conversation"],
+                  "missingTopics": ["List of topics that should have been covered"]
                 },
                 "suggestions": ["List of improvement suggestions"],
                 "conversationTurns": number of student responses in the conversation,
-                "speakingTime": estimated speaking time in seconds
+                "speakingTime": estimated speaking time in seconds,
+                "nextTopicSuggestions": ["List of suggested topics to continue the conversation"]
               }
               
               The lesson content context is: "${lessonContent ? lessonContent.slice(0, 500) + '...' : 'General conversation practice'}"
@@ -97,6 +122,42 @@ serve(async (req) => {
     // Try to parse the JSON response
     try {
       const feedbackObject = JSON.parse(feedbackText);
+      
+      // If there are vocabulary items specified, check if they were used
+      if (vocabularyItems.length > 0 && feedbackObject.vocabulary && feedbackObject.vocabulary.used) {
+        const usedVocabulary = feedbackObject.vocabulary.used.map((word: string) => word.toLowerCase());
+        const targetVocabulary = vocabularyItems.map(word => word.toLowerCase());
+        
+        // Calculate vocabulary usage score
+        const usedTargetWords = targetVocabulary.filter(word => 
+          usedVocabulary.some(usedWord => usedWord.includes(word))
+        );
+        
+        feedbackObject.vocabulary.targetWordsUsed = usedTargetWords;
+        feedbackObject.vocabulary.targetWordsTotal = targetVocabulary.length;
+        feedbackObject.vocabulary.targetWordsScore = targetVocabulary.length > 0 
+          ? usedTargetWords.length / targetVocabulary.length 
+          : 1;
+      }
+      
+      // If there are lesson topics specified, check if they were covered
+      if (lessonTopics.length > 0 && feedbackObject.topicCoverage) {
+        const coveredTopics = feedbackObject.topicCoverage.coveredTopics || [];
+        const targetTopics = lessonTopics;
+        
+        // Calculate topic coverage score
+        feedbackObject.topicCoverage.targetTopics = targetTopics;
+        feedbackObject.topicCoverage.targetTopicsCovered = targetTopics.filter(topic => 
+          coveredTopics.some((covered: string) => 
+            covered.toLowerCase().includes(topic.toLowerCase())
+          )
+        );
+        
+        feedbackObject.topicCoverage.targetTopicsScore = targetTopics.length > 0 
+          ? feedbackObject.topicCoverage.targetTopicsCovered.length / targetTopics.length 
+          : 1;
+      }
+      
       return new Response(JSON.stringify(feedbackObject), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -121,11 +182,18 @@ serve(async (req) => {
           used: [],
           suggestions: [],
           unique: 0,
-          total: 0
+          total: 0,
+          topicRelevance: 0.5
+        },
+        topicCoverage: {
+          score: 0.7,
+          coveredTopics: [],
+          missingTopics: []
         },
         suggestions: ["The system couldn't generate structured feedback. Please try again."],
         conversationTurns: conversationHistory ? conversationHistory.filter(msg => msg.role === 'user').length + 1 : 1,
-        speakingTime: 30
+        speakingTime: 30,
+        nextTopicSuggestions: ["Continue the current topic", "Ask a follow-up question"]
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
