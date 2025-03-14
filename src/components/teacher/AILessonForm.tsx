@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,12 +10,10 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuizData } from './preview/useQuizData';
 import QuizTab from './preview/QuizTab';
-
 interface AILessonFormProps {
   form: UseFormReturn<LessonFormValues>;
   title: string;
 }
-
 const AILessonForm: React.FC<AILessonFormProps> = ({
   form,
   title
@@ -44,7 +41,14 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
   // Get the form values and use optional chaining for id
   const formValues = form.getValues();
   const lessonId = formValues.id;
-  const { quizQuestions, quizTitle, quizPassPercent, loadingQuiz, quizExists, isQuizPublished } = useQuizData(lessonId);
+  const {
+    quizQuestions,
+    quizTitle,
+    quizPassPercent,
+    loadingQuiz,
+    quizExists,
+    isQuizPublished
+  } = useQuizData(lessonId);
 
   // Effect to change tab after content generation
   useEffect(() => {
@@ -59,37 +63,23 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
       clearErrors();
     }
   }, [activeTab, error, clearErrors]);
-
   const toggleEditMode = () => {
     setEditMode(!editMode);
     if (!editMode) {
       form.setValue('contentSource', 'mixed');
     }
   };
-
   useEffect(() => {
     if (activeTab === 'student') {
       setEditMode(false);
     }
   }, [activeTab]);
-
-  return (
-    <div className="space-y-6">
-      {!import.meta.env.VITE_REPLICATE_API_KEY && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Replicate API key is missing. Please add REPLICATE_API_KEY in your environment variables.
-          </AlertDescription>
-        </Alert>
-      )}
+  return <div className="space-y-6">
+      {!import.meta.env.VITE_REPLICATE_API_KEY}
       
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)}>
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger 
-            value="generate" 
-            disabled={generating && generationPhase !== 'error'}
-          >
+          <TabsTrigger value="generate" disabled={generating && generationPhase !== 'error'}>
             Generation Settings
           </TabsTrigger>
           <TabsTrigger value="preview" disabled={!generatedContent}>
@@ -101,68 +91,28 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
         </TabsList>
         
         <TabsContent value="generate" className="pt-4">
-          <GenerationSettingsForm 
-            title={title} 
-            level={level} 
-            setLevel={setLevel} 
-            instructions={instructions} 
-            setInstructions={setInstructions} 
-            handleGenerate={handleGenerate} 
-            handleCancel={generating ? handleCancelGeneration : undefined}
-            handleRetry={generationPhase === 'error' ? handleRetryGeneration : undefined} 
-            generating={generating} 
-            error={error} 
-            generationPhase={generationPhase}
-            progressPercentage={progressPercentage}
-            statusMessage={statusMessage}
-          />
+          <GenerationSettingsForm title={title} level={level} setLevel={setLevel} instructions={instructions} setInstructions={setInstructions} handleGenerate={handleGenerate} handleCancel={generating ? handleCancelGeneration : undefined} handleRetry={generationPhase === 'error' ? handleRetryGeneration : undefined} generating={generating} error={error} generationPhase={generationPhase} progressPercentage={progressPercentage} statusMessage={statusMessage} />
         </TabsContent>
         
         <TabsContent value="preview" className="pt-4">
-          {generatedContent && (
-            <ContentPreview 
-              form={form} 
-              generatedContent={generatedContent} 
-              editMode={editMode} 
-              toggleEditMode={toggleEditMode} 
-            />
-          )}
+          {generatedContent && <ContentPreview form={form} generatedContent={generatedContent} editMode={editMode} toggleEditMode={toggleEditMode} />}
         </TabsContent>
         
         <TabsContent value="student" className="pt-4">
-          {generatedContent ? (
-            <div className="space-y-8">
-              <LessonPreview 
-                content={form.watch('content')} 
-                title={form.watch('title')} 
-              />
+          {generatedContent ? <div className="space-y-8">
+              <LessonPreview content={form.watch('content')} title={form.watch('title')} />
               
-              {quizExists && quizQuestions.length > 0 && (
-                <div className="mt-8 pt-8 border-t">
+              {quizExists && quizQuestions.length > 0 && <div className="mt-8 pt-8 border-t">
                   <h2 className="text-xl font-semibold mb-4">Lesson Quiz</h2>
                   <div className="bg-card rounded-lg shadow-sm p-4">
-                    <QuizTab 
-                      lessonId={lessonId || ''} 
-                      loadingQuiz={loadingQuiz}
-                      quizExists={quizExists}
-                      quizQuestions={quizQuestions}
-                      quizTitle={quizTitle}
-                      quizPassPercent={quizPassPercent}
-                      isQuizPublished={isQuizPublished}
-                    />
+                    <QuizTab lessonId={lessonId || ''} loadingQuiz={loadingQuiz} quizExists={quizExists} quizQuestions={quizQuestions} quizTitle={quizTitle} quizPassPercent={quizPassPercent} isQuizPublished={isQuizPublished} />
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-12 border rounded-md bg-muted">
+                </div>}
+            </div> : <div className="text-center py-12 border rounded-md bg-muted">
               <p className="text-muted-foreground">Generate content first to see student view</p>
-            </div>
-          )}
+            </div>}
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default AILessonForm;
