@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mic, Clock, Award, Activity, Zap, BarChart3 } from 'lucide-react';
+import { Mic, Clock, Award, Activity, MessageCircle, BarChart3, BookOpen } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,10 +13,11 @@ interface VoicePracticeCardProps {
   highestDifficulty: number;
   averageScores: {
     overall: number;
-    pronunciation: number;
     grammar: number;
     fluency: number;
+    vocabulary: number;
   };
+  topicsCount?: number;
   loading?: boolean;
 }
 
@@ -26,6 +27,7 @@ const VoicePracticeCard: React.FC<VoicePracticeCardProps> = ({
   averageDuration,
   highestDifficulty,
   averageScores,
+  topicsCount = 0,
   loading = false
 }) => {
   const navigate = useNavigate();
@@ -40,10 +42,10 @@ const VoicePracticeCard: React.FC<VoicePracticeCardProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl mb-1 flex items-center gap-2">
-              <Mic className="h-5 w-5" /> Voice Practice
+              <Mic className="h-5 w-5" /> Conversation Practice
             </CardTitle>
             <CardDescription className="text-slate-100 opacity-90">
-              Improve your speaking with AI feedback
+              Improve your speaking with AI conversations
             </CardDescription>
           </div>
           <div className="bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
@@ -66,7 +68,7 @@ const VoicePracticeCard: React.FC<VoicePracticeCardProps> = ({
             <div className="mb-5">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm text-muted-foreground">Progress</span>
-                <span className="text-sm font-medium">{completedSessions} / {sessionCount} sessions</span>
+                <span className="text-sm font-medium">{completedSessions} / {sessionCount} conversations</span>
               </div>
               <Progress 
                 value={sessionCount > 0 ? (completedSessions / sessionCount) * 100 : 0} 
@@ -77,27 +79,38 @@ const VoicePracticeCard: React.FC<VoicePracticeCardProps> = ({
             
             <div className="grid grid-cols-2 gap-4">
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
-                <Activity className="h-5 w-5 text-blue-500 mb-1" />
-                <div className="text-lg font-bold">{averageScores.overall.toFixed(1)}</div>
-                <div className="text-xs text-muted-foreground">Avg. Score</div>
+                <BarChart3 className="h-5 w-5 text-blue-500 mb-1" />
+                <div className="text-lg font-bold">{averageScores.grammar.toFixed(1)}</div>
+                <div className="text-xs text-muted-foreground">Grammar</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-violet-500 mb-1" />
-                <div className="text-lg font-bold">{highestDifficulty || 1}</div>
-                <div className="text-xs text-muted-foreground">Max Level</div>
+                <Activity className="h-5 w-5 text-violet-500 mb-1" />
+                <div className="text-lg font-bold">{averageScores.fluency.toFixed(1)}</div>
+                <div className="text-xs text-muted-foreground">Fluency</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
-                <Clock className="h-5 w-5 text-indigo-500 mb-1" />
-                <div className="text-lg font-bold">{Math.round(averageDuration || 0)}</div>
-                <div className="text-xs text-muted-foreground">Avg. Seconds</div>
+                <BookOpen className="h-5 w-5 text-indigo-500 mb-1" />
+                <div className="text-lg font-bold">{averageScores.vocabulary.toFixed(1)}</div>
+                <div className="text-xs text-muted-foreground">Vocabulary</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
-                <Zap className="h-5 w-5 text-amber-500 mb-1" />
-                <div className="text-lg font-bold">{sessionCount}</div>
-                <div className="text-xs text-muted-foreground">Total Sessions</div>
+                <MessageCircle className="h-5 w-5 text-amber-500 mb-1" />
+                <div className="text-lg font-bold">{topicsCount || 0}</div>
+                <div className="text-xs text-muted-foreground">Topics</div>
+              </div>
+              
+              <div className="col-span-2 border rounded-lg p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-green-500" />
+                  <div>
+                    <div className="text-sm font-medium">Average Duration</div>
+                    <div className="text-xs text-muted-foreground">Per conversation</div>
+                  </div>
+                </div>
+                <div className="text-lg font-bold">{Math.round(averageDuration || 0)}s</div>
               </div>
             </div>
           </>
@@ -110,7 +123,7 @@ const VoicePracticeCard: React.FC<VoicePracticeCardProps> = ({
           className="w-full bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700"
           disabled={loading}
         >
-          Start Voice Practice
+          Start Conversation Practice
         </Button>
       </CardFooter>
     </Card>

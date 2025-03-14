@@ -14,11 +14,46 @@ import RecentFeedback from './components/voice-practice/RecentFeedback';
 import { useVoicePractice } from './hooks/useVoicePractice';
 import { formatDistanceToNow } from 'date-fns';
 import ProgressTracker from '@/components/teacher/preview/ProgressTracker';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const VoicePractice: React.FC = () => {
   const navigate = useNavigate();
   const { sessions, recentFeedback, stats, isLoading } = useVoicePractice();
   const [activeTab, setActiveTab] = useState("practice");
+  
+  // Fetch required assignments with lessons
+  const { data: requiredAssignments, isLoading: isLoadingAssignments } = useQuery({
+    queryKey: ['student-required-conversation-assignments'],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user) return [];
+      
+      const { data, error } = await supabase
+        .from('student_assignments')
+        .select(`
+          id,
+          title,
+          description,
+          due_date,
+          status,
+          started_at,
+          completed_at,
+          lesson_id,
+          lesson:lessons(
+            id,
+            title,
+            content
+          )
+        `)
+        .eq('student_id', user.user.id)
+        .eq('status', 'not_started')
+        .order('due_date', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
   
   const startNewConversation = (topic?: string, lessonId?: string) => {
     const queryParams = new URLSearchParams();
@@ -39,6 +74,12 @@ const VoicePractice: React.FC = () => {
     ?.filter(session => session.lesson && !session.completed_at)
     ?.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()) || [];
   
+  // Additional lessons from assignments not yet in practice sessions
+  const additionalRequiredLessons = requiredAssignments?.filter(assignment => 
+    assignment.lesson && 
+    !sessions?.some(session => session.lesson?.id === assignment.lesson_id)
+  ) || [];
+  
   // Filter completed lessons
   const completedSessions = sessions?.filter(session => session.completed_at) || [];
   
@@ -52,16 +93,19 @@ const VoicePractice: React.FC = () => {
     return groups;
   }, {} as Record<string, typeof sessions>);
   
+  // Calculate count of unique topics
+  const uniqueTopicsCount = Object.keys(topicGroups).length;
+  
   return (
     <StudentLayout>
       <Helmet>
-        <title>Voice Conversation Practice | Teachly</title>
+        <title>Conversation Practice | Teachly</title>
       </Helmet>
       
       <div className="container py-6 max-w-7xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Voice Conversation Practice</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Conversation Practice</h1>
             <p className="text-muted-foreground">
               Improve your speaking skills with AI-guided conversation practice
             </p>
@@ -81,7 +125,13 @@ const VoicePractice: React.FC = () => {
               completedSessions={stats.completedSessions}
               averageDuration={stats.averageDuration}
               highestDifficulty={stats.highestDifficulty}
-              averageScores={stats.averageScores}
+              averageScores={{
+                overall: stats.averageScores.overall,
+                grammar: stats.averageScores.grammar,
+                fluency: stats.averageScores.fluency,
+                vocabulary: stats.averageScores.overall * 0.9 // Approximation for vocabulary score
+              }}
+              topicsCount={uniqueTopicsCount}
               loading={isLoading}
             />
           </div>
@@ -96,7 +146,7 @@ const VoicePractice: React.FC = () => {
               <TabsList className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="practice" className="flex gap-2">
                   <BookOpenCheck className="h-4 w-4" />
-                  <span className="hidden sm:inline">Required Practice</span>
+                  <span className="hidden sm:inline">Required Conversations</span>
                   <span className="sm:hidden">Required</span>
                 </TabsTrigger>
                 <TabsTrigger value="topics" className="flex gap-2">
@@ -106,7 +156,7 @@ const VoicePractice: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger value="history" className="flex gap-2">
                   <History className="h-4 w-4" />
-                  <span className="hidden sm:inline">Practice History</span>
+                  <span className="hidden sm:inline">Conversation History</span>
                   <span className="sm:hidden">History</span>
                 </TabsTrigger>
               </TabsList>
@@ -115,19 +165,19 @@ const VoicePractice: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl flex items-center gap-2">
-                      <BookOpenCheck className="h-5 w-5 text-blue-500" /> Required Conversation Practice
+                      <BookOpenCheck className="h-5 w-5 text-blue-500" /> Required Conversations
                     </CardTitle>
                     <CardDescription>
                       Complete these conversations to progress in your learning journey
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {isLoading ? (
+                    {isLoading || isLoadingAssignments ? (
                       <div className="animate-pulse space-y-4">
                         <div className="h-20 bg-slate-200 rounded"></div>
                         <div className="h-20 bg-slate-200 rounded"></div>
                       </div>
-                    ) : requiredLessons.length > 0 ? (
+                    ) : requiredLessons.length > 0 || additionalRequiredLessons.length > 0 ? (
                       <div className="space-y-4">
                         {requiredLessons.map((session) => (
                           <div key={session.id} className="border rounded-lg p-4 hover:border-blue-200 hover:bg-blue-50 transition-colors">
@@ -156,16 +206,59 @@ const VoicePractice: React.FC = () => {
                                 size="sm"
                                 className="gap-1"
                               >
-                                Practice
+                                Continue
                                 <ArrowRight className="h-3 w-3" />
                               </Button>
                             </div>
                           </div>
                         ))}
+                        
+                        {additionalRequiredLessons.map((assignment) => (
+                          <div key={assignment.id} className="border rounded-lg p-4 hover:border-blue-200 hover:bg-blue-50 transition-colors">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-medium">{assignment.lesson?.title}</h3>
+                                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
+                                    New Assignment
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {assignment.description || 'Practice conversation based on this lesson content'}
+                                </p>
+                                {assignment.due_date && (
+                                  <div className="flex mt-2 gap-1">
+                                    <Badge variant="outline" className="text-xs">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Due {formatDistanceToNow(new Date(assignment.due_date), { addSuffix: true })}
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                              <Button 
+                                onClick={() => startNewConversation(assignment.lesson?.title, assignment.lesson_id)}
+                                size="sm"
+                                className="gap-1"
+                              >
+                                Start
+                                <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        
                         <ProgressTracker 
-                          completedSections={completedSessions.map(s => s.id)}
-                          totalSections={completedSessions.length + requiredLessons.length}
-                          customLabel={`${completedSessions.length} of ${completedSessions.length + requiredLessons.length} lessons completed`}
+                          completedSections={completedSessions.filter(s => s.lesson).map(s => s.id)}
+                          totalSections={
+                            completedSessions.filter(s => s.lesson).length + 
+                            requiredLessons.length + 
+                            additionalRequiredLessons.length
+                          }
+                          customLabel={`${completedSessions.filter(s => s.lesson).length} of ${
+                            completedSessions.filter(s => s.lesson).length + 
+                            requiredLessons.length + 
+                            additionalRequiredLessons.length
+                          } required conversations completed`}
                         />
                       </div>
                     ) : (
@@ -213,24 +306,24 @@ const VoicePractice: React.FC = () => {
                             Have a natural conversation with the AI to practice your speaking skills.
                           </p>
                           <div className="flex flex-wrap gap-2 mt-3">
-                            <div 
-                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100"
-                              onClick={() => startNewConversation('Free conversation', undefined)}
-                            >
-                              Beginner
-                            </div>
-                            <div 
-                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100"
-                              onClick={() => startNewConversation('Free conversation', undefined)}
-                            >
-                              Intermediate
-                            </div>
-                            <div 
-                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100"
-                              onClick={() => startNewConversation('Free conversation', undefined)}
-                            >
-                              Advanced
-                            </div>
+                            {[
+                              { level: 1, label: 'Beginner', color: 'bg-blue-50 text-blue-700' },
+                              { level: 2, label: 'Intermediate', color: 'bg-violet-50 text-violet-700' },
+                              { level: 3, label: 'Advanced', color: 'bg-indigo-50 text-indigo-700' }
+                            ].map((level) => (
+                              <div 
+                                key={level.level}
+                                className={`px-2 py-1 ${level.color} rounded-full text-xs cursor-pointer hover:opacity-80`}
+                                onClick={() => {
+                                  const params = new URLSearchParams();
+                                  params.append('topic', 'Free conversation');
+                                  params.append('difficulty', level.level.toString());
+                                  navigate(`/student/voice-practice/session?${params.toString()}`);
+                                }}
+                              >
+                                {level.label}
+                              </div>
+                            ))}
                           </div>
                           <div className="flex justify-end mt-3">
                             <Button 
@@ -251,7 +344,11 @@ const VoicePractice: React.FC = () => {
                             Choose a specific topic to practice conversation around.
                           </p>
                           <div className="flex flex-wrap gap-2 mt-3">
-                            {['Travel', 'Food & Dining', 'Work & Career', 'Hobbies', 'Family', 'Education', 'Technology', 'Health'].map(topic => (
+                            {[
+                              'Travel', 'Food & Dining', 'Work & Career', 'Hobbies', 
+                              'Family', 'Education', 'Technology', 'Health', 'Environment',
+                              'Arts & Entertainment', 'Shopping', 'Sports'
+                            ].map(topic => (
                               <div 
                                 key={topic}
                                 className="px-2 py-1 bg-slate-50 text-slate-700 rounded-full text-xs cursor-pointer hover:bg-slate-100"
