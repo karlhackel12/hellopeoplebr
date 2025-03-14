@@ -6,7 +6,9 @@ import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import GardenProgress from '@/components/ui/garden-progress';
-import { GenerationPhase } from '../hooks/types';
+
+// Simplified type definition to match what we're using
+export type GenerationPhase = 'idle' | 'starting' | 'analyzing' | 'generating' | 'processing' | 'complete' | 'error';
 
 interface GenerationProgressProps {
   phase: GenerationPhase;
