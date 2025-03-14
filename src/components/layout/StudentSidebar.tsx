@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   Menu,
   X,
-  Brain
+  Brain,
+  Mic
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,6 +94,11 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
       name: 'Spaced Repetition', 
       href: '/student/spaced-repetition', 
       icon: Brain 
+    },
+    { 
+      name: 'Voice Practice', 
+      href: '/student/voice-practice', 
+      icon: Mic 
     },
     { 
       name: 'Settings', 

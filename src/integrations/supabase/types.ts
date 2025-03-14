@@ -801,6 +801,121 @@ export type Database = {
           },
         ]
       }
+      voice_confidence_scores: {
+        Row: {
+          fluency_score: number
+          grammar_score: number
+          id: string
+          overall_score: number
+          pronunciation_score: number
+          recorded_at: string
+          user_id: string
+        }
+        Insert: {
+          fluency_score: number
+          grammar_score: number
+          id?: string
+          overall_score: number
+          pronunciation_score: number
+          recorded_at?: string
+          user_id: string
+        }
+        Update: {
+          fluency_score?: number
+          grammar_score?: number
+          id?: string
+          overall_score?: number
+          pronunciation_score?: number
+          recorded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voice_practice_feedback: {
+        Row: {
+          created_at: string
+          feedback_text: string
+          fluency_score: number | null
+          grammar_score: number | null
+          id: string
+          pronunciation_score: number | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_text: string
+          fluency_score?: number | null
+          grammar_score?: number | null
+          id?: string
+          pronunciation_score?: number | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_text?: string
+          fluency_score?: number | null
+          grammar_score?: number | null
+          id?: string
+          pronunciation_score?: number | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_practice_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_practice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_practice_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          difficulty_level: number
+          duration_seconds: number | null
+          id: string
+          lesson_id: string | null
+          started_at: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          difficulty_level?: number
+          duration_seconds?: number | null
+          id?: string
+          lesson_id?: string | null
+          started_at?: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          difficulty_level?: number
+          duration_seconds?: number | null
+          id?: string
+          lesson_id?: string | null
+          started_at?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_practice_sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

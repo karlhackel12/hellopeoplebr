@@ -32,6 +32,8 @@ import StudentSettings from "./pages/student/Settings";
 import LessonView from "./pages/student/LessonView";
 import SpacedRepetition from "./pages/student/SpacedRepetition";
 import SpacedRepetitionReview from "./pages/student/SpacedRepetitionReview";
+import VoicePractice from "./pages/student/VoicePractice";
+import VoicePracticeSession from "./pages/student/VoicePracticeSession";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +153,22 @@ const App = () => (
             <Route path="/student/spaced-repetition/review" element={
               <PageTransitionWrapper>
                 <SpacedRepetitionReview />
+              </PageTransitionWrapper>
+            } />
+            {/* Voice Practice Routes */}
+            <Route path="/student/voice-practice" element={
+              <PageTransitionWrapper>
+                <VoicePractice />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/student/voice-practice/session" element={
+              <PageTransitionWrapper>
+                <VoicePracticeSession />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/student/voice-practice/session/:sessionId" element={
+              <PageTransitionWrapper>
+                <VoicePracticeSession />
               </PageTransitionWrapper>
             } />
             
