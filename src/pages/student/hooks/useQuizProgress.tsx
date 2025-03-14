@@ -7,6 +7,18 @@ interface UserAnswers {
   [questionId: string]: string;
 }
 
+interface QuizProgressRecord {
+  id: string;
+  quiz_id: string;
+  user_id: string;
+  answers: UserAnswers;
+  completed_at: string | null;
+  score: number | null;
+  started_at: string;
+  last_updated_at: string;
+  current_question: number;
+}
+
 export const useQuizProgress = (quizId: string) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,20 +55,43 @@ export const useQuizProgress = (quizId: string) => {
       if (progressData) {
         // Load existing progress
         setProgressId(progressData.id);
-        setUserAnswers(progressData.answers || {});
-        setCompleted(progressData.completed || false);
+        
+        // Convert answers from JSON to UserAnswers
+        const answersObject = progressData.answers as unknown as UserAnswers;
+        setUserAnswers(answersObject || {});
+        
+        // Check if completed based on completed_at
+        setCompleted(!!progressData.completed_at);
         setScore(progressData.score);
         
         // If the quiz is incomplete, set the current question to the next unanswered one
-        if (!progressData.completed) {
-          const answeredQuestions = Object.keys(progressData.answers || {}).length;
-          setCurrentQuestionIndex(Math.min(answeredQuestions, progressData.total_questions - 1));
+        if (!progressData.completed_at) {
+          const answeredQuestions = Object.keys(answersObject || {}).length;
+          // We don't have total_questions in the database, so use the count of answers as a fallback
+          const totalQuestions = await getQuestionCount(quizId);
+          setCurrentQuestionIndex(Math.min(answeredQuestions, totalQuestions - 1));
         }
       }
     } catch (error) {
       console.error('Error loading quiz progress:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Get the total number of questions for a quiz
+  const getQuestionCount = async (quizId: string): Promise<number> => {
+    try {
+      const { count, error } = await supabase
+        .from('quiz_questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('quiz_id', quizId);
+      
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error counting questions:', error);
+      return 0;
     }
   };
 
@@ -69,16 +104,18 @@ export const useQuizProgress = (quizId: string) => {
       
       if (!user) throw new Error('User not authenticated');
       
+      const updateData = {
+        answers,
+        completed_at: isCompleted ? new Date().toISOString() : null,
+        score: finalScore,
+        updated_at: new Date().toISOString()
+      };
+      
       if (progressId) {
         // Update existing progress
         const { error: updateError } = await supabase
           .from('user_quiz_progress')
-          .update({
-            answers,
-            completed: isCompleted,
-            score: finalScore,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', progressId);
         
         if (updateError) throw updateError;
@@ -90,9 +127,8 @@ export const useQuizProgress = (quizId: string) => {
             quiz_id: quizId,
             user_id: user.id,
             answers,
-            completed: isCompleted,
+            completed_at: isCompleted ? new Date().toISOString() : null,
             score: finalScore,
-            total_questions: 0, // This will be updated with actual count
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -155,7 +191,7 @@ export const useQuizProgress = (quizId: string) => {
       
       questions.forEach(question => {
         const userAnswer = userAnswers[question.id];
-        const correctOption = question.options.find(option => option.is_correct);
+        const correctOption = question.options?.find(option => option.is_correct);
         
         if (userAnswer && correctOption && userAnswer === correctOption.id) {
           correctAnswers += question.points;
