@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUser } from './spaced-repetition/useUser';
@@ -15,6 +15,44 @@ export const useVoiceConversation = (lessonId?: string) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+
+  // Subscribe to real-time updates for conversation messages
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    const channel = supabase
+      .channel(`conversation-${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'conversation_messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, (payload) => {
+        const newMessage = {
+          role: payload.new.role as 'user' | 'assistant' | 'system',
+          content: payload.new.content,
+          timestamp: payload.new.created_at
+        };
+        
+        // Only add the message if it's not already in the array
+        setMessages(prev => {
+          if (prev.findIndex(msg => 
+              msg.role === newMessage.role && 
+              msg.content === newMessage.content &&
+              msg.timestamp === newMessage.timestamp) === -1) {
+            return [...prev, newMessage];
+          }
+          return prev;
+        });
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId]);
 
   // Initialize or load an existing conversation
   const initConversation = useCallback(async (existingConversationId?: string) => {
@@ -73,12 +111,13 @@ export const useVoiceConversation = (lessonId?: string) => {
     setIsLoading(true);
     try {
       // Add user message to local state immediately for UI responsiveness
+      const userMessageTimestamp = new Date().toISOString();
       setMessages(prev => [
         ...prev, 
         { 
           role: 'user', 
           content: userTranscript,
-          timestamp: new Date().toISOString()
+          timestamp: userMessageTimestamp
         }
       ]);
 
@@ -103,12 +142,13 @@ export const useVoiceConversation = (lessonId?: string) => {
 
       // Add AI response to local state
       if (data?.response) {
+        const aiResponseTimestamp = new Date().toISOString();
         setMessages(prev => [
           ...prev, 
           { 
             role: 'assistant', 
             content: data.response,
-            timestamp: new Date().toISOString()
+            timestamp: aiResponseTimestamp
           }
         ]);
       }
@@ -123,11 +163,40 @@ export const useVoiceConversation = (lessonId?: string) => {
     }
   }, [userId, conversationId]);
 
+  // Analyze conversation for performance metrics
+  const analyzeConversation = useCallback(async () => {
+    if (!conversationId || !userId) return null;
+    
+    setIsAnalyzing(true);
+    try {
+      // Call the analytics function
+      const { data, error } = await supabase.functions.invoke('analyze-conversation', {
+        body: {
+          conversationId,
+          userId
+        }
+      });
+      
+      if (error) throw error;
+      
+      setAnalyticsData(data);
+      return data;
+    } catch (error) {
+      console.error('Error analyzing conversation:', error);
+      return null;
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [conversationId, userId]);
+
   // End the conversation and update stats
   const endConversation = useCallback(async (confidenceScore?: number) => {
     if (!conversationId || !userId) return false;
     
     try {
+      // Analyze conversation first
+      await analyzeConversation();
+      
       // Update conversation session
       const { error } = await supabase
         .from('conversation_sessions')
@@ -146,14 +215,17 @@ export const useVoiceConversation = (lessonId?: string) => {
       toast.error('Failed to save conversation data');
       return false;
     }
-  }, [conversationId, userId]);
+  }, [conversationId, userId, analyzeConversation]);
 
   return {
     messages,
     conversationId,
     isLoading,
+    isAnalyzing,
+    analyticsData,
     initConversation,
     sendMessage,
+    analyzeConversation,
     endConversation
   };
 };
