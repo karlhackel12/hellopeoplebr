@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -27,10 +26,8 @@ const VoiceConversationSession: React.FC = () => {
   const [difficultyLevel, setDifficultyLevel] = useState(1);
   const [confidenceScore, setConfidenceScore] = useState<number | null>(null);
   
-  // Lesson data
   const { lesson, lessonLoading } = useLessonData(lessonIdParam || undefined);
   
-  // Voice conversation hook
   const {
     messages,
     conversationId,
@@ -40,11 +37,9 @@ const VoiceConversationSession: React.FC = () => {
     endConversation
   } = useVoiceConversation(lessonIdParam || undefined);
   
-  // Extract topics and vocabulary from lesson
   const lessonTopics = lesson ? [lesson.title] : [];
   const vocabularyItems: string[] = [];
   
-  // Initialize conversation
   useEffect(() => {
     if (sessionId) {
       initConversation(sessionId);
@@ -53,12 +48,10 @@ const VoiceConversationSession: React.FC = () => {
     }
   }, [sessionId, initConversation]);
   
-  // Handle start recording
   const handleStartRecording = () => {
     setIsRecording(true);
   };
   
-  // Handle stop recording and send message
   const handleStopRecording = async (_audioBlob: Blob, transcript: string) => {
     setIsRecording(false);
     
@@ -70,7 +63,6 @@ const VoiceConversationSession: React.FC = () => {
     }
   };
   
-  // Handle ending the conversation
   const handleEndConversation = async () => {
     if (await endConversation(confidenceScore || undefined)) {
       toast.success('Conversation saved successfully');
@@ -78,18 +70,15 @@ const VoiceConversationSession: React.FC = () => {
     }
   };
   
-  // Rate your confidence level
   const rateConfidence = (score: number) => {
     setConfidenceScore(score);
     toast.success(`You rated your confidence as ${score}/10`);
   };
   
-  // Go back to voice practice dashboard
   const handleGoBack = () => {
     navigate('/student/voice-practice');
   };
   
-  // Generate conversation practice topic
   const practiceTopic = lesson 
     ? `Conversation Practice: ${lesson.title}` 
     : 'General English Conversation Practice';
@@ -157,7 +146,7 @@ const VoiceConversationSession: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-2 mb-4">
             <TabsTrigger value="conversation" className="flex gap-2">
-              <Message className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
               <span>Conversation</span>
             </TabsTrigger>
             <TabsTrigger value="feedback" className="flex gap-2" disabled={messages.length === 0}>
