@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -17,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Modified schema to make quiz_id optional and not require content_type field
 const assignmentSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
   description: z.string().optional(),
@@ -71,7 +69,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
     },
   });
 
-  // Set initialStudentId when it changes
   useEffect(() => {
     if (initialStudentId) {
       form.setValue('student_id', initialStudentId, {
@@ -81,7 +78,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
     }
   }, [initialStudentId, form]);
 
-  // Check if selected lesson has an associated quiz
   useEffect(() => {
     const lessonId = form.watch('lesson_id');
     if (lessonId) {
@@ -96,7 +92,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
     }
   }, [form.watch('lesson_id'), quizzes]);
 
-  // Generate a nice title when lesson is selected
   useEffect(() => {
     const lessonId = form.watch('lesson_id');
     if (lessonId && !form.getValues('title')) {
@@ -112,7 +107,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
 
   const onSubmit = async (values: AssignmentFormValues) => {
     try {
-      // Get current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         toast.error('Authentication error', {
@@ -121,8 +115,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
         return;
       }
 
-      // Create the assignment
-      // Important: only set quiz_id if it exists, otherwise set it to null
       const assignment = {
         title: values.title,
         description: values.description || null,
@@ -136,7 +128,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
 
       console.log('Creating assignment with data:', assignment);
 
-      // Insert assignment
       const { error } = await supabase
         .from('student_assignments')
         .insert(assignment);
@@ -160,7 +151,6 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({
     }
   };
 
-  // Filter published lessons only
   const publishedLessons = lessons.filter(lesson => lesson.is_published !== false);
 
   return (
