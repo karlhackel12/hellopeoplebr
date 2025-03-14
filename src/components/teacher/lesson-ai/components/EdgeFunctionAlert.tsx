@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Alert, AlertCircle, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const EdgeFunctionAlert: React.FC = () => {
   if (import.meta.env.VITE_USE_EDGE_FUNCTIONS) {
