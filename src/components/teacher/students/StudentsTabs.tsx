@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StudentsList from '@/components/teacher/students/StudentsList';
 import StudentInviteForm from '@/components/teacher/StudentInviteForm';
 import InvitationsList from '@/components/teacher/InvitationsList';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StudentsTabsProps {
   activeTab: string;
@@ -30,12 +31,14 @@ const StudentsTabs: React.FC<StudentsTabsProps> = ({
   isRefetchingInvitations,
   handleInvitationUpdate
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="mb-6">
-        <TabsTrigger value="students">Students</TabsTrigger>
-        <TabsTrigger value="invite">Invite Students</TabsTrigger>
-        <TabsTrigger value="invitations">Pending Invitations</TabsTrigger>
+      <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
+        <TabsTrigger value="students" className={isMobile ? 'flex-1' : ''}>Students</TabsTrigger>
+        <TabsTrigger value="invite" className={isMobile ? 'flex-1' : ''}>Invite</TabsTrigger>
+        <TabsTrigger value="invitations" className={isMobile ? 'flex-1' : ''}>Pending</TabsTrigger>
       </TabsList>
       
       <TabsContent value="students">
@@ -47,7 +50,7 @@ const StudentsTabs: React.FC<StudentsTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="invite" className="space-y-4">
-        <div className="bg-card rounded-lg p-6 shadow-sm">
+        <div className="bg-card rounded-lg p-4 sm:p-6 shadow-sm">
           <h2 className="text-xl font-semibold mb-4">Invite a New Student</h2>
           <StudentInviteForm onSuccess={handleInvitationUpdate} />
         </div>

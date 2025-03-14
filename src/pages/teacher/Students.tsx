@@ -7,10 +7,12 @@ import StudentsError from '@/components/teacher/students/StudentsError';
 import { useStudentsData } from '@/components/teacher/students/hooks/useStudentsData';
 import { useOnboardingData } from '@/components/teacher/students/hooks/useOnboardingData';
 import { useInvitationsData } from '@/components/teacher/students/hooks/useInvitationsData';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Students = () => {
   const [activeTab, setActiveTab] = useState('students');
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   
   // Use our custom hooks to fetch data
   const { students, loadingStudents, studentsError, refetchStudents } = useStudentsData();
@@ -29,9 +31,9 @@ const Students = () => {
   }
 
   return (
-    <TeacherLayout>
+    <TeacherLayout pageTitle="Student Management">
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-bold mb-6">Student Management</h1>
+        {!isMobile && <h1 className="text-3xl font-bold mb-6">Student Management</h1>}
         
         <StudentsTabs 
           activeTab={activeTab}

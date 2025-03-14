@@ -6,7 +6,9 @@ import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import LessonCard from '@/components/teacher/LessonCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, BookOpen } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type Lesson = {
   id: string;
@@ -19,6 +21,7 @@ const Lessons: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchLessons();
@@ -57,10 +60,10 @@ const Lessons: React.FC = () => {
   };
 
   return (
-    <TeacherLayout>
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">My Lessons</h1>
+    <TeacherLayout pageTitle="My Lessons">
+      <div className="mb-8 animate-fade-in">
+        <div className={`flex ${isMobile ? 'flex-col' : 'justify-between'} items-${isMobile ? 'start' : 'center'} mb-6 gap-4`}>
+          {!isMobile && <h1 className="text-3xl font-bold">My Lessons</h1>}
           <Button onClick={handleCreateLesson} className="gap-2">
             <PlusCircle className="h-4 w-4" />
             Create Lesson
@@ -72,13 +75,18 @@ const Lessons: React.FC = () => {
             <p>Loading lessons...</p>
           </div>
         ) : lessons.length === 0 ? (
-          <div className="bg-muted p-8 rounded-lg text-center">
-            <h3 className="text-xl font-medium mb-2">No lessons created yet</h3>
-            <p className="text-muted-foreground mb-4">Start creating your first lesson to help students learn.</p>
-            <Button onClick={handleCreateLesson}>Create Your First Lesson</Button>
-          </div>
+          <Card className="bg-muted/50">
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <div className="rounded-full bg-muted p-3 mb-4">
+                <BookOpen className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">No lessons created yet</h3>
+              <p className="text-muted-foreground text-center mb-4">Start creating your first lesson to help students learn.</p>
+              <Button onClick={handleCreateLesson}>Create Your First Lesson</Button>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {lessons.map((lesson) => (
               <LessonCard key={lesson.id} lesson={lesson} onUpdate={fetchLessons} />
             ))}

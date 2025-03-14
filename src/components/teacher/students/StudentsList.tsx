@@ -12,13 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { 
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle 
+  CardContent
 } from '@/components/ui/card';
 import StudentAssignmentsButton from '@/components/teacher/students/StudentAssignmentsButton';
 import StudentProfileButton from '@/components/teacher/students/StudentProfileButton';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StudentsListProps {
   students: any[];
@@ -33,6 +31,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const isMobile = useIsMobile();
 
   // Filter and sort students
   const filteredStudents = students.filter(student => {
@@ -114,7 +113,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
           variant="outline" 
           size="sm"
           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 sm:self-start"
         >
           <span>Name</span>
           <ArrowUpDown className="h-3.5 w-3.5" />
@@ -151,7 +150,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
                     <div>
                       <h3 className="text-lg font-medium">{student.first_name} {student.last_name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Joined {format(new Date(student.created_at), 'MMMM d, yyyy')}
+                        Joined {format(new Date(student.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                     
@@ -164,7 +163,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
                     </div>
                   </div>
                   
-                  <div className="flex items-center sm:justify-end gap-2 mt-4 sm:mt-0">
+                  <div className={`flex ${isMobile ? 'flex-row justify-between' : 'items-center justify-end flex-col sm:flex-row'} gap-2 mt-4 sm:mt-0`}>
                     <StudentAssignmentsButton studentId={student.id} name={`${student.first_name} ${student.last_name}`} />
                     <StudentProfileButton studentId={student.id} />
                   </div>
