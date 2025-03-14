@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuizProgress } from '../../hooks/useQuizProgress';
 import { Question } from '@/components/teacher/quiz/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Loader2, CheckCircle, XCircle, Award } from 'lucide-react';
+import SpacedRepetitionPrompt from './SpacedRepetitionPrompt';
 
 interface QuizSectionProps {
   questions: Question[];
@@ -25,6 +26,7 @@ const QuizSection: React.FC<QuizSectionProps> = ({
   passPercent 
 }) => {
   const { toast } = useToast();
+  const [showSpacedRepetition, setShowSpacedRepetition] = useState(false);
   
   const {
     loading,
@@ -102,6 +104,9 @@ const QuizSection: React.FC<QuizSectionProps> = ({
           title: 'Quiz completed!',
           description: `Your score: ${finalScore}%`,
         });
+        
+        // Show spaced repetition prompt after completing quiz
+        setShowSpacedRepetition(true);
       }
     } catch (error: any) {
       toast({
@@ -122,6 +127,7 @@ const QuizSection: React.FC<QuizSectionProps> = ({
       toast({
         description: 'Quiz reset successfully',
       });
+      setShowSpacedRepetition(false);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -195,6 +201,13 @@ const QuizSection: React.FC<QuizSectionProps> = ({
             </Button>
           </div>
         </CardContent>
+        
+        <SpacedRepetitionPrompt 
+          quizId={quizId}
+          lessonId={lessonId}
+          visible={showSpacedRepetition}
+          onClose={() => setShowSpacedRepetition(false)}
+        />
       </Card>
     );
   }

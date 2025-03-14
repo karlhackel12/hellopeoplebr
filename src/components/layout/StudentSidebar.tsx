@@ -10,7 +10,8 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  X
+  X,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,6 +88,11 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
       name: 'My Lessons', 
       href: '/student/lessons', 
       icon: BookOpen 
+    },
+    { 
+      name: 'Spaced Repetition', 
+      href: '/student/spaced-repetition', 
+      icon: Brain 
     },
     { 
       name: 'Settings', 
