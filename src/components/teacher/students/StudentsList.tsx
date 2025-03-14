@@ -5,7 +5,8 @@ import {
   UsersIcon,
   SearchIcon, 
   ArrowUpDown, 
-  UserX 
+  UserX,
+  UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,11 +80,11 @@ const StudentsList: React.FC<StudentsListProps> = ({
       <Card className="bg-muted/50">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <div className="rounded-full bg-muted p-3 mb-4">
-            <UserX className="h-8 w-8 text-muted-foreground" />
+            <UserPlus className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-medium mb-2">No students yet</h3>
+          <h3 className="text-xl font-medium mb-2">No students found</h3>
           <p className="text-muted-foreground text-center max-w-md mb-6">
-            You don't have any students yet. Use the "Invite Students" tab to send invitations.
+            You don't have any students yet. Send invitations to your students to get started.
           </p>
           <Button
             onClick={handleNavigateToInvite}

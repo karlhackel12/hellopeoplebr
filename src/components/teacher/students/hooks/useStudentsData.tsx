@@ -20,7 +20,34 @@ export const useStudentsData = () => {
           throw new Error('Authentication required');
         }
 
-        const { data, error } = await supabase
+        // Get the current teacher's ID
+        const teacherId = authData.user.id;
+
+        // Get students who were invited by this teacher
+        const { data: invitedStudents, error: invitationsError } = await supabase
+          .from('student_invitations')
+          .select('user_id, email')
+          .eq('invited_by', teacherId)
+          .eq('status', 'accepted')
+          .not('user_id', 'is', null);
+
+        if (invitationsError) {
+          console.error('Error fetching student invitations:', invitationsError);
+          throw invitationsError;
+        }
+
+        // Extract the user_ids from invitations
+        const studentUserIds = invitedStudents
+          ?.filter(invitation => invitation.user_id)
+          .map(invitation => invitation.user_id) || [];
+
+        // If there are no invited students, return empty array
+        if (studentUserIds.length === 0) {
+          return [];
+        }
+
+        // Fetch student profiles based on the user_ids from invitations
+        const { data: studentProfiles, error } = await supabase
           .from('profiles')
           .select(`
             id,
@@ -29,7 +56,8 @@ export const useStudentsData = () => {
             avatar_url,
             created_at
           `)
-          .eq('role', 'student');
+          .eq('role', 'student')
+          .in('id', studentUserIds);
 
         if (error) {
           console.error('Error fetching students:', error);
@@ -45,7 +73,8 @@ export const useStudentsData = () => {
           throw error;
         }
 
-        return data || [];
+        console.log(`Found ${studentProfiles?.length || 0} students invited by this teacher`);
+        return studentProfiles || [];
       } catch (error: any) {
         console.error('Failed to fetch students:', error);
         toast.error('Authentication error', {
