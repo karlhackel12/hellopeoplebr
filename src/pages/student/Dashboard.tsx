@@ -1,287 +1,240 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BarChart, Calendar, Sparkles, ArrowRight, Award, BookOpen, Check, Clock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useOnboarding } from '@/components/student/OnboardingContext';
-import { LayoutDashboard, BookOpen, Clock, Trophy } from 'lucide-react';
+import LessonCard from '@/components/student/LessonCard';
+import AssignmentCard from '@/components/student/AssignmentCard';
+import SpacedRepetitionCard from '@/pages/student/components/spaced-repetition/SpacedRepetitionCard';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
 
-const StudentDashboard: React.FC = () => {
-  const { steps, isOnboardingComplete } = useOnboarding();
-  const completedSteps = steps.filter(step => step.completed).length;
-  const totalSteps = steps.length;
-  const completionPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-
-  // Fetch student assignments
-  const { data: assignments, isLoading: loadingAssignments } = useQuery({
-    queryKey: ['student-assignments'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('student_assignments')
-        .select(`
-          id,
-          title,
-          description,
-          due_date,
-          status,
-          lesson_id,
-          quiz_id,
-          lessons:lesson_id (title),
-          quizzes:quiz_id (title)
-        `)
-        .eq('student_id', user.id)
-        .order('due_date', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
+// This would be fetched from an API in a real app
+const mockAssignments = [
+  {
+    id: '1',
+    title: 'Present Simple Practice',
+    description: 'Complete the lesson about Present Simple tense',
+    status: 'not_started',
+    due_date: new Date(Date.now() + 86400000 * 2).toISOString(),
+    lesson_id: '123',
+    lessons: {
+      title: 'Present Simple Tense',
+      estimated_minutes: 15
     }
-  });
+  }
+];
 
-  // Fetch student progress
-  const { data: lessonProgress, isLoading: loadingProgress } = useQuery({
-    queryKey: ['student-lesson-progress'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('user_lesson_progress')
-        .select(`
-          id,
-          completed,
-          completed_at,
-          last_accessed_at,
-          lessons:lesson_id (id, title)
-        `)
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
+const mockLessons = [
+  {
+    id: '123',
+    title: 'Present Simple Tense',
+    description: 'Learn when and how to use the present simple tense in English',
+    is_published: true
+  },
+  {
+    id: '124',
+    title: 'Common Phrasal Verbs',
+    description: 'The most important phrasal verbs for everyday conversation',
+    is_published: true
+  }
+];
 
-  // Fetch quiz attempts
-  const { data: quizAttempts, isLoading: loadingQuizzes } = useQuery({
-    queryKey: ['student-quiz-attempts'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('User not authenticated');
-      
-      const { data, error } = await supabase
-        .from('user_quiz_attempts')
-        .select(`
-          id,
-          score,
-          passed,
-          completed_at,
-          time_spent_seconds,
-          quizzes:quiz_id (id, title)
-        `)
-        .eq('user_id', user.id)
-        .order('completed_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
-
-  const upcomingAssignments = assignments?.filter(a => a.status !== 'completed').slice(0, 5) || [];
-  const completedLessons = lessonProgress?.filter(lp => lp.completed) || [];
-  const totalLessons = lessonProgress?.length || 0;
-  const lessonCompletionPercentage = totalLessons > 0 ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
-
+const Dashboard: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [streakCount, setStreakCount] = useState(5);
+  const [lessonsCompleted, setLessonsCompleted] = useState(8);
+  const [totalMinutes, setTotalMinutes] = useState(120);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
+  
   return (
-    <StudentLayout>
+    <StudentLayout pageTitle="Dashboard">
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Student Dashboard</h1>
-            <p className="text-muted-foreground">
-              {!isOnboardingComplete ? 'Complete your onboarding to get started!' : 'Monitor your progress and upcoming lessons'}
-            </p>
-          </div>
+        {/* Streak Banner */}
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="mr-3 bg-primary/20 p-2 rounded-full">
+                <Award className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium">Current Streak</h3>
+                <div className="text-2xl font-bold">{streakCount} days</div>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-background border-primary/20 text-primary hover:bg-primary/20">
+              Continue Streak
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card>
+            <CardContent className="p-4 flex flex-col items-center">
+              <div className="bg-blue-50 p-2 rounded-full mb-2">
+                <BookOpen className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold">{lessonsCompleted}</div>
+                <div className="text-xs text-muted-foreground">Lessons Completed</div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 flex flex-col items-center">
+              <div className="bg-purple-50 p-2 rounded-full mb-2">
+                <Clock className="h-5 w-5 text-purple-500" />
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold">{formatTime(totalMinutes)}</div>
+                <div className="text-xs text-muted-foreground">Total Learning Time</div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {!isOnboardingComplete && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Onboarding Progress</CardTitle>
-              <CardDescription>Complete all steps to start learning</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>{completedSteps} of {totalSteps} steps completed</span>
-                  <span className="font-medium">{completionPercentage}%</span>
+        {/* Daily Goals */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-amber-500" />
+              Daily Goals
+            </CardTitle>
+            <CardDescription>Track your daily learning progress</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm">Vocabulary Practice</span>
+                  <span className="text-sm font-medium">10/20 words</span>
                 </div>
-                <Progress value={completionPercentage} className="h-2" />
+                <Progress value={50} className="h-2" />
               </div>
-            </CardContent>
-          </Card>
-        )}
+              
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm">Voice Practice</span>
+                  <span className="text-sm font-medium">5/10 minutes</span>
+                </div>
+                <Progress value={50} className="h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm">Lessons</span>
+                  <span className="text-sm font-medium">1/2 completed</span>
+                </div>
+                <Progress value={50} className="h-2" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Lessons Completed</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{completedLessons.length} / {totalLessons}</div>
-              <div className="mt-2">
-                <Progress value={lessonCompletionPercentage} className="h-2" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {lessonCompletionPercentage}% complete
-              </p>
-            </CardContent>
-          </Card>
+        {/* Due Soon */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Due Soon</h2>
+            <Button 
+              variant="ghost" 
+              className="text-sm" 
+              onClick={() => navigate('/student/assignments')}
+            >
+              View All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Upcoming Deadlines</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {upcomingAssignments.filter(a => a.due_date).length}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Assignments with upcoming deadlines
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium">Quizzes Passed</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {quizAttempts?.filter(q => q.passed).length || 0}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Out of {quizAttempts?.length || 0} attempts
-              </p>
-            </CardContent>
-          </Card>
+          {loading ? (
+            <Skeleton className="h-40 w-full" />
+          ) : mockAssignments.length > 0 ? (
+            <div className="space-y-4">
+              {mockAssignments.map(assignment => (
+                <AssignmentCard 
+                  key={assignment.id} 
+                  assignment={assignment}
+                  progress={{ completed: false }}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-muted/30">
+              <CardContent className="p-6 text-center">
+                <Check className="h-12 w-12 text-primary/30 mx-auto mb-3" />
+                <h3 className="text-lg font-medium mb-1">All caught up!</h3>
+                <p className="text-muted-foreground text-sm">
+                  You don't have any pending assignments.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <Tabs defaultValue="upcoming">
-          <TabsList>
-            <TabsTrigger value="upcoming">Upcoming Assignments</TabsTrigger>
-            <TabsTrigger value="recent">Recent Activity</TabsTrigger>
-          </TabsList>
+        {/* Spaced Repetition Card */}
+        <SpacedRepetitionCard 
+          dueItemsCount={12}
+          totalReviews={64}
+          bestStreak={7}
+          averageScore={85}
+          totalPoints={420}
+          loading={loading}
+        />
+
+        {/* Recent Lessons */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Recent Lessons</h2>
+            <Button 
+              variant="ghost" 
+              className="text-sm"
+              onClick={() => navigate('/student/lessons')}
+            >
+              View All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
           
-          <TabsContent value="upcoming" className="space-y-4 mt-4">
-            {loadingAssignments ? (
-              <div className="text-center py-8">Loading assignments...</div>
-            ) : upcomingAssignments.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No upcoming assignments
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {upcomingAssignments.map((assignment) => (
-                  <Card key={assignment.id}>
-                    <CardHeader className="p-4 pb-2">
-                      <CardTitle className="text-base">{assignment.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {assignment.lesson_id 
-                          ? `Lesson: ${assignment.lessons?.title}` 
-                          : `Quiz: ${assignment.quizzes?.title}`}
-                      </p>
-                      
-                      {assignment.due_date && (
-                        <p className="text-sm">
-                          <span className="font-medium">Due:</span>{' '}
-                          {new Date(assignment.due_date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </p>
-                      )}
-                      
-                      <div className="mt-3">
-                        <div className={`text-xs px-2 py-1 rounded-full inline-block ${
-                          assignment.status === 'in_progress' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {assignment.status === 'in_progress' ? 'In Progress' : 'Not Started'}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="recent" className="space-y-4 mt-4">
-            {loadingProgress && loadingQuizzes ? (
-              <div className="text-center py-8">Loading activity...</div>
-            ) : (quizAttempts?.length === 0 && completedLessons.length === 0) ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No recent activity
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {quizAttempts?.slice(0, 3).map((attempt) => (
-                  <Card key={attempt.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{attempt.quizzes?.title}</p>
-                          <p className="text-sm text-muted-foreground">Quiz Attempt</p>
-                        </div>
-                        <div className={`text-sm px-2 py-1 rounded-full ${
-                          attempt.passed 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {attempt.passed ? 'Passed' : 'Failed'} ({attempt.score}%)
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {completedLessons.slice(0, 3).map((progress) => (
-                  <Card key={progress.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{progress.lessons?.title}</p>
-                          <p className="text-sm text-muted-foreground">Lesson Completed</p>
-                        </div>
-                        <div className="text-sm px-2 py-1 rounded-full bg-green-100 text-green-800">
-                          Completed
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {mockLessons.map(lesson => (
+                <LessonCard 
+                  key={lesson.id} 
+                  lesson={lesson}
+                  progress={{ completed: false }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </StudentLayout>
   );
 };
 
-export default StudentDashboard;
+export default Dashboard;
