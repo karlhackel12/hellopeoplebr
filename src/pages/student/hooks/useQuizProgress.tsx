@@ -6,14 +6,14 @@ import { Question, QuestionOption } from '@/components/teacher/quiz/types';
 
 interface QuizProgressData {
   id?: string;
-  quizId: string;
-  userId: string;
-  currentQuestion: number;
+  quiz_id: string;
+  user_id: string;
+  current_question: number;
   answers: Record<string, string>;
-  startedAt?: string;
-  completedAt?: string | null;
+  started_at?: string;
+  completed_at?: string | null;
   score?: number | null;
-  lastUpdatedAt?: string;
+  last_updated_at?: string;
 }
 
 export const useQuizProgress = (quizId: string) => {
@@ -45,7 +45,7 @@ export const useQuizProgress = (quizId: string) => {
       if (data) {
         setProgressId(data.id);
         setCurrentQuestionIndex(data.current_question);
-        setUserAnswers(data.answers);
+        setUserAnswers(data.answers as Record<string, string>);
         setCompleted(!!data.completed_at);
         setScore(data.score);
       } else {

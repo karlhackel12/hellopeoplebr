@@ -34,7 +34,11 @@ export const useQuizHandler = (lessonId: string) => {
     isContentLoaded
   } = useQuizContent();
 
-  const { generateSmartQuiz } = useSmartQuizGeneration();
+  const { 
+    generateSmartQuiz,
+    isRetrying: smartQuizRetrying,
+    setIsRetrying: setSmartQuizRetrying
+  } = useSmartQuizGeneration();
 
   return {
     fetchLessonContent: getLessonContent,
@@ -48,7 +52,8 @@ export const useQuizHandler = (lessonId: string) => {
     unpublishQuiz,
     loading: generationLoading || fetchLoading,
     saving,
-    isRetrying,
+    isRetrying: isRetrying || smartQuizRetrying,
+    setIsRetrying: setSmartQuizRetrying,
     error: generationError || fetchError || managementError
   };
 };
