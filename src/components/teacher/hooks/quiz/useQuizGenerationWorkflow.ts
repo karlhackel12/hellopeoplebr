@@ -10,13 +10,10 @@ export const useQuizGenerationWorkflow = () => {
   const {
     setNumQuestions,
     numQuestions,
-    setCurrentPhase,
     contentLoadingMessage,
-    setContentLoadingMessage,
     loadingError,
     setLoadingError,
     isRetrying,
-    setIsRetrying,
     setGenerationPhase,
     setError
   } = useQuizGenerationState();
@@ -24,19 +21,39 @@ export const useQuizGenerationWorkflow = () => {
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
 
   const { generateSmartQuiz, loading } = useSmartQuizGeneration();
-  const { wrappedGenerateQuiz, wrappedSaveQuiz, wrappedDiscardQuiz } = useQuizActionWrappers();
-  const { processQuizData, previewQuestions } = useQuizDataProcessor();
+  
+  // Create mock functions for the wrapper since we're not actually using the result
+  const mockHandleGenerateQuiz = async () => true;
+  const mockHandleSaveQuiz = async () => true;
+  const mockHandleDiscardQuiz = async () => true;
+  const mockResetPreview = () => {};
+  const mockSetExistingQuiz = () => {};
+  const mockSetIsPublished = () => {};
+  const mockSetShowPreview = () => {};
+  const mockSetContentLoading = () => {};
+  
+  // Pass the mock functions to satisfy the type requirements
+  const { wrappedGenerateQuiz, wrappedSaveQuiz, wrappedDiscardQuiz } = useQuizActionWrappers(
+    mockHandleGenerateQuiz,
+    mockHandleSaveQuiz,
+    mockHandleDiscardQuiz,
+    mockResetPreview,
+    mockSetExistingQuiz,
+    mockSetIsPublished,
+    mockSetShowPreview,
+    mockSetContentLoading
+  );
+  
+  const { processQuizData } = useQuizDataProcessor();
 
   const generateQuizFromPrompt = useCallback(async (numQuestionsParam: string) => {
     try {
       // Reset states
-      setCurrentPhase('loading');
-      setContentLoadingMessage("Analyzing content and preparing to generate questions...");
+      setGenerationPhase('loading');
       setLoadingError(null);
 
       // Generate quiz using the provided function
-      setCurrentPhase('generating');
-      setContentLoadingMessage("Generating quiz questions based on content...");
+      setGenerationPhase('generating');
       
       // Parse the number of questions to generate
       const numQuestionsInt = parseInt(numQuestionsParam, 10) || 5;
@@ -68,28 +85,26 @@ export const useQuizGenerationWorkflow = () => {
         // Process the result
         const processedQuestions = await processQuizData(result.questions);
         setQuizQuestions(processedQuestions);
-        setCurrentPhase('complete');
-        setContentLoadingMessage(null);
+        setGenerationPhase('complete');
         return result;
       } else {
         // Handle failure
-        setCurrentPhase('error');
+        setGenerationPhase('error');
         setLoadingError("Failed to generate quiz questions.");
         return null;
       }
     } catch (error: any) {
       console.error("Error generating quiz:", error);
-      setCurrentPhase('error');
+      setGenerationPhase('error');
       setLoadingError(error.message || "An unexpected error occurred");
       return null;
     }
-  }, [generateSmartQuiz, processQuizData, setContentLoadingMessage, setCurrentPhase, setLoadingError]);
+  }, [generateSmartQuiz, processQuizData, setGenerationPhase, setLoadingError]);
 
   return {
     generateQuizFromPrompt,
     loading,
     isRetrying,
-    setIsRetrying,
     contentLoadingMessage,
     loadingError,
     numQuestions,
