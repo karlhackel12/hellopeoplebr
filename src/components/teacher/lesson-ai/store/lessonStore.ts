@@ -1,5 +1,6 @@
 
 import { create } from 'zustand';
+import { GeneratedLessonContent } from '../types';
 
 interface LessonSection {
   title: string;
@@ -16,14 +17,15 @@ interface LessonMetadata {
   [key: string]: any;
 }
 
-interface LessonContent {
-  sections: LessonSection[];
-  metadata: LessonMetadata;
+export interface LessonContent {
+  sections?: LessonSection[];
+  metadata?: LessonMetadata;
+  [key: string]: any; // This allows extra properties to accommodate GeneratedLessonContent
 }
 
 interface LessonStore {
   lessonContent: LessonContent | null;
-  updateContent: (content: LessonContent) => void;
+  updateContent: (content: LessonContent | GeneratedLessonContent) => void;
   updateMetadata: (metadata: Partial<LessonMetadata>) => void;
   reset: () => void;
 }

@@ -74,7 +74,7 @@ export const useGenerationApi = () => {
         
         return {
           id: 'mock-generation',
-          status: mockResponse.status || 'succeeded',
+          status: mockResponse.status as "succeeded" | "failed" | "pending" | "processing",
           lesson: mockResponse.lesson
         };
       }
@@ -89,8 +89,7 @@ export const useGenerationApi = () => {
       const { data, error } = await supabase.functions.invoke(
         'generate-lesson-content',
         {
-          body: cleanParams,
-          signal: controller.signal
+          body: cleanParams
         }
       );
       
