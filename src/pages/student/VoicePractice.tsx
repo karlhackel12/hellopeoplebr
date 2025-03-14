@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic, BookOpen, History, Plus, MessageCircle, BarChart3, Users, Lightbulb } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Mic, BookOpen, History, MessageCircle, BarChart3, Users, Lightbulb, Clock, ArrowRight, CheckCircle, BookOpenCheck } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import StudentLayout from '@/components/layout/StudentLayout';
 import VoicePracticeCard from './components/voice-practice/VoicePracticeCard';
@@ -13,55 +13,63 @@ import VoicePracticeAbout from './components/voice-practice/VoicePracticeAbout';
 import RecentFeedback from './components/voice-practice/RecentFeedback';
 import { useVoicePractice } from './hooks/useVoicePractice';
 import { formatDistanceToNow } from 'date-fns';
+import ProgressTracker from '@/components/teacher/preview/ProgressTracker';
 
 const VoicePractice: React.FC = () => {
   const navigate = useNavigate();
   const { sessions, recentFeedback, stats, isLoading } = useVoicePractice();
-  const [activeTab, setActiveTab] = useState("due");
+  const [activeTab, setActiveTab] = useState("practice");
   
-  const startNewPractice = (type: 'normal' | 'conversation' = 'normal') => {
-    if (type === 'conversation') {
-      navigate('/student/voice-practice/session?mode=conversation');
-    } else {
-      navigate('/student/voice-practice/session');
+  const startNewConversation = (topic?: string, lessonId?: string) => {
+    const queryParams = new URLSearchParams();
+    
+    if (topic) {
+      queryParams.append('topic', topic);
     }
+    
+    if (lessonId) {
+      queryParams.append('lessonId', lessonId);
+    }
+    
+    navigate(`/student/voice-practice/session?${queryParams.toString()}`);
   };
   
-  // Filter completed and pending sessions
-  const completedSessions = sessions?.filter(session => session.completed_at) || [];
-  const pendingSessions = sessions?.filter(session => !session.completed_at) || [];
+  // Filter required lessons (not marked as completed)
+  const requiredLessons = sessions
+    ?.filter(session => session.lesson && !session.completed_at)
+    ?.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()) || [];
   
-  // Filter conversation sessions
-  const conversationSessions = sessions?.filter(session => 
-    session.topic && session.topic.toLowerCase().includes('conversation')
-  ) || [];
+  // Filter completed lessons
+  const completedSessions = sessions?.filter(session => session.completed_at) || [];
+  
+  // Group past conversations by topic
+  const topicGroups = completedSessions.reduce((groups, session) => {
+    const topic = session.topic || 'General Conversation';
+    if (!groups[topic]) {
+      groups[topic] = [];
+    }
+    groups[topic].push(session);
+    return groups;
+  }, {} as Record<string, typeof sessions>);
   
   return (
     <StudentLayout>
       <Helmet>
-        <title>Voice Practice | Teachly</title>
+        <title>Voice Conversation Practice | Teachly</title>
       </Helmet>
       
       <div className="container py-6 max-w-7xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Voice Practice</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Voice Conversation Practice</h1>
             <p className="text-muted-foreground">
-              Improve your speaking skills with AI-guided practice sessions and conversations
+              Improve your speaking skills with AI-guided conversation practice
             </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => startNewPractice('conversation')} 
-              className="flex gap-2"
-            >
+            <Button onClick={() => startNewConversation('Free conversation')} className="flex gap-2">
               <MessageCircle className="h-4 w-4" />
-              New Conversation
-            </Button>
-            <Button onClick={() => startNewPractice('normal')} className="flex gap-2">
-              <Mic className="h-4 w-4" />
-              New Practice
+              Start Conversation
             </Button>
           </div>
         </div>
@@ -84,36 +92,34 @@ const VoicePractice: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <Tabs defaultValue="due" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-4 mb-4">
-                <TabsTrigger value="due" className="flex gap-2">
-                  <Mic className="h-4 w-4" />
-                  <span className="hidden sm:inline">Due Practice</span>
-                  <span className="sm:hidden">Due</span>
+            <Tabs defaultValue="practice" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="practice" className="flex gap-2">
+                  <BookOpenCheck className="h-4 w-4" />
+                  <span className="hidden sm:inline">Required Practice</span>
+                  <span className="sm:hidden">Required</span>
                 </TabsTrigger>
-                <TabsTrigger value="conversations" className="flex gap-2">
+                <TabsTrigger value="topics" className="flex gap-2">
                   <MessageCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">Conversations</span>
-                  <span className="sm:hidden">Chats</span>
-                </TabsTrigger>
-                <TabsTrigger value="lessons" className="flex gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  <span className="hidden sm:inline">Lessons</span>
-                  <span className="sm:hidden">Learn</span>
+                  <span className="hidden sm:inline">Conversation Topics</span>
+                  <span className="sm:hidden">Topics</span>
                 </TabsTrigger>
                 <TabsTrigger value="history" className="flex gap-2">
                   <History className="h-4 w-4" />
-                  <span className="hidden sm:inline">History</span>
-                  <span className="sm:hidden">Past</span>
+                  <span className="hidden sm:inline">Practice History</span>
+                  <span className="sm:hidden">History</span>
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="due">
+              <TabsContent value="practice">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl flex items-center gap-2">
-                      <Mic className="h-5 w-5 text-blue-500" /> Due Practice Sessions
+                      <BookOpenCheck className="h-5 w-5 text-blue-500" /> Required Conversation Practice
                     </CardTitle>
+                    <CardDescription>
+                      Complete these conversations to progress in your learning journey
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {isLoading ? (
@@ -121,52 +127,57 @@ const VoicePractice: React.FC = () => {
                         <div className="h-20 bg-slate-200 rounded"></div>
                         <div className="h-20 bg-slate-200 rounded"></div>
                       </div>
-                    ) : pendingSessions.length > 0 ? (
+                    ) : requiredLessons.length > 0 ? (
                       <div className="space-y-4">
-                        {pendingSessions.map((session) => (
-                          <div key={session.id} className="border rounded-lg p-4 flex items-center justify-between">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-medium">{session.topic}</h3>
-                                {session.topic.toLowerCase().includes('conversation') && (
-                                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                    Conversation
+                        {requiredLessons.map((session) => (
+                          <div key={session.id} className="border rounded-lg p-4 hover:border-blue-200 hover:bg-blue-50 transition-colors">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-medium">{session.lesson?.title}</h3>
+                                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
+                                    Required
                                   </Badge>
-                                )}
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Practice conversation based on this lesson content
+                                </p>
+                                <div className="flex mt-2 gap-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {session.started_at ? 
+                                      `Started ${formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}` : 
+                                      'Not started'}
+                                  </Badge>
+                                </div>
                               </div>
-                              <p className="text-sm text-muted-foreground">
-                                Created {formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}
-                              </p>
+                              <Button 
+                                onClick={() => startNewConversation(session.lesson?.title, session.lesson?.id)}
+                                size="sm"
+                                className="gap-1"
+                              >
+                                Practice
+                                <ArrowRight className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <Button 
-                              onClick={() => navigate(`/student/voice-practice/session/${session.id}`)}
-                              size="sm"
-                            >
-                              Continue
-                            </Button>
                           </div>
                         ))}
+                        <ProgressTracker 
+                          completedSections={completedSessions.map(s => s.id)}
+                          totalSections={completedSessions.length + requiredLessons.length}
+                          customLabel={`${completedSessions.length} of ${completedSessions.length + requiredLessons.length} lessons completed`}
+                        />
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
-                        <Mic className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                        <p>No practice sessions due.</p>
+                        <CheckCircle className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                        <p>Great job! You've completed all required conversation practices.</p>
                         <div className="flex gap-2 justify-center mt-4">
                           <Button 
-                            variant="outline" 
-                            onClick={() => startNewPractice('conversation')}
-                            className="flex gap-2"
+                            onClick={() => startNewConversation('Free conversation')}
                           >
-                            <MessageCircle className="h-4 w-4" />
-                            Start Conversation
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => startNewPractice('normal')}
-                          >
-                            <Mic className="h-4 w-4 mr-2" />
-                            Start Practice
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Practice Anyway
                           </Button>
                         </div>
                       </div>
@@ -175,12 +186,15 @@ const VoicePractice: React.FC = () => {
                 </Card>
               </TabsContent>
               
-              <TabsContent value="conversations">
+              <TabsContent value="topics">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-green-500" /> Conversation Practice
+                      <MessageCircle className="h-5 w-5 text-green-500" /> Conversation Topics
                     </CardTitle>
+                    <CardDescription>
+                      Choose a topic to practice conversation
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {isLoading ? (
@@ -189,7 +203,7 @@ const VoicePractice: React.FC = () => {
                         <div className="h-20 bg-slate-200 rounded"></div>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div className="border rounded-lg p-4">
                           <h3 className="font-medium flex items-center gap-2">
                             <Users className="h-4 w-4 text-blue-500" />
@@ -199,14 +213,29 @@ const VoicePractice: React.FC = () => {
                             Have a natural conversation with the AI to practice your speaking skills.
                           </p>
                           <div className="flex flex-wrap gap-2 mt-3">
-                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100">Beginner</div>
-                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100">Intermediate</div>
-                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100">Advanced</div>
+                            <div 
+                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100"
+                              onClick={() => startNewConversation('Free conversation', undefined)}
+                            >
+                              Beginner
+                            </div>
+                            <div 
+                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100"
+                              onClick={() => startNewConversation('Free conversation', undefined)}
+                            >
+                              Intermediate
+                            </div>
+                            <div 
+                              className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100"
+                              onClick={() => startNewConversation('Free conversation', undefined)}
+                            >
+                              Advanced
+                            </div>
                           </div>
                           <div className="flex justify-end mt-3">
                             <Button 
                               size="sm"
-                              onClick={() => startNewPractice('conversation')}
+                              onClick={() => startNewConversation('Free conversation', undefined)}
                             >
                               Start Conversation
                             </Button>
@@ -215,147 +244,47 @@ const VoicePractice: React.FC = () => {
                         
                         <div className="border rounded-lg p-4">
                           <h3 className="font-medium flex items-center gap-2">
-                            <BookOpen className="h-4 w-4 text-violet-500" />
-                            Lesson-based Conversation
-                          </h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Practice conversations related to your recent lessons and vocabulary.
-                          </p>
-                          <div className="flex justify-end mt-3">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate('/student/lessons')}
-                            >
-                              Browse Lessons
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="border rounded-lg p-4">
-                          <h3 className="font-medium flex items-center gap-2">
                             <Lightbulb className="h-4 w-4 text-amber-500" />
-                            Topic-based Conversation
+                            Popular Topics
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">
                             Choose a specific topic to practice conversation around.
                           </p>
                           <div className="flex flex-wrap gap-2 mt-3">
-                            <div className="px-2 py-1 bg-slate-50 text-slate-700 rounded-full text-xs cursor-pointer hover:bg-slate-100">
-                              Travel
-                            </div>
-                            <div className="px-2 py-1 bg-slate-50 text-slate-700 rounded-full text-xs cursor-pointer hover:bg-slate-100">
-                              Food & Dining
-                            </div>
-                            <div className="px-2 py-1 bg-slate-50 text-slate-700 rounded-full text-xs cursor-pointer hover:bg-slate-100">
-                              Work & Career
-                            </div>
-                            <div className="px-2 py-1 bg-slate-50 text-slate-700 rounded-full text-xs cursor-pointer hover:bg-slate-100">
-                              Hobbies
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-3">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate('/student/voice-practice/session?mode=conversation&topic=custom')}
-                            >
-                              Choose Topic
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {conversationSessions.length > 0 && (
-                          <div className="mt-6">
-                            <h3 className="text-md font-medium mb-3">Recent Conversations</h3>
-                            {conversationSessions.slice(0, 3).map(session => (
-                              <div key={session.id} className="border rounded-lg p-4 mb-3 flex justify-between items-center">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-medium">{session.topic}</h4>
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">
-                                      Level {session.difficulty_level}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {session.completed_at 
-                                      ? `Completed ${formatDistanceToNow(new Date(session.completed_at), { addSuffix: true })}` 
-                                      : `Started ${formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}`}
-                                  </p>
-                                </div>
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => navigate(`/student/voice-practice/session/${session.id}?mode=conversation`)}
-                                >
-                                  Continue
-                                </Button>
+                            {['Travel', 'Food & Dining', 'Work & Career', 'Hobbies', 'Family', 'Education', 'Technology', 'Health'].map(topic => (
+                              <div 
+                                key={topic}
+                                className="px-2 py-1 bg-slate-50 text-slate-700 rounded-full text-xs cursor-pointer hover:bg-slate-100"
+                                onClick={() => startNewConversation(topic, undefined)}
+                              >
+                                {topic}
                               </div>
                             ))}
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="lessons">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-green-500" /> Practice from Lessons
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="animate-pulse space-y-4">
-                        <div className="h-20 bg-slate-200 rounded"></div>
-                        <div className="h-20 bg-slate-200 rounded"></div>
-                      </div>
-                    ) : sessions?.some(session => session.lesson) ? (
-                      <div className="space-y-4">
-                        {sessions
-                          .filter(session => session.lesson)
-                          .slice(0, 5)
-                          .map((session) => (
-                            <div key={session.id} className="border rounded-lg p-4">
-                              <h3 className="font-medium">{session.lesson?.title}</h3>
-                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {session.completed_at 
-                                  ? `Completed ${formatDistanceToNow(new Date(session.completed_at), { addSuffix: true })}` 
-                                  : `Started ${formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}`}
-                              </p>
-                              <div className="flex justify-end mt-2 gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => navigate(`/student/voice-practice/session?lessonId=${session.lesson?.id}`)}
-                                >
-                                  Practice
-                                </Button>
-                                <Button 
-                                  size="sm"
-                                  onClick={() => navigate(`/student/voice-practice/session?lessonId=${session.lesson?.id}&mode=conversation`)}
-                                >
-                                  Conversation
-                                </Button>
-                              </div>
+                        </div>
+                        
+                        {Object.keys(topicGroups).length > 0 && (
+                          <div className="mt-6">
+                            <h3 className="text-md font-medium mb-3">Recent Conversation Topics</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {Object.entries(topicGroups).slice(0, 4).map(([topic, sessions]) => (
+                                <div key={topic} className="border rounded-lg p-4 cursor-pointer hover:bg-slate-50" onClick={() => startNewConversation(topic, undefined)}>
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <h4 className="font-medium">{topic}</h4>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {sessions.length} {sessions.length === 1 ? 'conversation' : 'conversations'}
+                                      </p>
+                                    </div>
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">
+                                      {sessions[0].difficulty_level > 2 ? 'Advanced' : sessions[0].difficulty_level > 1 ? 'Intermediate' : 'Beginner'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                        <p>No lesson-based practice yet.</p>
-                        <Button 
-                          variant="outline" 
-                          className="mt-4"
-                          onClick={() => navigate('/student/lessons')}
-                        >
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          Browse Lessons
-                        </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -366,8 +295,11 @@ const VoicePractice: React.FC = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl flex items-center gap-2">
-                      <History className="h-5 w-5 text-violet-500" /> Practice History
+                      <History className="h-5 w-5 text-violet-500" /> Conversation History
                     </CardTitle>
+                    <CardDescription>
+                      Review your past conversation practice sessions
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {isLoading ? (
@@ -377,18 +309,16 @@ const VoicePractice: React.FC = () => {
                       </div>
                     ) : completedSessions.length > 0 ? (
                       <div className="space-y-4">
-                        {completedSessions.map((session) => (
-                          <div key={session.id} className="border rounded-lg p-4">
+                        {completedSessions.slice(0, 10).map((session) => (
+                          <div key={session.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
                             <div className="flex justify-between items-start">
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h3 className="font-medium">{session.topic}</h3>
-                                  {session.topic.toLowerCase().includes("conversation") && (
-                                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                                      <MessageCircle className="h-3 w-3 mr-1" />
-                                      Conversation
-                                    </Badge>
-                                  )}
+                                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Completed
+                                  </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                   Completed {formatDistanceToNow(new Date(session.completed_at!), { addSuffix: true })}
@@ -398,24 +328,34 @@ const VoicePractice: React.FC = () => {
                                     Duration: {Math.floor(session.duration_seconds / 60)}m {session.duration_seconds % 60}s
                                   </p>
                                 )}
+                                {session.lesson && (
+                                  <Badge variant="outline" className="mt-2 text-xs">
+                                    <BookOpen className="h-3 w-3 mr-1" />
+                                    {session.lesson.title}
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                 <div className="bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-0.5 rounded">
                                   Level {session.difficulty_level}
                                 </div>
                                 <div className="flex gap-1">
-                                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6"
+                                    onClick={() => navigate(`/student/voice-practice/session/${session.id}`)}
+                                  >
                                     <BarChart3 className="h-3 w-3 text-slate-500" />
                                   </Button>
-                                  {session.topic.toLowerCase().includes("conversation") ? (
-                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                      <MessageCircle className="h-3 w-3 text-slate-500" />
-                                    </Button>
-                                  ) : (
-                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                      <Mic className="h-3 w-3 text-slate-500" />
-                                    </Button>
-                                  )}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6"
+                                    onClick={() => startNewConversation(session.topic, session.lesson?.id)}
+                                  >
+                                    <MessageCircle className="h-3 w-3 text-slate-500" />
+                                  </Button>
                                 </div>
                               </div>
                             </div>
@@ -425,13 +365,13 @@ const VoicePractice: React.FC = () => {
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         <History className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                        <p>No completed practice sessions yet.</p>
+                        <p>No completed conversation practice sessions yet.</p>
                         <Button 
                           variant="outline" 
                           className="mt-4"
-                          onClick={() => startNewPractice()}
+                          onClick={() => startNewConversation()}
                         >
-                          <Mic className="h-4 w-4 mr-2" />
+                          <MessageCircle className="h-4 w-4 mr-2" />
                           Start Practicing
                         </Button>
                       </div>

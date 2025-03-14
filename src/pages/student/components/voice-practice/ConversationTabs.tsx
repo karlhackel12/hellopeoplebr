@@ -1,12 +1,15 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, BarChart3, BookOpen, Lightbulb } from 'lucide-react';
+import { MessageSquare, BarChart3, BookOpen, Lightbulb, Check, AlertCircle } from 'lucide-react';
 import { ConversationMessage } from '../../hooks/useVoiceConversation';
 import ConversationDisplay from './ConversationDisplay';
 import ConversationRecorder from './ConversationRecorder';
 import ConversationFeedback from './ConversationFeedback';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Progress } from "@/components/ui/progress";
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface ConversationTabsProps {
   activeTab: string;
@@ -25,6 +28,9 @@ interface ConversationTabsProps {
   activeVocabulary?: string[];
   lessonTopics?: string[];
   suggestedResponses?: string[];
+  minTurnsRequired?: number;
+  currentTurns?: number;
+  isCompleted?: boolean;
 }
 
 const ConversationTabs: React.FC<ConversationTabsProps> = ({
@@ -43,8 +49,14 @@ const ConversationTabs: React.FC<ConversationTabsProps> = ({
   analyticsData,
   activeVocabulary = [],
   lessonTopics = [],
-  suggestedResponses = []
+  suggestedResponses = [],
+  minTurnsRequired = 3,
+  currentTurns = 0,
+  isCompleted = false
 }) => {
+  const requirementProgress = Math.min(100, (currentTurns / minTurnsRequired) * 100);
+  const canComplete = currentTurns >= minTurnsRequired;
+  
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid grid-cols-3 mb-4">
@@ -73,13 +85,59 @@ const ConversationTabs: React.FC<ConversationTabsProps> = ({
             highlightTopics={true}
           />
           
-          <ConversationRecorder 
-            isRecording={isRecording}
-            onStartRecording={onStartRecording}
-            onStopRecording={onStopRecording}
-            maxDurationSeconds={120}
-            isWaitingForResponse={isLoading}
-          />
+          {!isCompleted && (
+            <ConversationRecorder 
+              isRecording={isRecording}
+              onStartRecording={onStartRecording}
+              onStopRecording={onStopRecording}
+              maxDurationSeconds={120}
+              isWaitingForResponse={isLoading}
+            />
+          )}
+          
+          {/* Completion Requirements Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  {canComplete ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                  )}
+                  Completion Requirements
+                </span>
+                <Badge 
+                  variant={canComplete ? "default" : "outline"}
+                  className={canComplete ? "bg-green-100 text-green-700 border-green-200" : ""}
+                >
+                  {currentTurns} / {minTurnsRequired} turns
+                </Badge>
+              </CardTitle>
+              <Progress 
+                value={requirementProgress} 
+                className="h-1" 
+                indicatorClassName={canComplete ? "bg-green-500" : "bg-amber-500"} 
+              />
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">
+                {canComplete 
+                  ? `You've reached the minimum requirement of ${minTurnsRequired} conversation turns. You can end the conversation now or continue practicing.` 
+                  : `Complete at least ${minTurnsRequired} conversation turns to mark this practice as complete.`}
+              </p>
+            </CardContent>
+            <CardFooter className="border-t pt-3 pb-3">
+              <Button 
+                onClick={handleEndConversation}
+                disabled={!canComplete || isCompleted}
+                className="w-full"
+                variant={isCompleted ? "outline" : "default"}
+              >
+                {isCompleted ? "Completed" : "Complete Conversation Practice"}
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </TabsContent>
       
@@ -90,6 +148,8 @@ const ConversationTabs: React.FC<ConversationTabsProps> = ({
           handleEndConversation={handleEndConversation}
           analyticsData={analyticsData}
           lessonTopics={lessonTopics}
+          canComplete={canComplete}
+          isCompleted={isCompleted}
         />
       </TabsContent>
       
@@ -100,13 +160,13 @@ const ConversationTabs: React.FC<ConversationTabsProps> = ({
               <Lightbulb className="h-5 w-5 text-yellow-500" />
               Suggested Responses
             </CardTitle>
+            <CardDescription>
+              Not sure what to say? Here are some ideas to help keep the conversation going.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {suggestedResponses.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Not sure what to say? Here are some suggestions you can try:
-                </p>
                 {suggestedResponses.map((suggestion, i) => (
                   <div key={i} className="p-3 bg-slate-50 rounded-md border hover:bg-slate-100 cursor-pointer transition-colors">
                     <p className="text-sm">{suggestion}</p>
