@@ -39,50 +39,100 @@ export const useGenerationApi = () => {
       
       console.log("Cleaned params for edge function:", cleanParams);
       
-      // Use our mock API instead of real API call
-      console.log("Using mock API for lesson generation");
+      // For development/testing, use mock API
+      if (import.meta.env.DEV || !import.meta.env.VITE_USE_EDGE_FUNCTIONS) {
+        console.log("Using mock API for lesson generation");
+        
+        // Import the generateLesson function
+        const { generateLesson } = await import('@/integrations/openai/client');
+        
+        // Call the mock API with the aligned parameters
+        const mockResponse = await generateLesson(cleanParams);
+        console.log("Mock API response:", mockResponse);
+        
+        // Store quiz data in local storage for later use
+        if (mockResponse.quiz && mockResponse.quiz.questions) {
+          try {
+            const timestamp = generationParams.timestamp || new Date().toISOString();
+            const storageKey = `lesson_quiz_${timestamp}`;
+            
+            // Save the quiz data in localStorage for later retrieval
+            localStorage.setItem(
+              storageKey,
+              JSON.stringify(mockResponse.quiz)
+            );
+            console.log("Quiz data stored in localStorage with key:", storageKey);
+            
+            // Also store as a session reference to the most recent quiz
+            localStorage.setItem('most_recent_quiz_key', storageKey);
+          } catch (storageError) {
+            console.warn("Failed to store quiz data:", storageError);
+          }
+        } else {
+          console.warn("No quiz data received from mock API");
+        }
+        
+        return {
+          id: 'mock-generation',
+          status: mockResponse.status || 'succeeded',
+          lesson: mockResponse.lesson
+        };
+      }
       
-      // Import the generateLesson function
-      const { generateLesson } = await import('@/integrations/openai/client');
+      // For production, use the actual edge function
+      console.log("Calling Supabase edge function: generate-lesson-content");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, EDGE_FUNCTION_TIMEOUT);
       
-      // Call the mock API
-      const mockResponse = await generateLesson(cleanParams);
-      console.log("Mock API response:", mockResponse);
+      const { data, error } = await supabase.functions.invoke(
+        'generate-lesson-content',
+        {
+          body: cleanParams,
+          signal: controller.signal
+        }
+      );
       
-      // Store quiz data in local storage for later use
-      if (mockResponse.quiz && mockResponse.quiz.questions) {
+      clearTimeout(timeoutId);
+      
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to generate lesson content");
+      }
+      
+      console.log("Edge function response:", data);
+      
+      // Store quiz data in local storage if available
+      if (data.quiz && data.quiz.questions) {
         try {
           const timestamp = generationParams.timestamp || new Date().toISOString();
           const storageKey = `lesson_quiz_${timestamp}`;
           
-          // Save the quiz data in localStorage for later retrieval
           localStorage.setItem(
             storageKey,
-            JSON.stringify(mockResponse.quiz)
+            JSON.stringify(data.quiz)
           );
           console.log("Quiz data stored in localStorage with key:", storageKey);
           
-          // Also store as a session reference to the most recent quiz
           localStorage.setItem('most_recent_quiz_key', storageKey);
         } catch (storageError) {
           console.warn("Failed to store quiz data:", storageError);
         }
-      } else {
-        console.warn("No quiz data received from mock API");
       }
       
       return {
-        id: 'mock-generation',
-        status: mockResponse.status || 'succeeded',
-        lesson: mockResponse.lesson
+        id: data.id || 'direct-generation',
+        status: data.status || 'succeeded',
+        lesson: data.lesson
       };
     } catch (error: any) {
-      console.error("Error invoking mock API:", error);
+      console.error("Error invoking lesson generation:", error);
       
       // Provide more specific error messages based on error type
-      if (error.message === TIMEOUT_MESSAGE) {
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
         toast.error("Generation timeout", {
-          description: "The AI is still working, but it's taking longer than expected. Try refreshing the page in a few moments to see if content has been generated."
+          description: TIMEOUT_MESSAGE
         });
       } else {
         toast.error("Generation failed", {
