@@ -22,6 +22,13 @@ const RecallRatingSystem: React.FC<RecallRatingSystemProps> = ({
   onRateRecall, 
   isSubmitting 
 }) => {
+  // Validate rating before passing to onRateRecall
+  const handleRating = (rating: number) => {
+    // Ensure rating is within valid range 0-5
+    const validRating = Math.min(5, Math.max(0, rating));
+    onRateRecall(validRating);
+  };
+  
   return (
     <div className="mt-8 border-t pt-6">
       <h4 className="text-sm font-medium mb-2">How would you rate your recall?</h4>
@@ -33,7 +40,7 @@ const RecallRatingSystem: React.FC<RecallRatingSystemProps> = ({
             className={`h-auto py-2 flex flex-col items-center ${
               rating.value <= 2 ? "hover:border-red-500" : "hover:border-green-500"
             }`}
-            onClick={() => onRateRecall(rating.value)}
+            onClick={() => handleRating(rating.value)}
             disabled={isSubmitting}
           >
             <span className="text-lg">
