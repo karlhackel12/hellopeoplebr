@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -135,10 +135,10 @@ const AILessonCreateForm: React.FC<AILessonCreateFormProps> = ({ onSubmit, isLoa
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
+    <Card className="w-full border border-border/40 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-xl">Create New English Lesson</CardTitle>
-        <CardDescription>Generate a complete English lesson using AI</CardDescription>
+        <CardTitle className="text-xl">Create AI-Generated English Lesson</CardTitle>
+        <CardDescription>Generate a complete English lesson using advanced AI</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {generating && (
@@ -242,14 +242,17 @@ const AILessonCreateForm: React.FC<AILessonCreateFormProps> = ({ onSubmit, isLoa
         </Form>
         
         <div className="mt-4 text-sm text-muted-foreground">
-          <p>Tips for good English lessons:</p>
-          <ul className="list-disc pl-5 mt-2">
+          <p className="font-medium">Tips for better English lessons:</p>
+          <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>Be specific in your title (e.g., "Past Tense Verbs" instead of "Grammar")</li>
             <li>Add clear instructions to focus on specific aspects (conversation, writing, etc.)</li>
             <li>The generated lesson will include vocabulary, key phrases, and quiz questions</li>
           </ul>
         </div>
       </CardContent>
+      <CardFooter className="bg-muted/30 flex justify-between text-sm text-muted-foreground px-6 py-3">
+        <span>Content generated using Replicate AI (deepseek-r1 model)</span>
+      </CardFooter>
     </Card>
   );
 };

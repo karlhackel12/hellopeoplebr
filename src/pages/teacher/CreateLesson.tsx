@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { formatContent } from '@/components/teacher/lesson-ai/contentUtils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const CreateLesson: React.FC = () => {
   const navigate = useNavigate();
@@ -34,6 +35,9 @@ const CreateLesson: React.FC = () => {
       // Check if user is authenticated
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in to create lessons'
+        });
         navigate('/login');
         return;
       }
@@ -54,7 +58,10 @@ const CreateLesson: React.FC = () => {
         })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving lesson:', error);
+        throw error;
+      }
       
       toast.success('Lesson created', {
         description: 'Your lesson has been successfully created',
@@ -79,20 +86,33 @@ const CreateLesson: React.FC = () => {
   return (
     <TeacherLayout>
       <div className="container mx-auto p-4 md:p-8">
-        <div className="mb-6">
-          <Button variant="ghost" onClick={handleBack} className="mb-4 p-0">
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back to lessons
-          </Button>
-          <h1 className="text-2xl md:text-3xl font-bold">Create New Lesson</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <Button variant="ghost" onClick={handleBack} className="mb-2 p-0 -ml-2">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to lessons
+            </Button>
+            <h1 className="text-2xl md:text-3xl font-bold">Create New Lesson</h1>
+            <p className="text-muted-foreground mt-1">
+              Choose your preferred method to create an English lesson
+            </p>
+          </div>
         </div>
         
-        <div className="mb-8">
-          <LessonTypeSelector 
-            selectedType={lessonType} 
-            onSelectType={setLessonType} 
-          />
-        </div>
+        <Card className="mb-8 border border-border/40 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl">Lesson Creation Method</CardTitle>
+            <CardDescription>
+              Select how you want to create your lesson content
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LessonTypeSelector 
+              selectedType={lessonType} 
+              onSelectType={setLessonType} 
+            />
+          </CardContent>
+        </Card>
         
         {lessonType === 'ai' && (
           <AILessonCreateForm 
@@ -102,26 +122,31 @@ const CreateLesson: React.FC = () => {
         )}
         
         {lessonType === 'manual' && (
-          <div className="bg-muted p-6 rounded-lg text-center">
-            <p className="text-muted-foreground">
-              Manual lesson creation will redirect you to the editor after the lesson is created.
-            </p>
-            <Button 
-              onClick={() => {
-                // Create an empty lesson
-                handleSaveLesson({
-                  title: 'Untitled Lesson',
-                  content: '',
-                  is_published: false,
-                  contentSource: 'ai_generated',
-                });
-              }}
-              className="mt-4"
-              disabled={saving}
-            >
-              Continue to Editor
-            </Button>
-          </div>
+          <Card className="bg-card border border-border/40 shadow-sm">
+            <CardContent className="p-6">
+              <div className="text-center py-6">
+                <h3 className="text-lg font-medium mb-3">Manual Lesson Editor</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Create your lesson from scratch with our powerful editor that gives you complete control over the content.
+                </p>
+                <Button 
+                  onClick={() => {
+                    // Create an empty lesson
+                    handleSaveLesson({
+                      title: 'Untitled Lesson',
+                      content: '',
+                      is_published: false,
+                      contentSource: 'ai_generated',
+                    });
+                  }}
+                  className="px-6"
+                  disabled={saving}
+                >
+                  {saving ? 'Creating...' : 'Continue to Editor'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </TeacherLayout>
