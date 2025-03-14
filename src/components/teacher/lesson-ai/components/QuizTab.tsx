@@ -9,19 +9,31 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import QuizPreview from '../../quiz/QuizPreview';
 
 interface QuizTabProps {
-  form: UseFormReturn<LessonFormValues>;
+  form?: UseFormReturn<LessonFormValues>;
+  lessonId?: string;
+  loadingQuiz?: boolean;
+  quizExists?: boolean;
+  quizQuestions?: Question[];
+  quizTitle?: string;
+  quizPassPercent?: number;
+  isQuizPublished?: boolean;
 }
 
-const QuizTab: React.FC<QuizTabProps> = ({ form }) => {
-  const [quizQuestions, setQuizQuestions] = React.useState<Question[]>([]);
-  const [quizTitle, setQuizTitle] = React.useState<string>('Lesson Quiz');
-  const [loading, setLoading] = React.useState(false);
+const QuizTab: React.FC<QuizTabProps> = ({ 
+  form,
+  lessonId,
+  loadingQuiz = false,
+  quizExists = false,
+  quizQuestions = [],
+  quizTitle = 'Lesson Quiz',
+  quizPassPercent = 70,
+  isQuizPublished = false
+}) => {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchQuizData = async () => {
       try {
-        setLoading(true);
         setError(null);
         
         // Look for quiz data in localStorage based on recently generated content
@@ -36,42 +48,19 @@ const QuizTab: React.FC<QuizTabProps> = ({ form }) => {
         
         const quizData = localStorage.getItem(latestKey);
         if (!quizData) return;
-        
-        // Parse the quiz data
-        const parsedData = JSON.parse(quizData);
-        if (!parsedData.questions || parsedData.questions.length === 0) {
-          return;
-        }
-        
-        // Format questions to match our Question type
-        const formattedQuestions: Question[] = parsedData.questions.map((q: any, index: number) => ({
-          id: `preview-${index}`,
-          question_text: q.question_text,
-          question_type: q.question_type || 'multiple_choice',
-          points: q.points || 1,
-          order_index: index,
-          options: q.options?.map((o: any, optIndex: number) => ({
-            id: `preview-option-${index}-${optIndex}`,
-            option_text: o.option_text,
-            is_correct: o.is_correct,
-            order_index: optIndex
-          }))
-        }));
-        
-        setQuizQuestions(formattedQuestions);
-        setQuizTitle(`Quiz: ${form.watch('title')}`);
+
       } catch (err: any) {
         console.error('Error fetching quiz data:', err);
         setError(err.message || 'Failed to load quiz preview');
-      } finally {
-        setLoading(false);
       }
     };
     
-    fetchQuizData();
-  }, [form.watch('title')]);
+    if (form) {
+      fetchQuizData();
+    }
+  }, [form]);
 
-  if (loading) {
+  if (loadingQuiz) {
     return (
       <div className="flex items-center justify-center h-40">
         <p className="text-muted-foreground">Loading quiz preview...</p>
@@ -88,7 +77,7 @@ const QuizTab: React.FC<QuizTabProps> = ({ form }) => {
     );
   }
 
-  if (quizQuestions.length === 0) {
+  if (!quizExists || quizQuestions.length === 0) {
     return (
       <Card className="bg-muted/30">
         <CardContent className="pt-6">
@@ -116,7 +105,8 @@ const QuizTab: React.FC<QuizTabProps> = ({ form }) => {
         <CardContent>
           <QuizPreview 
             questions={quizQuestions} 
-            title={quizTitle} 
+            title={quizTitle}
+            passPercent={quizPassPercent}
             isPreview={true} 
           />
         </CardContent>

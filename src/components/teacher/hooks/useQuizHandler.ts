@@ -34,7 +34,7 @@ export const useQuizHandler = (lessonId: string) => {
     isContentLoaded
   } = useQuizContent();
 
-  const { generateSmartQuiz } = useSmartQuizGeneration(generateQuiz);
+  const { generateSmartQuiz } = useSmartQuizGeneration();
 
   return {
     fetchLessonContent: getLessonContent,

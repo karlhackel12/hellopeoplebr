@@ -18,7 +18,7 @@ interface ContentEditorProps {
 const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
   const structuredContent = form.watch('structuredContent') as GeneratedLessonContent | null;
   const lessonId = form.watch('id');
-  const { quizQuestions, quizTitle, loadingQuiz, quizExists } = useQuizData(lessonId);
+  const { quizQuestions, quizTitle, loadingQuiz, quizExists, quizPassPercent, isQuizPublished } = useQuizData(lessonId);
   
   const handleContentChange = (field: keyof GeneratedLessonContent, value: any) => {
     if (!structuredContent) return;
@@ -149,11 +149,13 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ form }) => {
         <TabsContent value="quiz" className="mt-4">
           {lessonId ? (
             <QuizTab 
-              lessonId={lessonId} 
               loadingQuiz={loadingQuiz}
               quizExists={quizExists}
               quizQuestions={quizQuestions}
               quizTitle={quizTitle}
+              quizPassPercent={quizPassPercent}
+              isQuizPublished={isQuizPublished}
+              lessonId={lessonId}
             />
           ) : (
             <div className="text-center py-8">
