@@ -18,6 +18,7 @@ import TeacherDashboard from "./pages/teacher/Dashboard";
 import LessonEditor from "./components/teacher/LessonEditor";
 import Invitations from "./pages/teacher/Invitations";
 import Students from "./pages/teacher/Students";
+import StudentProfile from "./pages/teacher/StudentProfile";
 import Assignments from "./pages/teacher/Assignments";
 import Lessons from "./pages/teacher/Lessons";
 import Settings from "./pages/teacher/Settings";
@@ -123,6 +124,11 @@ const App = () => (
             <Route path="/teacher/students" element={
               <PageTransitionWrapper>
                 <Students />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/students/profile/:studentId" element={
+              <PageTransitionWrapper>
+                <StudentProfile />
               </PageTransitionWrapper>
             } />
             <Route path="/teacher/assignments" element={
