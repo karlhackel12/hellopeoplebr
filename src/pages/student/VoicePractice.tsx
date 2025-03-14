@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mic, BookOpen, History, Plus, MessageCircle, BarChart3, Users, Lightbulb } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import StudentLayout from '@/components/layout/StudentLayout';
 import VoicePracticeCard from './components/voice-practice/VoicePracticeCard';
 import VoicePracticeAbout from './components/voice-practice/VoicePracticeAbout';
@@ -29,6 +30,11 @@ const VoicePractice: React.FC = () => {
   // Filter completed and pending sessions
   const completedSessions = sessions?.filter(session => session.completed_at) || [];
   const pendingSessions = sessions?.filter(session => !session.completed_at) || [];
+  
+  // Filter conversation sessions
+  const conversationSessions = sessions?.filter(session => 
+    session.topic && session.topic.toLowerCase().includes('conversation')
+  ) || [];
   
   return (
     <StudentLayout>
@@ -120,7 +126,15 @@ const VoicePractice: React.FC = () => {
                         {pendingSessions.map((session) => (
                           <div key={session.id} className="border rounded-lg p-4 flex items-center justify-between">
                             <div>
-                              <h3 className="font-medium">{session.topic}</h3>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium">{session.topic}</h3>
+                                {session.topic.toLowerCase().includes('conversation') && (
+                                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                                    <MessageCircle className="h-3 w-3 mr-1" />
+                                    Conversation
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-muted-foreground">
                                 Created {formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}
                               </p>
@@ -179,15 +193,15 @@ const VoicePractice: React.FC = () => {
                         <div className="border rounded-lg p-4">
                           <h3 className="font-medium flex items-center gap-2">
                             <Users className="h-4 w-4 text-blue-500" />
-                            Practice Conversation
+                            Free-Form Conversation
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">
                             Have a natural conversation with the AI to practice your speaking skills.
                           </p>
                           <div className="flex flex-wrap gap-2 mt-3">
-                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">Beginner</div>
-                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">Intermediate</div>
-                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">Advanced</div>
+                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100">Beginner</div>
+                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100">Intermediate</div>
+                            <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs cursor-pointer hover:bg-blue-100">Advanced</div>
                           </div>
                           <div className="flex justify-end mt-3">
                             <Button 
@@ -250,6 +264,36 @@ const VoicePractice: React.FC = () => {
                             </Button>
                           </div>
                         </div>
+                        
+                        {conversationSessions.length > 0 && (
+                          <div className="mt-6">
+                            <h3 className="text-md font-medium mb-3">Recent Conversations</h3>
+                            {conversationSessions.slice(0, 3).map(session => (
+                              <div key={session.id} className="border rounded-lg p-4 mb-3 flex justify-between items-center">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium">{session.topic}</h4>
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">
+                                      Level {session.difficulty_level}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {session.completed_at 
+                                      ? `Completed ${formatDistanceToNow(new Date(session.completed_at), { addSuffix: true })}` 
+                                      : `Started ${formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}`}
+                                  </p>
+                                </div>
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => navigate(`/student/voice-practice/session/${session.id}?mode=conversation`)}
+                                >
+                                  Continue
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -339,8 +383,8 @@ const VoicePractice: React.FC = () => {
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h3 className="font-medium">{session.topic}</h3>
-                                  {session.topic.includes("Conversation") && (
-                                    <Badge variant="default" className="bg-green-100 text-green-700">
+                                  {session.topic.toLowerCase().includes("conversation") && (
+                                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
                                       <MessageCircle className="h-3 w-3 mr-1" />
                                       Conversation
                                     </Badge>
@@ -363,9 +407,15 @@ const VoicePractice: React.FC = () => {
                                   <Button variant="ghost" size="icon" className="h-6 w-6">
                                     <BarChart3 className="h-3 w-3 text-slate-500" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                                    <Mic className="h-3 w-3 text-slate-500" />
-                                  </Button>
+                                  {session.topic.toLowerCase().includes("conversation") ? (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                      <MessageCircle className="h-3 w-3 text-slate-500" />
+                                    </Button>
+                                  ) : (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                      <Mic className="h-3 w-3 text-slate-500" />
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>
