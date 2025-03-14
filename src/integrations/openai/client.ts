@@ -1,5 +1,6 @@
 
 import { toast } from 'sonner';
+import { GeneratedLessonContent } from '@/components/teacher/lesson-ai/types';
 
 interface GenerationSettings {
   title: string;
@@ -19,10 +20,10 @@ export const generateLesson = async (settings: GenerationSettings) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Create a more realistic lesson structure based on our GeneratedLessonContent type
+    // Create a complete lesson structure based on GeneratedLessonContent type
     const mockResponse = {
       data: {
-        description: `This is a comprehensive lesson about ${settings.title}. It is designed for ${settings.grade_level} level English learners.`,
+        description: `This is a comprehensive lesson about ${settings.title}. It is designed for ${settings.grade_level || 'beginner'} level English learners.`,
         objectives: [
           "Learn key vocabulary related to the topic",
           "Practice essential phrases for real-world situations",
@@ -83,7 +84,14 @@ export const generateLesson = async (settings: GenerationSettings) => {
             tip: "Watch English movies with subtitles to improve comprehension",
             context: "Listening practice"
           }
-        ]
+        ],
+        metadata: {
+          title: settings.title,
+          level: settings.grade_level || 'beginner',
+          language: 'English',
+          model: 'deepseek-r1',
+          generationTime: '1.5s'
+        }
       }
     };
     

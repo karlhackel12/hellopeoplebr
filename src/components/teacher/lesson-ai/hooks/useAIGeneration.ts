@@ -45,26 +45,13 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
   useEffect(() => {
     const structuredContent = form.watch('structuredContent') as GeneratedLessonContent | null;
     if (structuredContent && !generatedContent) {
+      console.log('Setting generated content from form structuredContent:', structuredContent);
       setGeneratedContent(structuredContent);
       setGenerationStatus('completed');
       setGenerationPhase('complete');
       setProgressPercentage(100);
     }
   }, [form.watch('structuredContent')]);
-
-  // Keep generatedContent in sync with form's structuredContent
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'structuredContent') {
-        const newContent = value.structuredContent as GeneratedLessonContent | null;
-        if (newContent) {
-          setGeneratedContent(newContent);
-        }
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
 
   // Get the generation handler with required methods
   const generationHandler = useGenerationHandler();
@@ -83,6 +70,19 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     }
   }, [title, level, instructions, lastTitleUsed]);
 
+  // Ensure level and instructions are always passed to generation handler
+  useEffect(() => {
+    if (lastTitleUsed) { // Only update if title is already set
+      console.log('Level or instructions changed, updating settings:', { level, instructions });
+      generationHandler.handleSettingsChange({
+        title: lastTitleUsed,
+        grade: level,
+        subject: 'English',
+        additionalInstructions: instructions
+      });
+    }
+  }, [level, instructions]);
+
   // Function to start generation with proper sequence
   const handleGenerate = async () => {
     // Check if title is valid first
@@ -93,6 +93,8 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
 
     setGenerating(true);
     setGenerationStatus('pending');
+    setGenerationPhase('starting');
+    setProgressPercentage(10);
     setError(null);
     
     try {
@@ -105,12 +107,34 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
       });
       
       // Then start generation
-      console.log('Starting generation for:', title, level, instructions);
-      await generationHandler.handleGenerate();
+      console.log('Starting generation for:', {
+        title,
+        level,
+        instructions
+      });
+      
+      // Update phase to generate
+      setGenerationPhase('generating');
+      setProgressPercentage(30);
+      
+      const result = await generationHandler.handleGenerate();
+      
+      // If we get here, the generation was successful
+      setGenerationPhase('complete');
+      setProgressPercentage(100);
+      setGenerationStatus('completed');
+      
+      // Update form with generated content (this should be done by the handler)
+      const structuredContent = form.watch('structuredContent');
+      if (structuredContent) {
+        setGeneratedContent(structuredContent);
+      }
+      
     } catch (error) {
       console.error('Generation error:', error);
       setError(error.message || 'An error occurred during generation');
       setGenerationStatus('failed');
+      setGenerationPhase('error');
       setGenerating(false);
     }
   };

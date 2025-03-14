@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageSquare, StopCircle, AlertCircle } from 'lucide-react';
+import { Sparkles, MessageSquare, StopCircle, AlertCircle, Info } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
 import GenerationProgress from './components/GenerationProgress';
 import { GenerationPhase } from './hooks/types';
 
@@ -43,6 +44,16 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
   
   // Show a user-friendly message when the title is missing
   const showTitleWarning = !title?.trim();
+
+  // Debug info - can be removed after fixing
+  console.log('GenerationSettingsForm props:', {
+    title,
+    level,
+    generating,
+    error,
+    generationPhase,
+    progressPercentage
+  });
 
   return (
     <div className="space-y-6">
@@ -111,6 +122,22 @@ const GenerationSettingsForm: React.FC<GenerationSettingsFormProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Debug card - can be removed after fixing */}
+      <Card className="p-4 border border-blue-200 bg-blue-50">
+        <div className="flex items-start gap-2">
+          <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+          <div className="text-sm text-blue-700">
+            <p className="font-medium">Generation Settings:</p>
+            <div className="mt-1 space-y-1">
+              <p>Title: {title || "(none)"}</p>
+              <p>Level: {level}</p>
+              <p>Phase: {generationPhase}</p>
+              <p>Progress: {progressPercentage}%</p>
+            </div>
+          </div>
+        </div>
+      </Card>
       
       {!generating ? (
         <Button 
