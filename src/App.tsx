@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PageTransitionWrapper } from "@/components/ui/page-transition";
 
 import Index from "./pages/Index";
+import TeacherLanding from "./pages/landing/TeacherLanding";
+import StudentLanding from "./pages/landing/StudentLanding";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -46,6 +47,16 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/teachers" element={
+              <PageTransitionWrapper>
+                <TeacherLanding />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/students" element={
+              <PageTransitionWrapper>
+                <StudentLanding />
+              </PageTransitionWrapper>
+            } />
             <Route path="/login" element={
               <PageTransitionWrapper>
                 <Login />

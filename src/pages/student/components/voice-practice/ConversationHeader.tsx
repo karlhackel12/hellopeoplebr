@@ -50,7 +50,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium">Difficulty Level</span>
             <Select 
@@ -71,7 +71,7 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
           </div>
           
           {vocabularyItems && vocabularyItems.length > 0 && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 w-full md:w-auto">
               <span className="text-sm font-medium flex items-center gap-1">
                 <Bookmark className="h-3 w-3" /> 
                 Target Vocabulary
