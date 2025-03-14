@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Question, QuestionOption } from '@/components/teacher/quiz/types';
+import { Question } from '@/components/teacher/quiz/types';
 
 interface QuizProgressData {
   id?: string;
@@ -33,43 +33,27 @@ export const useQuizProgress = (quizId: string) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
       
-      // Use raw SQL to query the user_quiz_progress table since it might not be registered in TypeScript yet
+      // Query the user_quiz_progress table directly
       const { data, error } = await supabase
-        .rpc('get_quiz_progress', { 
-          quiz_id_param: quizId,
-          user_id_param: user.user.id
-        });
+        .from('user_quiz_progress')
+        .select('*')
+        .eq('quiz_id', quizId)
+        .eq('user_id', user.user.id)
+        .maybeSingle();
       
       if (error) {
         console.error("Error fetching quiz progress:", error);
-        // Fallback to directly querying if RPC fails
-        const { data: directData, error: directError } = await supabase.from('user_quiz_progress')
-          .select('*')
-          .eq('quiz_id', quizId)
-          .eq('user_id', user.user.id)
-          .maybeSingle();
-          
-        if (directError) throw directError;
-        
-        if (directData) {
-          setProgressId(directData.id);
-          setCurrentQuestionIndex(directData.current_question);
-          setUserAnswers(directData.answers as Record<string, string>);
-          setCompleted(!!directData.completed_at);
-          setScore(directData.score);
-        } else {
-          // Create new progress record
-          await createProgress(user.user.id);
-        }
-      } else if (data) {
-        // If RPC succeeded
+        throw error;
+      }
+      
+      if (data) {
         setProgressId(data.id);
         setCurrentQuestionIndex(data.current_question);
         setUserAnswers(data.answers as Record<string, string>);
         setCompleted(!!data.completed_at);
         setScore(data.score);
       } else {
-        // Create new progress record if no data returned
+        // Create new progress record
         await createProgress(user.user.id);
       }
     } catch (error) {
@@ -83,33 +67,21 @@ export const useQuizProgress = (quizId: string) => {
   // Create new progress record
   const createProgress = async (userId: string) => {
     try {
-      // Use raw SQL to insert into the user_quiz_progress table
+      // Insert directly into the user_quiz_progress table
       const { data, error } = await supabase
-        .rpc('create_quiz_progress', {
-          quiz_id_param: quizId,
-          user_id_param: userId
-        });
+        .from('user_quiz_progress')
+        .insert({
+          quiz_id: quizId,
+          user_id: userId,
+          current_question: 0,
+          answers: {}
+        })
+        .select()
+        .single();
       
-      if (error) {
-        console.error("Error creating quiz progress via RPC:", error);
-        // Fallback to direct insert
-        const { data: directData, error: directError } = await supabase
-          .from('user_quiz_progress')
-          .insert({
-            quiz_id: quizId,
-            user_id: userId,
-            current_question: 0,
-            answers: {}
-          })
-          .select()
-          .single();
-        
-        if (directError) throw directError;
-        
-        setProgressId(directData.id);
-      } else if (data && data.id) {
-        setProgressId(data.id);
-      }
+      if (error) throw error;
+      
+      setProgressId(data.id);
     } catch (error) {
       console.error('Error creating quiz progress:', error);
       toast.error('Failed to initialize quiz');
@@ -123,29 +95,17 @@ export const useQuizProgress = (quizId: string) => {
     try {
       setSaving(true);
       
-      // Use raw SQL to update the user_quiz_progress table
+      // Update the user_quiz_progress table directly
       const { error } = await supabase
-        .rpc('update_quiz_progress', {
-          progress_id_param: progressId,
-          current_question_param: questionIndex,
-          answers_param: answers,
-          updated_at_param: new Date().toISOString()
-        });
+        .from('user_quiz_progress')
+        .update({
+          current_question: questionIndex,
+          answers: answers,
+          last_updated_at: new Date().toISOString()
+        })
+        .eq('id', progressId);
       
-      if (error) {
-        console.error("Error saving quiz progress via RPC:", error);
-        // Fallback to direct update
-        const { error: directError } = await supabase
-          .from('user_quiz_progress')
-          .update({
-            current_question: questionIndex,
-            answers: answers,
-            last_updated_at: new Date().toISOString()
-          })
-          .eq('id', progressId);
-        
-        if (directError) throw directError;
-      }
+      if (error) throw error;
       
       setCurrentQuestionIndex(questionIndex);
       setUserAnswers(answers);
@@ -208,29 +168,17 @@ export const useQuizProgress = (quizId: string) => {
       
       const calculatedScore = Math.round((correctAnswers / totalPoints) * 100);
       
-      // Use raw SQL to complete the quiz
+      // Update the quiz progress directly
       const { error } = await supabase
-        .rpc('complete_quiz', {
-          progress_id_param: progressId,
-          completed_at_param: new Date().toISOString(),
-          score_param: calculatedScore,
-          updated_at_param: new Date().toISOString()
-        });
+        .from('user_quiz_progress')
+        .update({
+          completed_at: new Date().toISOString(),
+          score: calculatedScore,
+          last_updated_at: new Date().toISOString()
+        })
+        .eq('id', progressId);
       
-      if (error) {
-        console.error("Error completing quiz via RPC:", error);
-        // Fallback to direct update
-        const { error: directError } = await supabase
-          .from('user_quiz_progress')
-          .update({
-            completed_at: new Date().toISOString(),
-            score: calculatedScore,
-            last_updated_at: new Date().toISOString()
-          })
-          .eq('id', progressId);
-        
-        if (directError) throw directError;
-      }
+      if (error) throw error;
       
       setCompleted(true);
       setScore(calculatedScore);
@@ -253,29 +201,19 @@ export const useQuizProgress = (quizId: string) => {
     try {
       setSaving(true);
       
-      // Use raw SQL to reset the quiz
+      // Reset the quiz progress directly
       const { error } = await supabase
-        .rpc('reset_quiz', {
-          progress_id_param: progressId,
-          updated_at_param: new Date().toISOString()
-        });
+        .from('user_quiz_progress')
+        .update({
+          current_question: 0,
+          answers: {},
+          completed_at: null,
+          score: null,
+          last_updated_at: new Date().toISOString()
+        })
+        .eq('id', progressId);
       
-      if (error) {
-        console.error("Error resetting quiz via RPC:", error);
-        // Fallback to direct update
-        const { error: directError } = await supabase
-          .from('user_quiz_progress')
-          .update({
-            current_question: 0,
-            answers: {},
-            completed_at: null,
-            score: null,
-            last_updated_at: new Date().toISOString()
-          })
-          .eq('id', progressId);
-        
-        if (directError) throw directError;
-      }
+      if (error) throw error;
       
       setCurrentQuestionIndex(0);
       setUserAnswers({});

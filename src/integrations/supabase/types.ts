@@ -714,9 +714,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_quiz: {
+        Args: {
+          progress_id_param: string
+          completed_at_param: string
+          score_param: number
+          updated_at_param: string
+        }
+        Returns: undefined
+      }
+      create_quiz_progress: {
+        Args: {
+          quiz_id_param: string
+          user_id_param: string
+        }
+        Returns: {
+          answers: Json
+          completed_at: string | null
+          current_question: number
+          id: string
+          last_updated_at: string
+          quiz_id: string
+          score: number | null
+          started_at: string
+          user_id: string
+        }
+      }
       generate_invitation_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_quiz_progress: {
+        Args: {
+          quiz_id_param: string
+          user_id_param: string
+        }
+        Returns: {
+          id: string
+          quiz_id: string
+          user_id: string
+          current_question: number
+          answers: Json
+          started_at: string
+          completed_at: string
+          score: number
+          last_updated_at: string
+        }[]
       }
       get_user_role: {
         Args: {
@@ -743,6 +786,22 @@ export type Database = {
           user_name_param: string
         }
         Returns: boolean
+      }
+      reset_quiz: {
+        Args: {
+          progress_id_param: string
+          updated_at_param: string
+        }
+        Returns: undefined
+      }
+      update_quiz_progress: {
+        Args: {
+          progress_id_param: string
+          current_question_param: number
+          answers_param: Json
+          updated_at_param: string
+        }
+        Returns: undefined
       }
       validate_invitation_code: {
         Args: {

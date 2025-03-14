@@ -1,81 +1,67 @@
 
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { QuizService } from '../../quiz/services/QuizService';
-import { QuizGenerationResponse, QuizQuestionData } from '../../quiz/types/quizGeneration';
-import { Question } from '../../quiz/types';
+import { useCallback } from "react";
+import { useQuizPreviewState } from "./useQuizPreviewState";
+import { QuizQuestionData } from "../../quiz/types/quizGeneration";
 
 export const useQuizDataProcessor = () => {
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const { 
+    setPreviewQuestions, 
+    setShowPreview 
+  } = useQuizPreviewState();
 
-  /**
-   * Process quiz data from the edge function and save to database
-   */
-  const processQuizData = async (
-    lessonId: string,
-    generationResponse: QuizGenerationResponse,
-    quizTitle: string = 'Lesson Quiz'
-  ): Promise<Question[]> => {
+  // Process quiz questions from the API response
+  const processQuizData = useCallback(async (
+    questions: {
+      question_text: string;
+      question_type: 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank' | 'audio_response';
+      options: {
+        option_text: string;
+        is_correct: boolean;
+      }[];
+      points?: number;
+    }[]
+  ) => {
     try {
-      setProcessing(true);
-      setError(null);
+      // Map to QuizQuestionData format and ensure required fields
+      const formattedQuestions: QuizQuestionData[] = questions.map(q => ({
+        question_text: q.question_text,
+        question_type: q.question_type,
+        points: q.points || 1, // Default to 1 point if not specified
+        options: q.options.map(o => ({
+          option_text: o.option_text,
+          is_correct: o.is_correct
+        }))
+      }));
+
+      // Generate UUIDs for questions and options (in a real implementation)
+      const questionsWithIds = formattedQuestions.map((question, qIndex) => {
+        return {
+          id: `temp-${qIndex}`,
+          question_text: question.question_text,
+          question_type: question.question_type,
+          points: question.points,
+          order_index: qIndex,
+          options: question.options.map((option, oIndex) => ({
+            id: `temp-${qIndex}-${oIndex}`,
+            option_text: option.option_text,
+            is_correct: option.is_correct,
+            order_index: oIndex
+          }))
+        };
+      });
+
+      // Update the preview state
+      setPreviewQuestions(questionsWithIds);
+      setShowPreview(true);
       
-      if (!generationResponse?.questions || generationResponse.questions.length === 0) {
-        throw new Error('No quiz questions were provided in the response');
-      }
-      
-      // Check for partial success with fallback
-      if (generationResponse.status === 'failed_with_fallback') {
-        toast.warning('Quiz generation partially failed', {
-          description: 'Using simplified questions. You may want to regenerate or edit them.'
-        });
-      }
-      
-      // Step 1: Check if a quiz already exists for this lesson
-      const existingQuiz = await QuizService.getExistingQuiz(lessonId);
-      
-      // Step 2: Save or update the quiz
-      const quiz = await QuizService.saveQuiz(
-        lessonId,
-        quizTitle,
-        existingQuiz?.id
-      );
-      
-      // Step 3: Clear existing questions if any
-      if (existingQuiz) {
-        await QuizService.clearExistingQuestions(quiz.id);
-      }
-      
-      // Step 4: Save the new questions
-      const savedQuestions = await QuizService.saveQuestions(
-        quiz.id,
-        generationResponse.questions
-      );
-      
-      setQuestions(savedQuestions);
-      
-      // Log success metrics
-      if (generationResponse.processing_stats) {
-        console.log('Quiz generation metrics:', generationResponse.processing_stats);
-      }
-      
-      return savedQuestions;
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to process quiz data';
-      console.error('Error processing quiz data:', error);
-      setError(errorMessage);
+      return questionsWithIds;
+    } catch (error) {
+      console.error("Error processing quiz data:", error);
       throw error;
-    } finally {
-      setProcessing(false);
     }
-  };
+  }, [setPreviewQuestions, setShowPreview]);
 
   return {
-    processQuizData,
-    processing,
-    error,
-    questions
+    processQuizData
   };
 };

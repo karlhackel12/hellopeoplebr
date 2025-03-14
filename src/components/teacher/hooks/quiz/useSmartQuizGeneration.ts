@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuizGenerationState } from "./useQuizGenerationState";
-import { QuizGenerationResponse } from "../quiz/types/quizGeneration";
+import { QuizGenerationResponse } from "../../quiz/types/quizGeneration";
 
 export const useSmartQuizGeneration = () => {
   const { isRetrying, setIsRetrying } = useQuizGenerationState();
