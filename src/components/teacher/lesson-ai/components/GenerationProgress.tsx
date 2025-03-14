@@ -55,7 +55,7 @@ const GenerationProgress: React.FC<GenerationProgressProps> = ({
   }
 
   return (
-    <Card className="w-full mb-4">
+    <Card className="w-full mb-4 border-border/40 shadow-sm">
       <CardContent className="p-6">
         <div className="flex flex-col items-center justify-center space-y-4">
           {phase === 'error' ? (
@@ -91,13 +91,13 @@ const GenerationProgress: React.FC<GenerationProgressProps> = ({
           {/* Action buttons */}
           <div className="flex space-x-4 mt-2">
             {phase !== 'complete' && phase !== 'error' && onCancel && (
-              <Button variant="outline" onClick={onCancel}>
+              <Button variant="outline" onClick={onCancel} size="sm">
                 Cancel Generation
               </Button>
             )}
             
             {phase === 'error' && onRetry && (
-              <Button onClick={onRetry}>
+              <Button onClick={onRetry} size="sm">
                 Retry Generation
               </Button>
             )}
