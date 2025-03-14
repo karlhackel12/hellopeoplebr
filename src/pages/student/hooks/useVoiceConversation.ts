@@ -10,7 +10,7 @@ export interface ConversationMessage {
   timestamp?: string;
 }
 
-export const useVoiceConversation = (lessonId?: string) => {
+export const useVoiceConversation = () => {
   const { userId } = useUser();
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -97,12 +97,7 @@ export const useVoiceConversation = (lessonId?: string) => {
   }, [userId]);
 
   // Send message to AI
-  const sendMessage = useCallback(async (
-    userTranscript: string, 
-    lessonTopics: string[] = [], 
-    vocabularyItems: string[] = [],
-    difficulty: number = 1
-  ) => {
+  const sendMessage = useCallback(async (userTranscript: string) => {
     if (!userId) {
       toast.error('Please sign in to use the conversation feature');
       return null;
@@ -126,9 +121,6 @@ export const useVoiceConversation = (lessonId?: string) => {
         body: {
           userTranscript,
           conversationId,
-          lessonTopics,
-          vocabularyItems,
-          difficulty,
           userId
         }
       });
@@ -190,7 +182,7 @@ export const useVoiceConversation = (lessonId?: string) => {
   }, [conversationId, userId]);
 
   // End the conversation and update stats
-  const endConversation = useCallback(async (confidenceScore?: number) => {
+  const endConversation = useCallback(async () => {
     if (!conversationId || !userId) return false;
     
     try {
@@ -201,8 +193,7 @@ export const useVoiceConversation = (lessonId?: string) => {
       const { error } = await supabase
         .from('conversation_sessions')
         .update({
-          completed_at: new Date().toISOString(),
-          speaking_confidence: confidenceScore || null
+          completed_at: new Date().toISOString()
         })
         .eq('id', conversationId)
         .eq('user_id', userId);
