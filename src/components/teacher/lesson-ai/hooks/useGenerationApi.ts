@@ -19,7 +19,8 @@ export const useGenerationApi = () => {
         }, EDGE_FUNCTION_TIMEOUT);
       });
 
-      // Create the actual request promise
+      // Create the actual request promise with explicit function name
+      console.log("Calling Supabase edge function: generate-lesson-content");
       const edgeFunctionPromise = supabase.functions.invoke('generate-lesson-content', {
         body: generationParams,
       });
@@ -27,13 +28,15 @@ export const useGenerationApi = () => {
       // Race the promises - whichever resolves/rejects first wins
       const response = await Promise.race([edgeFunctionPromise, timeoutPromise]);
       
-      if (response.error || !response.data) {
+      console.log("Edge function response status:", response.status);
+      
+      if (response.error) {
         console.error("Edge function error:", response.error);
         throw new Error(response.error?.message || "Failed to start content generation");
       }
 
       const resultData = response.data;
-      console.log("Edge function response:", resultData);
+      console.log("Edge function response data:", resultData);
       
       // Store quiz data in local storage for later use
       if (resultData.quiz && resultData.quiz.questions) {
@@ -57,14 +60,26 @@ export const useGenerationApi = () => {
     } catch (error: any) {
       console.error("Error invoking edge function:", error);
       
-      // Provide more specific error messages
+      // Provide more specific error messages based on error type
       if (error.message === TIMEOUT_MESSAGE) {
         toast.error("Generation timeout", {
           description: "The AI is still working, but it's taking longer than expected. Try refreshing the page in a few moments to see if content has been generated."
         });
-      } else if (error.message?.includes("network") || error.code === "NETWORK_ERROR") {
+      } else if (error.message?.includes("Failed to fetch") || error.code === "NETWORK_ERROR") {
         toast.error("Network error", {
           description: "There was a problem connecting to our servers. Please check your internet connection and try again."
+        });
+      } else if (error.status === 404 || error.message?.includes("404")) {
+        toast.error("Edge function not found", {
+          description: "The AI generation service may not be deployed correctly. Please contact support."
+        });
+      } else if (error.status === 403) {
+        toast.error("Permission denied", {
+          description: "You don't have permission to use this feature. Please check your account status."
+        });
+      } else {
+        toast.error("Generation failed", {
+          description: error.message || "An unexpected error occurred while generating content."
         });
       }
       

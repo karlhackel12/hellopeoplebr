@@ -46,17 +46,19 @@ const AILessonForm: React.FC<AILessonFormProps> = ({
   const lessonId = formValues.id;
   const { quizQuestions, quizTitle, quizPassPercent, loadingQuiz, quizExists, isQuizPublished } = useQuizData(lessonId);
 
+  // Effect to change tab after content generation
   useEffect(() => {
     if (generatedContent && activeTab === 'generate' && generationStatus === 'completed') {
       setActiveTab('preview');
     }
   }, [generatedContent, generationStatus, activeTab]);
 
+  // Fix for maximum update depth exceeded - only call clearErrors when it changes
   useEffect(() => {
-    if (clearErrors) {
+    if (clearErrors && error !== null) {
       clearErrors();
     }
-  }, [activeTab, clearErrors]);
+  }, [activeTab, error, clearErrors]);
 
   const toggleEditMode = () => {
     setEditMode(!editMode);

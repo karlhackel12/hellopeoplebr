@@ -6,9 +6,12 @@ import Replicate from "https://esm.sh/replicate@0.25.2";
 const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
 const MODEL_ID = "deepseek-ai/deepseek-r1";
 
+// Updated CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Content-Type": "application/json"
 };
 
 function buildPrompt(requestData: any): string {
@@ -146,15 +149,38 @@ serve(async (req) => {
   try {
     // Validate API key
     if (!REPLICATE_API_KEY) {
-      throw new Error("REPLICATE_API_KEY is not set");
+      console.error("REPLICATE_API_KEY is not set");
+      return new Response(
+        JSON.stringify({ 
+          error: "Server configuration error", 
+          details: "API key is missing" 
+        }),
+        {
+          status: 500,
+          headers: corsHeaders
+        }
+      );
     }
 
     const replicate = new Replicate({
       auth: REPLICATE_API_KEY,
     });
 
-    const requestData = await req.json();
-    console.log("Request data:", requestData);
+    // Parse the request body
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log("Request data:", requestData);
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        {
+          status: 400, 
+          headers: corsHeaders
+        }
+      );
+    }
 
     // Validate title
     if (!requestData.title) {
@@ -162,7 +188,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Title is required" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: corsHeaders
         }
       );
     }
@@ -204,6 +230,7 @@ serve(async (req) => {
         vocabulary: validatedOutput.vocabulary,
       };
       
+      // Return successful response
       return new Response(
         JSON.stringify({
           status: "succeeded",
@@ -213,12 +240,21 @@ serve(async (req) => {
           }
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: corsHeaders
         }
       );
     } catch (modelError) {
       console.error("Error running model:", modelError);
-      throw new Error(`Model execution failed: ${modelError.message}`);
+      return new Response(
+        JSON.stringify({
+          error: "Model execution failed", 
+          details: modelError.message
+        }),
+        {
+          status: 500,
+          headers: corsHeaders
+        }
+      );
     }
   } catch (error) {
     console.error("Error in generate-lesson-content function:", error);
@@ -230,7 +266,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: corsHeaders
       }
     );
   }
