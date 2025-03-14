@@ -3,8 +3,16 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface ConversationMessage {
+  id?: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  created_at?: string;
+  timestamp?: string;
+}
+
 export const useVoiceConversation = (lessonId?: string, assignmentId?: string) => {
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
