@@ -28,7 +28,6 @@ const LessonView: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'content' | 'quiz'>('content');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [sections, setSections] = useState<Array<{id: string, title: string, content: string}>>([]);
-  const [introContent, setIntroContent] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   
   // Extract sections from lesson content
@@ -36,10 +35,6 @@ const LessonView: React.FC = () => {
     if (lesson?.content) {
       const extractedSections = extractSections(lesson.content);
       setSections(extractedSections);
-      
-      // Extract introduction content (anything before the first section)
-      const intro = lesson.content.split('## ')[0] || '';
-      setIntroContent(intro);
     }
   }, [lesson?.content]);
   
@@ -108,7 +103,7 @@ const LessonView: React.FC = () => {
   };
   
   const goToNextSection = () => {
-    if (currentSectionIndex < sections.length) {
+    if (currentSectionIndex < sections.length - 1) {
       setCurrentSectionIndex(currentSectionIndex + 1);
       window.scrollTo(0, 0);
     }
@@ -116,7 +111,7 @@ const LessonView: React.FC = () => {
   
   // Go to specific section by index
   const goToSection = (index: number) => {
-    if (index >= 0 && index <= sections.length) {
+    if (index >= 0 && index < sections.length) {
       setCurrentSectionIndex(index);
       window.scrollTo(0, 0);
     }
@@ -148,10 +143,10 @@ const LessonView: React.FC = () => {
   
   const completedSections = lessonProgress?.completed_sections || [];
   const isLessonComplete = !!lessonProgress?.completed;
-  const totalPages = sections.length + 1; // +1 for intro
-  const isIntroPage = currentSectionIndex === 0;
+  const totalPages = sections.length;
+  const isFirstPage = currentSectionIndex === 0;
   const isLastPage = currentSectionIndex === totalPages - 1;
-  const completionPercentage = totalPages > 1 
+  const completionPercentage = totalPages > 0 
     ? Math.round((currentSectionIndex) / (totalPages - 1) * 100) 
     : 0;
   
@@ -186,14 +181,14 @@ const LessonView: React.FC = () => {
           <div className="md:col-span-3">
             {currentTab === 'content' ? (
               <LessonContent 
-                introContent={introContent}
+                introContent=""
                 sections={sections}
                 currentSectionIndex={currentSectionIndex}
                 completedSections={completedSections}
                 onToggleComplete={handleToggleSectionCompletion}
                 onPrevious={goToPreviousSection}
                 onNext={goToNextSection}
-                isFirstPage={isIntroPage}
+                isFirstPage={isFirstPage}
                 isLastPage={isLastPage}
                 completionPercentage={completionPercentage}
                 totalPages={totalPages}
