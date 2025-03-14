@@ -31,7 +31,11 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
         </Badge>
       </div>
       
-      <Progress value={percentComplete} className="h-1" indicatorClassName={cn(percentComplete === 100 ? "bg-green-500" : "bg-primary")} />
+      <Progress 
+        value={percentComplete} 
+        className="h-1" 
+        indicatorClassName={cn(percentComplete === 100 ? "bg-green-500" : "bg-primary")} 
+      />
     </div>
   );
 };
