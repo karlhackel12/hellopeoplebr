@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { Question } from '../../quiz/types';
 
 export const useQuizPreviewState = (
-  existingQuiz: boolean,
-  fetchQuizQuestions: () => Promise<Question[] | null>
+  existingQuiz: boolean = false,
+  fetchQuizQuestions: () => Promise<Question[] | null> = async () => null
 ) => {
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [showPreview, setShowPreview] = useState(true);
@@ -51,6 +51,7 @@ export const useQuizPreviewState = (
 
   return {
     previewQuestions,
+    setPreviewQuestions,
     showPreview,
     setShowPreview,
     quizTitle,

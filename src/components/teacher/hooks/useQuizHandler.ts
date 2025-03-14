@@ -27,19 +27,22 @@ export const useQuizHandler = (lessonId?: string) => {
     setError(loadingError);
   }, [loadingError]);
 
-  const handleGenerateQuiz = async () => {
+  const handleGenerateQuiz = async (questionsCount: string) => {
     if (!lessonId) {
       setError("Lesson ID is required to generate a quiz");
       return;
     }
 
     try {
-      const result = await generateQuizFromPrompt(numQuestions);
+      const result = await generateQuizFromPrompt(questionsCount);
       if (result) {
         setQuizGenerated(true);
+        return true;
       }
+      return false;
     } catch (err: any) {
       setError(err.message || "Failed to generate quiz");
+      return false;
     }
   };
 
