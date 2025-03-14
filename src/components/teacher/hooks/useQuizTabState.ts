@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { Question } from '../quiz/types';
+import { QuizQuestionData } from '../quiz/types/quizGeneration';
 import { toast } from 'sonner';
 import { GenerationPhase } from '../quiz/types/quizGeneration';
 import { useQuizGenerationState } from './quiz/useQuizGenerationState';
@@ -117,8 +119,21 @@ export const useQuizTabState = (lessonId?: string) => {
         await QuizService.clearExistingQuestions(existingQuiz.id);
       }
       
+      // Convert previewQuestions to QuizQuestionData format
+      const quizQuestionData: QuizQuestionData[] = previewQuestions.map(question => {
+        return {
+          question_text: question.question_text,
+          question_type: question.question_type || 'multiple_choice',
+          points: question.points || 1,
+          options: question.options ? question.options.map(option => ({
+            option_text: option.option_text,
+            is_correct: option.is_correct
+          })) : []
+        };
+      });
+      
       // Save the questions
-      await QuizService.saveQuestions(quiz.id, previewQuestions);
+      await QuizService.saveQuestions(quiz.id, quizQuestionData);
       
       toast.success('Quiz saved successfully');
       setExistingQuiz(true);

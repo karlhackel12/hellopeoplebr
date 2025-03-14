@@ -6,7 +6,7 @@ import QuizPreviewSection from './components/QuizPreviewSection';
 import QuizPublishAlert from './components/QuizPublishAlert';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { QuizService } from '../quiz/services/QuizService';
+import { QuizService } from '@/components/teacher/quiz/services/QuizService';
 import { toast } from 'sonner';
 
 interface QuizTabProps {
