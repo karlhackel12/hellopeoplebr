@@ -1,19 +1,11 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { generateLesson } from '@/integrations/openai/client';
-import { parseLesson } from '@/integrations/openai/parser';
 import { useLessonStore } from '../store/lessonStore';
 import { GeneratedLessonContent } from '../types';
-
-interface GenerationSettings {
-  title: string;
-  grade: string;
-  subject: string;
-  language: string;
-  timestamp: string;
-  additionalInstructions?: string;
-}
+import { generateContent } from './utils/apiUtils';
+import { parseResponse } from './utils/parserUtils';
+import { GenerationSettings, validateGenerationSettings } from './utils/validationUtils';
 
 interface GenerationState {
   phase: 'idle' | 'initializing' | 'generating' | 'parsing' | 'complete' | 'error';
@@ -35,24 +27,6 @@ export const useGenerationHandler = () => {
     phase: 'idle',
     error: null
   });
-
-  // Validation function
-  const validate = (): boolean => {
-    console.log('Validating settings:', generationSettings);
-    if (!generationSettings.title) {
-      toast.error('Missing title', {
-        description: 'Please provide a lesson title before generating content.'
-      });
-      return false;
-    }
-    if (!generationSettings.grade) {
-      toast.error('Missing level', {
-        description: 'Please select an English proficiency level before generating content.'
-      });
-      return false;
-    }
-    return true;
-  };
 
   // Update state function
   const updateState = useCallback((newState: Partial<GenerationState>) => {
@@ -85,37 +59,6 @@ export const useGenerationHandler = () => {
     });
   };
 
-  // Generate content function
-  const generateContent = async (settings: any) => {
-    updateState({ phase: 'generating', error: null });
-    try {
-      console.log('generateContent called with settings:', settings);
-      const result = await generateLesson(settings);
-      console.log('generateLesson result:', result);
-      return result;
-    } catch (error) {
-      handleApiError(error);
-      return null;
-    }
-  };
-
-  // Parse response function
-  const parseResponse = (responseData: any): GeneratedLessonContent | null => {
-    updateState({ phase: 'parsing', error: null });
-    try {
-      const parsedContent = parseLesson(responseData);
-      console.log('Parsed content:', parsedContent);
-      return parsedContent;
-    } catch (error) {
-      console.error("Error parsing AI response:", error);
-      updateState({
-        phase: 'error',
-        error: `Failed to process the generated content: ${error.message}`
-      });
-      return null;
-    }
-  };
-
   // Handle complete generation process
   const handleGenerateContent = async () => {
     setIsGenerating(true);
@@ -126,11 +69,8 @@ export const useGenerationHandler = () => {
     console.log('Starting generation with settings:', currentSettings);
     
     // Validate with the current settings
-    if (!currentSettings.title || !currentSettings.grade) {
+    if (!validateGenerationSettings(currentSettings)) {
       console.error('Validation failed:', currentSettings);
-      toast.error('Please fill in all required fields', {
-        description: 'Title and proficiency level are required.'
-      });
       setIsGenerating(false);
       updateState({ phase: 'idle', error: null });
       return;
@@ -140,6 +80,7 @@ export const useGenerationHandler = () => {
       const { title, grade, subject, language, timestamp, additionalInstructions } = currentSettings;
 
       // Start the generation
+      updateState({ phase: 'generating', error: null });
       const result = await generateContent({
         title,
         grade_level: grade,
@@ -157,6 +98,7 @@ export const useGenerationHandler = () => {
       }
 
       // Process successful response
+      updateState({ phase: 'parsing', error: null });
       const parsedContent = parseResponse(result);
       
       if (parsedContent) {
@@ -171,18 +113,7 @@ export const useGenerationHandler = () => {
           completed: new Date().toISOString()
         });
         
-        // Create sections from parsed content
-        const sections = {
-          description: parsedContent.description,
-          objectives: parsedContent.objectives,
-          keyPhrases: parsedContent.keyPhrases,
-          vocabulary: parsedContent.vocabulary,
-          practicalSituations: parsedContent.practicalSituations,
-          explanations: parsedContent.explanations,
-          tips: parsedContent.tips
-        };
-        
-        updateContent(parsedContent);
+        updateContent(parsedContent as any);
         
         updateState({ 
           phase: 'complete', 
