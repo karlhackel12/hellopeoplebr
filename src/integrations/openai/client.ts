@@ -4,11 +4,11 @@ import { GeneratedLessonContent } from '@/components/teacher/lesson-ai/types';
 
 interface GenerationSettings {
   title: string;
-  grade_level: string;
+  level: string;
   subject: string;
   language: string;
   timestamp: string;
-  additional_instructions?: string;
+  instructions?: string;
 }
 
 // Function to generate lesson with proper logging
@@ -23,7 +23,7 @@ export const generateLesson = async (settings: GenerationSettings) => {
     const response = {
       status: 'succeeded',
       lesson: {
-        description: `This is a comprehensive lesson about ${settings.title}. It is designed for ${settings.grade_level || 'beginner'} level English learners.`,
+        description: `This is a comprehensive lesson about ${settings.title}. It is designed for ${settings.level || 'beginner'} level English learners.`,
         objectives: [
           "Learn key vocabulary related to the topic",
           "Practice essential phrases for real-world situations",
@@ -87,7 +87,7 @@ export const generateLesson = async (settings: GenerationSettings) => {
         ],
         metadata: {
           title: settings.title,
-          level: settings.grade_level || 'beginner',
+          level: settings.level || 'beginner',
           language: settings.language || 'English',
           model: 'deepseek-r1',
           status: 'succeeded',
