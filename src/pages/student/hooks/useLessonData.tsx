@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Question } from '@/components/teacher/quiz/types';
 
 export const useLessonData = (lessonId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -62,16 +63,29 @@ export const useLessonData = (lessonId: string | undefined) => {
           question_text,
           question_type,
           points,
+          order_index,
           options:quiz_question_options (
             id,
-            option_text
+            option_text,
+            is_correct
           )
         `)
         .eq('quiz_id', quiz.id)
         .order('order_index', { ascending: true });
       
       if (error) throw error;
-      return data;
+      
+      // Ensure the data matches the Question type
+      const formattedQuestions: Question[] = (data || []).map(q => ({
+        id: q.id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        points: q.points,
+        order_index: q.order_index,
+        options: q.options
+      }));
+      
+      return formattedQuestions;
     },
     enabled: !!quiz?.id
   });
@@ -80,6 +94,6 @@ export const useLessonData = (lessonId: string | undefined) => {
     lesson,
     lessonLoading,
     quiz,
-    quizQuestions
+    quizQuestions: quizQuestions || []
   };
 };
