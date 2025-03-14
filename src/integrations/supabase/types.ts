@@ -9,6 +9,132 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversation_analytics: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          fluency_score: number | null
+          grammar_quality: number | null
+          id: string
+          user_id: string | null
+          user_speaking_time_seconds: number | null
+          vocabulary_count: number | null
+          vocabulary_diversity: number | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          fluency_score?: number | null
+          grammar_quality?: number | null
+          id?: string
+          user_id?: string | null
+          user_speaking_time_seconds?: number | null
+          vocabulary_count?: number | null
+          vocabulary_diversity?: number | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          fluency_score?: number | null
+          grammar_quality?: number | null
+          id?: string
+          user_id?: string | null
+          user_speaking_time_seconds?: number | null
+          vocabulary_count?: number | null
+          vocabulary_diversity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_analytics_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_messages: {
+        Row: {
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          difficulty_level: number
+          duration_seconds: number | null
+          id: string
+          lesson_id: string | null
+          speaking_confidence: number | null
+          started_at: string | null
+          topic: string
+          user_id: string | null
+          vocabulary_used: string[] | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          difficulty_level: number
+          duration_seconds?: number | null
+          id?: string
+          lesson_id?: string | null
+          speaking_confidence?: number | null
+          started_at?: string | null
+          topic: string
+          user_id?: string | null
+          vocabulary_used?: string[] | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          difficulty_level?: number
+          duration_seconds?: number | null
+          id?: string
+          lesson_id?: string | null
+          speaking_confidence?: number | null
+          started_at?: string | null
+          topic?: string
+          user_id?: string | null
+          vocabulary_used?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
