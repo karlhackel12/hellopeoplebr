@@ -118,7 +118,16 @@ const LessonView: React.FC = () => {
   }
 
   const totalSections = calculateTotalSections();
-  const hasQuiz = quiz && quiz.is_published && quizQuestions && quizQuestions.length > 0;
+  // Ensure all question objects have the required order_index property
+  const processedQuizQuestions = quizQuestions?.map((q, index) => ({
+    ...q,
+    order_index: q.order_index !== undefined ? q.order_index : index,
+    options: q.options?.map((opt, optIndex) => ({
+      ...opt,
+      order_index: opt.order_index !== undefined ? opt.order_index : optIndex
+    }))
+  }));
+  const hasQuiz = quiz && quiz.is_published && processedQuizQuestions && processedQuizQuestions.length > 0;
 
   return (
     <StudentLayout>
@@ -152,7 +161,7 @@ const LessonView: React.FC = () => {
                 quizId={quiz.id}
                 title={quiz.title}
                 description={quiz.description || ''}
-                questions={quizQuestions}
+                questions={processedQuizQuestions}
                 isPublished={quiz.is_published}
                 passPercent={quiz.pass_percent}
                 progress={{
@@ -197,7 +206,7 @@ const LessonView: React.FC = () => {
                     quizId={quiz.id}
                     title={quiz.title}
                     description={quiz.description || ''}
-                    questions={quizQuestions}
+                    questions={processedQuizQuestions}
                     isPublished={quiz.is_published}
                     passPercent={quiz.pass_percent}
                     progress={{
