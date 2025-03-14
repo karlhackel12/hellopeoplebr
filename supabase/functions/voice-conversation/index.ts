@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -184,7 +183,8 @@ serve(async (req) => {
             topic: lessonTopics.length > 0 ? lessonTopics[0] : 'General Conversation',
             vocabulary_used: vocabularyItems,
             is_required: lessonId ? true : false,
-            lesson_id: lessonId
+            lesson_id: lessonId,
+            assignment_id: assignmentId
           })
           .select('id')
           .single();
