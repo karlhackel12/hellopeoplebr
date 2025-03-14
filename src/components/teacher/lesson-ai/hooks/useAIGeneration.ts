@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { LessonFormValues } from '../../lesson-editor/useLessonForm';
@@ -65,51 +64,39 @@ export const useAIGeneration = (form: UseFormReturn<LessonFormValues>, title: st
     return () => subscription.unsubscribe();
   }, [form.watch]);
 
-  // Create the state updater object
-  const stateUpdaters = {
-    setGenerating,
-    setGeneratedContent,
-    setLevel,
-    setInstructions,
-    setError,
-    clearErrors,
-    setGenerationStatus,
-    setGenerationPhase,
-    setProgressPercentage,
-    setStatusMessage,
-    setGenerationId,
-    incrementPollCount: generationState.incrementPollCount,
-    resetPollCount: generationState.resetPollCount,
-    incrementRetryCount: generationState.incrementRetryCount,
-    resetRetryCount: generationState.resetRetryCount,
-    resetGenerationState
-  };
-
-  // Get the generation handler
-  const { 
-    handleGenerate: generateHandler, 
-    cancelGeneration: cancelGenerationHandler,
-    retryGeneration: retryGenerationHandler
-  } = useGenerationHandler(
-    form,
-    generationState,
-    stateUpdaters
-  );
+  // Get the generation handler with required methods
+  const generationHandler = useGenerationHandler();
 
   // Function to start generation
   const handleGenerate = async () => {
-    await generateHandler(title, level, instructions);
+    // Update settings before generating
+    generationHandler.handleSettingsChange({
+      title: title,
+      grade: level,
+      subject: 'English',
+      additionalInstructions: instructions
+    });
+    
+    await generationHandler.handleGenerate();
   };
 
   // Function to cancel generation
   const handleCancelGeneration = () => {
     cancelGeneration();
-    cancelGenerationHandler();
+    generationHandler.cancelGeneration();
   };
   
   // Function to retry generation
   const handleRetryGeneration = async () => {
-    await retryGenerationHandler(title, level, instructions);
+    // Update settings before retrying
+    generationHandler.handleSettingsChange({
+      title: title,
+      grade: level,
+      subject: 'English',
+      additionalInstructions: instructions
+    });
+    
+    await generationHandler.retryGeneration();
   };
 
   // Clean up any polling or resources when component unmounts

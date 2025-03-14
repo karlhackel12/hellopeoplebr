@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { generateLesson } from '@/integrations/openai/client';
@@ -80,7 +81,7 @@ export const useGenerationHandler = () => {
   };
 
   // Generate content function
-  const generateContent = async (settings: GenerationSettings) => {
+  const generateContent = async (settings: any) => {
     updateState({ phase: 'generating', error: null });
     try {
       const result = await generateLesson(settings);
@@ -170,5 +171,12 @@ export const useGenerationHandler = () => {
     generationState,
     handleSettingsChange,
     handleGenerateContent,
+    // Add these functions to fix useAIGeneration.ts errors
+    handleGenerate: handleGenerateContent,
+    cancelGeneration: () => {
+      setIsGenerating(false);
+      updateState({ phase: 'idle', error: null });
+    },
+    retryGeneration: handleGenerateContent
   };
 };
