@@ -236,7 +236,7 @@ const LessonView: React.FC = () => {
   });
   
   // Fetch quiz questions
-  const { data: quizQuestions, isLoading: loadingQuiz } = useQuery({
+  const { data: fetchedQuizQuestions, isLoading: loadingQuiz } = useQuery({
     queryKey: ['quiz-questions', lessonId],
     queryFn: async () => {
       const { data: quiz, error: quizError } = await supabase
@@ -304,7 +304,7 @@ const LessonView: React.FC = () => {
           user_id: user.id,
           completed: true,
           last_accessed_at: new Date().toISOString(),
-        }, { onConflict: ['lesson_id', 'user_id'] });
+        }, { onConflict: 'lesson_id,user_id' });
       
       if (error) throw error;
       
@@ -331,7 +331,7 @@ const LessonView: React.FC = () => {
     }));
   };
 
-  // Example quiz questions (replaced with proper formatted questions)
+  // Example quiz questions (used as fallback)
   const exampleQuestions: Question[] = formatQuizQuestions([
     {
       id: '1',
@@ -382,19 +382,12 @@ const LessonView: React.FC = () => {
     );
   }
 
-  const quizQuestions = lesson.quiz?.questions.map(q => ({
-    id: q.id,
-    question_text: q.question_text,
-    question_type: q.question_type,
-    points: q.points,
-    order_index: q.order_index || 0,
-    options: q.options.map(o => ({
-      id: o.id,
-      option_text: o.option_text,
-      is_correct: o.is_correct || false,
-      order_index: o.order_index || 0
-    }))
-  }));
+  // Process the fetched quiz questions
+  const formattedQuizQuestions = lesson.quiz?.questions 
+    ? formatQuizQuestions(lesson.quiz.questions) 
+    : fetchedQuizQuestions?.length > 0 
+      ? formatQuizQuestions(fetchedQuizQuestions) 
+      : [];
 
   return (
     <div className="container mx-auto py-10">
@@ -420,7 +413,7 @@ const LessonView: React.FC = () => {
 
         <Separator />
 
-        <Accordion type="multiple" collapsible className="w-full">
+        <Accordion type="multiple" className="w-full">
           <AccordionItem value="lesson-content">
             <AccordionTrigger>
               <div className="flex items-center gap-2">
@@ -443,9 +436,9 @@ const LessonView: React.FC = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <QuizSection 
-                  questions={quizQuestions.length > 0 ? formatQuizQuestions(quizQuestions) : []} 
-                  quizId={quizId || ''}
-                  lessonId={lessonId}
+                  questions={formattedQuizQuestions.length > 0 ? formattedQuizQuestions : []} 
+                  quizId={quizId}
+                  lessonId={lessonId || ''}
                   title={quizTitle || 'Lesson Quiz'}
                   passPercent={70}
                 />

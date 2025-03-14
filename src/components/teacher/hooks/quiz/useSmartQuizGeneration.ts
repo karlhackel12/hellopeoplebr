@@ -1,31 +1,32 @@
 
-import { useState, useCallback } from 'react';
-import { QuizGenerationResponse } from '../../quiz/types/quizGeneration';
+import { useState } from "react";
+import { useQuizGenerationState } from "./useQuizGenerationState";
+import { QuizGenerationResponse } from "../quiz/types/quizGeneration";
 
 export const useSmartQuizGeneration = () => {
+  const { isRetrying, setIsRetrying } = useQuizGenerationState();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [error, setError] = useState("");
 
-  const generateSmartQuiz = useCallback(async (
+  const generateSmartQuiz = async (
     generateQuizFunc: (numQuestions?: number) => Promise<QuizGenerationResponse>,
-    numQuestions = 5
+    numQuestions?: number
   ) => {
     try {
       setLoading(true);
-      setError(null);
+      setError("");
       
-      // Call the provided quiz generation function
       const response = await generateQuizFunc(numQuestions);
+      
       return response;
-    } catch (error: any) {
-      console.error('Error generating smart quiz:', error);
-      setError(error.message || 'Failed to generate quiz');
+    } catch (err: any) {
+      console.error("Smart quiz generation error:", err);
+      setError(err.message || "Failed to generate quiz. Please try again.");
       return null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   return {
     generateSmartQuiz,
