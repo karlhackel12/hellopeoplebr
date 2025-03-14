@@ -11,7 +11,7 @@ export const useQuizHandler = (lessonId: string) => {
     loading: generationLoading, 
     isRetrying,
     error: generationError 
-  } = useQuizGeneration(lessonId);
+  } = useQuizGeneration();
   
   const { 
     fetchQuizQuestions, 
