@@ -4,12 +4,14 @@ import { CheckCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+
 interface ProgressTrackerProps {
   completedSections: string[];
   totalSections?: number;
   customLabel?: string;
   className?: string;
 }
+
 const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   completedSections,
   totalSections = 7,
@@ -17,6 +19,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   className
 }) => {
   const percentComplete = totalSections > 0 ? Math.round(completedSections.length / totalSections * 100) : 0;
+  
   return (
     <div className={cn("py-[5px] my-[60px]", className)}>
       <div className="flex items-center justify-between mb-2">
@@ -32,4 +35,5 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
     </div>
   );
 };
+
 export default ProgressTracker;
