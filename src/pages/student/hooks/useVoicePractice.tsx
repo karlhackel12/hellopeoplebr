@@ -13,6 +13,7 @@ export interface VoicePracticeSession {
   completed_at: string | null;
   duration_seconds: number | null;
   vocabulary_used?: string[];
+  assignment_id?: string | null;
   lesson?: {
     id: string;
     title: string;
@@ -75,32 +76,40 @@ export const useVoicePractice = () => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
-        .from('voice_practice_sessions')
-        .select(`
-          id,
-          lesson_id,
-          topic,
-          difficulty_level,
-          started_at,
-          completed_at,
-          duration_seconds,
-          vocabulary_used,
-          lesson:lessons(
+      try {
+        const { data, error } = await supabase
+          .from('voice_practice_sessions')
+          .select(`
             id,
-            title,
-            content
-          )
-        `)
-        .eq('user_id', userId)
-        .order('started_at', { ascending: false });
-      
-      if (error) {
+            lesson_id,
+            topic,
+            difficulty_level,
+            started_at,
+            completed_at,
+            duration_seconds,
+            vocabulary_used,
+            assignment_id,
+            lesson:lessons(
+              id,
+              title,
+              content
+            )
+          `)
+          .eq('user_id', userId)
+          .order('started_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching voice practice sessions:', error);
+          toast.error('Failed to fetch voice practice sessions');
+          return [];
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error('Exception fetching voice practice sessions:', err);
         toast.error('Failed to fetch voice practice sessions');
-        throw error;
+        return [];
       }
-      
-      return data || [];
     },
     enabled: !!userId
   });
@@ -252,46 +261,56 @@ export const useVoicePractice = () => {
       if (!userId) throw new Error('User is not authenticated');
       
       // Get the session to check if it's assignment-related
-      const { data: sessionData } = await supabase
-        .from('voice_practice_sessions')
-        .select('assignment_id, lesson_id')
-        .eq('id', sessionId)
-        .single();
-      
-      const assignmentId = sessionData?.assignment_id;
-      
-      // Update session
-      const { data, error } = await supabase
-        .from('voice_practice_sessions')
-        .update({
-          completed_at: new Date().toISOString(),
-          duration_seconds: durationSeconds,
-          analytics_data: analyticsData
-        })
-        .eq('id', sessionId)
-        .eq('user_id', userId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // If this was an assignment-related session, update the assignment
-      if (assignmentId) {
-        await supabase
-          .from('student_assignments')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString()
+      try {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('voice_practice_sessions')
+          .select('assignment_id, lesson_id')
+          .eq('id', sessionId)
+          .single();
+          
+        if (sessionError) {
+          console.error('Error fetching session data:', sessionError);
+          throw sessionError;
+        }
+        
+        const assignmentId = sessionData?.assignment_id;
+        
+        // Update session
+        const { data, error } = await supabase
+          .from('voice_practice_sessions')
+          .update({
+            completed_at: new Date().toISOString(),
+            duration_seconds: durationSeconds,
+            analytics_data: analyticsData
           })
-          .eq('id', assignmentId);
+          .eq('id', sessionId)
+          .eq('user_id', userId)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // If this was an assignment-related session, update the assignment
+        if (assignmentId) {
+          await supabase
+            .from('student_assignments')
+            .update({ 
+              status: 'completed',
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', assignmentId);
+        }
+        
+        // Update lesson progress if applicable
+        if (sessionData?.lesson_id) {
+          await updateLessonProgress(sessionData.lesson_id);
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('Error completing session:', error);
+        throw error;
       }
-      
-      // Update lesson progress if applicable
-      if (sessionData?.lesson_id) {
-        await updateLessonProgress(sessionData.lesson_id);
-      }
-      
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voice-practice-sessions'] });
@@ -496,7 +515,8 @@ export const useVoicePractice = () => {
   const assignedLessonsWithoutSessions = assignedLessons?.filter(assignment => 
     assignment.lesson_id && 
     !sessions?.some(session => 
-      session.lesson_id === assignment.lesson_id && !session.completed_at
+      (session.lesson_id === assignment.lesson_id || session.assignment_id === assignment.id) 
+      && !session.completed_at
     )
   ) || [];
 

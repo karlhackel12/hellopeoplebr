@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { format, formatDistance } from 'date-fns';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { useLessonData } from './hooks/useLessonData';
 import { useVoiceConversation } from './hooks/useVoiceConversation';
@@ -48,7 +50,7 @@ const VoiceConversationSession: React.FC = () => {
     sendMessage,
     endConversation,
     analyzeConversation
-  } = useVoiceConversation(lessonIdParam || undefined, assignmentIdParam || undefined);
+  } = useVoiceConversation(lessonIdParam, assignmentIdParam);
   
   useEffect(() => {
     const fetchAssignmentData = async () => {
@@ -305,7 +307,7 @@ const VoiceConversationSession: React.FC = () => {
             <AlertDescription>
               You're completing a required conversation practice for the assignment: "{assignmentData.title}". 
               {assignmentData.due_date && (
-                <span> Due {formatDistanceToNow(new Date(assignmentData.due_date), { addSuffix: true })}.</span>
+                <span> Due {formatDistance(new Date(assignmentData.due_date), new Date(), { addSuffix: true })}.</span>
               )}
             </AlertDescription>
           </Alert>
