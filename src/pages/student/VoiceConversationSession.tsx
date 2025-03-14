@@ -49,7 +49,7 @@ const VoiceConversationSession: React.FC = () => {
     sendMessage,
     endConversation,
     analyzeConversation
-  } = useVoiceConversation(lessonIdParam || undefined, assignmentIdParam || undefined);
+  } = useVoiceConversation();
   
   useEffect(() => {
     const fetchAssignmentData = async () => {
@@ -205,10 +205,10 @@ const VoiceConversationSession: React.FC = () => {
     setLiveTranscript('');
     
     try {
-      await sendMessage(transcript, lessonTopics, activeVocabulary, difficultyLevel);
+      await sendMessage(transcript);
       
       if (messages.length % 3 === 0) {
-        const analyticsResult = await analyzeConversation();
+        await analyzeConversation();
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -218,11 +218,7 @@ const VoiceConversationSession: React.FC = () => {
   
   const handleEndConversation = async () => {
     if (conversationId) {
-      const success = await endConversation(
-        confidenceScore || undefined, 
-        lessonIdParam || undefined,
-        assignmentIdParam || undefined
-      );
+      const success = await endConversation();
       
       if (success) {
         if (lessonIdParam && lesson) {

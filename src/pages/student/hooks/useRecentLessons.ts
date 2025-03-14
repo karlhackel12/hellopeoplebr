@@ -15,7 +15,7 @@ export const useRecentLessons = () => {
         .select(`
           id,
           title,
-          description,
+          content,
           is_published,
           user_lesson_progress!inner(
             user_id,
@@ -42,7 +42,7 @@ export const useRecentLessons = () => {
           return {
             id: lesson.id,
             title: lesson.title,
-            description: lesson.description,
+            content: lesson.content,
             is_published: lesson.is_published,
             progress: {
               completed: progress?.completed || false
