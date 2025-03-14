@@ -28,7 +28,7 @@ export const useGenerationApi = () => {
       // Race the promises - whichever resolves/rejects first wins
       const response = await Promise.race([edgeFunctionPromise, timeoutPromise]);
       
-      console.log("Edge function response status:", response.status);
+      console.log("Edge function response received:", response);
       
       if (response.error) {
         console.error("Edge function error:", response.error);
