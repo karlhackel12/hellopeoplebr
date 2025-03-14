@@ -1,194 +1,174 @@
-
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from '../../lesson-editor/useLessonForm';
-import { GenerationParams } from './types';
-import { useGenerationApi } from './useGenerationApi';
-import { useResponseParser } from './useResponseParser';
-import { useContentUpdater } from './useContentUpdater';
-import { useValidation } from './useValidation';
-import { useErrorHandler } from './useErrorHandler';
-import { useGenerationProcess } from './useGenerationProcess';
+import { generateLesson } from '@/integrations/openai/client';
+import { parseLesson } from '@/integrations/openai/parser';
+import { useLessonStore } from '../store/lessonStore';
 
-export const useGenerationHandler = (
-  form: UseFormReturn<LessonFormValues>,
-  generationState: any,
-  updateState: any
-) => {
-  const { invokeLessonGeneration } = useGenerationApi();
-  const { parseAIResponse } = useResponseParser();
-  const { updateFormContent } = useContentUpdater(form);
-  
-  const {
-    setGenerating,
-    setGeneratedContent,
-    setError,
-    clearErrors,
-    setGenerationStatus,
-    setGenerationPhase,
-    setProgressPercentage,
-    setStatusMessage,
-    setGenerationId,
-    resetGenerationState
-  } = updateState;
+interface GenerationSettings {
+  title: string;
+  grade: string;
+  subject: string;
+  length: string;
+  tone: string;
+  focusAreas: string;
+  additionalInstructions: string;
+}
 
-  // Use our new focused hooks
-  const { validateTitleInput } = useValidation(setGenerating, setGenerationStatus);
-  const { handleGenerationError, handleParsingError } = useErrorHandler(setError, setGenerating, setGenerationStatus);
-  const { processGeneration } = useGenerationProcess(
-    invokeLessonGeneration, 
-    parseAIResponse, 
-    updateFormContent, 
-    setGeneratedContent, 
-    handleParsingError
-  );
+interface GenerationState {
+  phase: 'idle' | 'initializing' | 'generating' | 'parsing' | 'complete' | 'error';
+  error: string | null;
+}
 
-  const handleGenerate = async (
-    title: string,
-    level: 'beginner' | 'intermediate' | 'advanced',
-    instructions: string
-  ) => {
+export const useGenerationHandler = () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationSettings, setGenerationSettings] = useState<GenerationSettings>({
+    title: '',
+    grade: '',
+    subject: '',
+    length: '',
+    tone: '',
+    focusAreas: '',
+    additionalInstructions: ''
+  });
+  const { updateContent, updateMetadata } = useLessonStore();
+  const [generationState, setGenerationState] = useState<GenerationState>({
+    phase: 'idle',
+    error: null
+  });
+
+  // Validation function
+  const validate = (): boolean => {
+    if (!generationSettings.title || !generationSettings.grade || !generationSettings.subject) {
+      toast.error('Please fill in all required fields (Title, Grade, Subject).');
+      return false;
+    }
+    return true;
+  };
+
+  // Update state function
+  const updateState = useCallback((newState: Partial<GenerationState>) => {
+    setGenerationState(prevState => ({ ...prevState, ...newState }));
+  }, []);
+
+  // Handle settings changes
+  const handleSettingsChange = (settings: Partial<GenerationSettings>) => {
+    setGenerationSettings(prevSettings => ({ ...prevSettings, ...settings }));
+  };
+
+  // Handle API errors
+  const handleApiError = (error: any) => {
+    console.error('API Error:', error);
+    updateState({
+      phase: 'error',
+      error: 'Failed to generate content. Please check your settings and try again.'
+    });
+    toast.error('Generation Failed', {
+      description: 'Failed to generate content. Please check your settings and try again.'
+    });
+  };
+
+  // Handle parsing errors
+  const handleParsingError = (error: any) => {
+    console.error('Parsing Error:', error);
+    updateState({
+      phase: 'error',
+      error: 'Failed to parse generated content. The structure might be invalid.'
+    });
+    toast.error('Parsing Failed', {
+      description: 'Failed to parse generated content. The structure might be invalid.'
+    });
+  };
+
+  // Generate content function
+  const generateContent = async (settings: GenerationSettings) => {
+    updateState({ phase: 'generating', error: null });
     try {
-      clearErrors();
-      setGenerating(true);
-      setGenerationStatus('pending');
-      setGenerationPhase('starting');
-      setProgressPercentage(10);
-      setStatusMessage('Starting lesson generation...');
-      
-      if (!validateTitleInput(title)) {
-        return;
-      }
-      
-      // Validate and sanitize instructions to prevent errors
-      let sanitizedInstructions: string | undefined = undefined;
-      
-      if (instructions) {
-        if (typeof instructions === 'string') {
-          // Trim and limit length of instructions
-          sanitizedInstructions = instructions.trim().substring(0, 1000);
-        } else if (typeof instructions === 'object' && instructions !== null && 'value' in instructions) {
-          // Handle object with value property
-          const value = instructions.value;
-          if (typeof value === 'string') {
-            sanitizedInstructions = value.trim().substring(0, 1000);
-          } else if (value !== null && value !== undefined) {
-            sanitizedInstructions = String(value).trim().substring(0, 1000);
-          }
-        }
-        
-        // Additional validation - ensure it's not just whitespace
-        if (sanitizedInstructions && sanitizedInstructions.length === 0) {
-          sanitizedInstructions = undefined;
-        }
-      }
-      
-      console.log("Validated instructions:", {
-        original: instructions,
-        sanitized: sanitizedInstructions,
-        type: typeof instructions
-      });
-      
-      const generationParams: GenerationParams = {
-        timestamp: new Date().toISOString(),
-        title,
-        level,
-        language: 'english',
-        instructions: sanitizedInstructions,
-      };
-      
-      console.log("Generation params prepared:", generationParams);
-      
-      // Set up a timeout to progress to the analyzing phase
-      setTimeout(() => {
-        if (generationState.generationPhase === 'starting') {
-          setGenerationPhase('analyzing');
-          setProgressPercentage(20);
-          setStatusMessage('Analyzing requirements...');
-        }
-      }, 1500);
-      
-      // Set up a timeout to progress to the generating phase
-      setTimeout(() => {
-        if (generationState.generationPhase === 'analyzing') {
-          setGenerationPhase('generating');
-          setProgressPercentage(30);
-          setStatusMessage('Generating content and quiz questions...');
-        }
-      }, 3000);
-      
-      try {
-        const result = await processGeneration(generationParams);
-        
-        // Check localStorage for quiz data
-        const storageKey = `lesson_quiz_${generationParams.timestamp}`;
-        const quizData = localStorage.getItem(storageKey);
-        
-        if (quizData) {
-          console.log("Successfully stored quiz data in localStorage:", storageKey);
-          const parsedQuiz = JSON.parse(quizData);
-          const questionCount = parsedQuiz.questions?.length || 0;
-          
-          if (questionCount > 0) {
-            setStatusMessage(`Generated content with ${questionCount} quiz questions!`);
-          } else {
-            console.warn("Quiz data stored but no questions found");
-            setStatusMessage('Lesson content generated successfully!');
-          }
-        } else {
-          console.warn("No quiz data was stored in localStorage");
-          setStatusMessage('Lesson content generated successfully!');
-        }
-        
-        setGenerationPhase('complete');
-        setProgressPercentage(100);
-        setGenerating(false);
-        setGenerationStatus('completed');
-        
-        toast.success("Content generated", {
-          description: "AI-generated English lesson content is ready for review",
-        });
-        
-        return result;
-      } catch (error: any) {
-        handleGenerationError(error);
-        setGenerationPhase('error');
-        return null;
-      }
-    } catch (error: any) {
-      console.error("Error in handleGenerate:", error);
-      setError(error?.message || "Unknown error");
-      setGenerating(false);
-      setGenerationStatus('failed');
-      setGenerationPhase('error');
-      
-      toast.error("Generation failed", {
-        description: error?.message || "An unexpected error occurred",
-      });
-      
+      const result = await generateLesson(settings);
+      return result;
+    } catch (error) {
+      handleApiError(error);
       return null;
     }
   };
 
-  const cancelGeneration = () => {
-    resetGenerationState();
-    toast.info("Generation cancelled", {
-      description: "The lesson generation process has been cancelled.",
-    });
+  // Parse response function
+  const parseResponse = (responseData: any) => {
+    updateState({ phase: 'parsing', error: null });
+    try {
+      const parsedContent = parseLesson(responseData);
+      return parsedContent;
+    } catch (error) {
+      handleParsingError(error);
+      return null;
+    }
   };
 
-  const retryGeneration = async (
-    title: string,
-    level: 'beginner' | 'intermediate' | 'advanced',
-    instructions: string
-  ) => {
-    clearErrors();
-    return handleGenerate(title, level, instructions);
+  // Handle complete generation process
+  const handleGenerateContent = async () => {
+    if (!validate()) return;
+
+    try {
+      setIsGenerating(true);
+      updateState({ phase: 'initializing' });
+
+      const { title, grade, subject, length, tone, focusAreas, additionalInstructions } = generationSettings;
+
+      // Start the generation
+      const result = await generateContent({
+        title,
+        grade_level: grade,
+        subject,
+        length,
+        tone,
+        focus_areas: focusAreas,
+        additional_instructions: additionalInstructions
+      });
+
+      // Handle error from API
+      if (!result || !result.data) {
+        handleApiError(new Error('Failed to generate content'));
+        return;
+      }
+
+      // Process successful response
+      await processResponse(result.data);
+      
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Process the response from the API
+  const processResponse = async (responseData: any) => {
+    try {
+      const parsedContent = parseResponse(responseData);
+      
+      // Fix: Check if parsedContent exists before accessing properties
+      if (parsedContent && parsedContent.sections) {
+        updateContent({
+          sections: parsedContent.sections,
+          metadata: parsedContent.metadata || {}
+        });
+        
+        updateState({ 
+          phase: 'complete', 
+          error: null 
+        });
+      } else {
+        throw new Error('Invalid content structure received');
+      }
+    } catch (error) {
+      handleParsingError(error);
+    }
   };
 
   return {
-    handleGenerate,
-    cancelGeneration,
-    retryGeneration
+    isGenerating,
+    generationSettings,
+    generationState,
+    handleSettingsChange,
+    handleGenerateContent,
   };
 };
