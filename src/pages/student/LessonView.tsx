@@ -382,6 +382,20 @@ const LessonView: React.FC = () => {
     );
   }
 
+  const quizQuestions = lesson.quiz?.questions.map(q => ({
+    id: q.id,
+    question_text: q.question_text,
+    question_type: q.question_type,
+    points: q.points,
+    order_index: q.order_index || 0,
+    options: q.options.map(o => ({
+      id: o.id,
+      option_text: o.option_text,
+      is_correct: o.is_correct || false,
+      order_index: o.order_index || 0
+    }))
+  }));
+
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
