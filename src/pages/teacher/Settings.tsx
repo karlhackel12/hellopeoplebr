@@ -6,18 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Settings: React.FC = () => {
+  const isMobile = useIsMobile();
+
   return (
-    <TeacherLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
+    <TeacherLayout pageTitle="Settings">
+      <div className="mb-8 animate-fade-in">
+        {!isMobile && <h1 className="text-3xl font-bold mb-6">Settings</h1>}
         
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
+            <TabsTrigger value="profile" className={isMobile ? 'flex-1' : ''}>Profile</TabsTrigger>
+            <TabsTrigger value="account" className={isMobile ? 'flex-1' : ''}>Account</TabsTrigger>
+            <TabsTrigger value="preferences" className={isMobile ? 'flex-1' : ''}>Preferences</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile">

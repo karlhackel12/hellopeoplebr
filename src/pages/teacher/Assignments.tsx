@@ -8,6 +8,7 @@ import AssignmentForm from '@/components/teacher/AssignmentForm';
 import AssignmentsList from '@/components/teacher/AssignmentsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Assignments = () => {
   const location = useLocation();
@@ -15,6 +16,7 @@ const Assignments = () => {
   const initialStudentId = location.state?.studentId;
   const studentName = location.state?.studentName;
   const initialTab = location.state?.initialTab;
+  const isMobile = useIsMobile();
 
   // Set initial tab based on navigation state
   useEffect(() => {
@@ -157,20 +159,22 @@ const Assignments = () => {
   const isLoading = loadingStudents || loadingLessons || loadingQuizzes;
 
   return (
-    <TeacherLayout>
+    <TeacherLayout pageTitle="Assignments">
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-bold mb-6">
-          {studentName ? `Assignments for ${studentName}` : 'Student Assignments'}
-        </h1>
+        {!isMobile && (
+          <h1 className="text-3xl font-bold mb-6">
+            {studentName ? `Assignments for ${studentName}` : 'Student Assignments'}
+          </h1>
+        )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="create">Create Assignment</TabsTrigger>
-            <TabsTrigger value="view">View Assignments</TabsTrigger>
+          <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
+            <TabsTrigger value="create" className={isMobile ? 'flex-1' : ''}>Create Assignment</TabsTrigger>
+            <TabsTrigger value="view" className={isMobile ? 'flex-1' : ''}>View Assignments</TabsTrigger>
           </TabsList>
           
           <TabsContent value="create" className="space-y-4">
-            <div className="bg-card rounded-lg p-6 shadow-sm">
+            <div className="bg-card rounded-lg p-4 sm:p-6 shadow-sm">
               <h2 className="text-xl font-semibold mb-4">Assign Content to Student</h2>
               <AssignmentForm 
                 students={students}
