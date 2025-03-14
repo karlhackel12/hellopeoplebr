@@ -330,6 +330,98 @@ export type Database = {
           },
         ]
       }
+      spaced_repetition_items: {
+        Row: {
+          created_at: string
+          difficulty: number
+          id: string
+          lesson_id: string | null
+          next_review_date: string
+          question_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number
+          id?: string
+          lesson_id?: string | null
+          next_review_date?: string
+          question_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number
+          id?: string
+          lesson_id?: string | null
+          next_review_date?: string
+          question_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaced_repetition_items_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spaced_repetition_items_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spaced_repetition_stats: {
+        Row: {
+          ease_factor: number
+          id: string
+          interval_days: number
+          item_id: string
+          points_earned: number | null
+          quality_response: number
+          response_time_ms: number | null
+          review_date: string
+          streak: number
+          user_id: string
+        }
+        Insert: {
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          item_id: string
+          points_earned?: number | null
+          quality_response: number
+          response_time_ms?: number | null
+          review_date?: string
+          streak?: number
+          user_id: string
+        }
+        Update: {
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          item_id?: string
+          points_earned?: number | null
+          quality_response?: number
+          response_time_ms?: number | null
+          review_date?: string
+          streak?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaced_repetition_stats_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "spaced_repetition_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_assignments: {
         Row: {
           assigned_by: string

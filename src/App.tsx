@@ -30,6 +30,8 @@ import StudentDashboard from "./pages/student/Dashboard";
 import StudentLessons from "./pages/student/Lessons";
 import StudentSettings from "./pages/student/Settings";
 import LessonView from "./pages/student/LessonView";
+import SpacedRepetition from "./pages/student/SpacedRepetition";
+import SpacedRepetitionReview from "./pages/student/SpacedRepetitionReview";
 
 const queryClient = new QueryClient();
 
@@ -139,6 +141,16 @@ const App = () => (
             <Route path="/student/settings" element={
               <PageTransitionWrapper>
                 <StudentSettings />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/student/spaced-repetition" element={
+              <PageTransitionWrapper>
+                <SpacedRepetition />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/student/spaced-repetition/review" element={
+              <PageTransitionWrapper>
+                <SpacedRepetitionReview />
               </PageTransitionWrapper>
             } />
             
