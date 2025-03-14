@@ -3,19 +3,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { useLessonData } from './hooks/useLessonData';
 import { useVoiceConversation } from './hooks/useVoiceConversation';
 import ConversationHeader from './components/voice-practice/ConversationHeader';
 import ConversationTabs from './components/voice-practice/ConversationTabs';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useVoicePractice } from './hooks/useVoicePractice';
 
 const VoiceConversationSession: React.FC = () => {
   const navigate = useNavigate();
   const { sessionId } = useParams();
   const [searchParams] = useSearchParams();
   const lessonIdParam = searchParams.get('lessonId');
+  const topicParam = searchParams.get('topic');
   
   const [isRecording, setIsRecording] = useState(false);
   const [activeTab, setActiveTab] = useState("conversation");
@@ -27,10 +30,13 @@ const VoiceConversationSession: React.FC = () => {
   const [activeVocabulary, setActiveVocabulary] = useState<string[]>([]);
   const [lessonTopics, setLessonTopics] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [minMessageCountReached, setMinMessageCountReached] = useState(false);
   
   const startTimeRef = useRef<Date | null>(null);
   
   const { lesson, lessonLoading } = useLessonData(lessonIdParam || undefined);
+  const { completeSession } = useVoicePractice();
   
   const {
     messages,
@@ -44,6 +50,12 @@ const VoiceConversationSession: React.FC = () => {
   } = useVoiceConversation(lessonIdParam || undefined);
   
   useEffect(() => {
+    // Check if minimum conversation turns have been reached (e.g., 5 user messages)
+    const userMessageCount = messages.filter(m => m.role === 'user').length;
+    setMinMessageCountReached(userMessageCount >= 3);
+  }, [messages]);
+  
+  useEffect(() => {
     if (sessionId) {
       initConversation(sessionId);
     } else {
@@ -54,9 +66,6 @@ const VoiceConversationSession: React.FC = () => {
   // Extract vocabulary and topics from lesson
   useEffect(() => {
     if (lesson) {
-      // Example extraction logic - in a real app this would be more sophisticated
-      // and might come from a structured field in the lesson
-      
       // Extract some vocabulary words from content
       const content = lesson.content || '';
       const words = content
@@ -70,7 +79,6 @@ const VoiceConversationSession: React.FC = () => {
       setActiveVocabulary(words);
       
       // Extract topics from lesson title or content
-      // In a real app, these would likely be stored in the lesson metadata
       const topics = [
         lesson.title,
         'Key Grammar Points',
@@ -82,8 +90,12 @@ const VoiceConversationSession: React.FC = () => {
       
       // Generate some suggested responses based on lesson content
       generateSuggestedResponses(content);
+    } else if (topicParam) {
+      // For topic-based conversations, set a default set of vocabulary and topics
+      setLessonTopics([topicParam]);
+      generateGenericSuggestions(topicParam);
     }
-  }, [lesson]);
+  }, [lesson, topicParam]);
   
   // Update analytics data when it changes
   useEffect(() => {
@@ -105,7 +117,8 @@ const VoiceConversationSession: React.FC = () => {
           score: conversationAnalytics.fluency_score ? conversationAnalytics.fluency_score / 10 : 7.0,
           wordsPerMinute: calculateWordsPerMinute()
         },
-        speakingTime: conversationAnalytics.user_speaking_time_seconds || calculateTotalSpeakingTime()
+        speakingTime: conversationAnalytics.user_speaking_time_seconds || calculateTotalSpeakingTime(),
+        conversationTurns: messages.filter(m => m.role === 'user').length
       });
     }
   }, [conversationAnalytics, messages, activeVocabulary]);
@@ -124,7 +137,6 @@ const VoiceConversationSession: React.FC = () => {
   
   const generateSuggestedResponses = (content: string) => {
     // In a real app, this would use AI to generate contextual suggestions
-    // Here we're just providing generic suggestions
     const genericSuggestions = [
       "Could you explain that in more detail?",
       "I'm not sure I understand. Can you clarify?",
@@ -134,6 +146,38 @@ const VoiceConversationSession: React.FC = () => {
     ];
     
     setSuggestedResponses(genericSuggestions);
+  };
+  
+  const generateGenericSuggestions = (topic: string) => {
+    const topicSuggestions: Record<string, string[]> = {
+      'Travel': [
+        "What's your favorite place you've traveled to?",
+        "Do you prefer beach vacations or city trips?",
+        "What's on your travel bucket list?",
+        "How do you usually plan your trips?"
+      ],
+      'Food & Dining': [
+        "What's your favorite cuisine?",
+        "Do you enjoy cooking at home?",
+        "Have you tried any interesting restaurants lately?",
+        "What's a dish you'd like to learn how to make?"
+      ],
+      'Work & Career': [
+        "What do you do for work?",
+        "What do you enjoy most about your job?",
+        "What skills are important in your field?",
+        "How has your industry changed recently?"
+      ],
+      'default': [
+        "What do you find interesting about this topic?",
+        "Could you tell me more about your experience with this?",
+        "What would you like to learn about this subject?",
+        "Do you have any questions about this topic?"
+      ]
+    };
+    
+    const suggestions = topicSuggestions[topic] || topicSuggestions['default'];
+    setSuggestedResponses(suggestions);
   };
   
   const handleStartRecording = () => {
@@ -165,9 +209,34 @@ const VoiceConversationSession: React.FC = () => {
   };
   
   const handleEndConversation = async () => {
-    if (await endConversation(confidenceScore || undefined)) {
-      toast.success('Conversation saved successfully');
-      navigate('/student/voice-practice');
+    if (conversationId) {
+      const success = await endConversation(confidenceScore || undefined);
+      
+      if (success) {
+        // Mark the lesson session as completed if it's a lesson-based conversation
+        if (lessonIdParam && lesson) {
+          try {
+            await completeSession({
+              sessionId: conversationId,
+              durationSeconds: calculateTotalSpeakingTime()
+            });
+            
+            toast.success(`Practice for "${lesson.title}" marked as completed!`);
+          } catch (error) {
+            console.error('Error completing session:', error);
+            toast.error('Failed to mark lesson as completed');
+          }
+        } else {
+          toast.success('Conversation saved successfully');
+        }
+        
+        setSessionCompleted(true);
+        
+        // Delay navigation to allow the user to see the completion message
+        setTimeout(() => {
+          navigate('/student/voice-practice');
+        }, 3000);
+      }
     }
   };
   
@@ -177,12 +246,18 @@ const VoiceConversationSession: React.FC = () => {
   };
   
   const handleGoBack = () => {
+    // Ask for confirmation if there are messages and the session isn't completed
+    if (messages.length > 0 && !sessionCompleted) {
+      const confirm = window.confirm('Are you sure you want to leave? Your conversation progress will be saved, but not marked as completed.');
+      if (!confirm) return;
+    }
+    
     navigate('/student/voice-practice');
   };
   
-  const practiceTopic = lesson 
+  const practiceTopic = topicParam || (lesson 
     ? `Conversation Practice: ${lesson.title}` 
-    : 'General English Conversation Practice';
+    : 'General English Conversation Practice');
 
   return (
     <StudentLayout>
@@ -197,6 +272,19 @@ const VoiceConversationSession: React.FC = () => {
             Back to Voice Practice
           </Button>
         </div>
+        
+        {sessionCompleted && (
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle>Practice Completed!</AlertTitle>
+            <AlertDescription>
+              Great job! Your conversation practice has been saved and marked as completed.
+              {lesson && (
+                <span> You've completed the practice for "{lesson.title}".</span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
         
         <ConversationHeader 
           practiceTopic={practiceTopic}
@@ -223,6 +311,9 @@ const VoiceConversationSession: React.FC = () => {
           activeVocabulary={activeVocabulary}
           lessonTopics={lessonTopics}
           suggestedResponses={suggestedResponses}
+          minTurnsRequired={3}
+          currentTurns={messages.filter(m => m.role === 'user').length}
+          isCompleted={sessionCompleted}
         />
       </div>
     </StudentLayout>
