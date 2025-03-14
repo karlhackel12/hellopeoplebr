@@ -31,7 +31,8 @@ const VoicePracticeSession: React.FC = () => {
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(sessionId || null);
   const startTimeRef = useRef<Date | null>(null);
 
-  const { data: lessons, isLoading: isLoadingLessons } = useLessonData();
+  // Fix: Pass lessonId parameter and use correct properties from useLessonData hook
+  const { lesson, lessonLoading } = useLessonData(lessonIdParam || undefined);
   const { 
     createSession,
     completeSession,
@@ -48,11 +49,12 @@ const VoicePracticeSession: React.FC = () => {
 
   // Find lesson for practice
   const lessonId = currentSession?.lesson_id || lessonIdParam || null;
-  const lesson = lessons?.find(l => l.id === lessonId);
+  // Use lessons array from useVoicePractice if needed or directly use lesson from useLessonData
+  const currentLesson = lesson || null;
   
   // Generate practice topic based on lesson or default
   const practiceTopic = currentSession?.topic || 
-    (lesson ? `Practice: ${lesson.title}` : 'General Speaking Practice');
+    (currentLesson ? `Practice: ${currentLesson.title}` : 'General Speaking Practice');
   
   // Practice difficulty level
   const difficultyLevel = currentSession?.difficulty_level || 1;
@@ -109,7 +111,7 @@ const VoicePracticeSession: React.FC = () => {
           {
             body: { 
               transcript: 'This is a test transcript since we cannot process real audio in this example.', 
-              lessonContent: lesson?.content || 'General speaking practice without specific content.',
+              lessonContent: currentLesson?.content || 'General speaking practice without specific content.',
               difficulty: difficultyLevel
             }
           }
@@ -214,7 +216,7 @@ const VoicePracticeSession: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-2xl">{practiceTopic}</CardTitle>
             <CardDescription>
-              {lesson 
+              {currentLesson 
                 ? `Practice your speaking skills based on lesson content`
                 : `Freestyle speaking practice to improve your skills`}
             </CardDescription>
@@ -224,17 +226,17 @@ const VoicePracticeSession: React.FC = () => {
               <Info className="h-4 w-4" />
               <AlertTitle>Practice Instructions</AlertTitle>
               <AlertDescription>
-                {lesson 
-                  ? `Speak about the topics covered in the "${lesson.title}" lesson. Try to use vocabulary and concepts from the lesson in your speech.`
+                {currentLesson 
+                  ? `Speak about the topics covered in the "${currentLesson.title}" lesson. Try to use vocabulary and concepts from the lesson in your speech.`
                   : `Introduce yourself, talk about your interests, or describe your day. Speak clearly and at a natural pace.`}
               </AlertDescription>
             </Alert>
             
-            {lesson && (
+            {currentLesson && (
               <div className="mt-4">
                 <h3 className="font-medium mb-2">Lesson Prompt:</h3>
                 <div className="bg-slate-50 p-4 rounded-md text-sm max-h-32 overflow-y-auto">
-                  {lesson.content?.slice(0, 300)}...
+                  {currentLesson.content?.slice(0, 300)}...
                 </div>
               </div>
             )}
