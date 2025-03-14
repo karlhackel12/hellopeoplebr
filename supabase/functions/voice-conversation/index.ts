@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -25,8 +24,67 @@ serve(async (req) => {
       lessonTopics = [], 
       vocabularyItems = [], 
       difficulty = 1,
-      userId
+      userId,
+      markAsCompleted = false,
+      lessonId = null
     } = await req.json();
+
+    // If just marking as completed, update the conversation session
+    if (markAsCompleted && conversationId && userId) {
+      // Create Supabase client
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+      
+      const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+      
+      // Update the conversation session as completed
+      await supabaseAdmin
+        .from('conversation_sessions')
+        .update({ is_completed: true, completed_at: new Date().toISOString() })
+        .eq('id', conversationId);
+      
+      // If there's a lessonId, also update the lesson progress
+      if (lessonId) {
+        // Check if there's an existing progress record
+        const { data: existingProgress } = await supabaseAdmin
+          .from('user_lesson_progress')
+          .select('id')
+          .eq('lesson_id', lessonId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (existingProgress) {
+          // Update existing progress
+          await supabaseAdmin
+            .from('user_lesson_progress')
+            .update({ 
+              status: 'completed',
+              updated_at: new Date().toISOString(),
+              practice_completed: true
+            })
+            .eq('id', existingProgress.id);
+        } else {
+          // Insert new progress record
+          await supabaseAdmin
+            .from('user_lesson_progress')
+            .insert({
+              lesson_id: lessonId,
+              user_id: userId,
+              status: 'completed',
+              practice_completed: true,
+              is_required: true
+            });
+        }
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: "Conversation practice marked as completed" 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     if (!userTranscript) {
       throw new Error('Missing required parameter: userTranscript');
@@ -108,7 +166,9 @@ serve(async (req) => {
             user_id: userId,
             difficulty_level: difficulty,
             topic: lessonTopics.length > 0 ? lessonTopics[0] : 'General Conversation',
-            vocabulary_used: vocabularyItems
+            vocabulary_used: vocabularyItems,
+            is_required: lessonId ? true : false,
+            lesson_id: lessonId
           })
           .select('id')
           .single();
@@ -174,7 +234,17 @@ function createClient(supabaseUrl, supabaseKey) {
               const data = await response.json();
               return { data, error: null };
             }
-          })
+          }),
+          maybeSingle: async () => {
+            const response = await fetch(`${supabaseUrl}/rest/v1/${table}?select=${columns}&${column}=eq.${value}&limit=1`, {
+              headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+              }
+            });
+            const data = await response.json();
+            return { data: data.length > 0 ? data[0] : null, error: null };
+          }
         })
       }),
       insert: (row) => ({
@@ -200,6 +270,27 @@ function createClient(supabaseUrl, supabaseKey) {
             return { data: data[0], error: null };
           }
         })
+      }),
+      update: (updates) => ({
+        eq: async (column, value) => {
+          const response = await fetch(`${supabaseUrl}/rest/v1/${table}?${column}=eq.${value}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(updates)
+          });
+          
+          if (!response.ok) {
+            const error = await response.text();
+            return { error: { message: error } };
+          }
+          
+          return { error: null };
+        }
       })
     })
   };

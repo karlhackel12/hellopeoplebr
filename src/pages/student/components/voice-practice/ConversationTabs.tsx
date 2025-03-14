@@ -105,7 +105,7 @@ const ConversationTabs: React.FC<ConversationTabsProps> = ({
                   ) : (
                     <AlertCircle className="h-4 w-4 text-amber-500" />
                   )}
-                  Completion Requirements
+                  Conversation Requirements
                 </span>
                 <Badge 
                   variant={canComplete ? "default" : "outline"}
@@ -134,7 +134,7 @@ const ConversationTabs: React.FC<ConversationTabsProps> = ({
                 className="w-full"
                 variant={isCompleted ? "outline" : "default"}
               >
-                {isCompleted ? "Completed" : "Complete Conversation Practice"}
+                {isCompleted ? "Practice Completed" : "Complete Conversation Practice"}
               </Button>
             </CardFooter>
           </Card>
