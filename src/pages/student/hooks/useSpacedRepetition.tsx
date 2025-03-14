@@ -223,7 +223,8 @@ export const useSpacedRepetition = () => {
           points_earned: points,
           ease_factor: newEaseFactor,
           interval_days: newInterval,
-          streak: newStreak
+          streak: newStreak,
+          review_date: new Date().toISOString()
         })
         .select()
         .single();

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { 
-  Timer, Star, ChevronLeft, ArrowLeft, ArrowRight, Zap, 
+  Timer, Star, ChevronLeft, ArrowLeft, ArrowRight, 
   ThumbsUp, ThumbsDown, X, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,6 +37,7 @@ const SpacedRepetitionReview: React.FC = () => {
   const [correctCount, setCorrectCount] = useState(0);
   const [totalReviewed, setTotalReviewed] = useState(0);
   const [totalPointsEarned, setTotalPointsEarned] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const confettiRef = useRef<HTMLDivElement>(null);
   
@@ -115,13 +116,14 @@ const SpacedRepetitionReview: React.FC = () => {
   };
   
   const submitRating = async (rating: number) => {
-    if (!currentItem) return;
+    if (!currentItem || isSubmitting) return;
     
+    setIsSubmitting(true);
     const endTime = Date.now();
     const responseTimeMs = startTime ? endTime - startTime : 5000;
     
     try {
-      // recordReview now returns a Promise with a result
+      // Use await to properly handle the Promise
       const result = await recordReview({
         itemId: currentItem.id,
         qualityResponse: rating,
@@ -149,15 +151,18 @@ const SpacedRepetitionReview: React.FC = () => {
           setSelectedOption(null);
           setStartTime(Date.now());
           setPoints(null);
+          setIsSubmitting(false);
         }, 1500);
       } else {
         // All items reviewed
         setReviewComplete(true);
         refetchDueItems();
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Failed to submit rating:', error);
       toast.error('Failed to record your response');
+      setIsSubmitting(false);
     }
   };
   
@@ -314,6 +319,7 @@ const SpacedRepetitionReview: React.FC = () => {
                             rating.value <= 2 ? "hover:border-red-500" : "hover:border-green-500"
                           }`}
                           onClick={() => submitRating(rating.value)}
+                          disabled={isSubmitting}
                         >
                           <span className="text-lg">
                             {rating.value <= 2 ? (
@@ -359,7 +365,7 @@ const SpacedRepetitionReview: React.FC = () => {
                     setStartTime(Date.now());
                     setPoints(null);
                   }}
-                  disabled={showingRating}
+                  disabled={showingRating || isSubmitting}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Previous
                 </Button>
