@@ -28,6 +28,7 @@ export const useGenerationHandler = (
     setGenerationPhase,
     setProgressPercentage,
     setStatusMessage,
+    setGenerationId,
     resetGenerationState
   } = updateState;
 
@@ -72,6 +73,7 @@ export const useGenerationHandler = (
         if (generationState.generationPhase === 'starting') {
           setGenerationPhase('analyzing');
           setProgressPercentage(20);
+          setStatusMessage('Analyzing requirements...');
         }
       }, 1500);
       
@@ -80,14 +82,35 @@ export const useGenerationHandler = (
         if (generationState.generationPhase === 'analyzing') {
           setGenerationPhase('generating');
           setProgressPercentage(30);
+          setStatusMessage('Generating content and quiz questions...');
         }
       }, 3000);
       
       try {
         const result = await processGeneration(generationParams);
+        
+        // Check localStorage for quiz data
+        const storageKey = `lesson_quiz_${generationParams.timestamp}`;
+        const quizData = localStorage.getItem(storageKey);
+        
+        if (quizData) {
+          console.log("Successfully stored quiz data in localStorage:", storageKey);
+          const parsedQuiz = JSON.parse(quizData);
+          const questionCount = parsedQuiz.questions?.length || 0;
+          
+          if (questionCount > 0) {
+            setStatusMessage(`Generated content with ${questionCount} quiz questions!`);
+          } else {
+            console.warn("Quiz data stored but no questions found");
+            setStatusMessage('Lesson content generated successfully!');
+          }
+        } else {
+          console.warn("No quiz data was stored in localStorage");
+          setStatusMessage('Lesson content generated successfully!');
+        }
+        
         setGenerationPhase('complete');
         setProgressPercentage(100);
-        setStatusMessage('Lesson content generated successfully!');
         setGenerating(false);
         setGenerationStatus('completed');
         

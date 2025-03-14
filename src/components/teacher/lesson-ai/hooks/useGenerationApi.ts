@@ -41,15 +41,23 @@ export const useGenerationApi = () => {
       // Store quiz data in local storage for later use
       if (resultData.quiz && resultData.quiz.questions) {
         try {
+          const timestamp = generationParams.timestamp || new Date().toISOString();
+          const storageKey = `lesson_quiz_${timestamp}`;
+          
           // Save the quiz data in localStorage for later retrieval
           localStorage.setItem(
-            `lesson_quiz_${generationParams.timestamp || new Date().toISOString()}`,
+            storageKey,
             JSON.stringify(resultData.quiz)
           );
-          console.log("Quiz data stored for later use");
+          console.log("Quiz data stored in localStorage with key:", storageKey);
+          
+          // Also store as a session reference to the most recent quiz
+          localStorage.setItem('most_recent_quiz_key', storageKey);
         } catch (storageError) {
           console.warn("Failed to store quiz data:", storageError);
         }
+      } else {
+        console.warn("No quiz data received from edge function");
       }
       
       return {

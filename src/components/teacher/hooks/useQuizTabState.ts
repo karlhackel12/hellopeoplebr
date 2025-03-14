@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Question } from '../quiz/types';
 import { toast } from 'sonner';
@@ -77,9 +76,19 @@ export const useQuizTabState = (lessonId?: string) => {
     }
   };
 
-  // Handle quiz generation
-  const handleGenerateQuiz = async (numQuestionsParam: string) => {
+  // Handle quiz generation - now accepts pre-existing questions
+  const handleGenerateQuiz = async (numQuestionsParam: string, existingQuestions?: any[]) => {
     try {
+      // If we have existing questions from localStorage, use those
+      if (existingQuestions && existingQuestions.length > 0) {
+        console.log("Using pre-existing questions from localStorage:", existingQuestions.length);
+        setPreviewQuestions(existingQuestions);
+        setShowPreview(true);
+        return true;
+      }
+      
+      // Otherwise, generate new questions
+      console.log("Generating new questions from prompt");
       const result = await generateQuizFromPrompt(numQuestionsParam);
       if (result) {
         setShowPreview(true);
@@ -94,18 +103,34 @@ export const useQuizTabState = (lessonId?: string) => {
   };
   
   // Handle quiz saving
-  const handleSaveQuiz = async (title: string) => {
+  const handleSaveQuiz = async (title: string = quizTitle) => {
     if (!lessonId || previewQuestions.length === 0) return;
     
     try {
       setSaving(true);
       
       const existingQuiz = await QuizService.getExistingQuiz(lessonId);
-      await QuizService.saveQuiz(lessonId, title, existingQuiz?.id);
+      const quiz = await QuizService.saveQuiz(lessonId, title, existingQuiz?.id);
+      
+      // Clear existing questions if there are any
+      if (existingQuiz?.id) {
+        await QuizService.clearExistingQuestions(existingQuiz.id);
+      }
+      
+      // Save the questions
+      await QuizService.saveQuestions(quiz.id, previewQuestions);
       
       toast.success('Quiz saved successfully');
       setExistingQuiz(true);
       await loadExistingQuizData();
+      
+      // Clear localStorage quiz data since we've saved it to the database
+      const mostRecentQuizKey = localStorage.getItem('most_recent_quiz_key');
+      if (mostRecentQuizKey) {
+        localStorage.removeItem(mostRecentQuizKey);
+        localStorage.removeItem('most_recent_quiz_key');
+      }
+      
     } catch (error: any) {
       console.error("Error saving quiz:", error);
       toast.error(`Failed to save quiz: ${error.message}`);
@@ -136,6 +161,14 @@ export const useQuizTabState = (lessonId?: string) => {
         // Just clear the preview without database operations
         setPreviewQuestions([]);
       }
+      
+      // Clear localStorage quiz data since we've discarded it
+      const mostRecentQuizKey = localStorage.getItem('most_recent_quiz_key');
+      if (mostRecentQuizKey) {
+        localStorage.removeItem(mostRecentQuizKey);
+        localStorage.removeItem('most_recent_quiz_key');
+      }
+      
     } catch (error: any) {
       console.error("Error discarding quiz:", error);
       toast.error(`Failed to discard quiz: ${error.message}`);
