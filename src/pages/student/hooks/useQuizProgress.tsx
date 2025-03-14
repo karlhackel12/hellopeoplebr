@@ -66,16 +66,45 @@ export const useQuizProgress = (quizId: string) => {
         
         // If the quiz is incomplete, set the current question to the next unanswered one
         if (!progressData.completed_at) {
-          const answeredQuestions = Object.keys(answersObject || {}).length;
-          // We don't have total_questions in the database, so use the count of answers as a fallback
-          const totalQuestions = await getQuestionCount(quizId);
-          setCurrentQuestionIndex(Math.min(answeredQuestions, totalQuestions - 1));
+          setCurrentQuestionIndex(progressData.current_question || 0);
         }
+      } else {
+        // Create new progress record if none exists
+        await createNewProgress(user.id);
       }
     } catch (error) {
       console.error('Error loading quiz progress:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Create a new progress record
+  const createNewProgress = async (userId: string) => {
+    try {
+      const { data: newProgress, error } = await supabase
+        .from('user_quiz_progress')
+        .insert({
+          quiz_id: quizId,
+          user_id: userId,
+          current_question: 0,
+          answers: {},
+          started_at: new Date().toISOString(),
+          last_updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (newProgress) {
+        setProgressId(newProgress.id);
+      }
+      
+      return newProgress;
+    } catch (error) {
+      console.error('Error creating quiz progress:', error);
+      throw error;
     }
   };
 
@@ -96,51 +125,28 @@ export const useQuizProgress = (quizId: string) => {
   };
 
   // Save user's progress to the database
-  const saveProgress = async (answers: UserAnswers, isCompleted: boolean = false, finalScore: number | null = null) => {
+  const saveProgress = async (answers: UserAnswers, currentQuestion: number, isCompleted: boolean = false, finalScore: number | null = null) => {
     try {
       setSaving(true);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('User not authenticated');
+      if (!progressId) {
+        throw new Error('Progress record not found');
+      }
       
       const updateData = {
         answers,
+        current_question: currentQuestion,
         completed_at: isCompleted ? new Date().toISOString() : null,
         score: finalScore,
-        updated_at: new Date().toISOString()
+        last_updated_at: new Date().toISOString()
       };
       
-      if (progressId) {
-        // Update existing progress
-        const { error: updateError } = await supabase
-          .from('user_quiz_progress')
-          .update(updateData)
-          .eq('id', progressId);
-        
-        if (updateError) throw updateError;
-      } else {
-        // Create new progress record
-        const { data: newProgress, error: insertError } = await supabase
-          .from('user_quiz_progress')
-          .insert({
-            quiz_id: quizId,
-            user_id: user.id,
-            answers,
-            completed_at: isCompleted ? new Date().toISOString() : null,
-            score: finalScore,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-        
-        if (insertError) throw insertError;
-        
-        if (newProgress) {
-          setProgressId(newProgress.id);
-        }
-      }
+      const { error } = await supabase
+        .from('user_quiz_progress')
+        .update(updateData)
+        .eq('id', progressId);
+      
+      if (error) throw error;
       
       return true;
     } catch (error) {
@@ -157,7 +163,7 @@ export const useQuizProgress = (quizId: string) => {
       const updatedAnswers = { ...userAnswers, [questionId]: optionId };
       setUserAnswers(updatedAnswers);
       
-      await saveProgress(updatedAnswers);
+      await saveProgress(updatedAnswers, currentQuestionIndex);
       
       return updatedAnswers;
     } catch (error) {
@@ -169,14 +175,18 @@ export const useQuizProgress = (quizId: string) => {
   // Navigate to the next question
   const goToNextQuestion = async (questions: Question[]) => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      await saveProgress(userAnswers, nextIndex);
     }
   };
 
   // Navigate to the previous question
   const goToPreviousQuestion = async () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      const prevIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(prevIndex);
+      await saveProgress(userAnswers, prevIndex);
     }
   };
 
@@ -207,7 +217,7 @@ export const useQuizProgress = (quizId: string) => {
       setScore(finalScore);
       
       // Save to database
-      await saveProgress(userAnswers, true, finalScore);
+      await saveProgress(userAnswers, currentQuestionIndex, true, finalScore);
       
       return finalScore;
     } catch (error) {
@@ -230,7 +240,7 @@ export const useQuizProgress = (quizId: string) => {
       setCurrentQuestionIndex(0);
       
       // Save to database
-      await saveProgress({}, false, null);
+      await saveProgress({}, 0, false, null);
       
       return true;
     } catch (error) {
