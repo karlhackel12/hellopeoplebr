@@ -6,13 +6,16 @@ export interface GenerationParams {
   title: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   language: string;
-  instructions?: string; // Make sure this is explicitly defined as string or undefined
+  subject?: string;
+  instructions?: string;
 }
 
 export interface PredictionResponse {
-  id: string;
-  status: 'succeeded' | 'failed';
+  id?: string;
+  status: 'succeeded' | 'failed' | 'pending' | 'processing';
+  lesson?: GeneratedLessonContent;
   output?: any;
+  error?: string;
 }
 
 export type GenerationPhase = 

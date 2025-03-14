@@ -16,6 +16,10 @@ export const useGenerationApi = () => {
       if (!generationParams.title) {
         throw new Error("Title is required for lesson generation");
       }
+      
+      if (!generationParams.timestamp) {
+        generationParams.timestamp = new Date().toISOString();
+      }
 
       // Ensure instructions is undefined or a string (not null or other types)
       if (generationParams.instructions !== undefined && typeof generationParams.instructions !== 'string') {
@@ -25,44 +29,28 @@ export const useGenerationApi = () => {
       
       // Clean params object to ensure only valid data is sent
       const cleanParams = {
-        ...generationParams,
         title: generationParams.title.trim(),
         level: generationParams.level,
-        language: generationParams.language,
+        language: generationParams.language || 'English',
+        subject: generationParams.subject || 'English',
         instructions: generationParams.instructions ? generationParams.instructions.trim() : undefined,
         timestamp: generationParams.timestamp
       };
       
       console.log("Cleaned params for edge function:", cleanParams);
       
-      // Create a timeout promise
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(TIMEOUT_MESSAGE));
-        }, EDGE_FUNCTION_TIMEOUT);
-      });
-
-      // Create the actual request promise with explicit function name
-      console.log("Calling Supabase edge function: generate-lesson-content");
-      const edgeFunctionPromise = supabase.functions.invoke('generate-lesson-content', {
-        body: cleanParams,
-      });
+      // Use our mock API instead of real API call
+      console.log("Using mock API for lesson generation");
       
-      // Race the promises - whichever resolves/rejects first wins
-      const response = await Promise.race([edgeFunctionPromise, timeoutPromise]);
+      // Import the generateLesson function
+      const { generateLesson } = await import('@/integrations/openai/client');
       
-      console.log("Edge function response received:", response);
-      
-      if (response.error) {
-        console.error("Edge function error:", response.error);
-        throw new Error(response.error?.message || "Failed to start content generation");
-      }
-
-      const resultData = response.data;
-      console.log("Edge function response data:", resultData);
+      // Call the mock API
+      const mockResponse = await generateLesson(cleanParams);
+      console.log("Mock API response:", mockResponse);
       
       // Store quiz data in local storage for later use
-      if (resultData.quiz && resultData.quiz.questions) {
+      if (mockResponse.quiz && mockResponse.quiz.questions) {
         try {
           const timestamp = generationParams.timestamp || new Date().toISOString();
           const storageKey = `lesson_quiz_${timestamp}`;
@@ -70,7 +58,7 @@ export const useGenerationApi = () => {
           // Save the quiz data in localStorage for later retrieval
           localStorage.setItem(
             storageKey,
-            JSON.stringify(resultData.quiz)
+            JSON.stringify(mockResponse.quiz)
           );
           console.log("Quiz data stored in localStorage with key:", storageKey);
           
@@ -80,33 +68,21 @@ export const useGenerationApi = () => {
           console.warn("Failed to store quiz data:", storageError);
         }
       } else {
-        console.warn("No quiz data received from edge function");
+        console.warn("No quiz data received from mock API");
       }
       
       return {
-        id: 'direct',
-        status: resultData.status || 'succeeded',
-        output: resultData.lesson || resultData.output
+        id: 'mock-generation',
+        status: mockResponse.status || 'succeeded',
+        lesson: mockResponse.lesson
       };
     } catch (error: any) {
-      console.error("Error invoking edge function:", error);
+      console.error("Error invoking mock API:", error);
       
       // Provide more specific error messages based on error type
       if (error.message === TIMEOUT_MESSAGE) {
         toast.error("Generation timeout", {
           description: "The AI is still working, but it's taking longer than expected. Try refreshing the page in a few moments to see if content has been generated."
-        });
-      } else if (error.message?.includes("Failed to fetch") || error.code === "NETWORK_ERROR") {
-        toast.error("Network error", {
-          description: "There was a problem connecting to our servers. Please check your internet connection and try again."
-        });
-      } else if (error.status === 404 || error.message?.includes("404")) {
-        toast.error("Edge function not found", {
-          description: "The AI generation service may not be deployed correctly. Please contact support."
-        });
-      } else if (error.status === 403) {
-        toast.error("Permission denied", {
-          description: "You don't have permission to use this feature. Please check your account status."
         });
       } else {
         toast.error("Generation failed", {
