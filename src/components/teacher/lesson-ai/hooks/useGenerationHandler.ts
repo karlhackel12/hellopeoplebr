@@ -60,13 +60,28 @@ export const useGenerationHandler = (
         return;
       }
       
+      // Ensure instructions is a properly formatted string or undefined
+      const formattedInstructions = instructions && typeof instructions === 'string' 
+        ? instructions.trim() 
+        : typeof instructions === 'object' && instructions !== null && 'value' in instructions 
+          ? (instructions.value as string).trim()
+          : undefined;
+      
+      console.log("Formatting instructions:", { 
+        original: instructions, 
+        formatted: formattedInstructions,
+        type: typeof instructions
+      });
+      
       const generationParams: GenerationParams = {
         timestamp: new Date().toISOString(),
         title,
         level,
         language: 'english',
-        instructions: instructions.trim() || undefined,
+        instructions: formattedInstructions,
       };
+      
+      console.log("Generation params prepared:", generationParams);
       
       // Set up a timeout to progress to the analyzing phase
       setTimeout(() => {

@@ -12,6 +12,16 @@ export const useGenerationApi = () => {
     console.log("Invoking generate-lesson-content function with params:", generationParams);
     
     try {
+      // Validate params before sending
+      if (!generationParams.title) {
+        throw new Error("Title is required for lesson generation");
+      }
+
+      if (generationParams.instructions && typeof generationParams.instructions !== 'string') {
+        console.warn("Instructions is not a string, converting to string:", generationParams.instructions);
+        generationParams.instructions = String(generationParams.instructions);
+      }
+      
       // Create a timeout promise
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {

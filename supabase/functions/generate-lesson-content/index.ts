@@ -14,6 +14,32 @@ const corsHeaders = {
   "Content-Type": "application/json"
 };
 
+function validateRequest(requestData: any): string | null {
+  // Check if the request data is null or undefined
+  if (!requestData) {
+    return "Request data is missing";
+  }
+
+  // Check if the title is present
+  if (!requestData.title) {
+    return "Title is required";
+  }
+
+  // Check if level is valid
+  if (requestData.level && !["beginner", "intermediate", "advanced"].includes(requestData.level)) {
+    return "Invalid level: must be 'beginner', 'intermediate', or 'advanced'";
+  }
+
+  // Check if instructions is a string when provided
+  if (requestData.instructions !== undefined && 
+      requestData.instructions !== null && 
+      typeof requestData.instructions !== 'string') {
+    return "Instructions must be a string";
+  }
+
+  return null;
+}
+
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
@@ -182,10 +208,12 @@ serve(async (req) => {
       );
     }
 
-    // Validate title
-    if (!requestData.title) {
+    // Validate request data
+    const validationError = validateRequest(requestData);
+    if (validationError) {
+      console.error("Validation error:", validationError);
       return new Response(
-        JSON.stringify({ error: "Title is required" }),
+        JSON.stringify({ error: validationError }),
         {
           status: 400,
           headers: corsHeaders
