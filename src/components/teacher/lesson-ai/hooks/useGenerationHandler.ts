@@ -61,11 +61,13 @@ export const useGenerationHandler = (
       }
       
       // Ensure instructions is a properly formatted string or undefined
-      const formattedInstructions = instructions && typeof instructions === 'string' 
-        ? instructions.trim() 
-        : typeof instructions === 'object' && instructions !== null && 'value' in instructions 
-          ? (instructions.value as string).trim()
-          : undefined;
+      const formattedInstructions = instructions 
+        ? typeof instructions === 'string' 
+          ? instructions.trim() 
+          : typeof instructions === 'object' && instructions !== null && 'value' in instructions 
+            ? String((instructions as {value: string}).value).trim()
+            : undefined
+        : undefined;
       
       console.log("Formatting instructions:", { 
         original: instructions, 
