@@ -23,7 +23,9 @@ export const useInvitationsData = (queryClient: any) => {
           throw new Error('Authentication required');
         }
         
-        // Use the profiles table instead of auth.users to avoid permission issues
+        const teacherId = authData.user.id;
+        
+        // Get invitations created by the current teacher
         const { data, error } = await supabase
           .from('student_invitations')
           .select(`
@@ -35,8 +37,10 @@ export const useInvitationsData = (queryClient: any) => {
             expires_at,
             used_by_name,
             invited_by,
+            user_id,
             profiles:profiles(first_name, last_name)
           `)
+          .eq('invited_by', teacherId)
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -75,9 +79,11 @@ export const useInvitationsData = (queryClient: any) => {
   // Handler for successful invitation or deletion
   const handleInvitationUpdate = useCallback(() => {
     console.log('handleInvitationUpdate called, invalidating cache');
-    // Invalidate the cache and force refetch data
+    // Invalidate both invitations and students caches
     queryClient.invalidateQueries({ queryKey: ['student-invitations'] });
-    queryClient.removeQueries({ queryKey: ['student-invitations'] });
+    queryClient.invalidateQueries({ queryKey: ['students-profiles'] });
+    
+    // Force refetch data
     setTimeout(() => {
       refetchInvitations();
     }, 100);

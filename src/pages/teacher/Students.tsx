@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import StudentsTabs from '@/components/teacher/students/StudentsTabs';
 import StudentsError from '@/components/teacher/students/StudentsError';
@@ -10,9 +11,18 @@ import { useInvitationsData } from '@/components/teacher/students/hooks/useInvit
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Students = () => {
-  const [activeTab, setActiveTab] = useState('students');
+  const location = useLocation();
+  const initialTab = location.state?.initialTab || 'students';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  
+  // Set initial tab from location state if provided
+  useEffect(() => {
+    if (location.state?.initialTab) {
+      setActiveTab(location.state.initialTab);
+    }
+  }, [location.state]);
   
   // Use our custom hooks to fetch data
   const { students, loadingStudents, studentsError, refetchStudents } = useStudentsData();
