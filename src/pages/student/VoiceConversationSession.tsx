@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -12,6 +11,7 @@ import ConversationHeader from './components/voice-practice/ConversationHeader';
 import ConversationTabs from './components/voice-practice/ConversationTabs';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useVoicePractice } from './hooks/useVoicePractice';
+import { supabase } from '@/integrations/supabase/client';
 
 const VoiceConversationSession: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const VoiceConversationSession: React.FC = () => {
   const [searchParams] = useSearchParams();
   const lessonIdParam = searchParams.get('lessonId');
   const topicParam = searchParams.get('topic');
+  const assignmentIdParam = searchParams.get('assignmentId');
   
   const [isRecording, setIsRecording] = useState(false);
   const [activeTab, setActiveTab] = useState("conversation");
@@ -31,7 +32,7 @@ const VoiceConversationSession: React.FC = () => {
   const [lessonTopics, setLessonTopics] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [minMessageCountReached, setMinMessageCountReached] = useState(false);
+  const [assignmentData, setAssignmentData] = useState<any>(null);
   
   const startTimeRef = useRef<Date | null>(null);
   
@@ -47,13 +48,33 @@ const VoiceConversationSession: React.FC = () => {
     sendMessage,
     endConversation,
     analyzeConversation
-  } = useVoiceConversation(lessonIdParam || undefined);
+  } = useVoiceConversation(lessonIdParam || undefined, assignmentIdParam || undefined);
+  
+  useEffect(() => {
+    const fetchAssignmentData = async () => {
+      if (assignmentIdParam) {
+        const { data, error } = await supabase
+          .from('student_assignments')
+          .select('*')
+          .eq('id', assignmentIdParam)
+          .single();
+          
+        if (!error && data) {
+          setAssignmentData(data);
+        }
+      }
+    };
+    
+    fetchAssignmentData();
+  }, [assignmentIdParam]);
   
   useEffect(() => {
     // Check if minimum conversation turns have been reached (e.g., 5 user messages)
     const userMessageCount = messages.filter(m => m.role === 'user').length;
     setMinMessageCountReached(userMessageCount >= 3);
   }, [messages]);
+  
+  const [minMessageCountReached, setMinMessageCountReached] = useState(false);
   
   useEffect(() => {
     if (sessionId) {
@@ -63,7 +84,6 @@ const VoiceConversationSession: React.FC = () => {
     }
   }, [sessionId, initConversation]);
   
-  // Extract vocabulary and topics from lesson
   useEffect(() => {
     if (lesson) {
       // Extract some vocabulary words from content
@@ -97,7 +117,6 @@ const VoiceConversationSession: React.FC = () => {
     }
   }, [lesson, topicParam]);
   
-  // Update analytics data when it changes
   useEffect(() => {
     if (conversationAnalytics) {
       // Transform the analytics data into the format expected by the feedback component
@@ -210,7 +229,11 @@ const VoiceConversationSession: React.FC = () => {
   
   const handleEndConversation = async () => {
     if (conversationId) {
-      const success = await endConversation(confidenceScore || undefined);
+      const success = await endConversation(
+        confidenceScore || undefined, 
+        lessonIdParam || undefined,
+        assignmentIdParam || undefined
+      );
       
       if (success) {
         // Mark the lesson session as completed if it's a lesson-based conversation
@@ -226,6 +249,8 @@ const VoiceConversationSession: React.FC = () => {
             console.error('Error completing session:', error);
             toast.error('Failed to mark lesson as completed');
           }
+        } else if (assignmentIdParam && assignmentData) {
+          toast.success(`Assignment "${assignmentData.title}" completed!`);
         } else {
           toast.success('Conversation saved successfully');
         }
@@ -255,9 +280,9 @@ const VoiceConversationSession: React.FC = () => {
     navigate('/student/voice-practice');
   };
   
-  const practiceTopic = topicParam || (lesson 
-    ? `Conversation Practice: ${lesson.title}` 
-    : 'General English Conversation Practice');
+  const practiceTopic = assignmentData?.title || 
+    (lesson ? `Conversation Practice: ${lesson.title}` : 
+      (topicParam || 'General English Conversation Practice'));
 
   return (
     <StudentLayout>
@@ -273,6 +298,19 @@ const VoiceConversationSession: React.FC = () => {
           </Button>
         </div>
         
+        {assignmentData && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <BookOpen className="h-4 w-4 text-blue-600" />
+            <AlertTitle>Assignment Conversation Practice</AlertTitle>
+            <AlertDescription>
+              You're completing a required conversation practice for the assignment: "{assignmentData.title}". 
+              {assignmentData.due_date && (
+                <span> Due {formatDistanceToNow(new Date(assignmentData.due_date), { addSuffix: true })}.</span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {sessionCompleted && (
           <Alert className="mb-6 bg-green-50 border-green-200">
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -281,6 +319,9 @@ const VoiceConversationSession: React.FC = () => {
               Great job! Your conversation practice has been saved and marked as completed.
               {lesson && (
                 <span> You've completed the practice for "{lesson.title}".</span>
+              )}
+              {assignmentData && (
+                <span> You've completed the assignment "{assignmentData.title}".</span>
               )}
             </AlertDescription>
           </Alert>

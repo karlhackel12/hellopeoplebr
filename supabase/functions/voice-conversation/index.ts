@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -26,7 +27,8 @@ serve(async (req) => {
       difficulty = 1,
       userId,
       markAsCompleted = false,
-      lessonId = null
+      lessonId = null,
+      assignmentId = null
     } = await req.json();
 
     // If just marking as completed, update the conversation session
@@ -42,6 +44,18 @@ serve(async (req) => {
         .from('conversation_sessions')
         .update({ is_completed: true, completed_at: new Date().toISOString() })
         .eq('id', conversationId);
+      
+      // If there's an assignment ID, mark the assignment as completed
+      if (assignmentId) {
+        await supabaseAdmin
+          .from('student_assignments')
+          .update({ 
+            status: 'completed', 
+            completed_at: new Date().toISOString() 
+          })
+          .eq('id', assignmentId)
+          .eq('student_id', userId);
+      }
       
       // If there's a lessonId, also update the lesson progress
       if (lessonId) {
@@ -60,7 +74,8 @@ serve(async (req) => {
             .update({ 
               status: 'completed',
               updated_at: new Date().toISOString(),
-              practice_completed: true
+              practice_completed: true,
+              completed_at: new Date().toISOString()
             })
             .eq('id', existingProgress.id);
         } else {
@@ -72,7 +87,8 @@ serve(async (req) => {
               user_id: userId,
               status: 'completed',
               practice_completed: true,
-              is_required: true
+              is_required: true,
+              completed_at: new Date().toISOString()
             });
         }
       }

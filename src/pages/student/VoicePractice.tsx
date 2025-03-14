@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Helmet } from 'react-helmet';
@@ -14,48 +13,21 @@ import RecentFeedback from './components/voice-practice/RecentFeedback';
 import { useVoicePractice } from './hooks/useVoicePractice';
 import { formatDistanceToNow } from 'date-fns';
 import ProgressTracker from '@/components/teacher/preview/ProgressTracker';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 
 const VoicePractice: React.FC = () => {
   const navigate = useNavigate();
-  const { sessions, recentFeedback, stats, isLoading } = useVoicePractice();
+  const { 
+    sessions, 
+    recentFeedback, 
+    stats, 
+    isLoading, 
+    requiredSessions,
+    assignedLessonsWithoutSessions
+  } = useVoicePractice();
+  
   const [activeTab, setActiveTab] = useState("practice");
   
-  // Fetch required assignments with lessons
-  const { data: requiredAssignments, isLoading: isLoadingAssignments } = useQuery({
-    queryKey: ['student-required-conversation-assignments'],
-    queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user) return [];
-      
-      const { data, error } = await supabase
-        .from('student_assignments')
-        .select(`
-          id,
-          title,
-          description,
-          due_date,
-          status,
-          started_at,
-          completed_at,
-          lesson_id,
-          lesson:lessons(
-            id,
-            title,
-            content
-          )
-        `)
-        .eq('student_id', user.user.id)
-        .eq('status', 'not_started')
-        .order('due_date', { ascending: true });
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
-  
-  const startNewConversation = (topic?: string, lessonId?: string) => {
+  const startNewConversation = (topic?: string, lessonId?: string, assignmentId?: string) => {
     const queryParams = new URLSearchParams();
     
     if (topic) {
@@ -66,19 +38,12 @@ const VoicePractice: React.FC = () => {
       queryParams.append('lessonId', lessonId);
     }
     
+    if (assignmentId) {
+      queryParams.append('assignmentId', assignmentId);
+    }
+    
     navigate(`/student/voice-practice/session?${queryParams.toString()}`);
   };
-  
-  // Filter required lessons (not marked as completed)
-  const requiredLessons = sessions
-    ?.filter(session => session.lesson && !session.completed_at)
-    ?.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()) || [];
-  
-  // Additional lessons from assignments not yet in practice sessions
-  const additionalRequiredLessons = requiredAssignments?.filter(assignment => 
-    assignment.lesson && 
-    !sessions?.some(session => session.lesson?.id === assignment.lesson_id)
-  ) || [];
   
   // Filter completed lessons
   const completedSessions = sessions?.filter(session => session.completed_at) || [];
@@ -95,6 +60,8 @@ const VoicePractice: React.FC = () => {
   
   // Calculate count of unique topics
   const uniqueTopicsCount = Object.keys(topicGroups).length;
+  
+  const hasRequiredConversations = requiredSessions.length > 0 || assignedLessonsWithoutSessions.length > 0;
   
   return (
     <StudentLayout>
@@ -129,7 +96,7 @@ const VoicePractice: React.FC = () => {
                 overall: stats.averageScores.overall,
                 grammar: stats.averageScores.grammar,
                 fluency: stats.averageScores.fluency,
-                vocabulary: stats.averageScores.overall * 0.9 // Approximation for vocabulary score
+                vocabulary: stats.averageScores.vocabulary
               }}
               topicsCount={uniqueTopicsCount}
               loading={isLoading}
@@ -172,21 +139,22 @@ const VoicePractice: React.FC = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {isLoading || isLoadingAssignments ? (
+                    {isLoading ? (
                       <div className="animate-pulse space-y-4">
                         <div className="h-20 bg-slate-200 rounded"></div>
                         <div className="h-20 bg-slate-200 rounded"></div>
                       </div>
-                    ) : requiredLessons.length > 0 || additionalRequiredLessons.length > 0 ? (
+                    ) : hasRequiredConversations ? (
                       <div className="space-y-4">
-                        {requiredLessons.map((session) => (
+                        {/* In-progress practice sessions */}
+                        {requiredSessions.map((session) => (
                           <div key={session.id} className="border rounded-lg p-4 hover:border-blue-200 hover:bg-blue-50 transition-colors">
                             <div className="flex justify-between items-start">
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h3 className="font-medium">{session.lesson?.title}</h3>
                                   <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
-                                    Required
+                                    In Progress
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1">
@@ -213,14 +181,15 @@ const VoicePractice: React.FC = () => {
                           </div>
                         ))}
                         
-                        {additionalRequiredLessons.map((assignment) => (
+                        {/* Assigned lessons without practice sessions */}
+                        {assignedLessonsWithoutSessions.map((assignment) => (
                           <div key={assignment.id} className="border rounded-lg p-4 hover:border-blue-200 hover:bg-blue-50 transition-colors">
                             <div className="flex justify-between items-start">
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h3 className="font-medium">{assignment.lesson?.title}</h3>
                                   <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
-                                    New Assignment
+                                    Required Assignment
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1">
@@ -236,7 +205,7 @@ const VoicePractice: React.FC = () => {
                                 )}
                               </div>
                               <Button 
-                                onClick={() => startNewConversation(assignment.lesson?.title, assignment.lesson_id)}
+                                onClick={() => startNewConversation(assignment.lesson?.title, assignment.lesson_id, assignment.id)}
                                 size="sm"
                                 className="gap-1"
                               >
@@ -251,13 +220,13 @@ const VoicePractice: React.FC = () => {
                           completedSections={completedSessions.filter(s => s.lesson).map(s => s.id)}
                           totalSections={
                             completedSessions.filter(s => s.lesson).length + 
-                            requiredLessons.length + 
-                            additionalRequiredLessons.length
+                            requiredSessions.length + 
+                            assignedLessonsWithoutSessions.length
                           }
                           customLabel={`${completedSessions.filter(s => s.lesson).length} of ${
                             completedSessions.filter(s => s.lesson).length + 
-                            requiredLessons.length + 
-                            additionalRequiredLessons.length
+                            requiredSessions.length + 
+                            assignedLessonsWithoutSessions.length
                           } required conversations completed`}
                         />
                       </div>
