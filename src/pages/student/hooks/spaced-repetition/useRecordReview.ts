@@ -3,12 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateNextReview, calculatePoints } from '@/utils/spacedRepetition';
-
-export interface ReviewResult {
-  reviewStat: any;
-  points: number;
-  nextReviewDate: Date;
-}
+import { ReviewResult } from '../useSpacedRepetition';
 
 export const useRecordReview = (userId: string | null) => {
   const queryClient = useQueryClient();
@@ -24,6 +19,9 @@ export const useRecordReview = (userId: string | null) => {
       responseTimeMs 
     }) => {
       if (!userId) throw new Error('User is not authenticated');
+      
+      // Validate qualityResponse is within the valid range (0-5)
+      const validQualityResponse = Math.min(5, Math.max(0, qualityResponse));
       
       const { data: existingStats, error: statsError } = await supabase
         .from('spaced_repetition_stats')
@@ -43,20 +41,20 @@ export const useRecordReview = (userId: string | null) => {
         streak: newStreak,
         nextReviewDate
       } = calculateNextReview(
-        qualityResponse, 
+        validQualityResponse, 
         latestStat?.ease_factor || 2.5,
         latestStat?.interval_days || 1,
         latestStat?.streak || 0
       );
       
-      const points = calculatePoints(responseTimeMs, qualityResponse);
+      const points = calculatePoints(responseTimeMs, validQualityResponse);
       
       const { data: reviewStat, error: reviewError } = await supabase
         .from('spaced_repetition_stats')
         .insert({
           item_id: itemId,
           user_id: userId,
-          quality_response: qualityResponse,
+          quality_response: validQualityResponse,
           response_time_ms: responseTimeMs,
           points_earned: points,
           ease_factor: newEaseFactor,

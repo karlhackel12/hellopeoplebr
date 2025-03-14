@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import the new components
+// Import the components
 import ReviewProgress from './components/spaced-repetition/ReviewProgress';
 import ReviewQuestionCard from './components/spaced-repetition/ReviewQuestionCard';
 import ReviewCompletionSummary from './components/spaced-repetition/ReviewCompletionSummary';
@@ -101,15 +101,18 @@ const SpacedRepetitionReview: React.FC = () => {
     
     if (!currentItem || isSubmitting) return;
     
-    setIsSubmitting(true);
-    const endTime = Date.now();
-    const responseTimeMs = startTime ? endTime - startTime : 5000;
-    
     try {
+      setIsSubmitting(true);
+      const endTime = Date.now();
+      const responseTimeMs = startTime ? endTime - startTime : 5000;
+      
+      // Ensure rating is within valid range (0-5)
+      const validRating = Math.min(5, Math.max(0, rating));
+      
       // Use await to properly handle the Promise
       const result = await recordReview({
         itemId: currentItem.id,
-        qualityResponse: rating,
+        qualityResponse: validRating,
         responseTimeMs
       });
       

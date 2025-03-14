@@ -8,8 +8,20 @@ import { useAddSpacedRepetitionItem } from './spaced-repetition/useAddSpacedRepe
 import { useAddQuestionsFromQuiz } from './spaced-repetition/useAddQuestionsFromQuiz';
 import { useRecordReview } from './spaced-repetition/useRecordReview';
 
+// Standardized ReviewResult interface
 export interface ReviewResult {
-  reviewStat: any;
+  reviewStat: {
+    id: string;
+    item_id: string;
+    user_id: string;
+    quality_response: number;
+    response_time_ms: number;
+    points_earned: number;
+    streak: number;
+    interval_days: number;
+    ease_factor: number;
+    review_date: string;
+  };
   points: number;
   nextReviewDate: Date;
 }
