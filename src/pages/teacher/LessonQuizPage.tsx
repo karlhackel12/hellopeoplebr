@@ -4,14 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import QuizTab from '@/components/teacher/lesson/quiz/QuizTab';
+import QuizEditor from '@/components/teacher/QuizEditor';
 
 const LessonQuizPage = () => {
   const { lessonId } = useParams();
   const navigate = useNavigate();
 
   const handleBack = () => {
-    navigate(`/teacher/lessons/edit/${lessonId}`);
+    navigate(`/teacher/lessons/preview/${lessonId}`);
   };
 
   return (
@@ -25,7 +25,7 @@ const LessonQuizPage = () => {
           <h1 className="text-2xl font-semibold">Lesson Quiz</h1>
         </div>
 
-        <QuizTab lessonId={lessonId} isEditMode={true} />
+        {lessonId && <QuizEditor lessonId={lessonId} />}
       </div>
     </TeacherLayout>
   );
