@@ -1,24 +1,17 @@
 
-export type Quiz = {
-  id: string;
-  title: string;
-  description: string | null;
-  is_published: boolean;
-  pass_percent: number;
-};
-
-export type QuestionOption = {
+export interface QuestionOption {
   id: string;
   option_text: string;
   is_correct: boolean;
-  order_index: number;
-};
+  order_index?: number;
+}
 
-export type Question = {
+export interface Question {
   id: string;
   question_text: string;
   question_type: 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank' | 'audio_response';
-  points: number;
-  order_index: number;
-  options?: QuestionOption[];
-};
+  options: QuestionOption[];
+  points?: number;
+  media_url?: string;
+  order_index?: number;
+}
