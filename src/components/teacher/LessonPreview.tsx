@@ -7,6 +7,7 @@ import ViewModeToggle from './preview/ViewModeToggle';
 import LessonContentTab from './preview/LessonContentTab';
 import QuizTab from './preview/QuizTab';
 import { useQuizData } from './preview/useQuizData';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LessonPreviewProps {
   content: string;
@@ -17,6 +18,7 @@ interface LessonPreviewProps {
 export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, lessonId }) => {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const isMobile = useIsMobile();
   
   const {
     quizQuestions,
@@ -36,8 +38,8 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4">
+      <div className={`flex ${isMobile ? 'flex-col gap-3' : 'justify-between'} items-start sm:items-center`}>
         <h3 className="text-lg font-medium flex items-center">
           <BookOpen className="h-4 w-4 mr-2" />
           Student Preview
@@ -46,12 +48,12 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
       </div>
 
       <div className={`border rounded-lg overflow-hidden bg-white ${
-        viewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 'w-full'
+        viewMode === 'mobile' || isMobile ? 'max-w-[375px] mx-auto' : 'w-full'
       }`}>
         <div className="bg-primary text-white p-4">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="font-bold">{title || 'Student Portal'}</h2>
+              <h2 className="font-bold text-base sm:text-lg">{title || 'Student Portal'}</h2>
             </div>
             <Button size="sm" variant="outline" className="bg-white/20 text-white border-white/20">
               <Bookmark className="h-4 w-4 mr-1" /> Save
@@ -59,7 +61,7 @@ export const LessonPreview: React.FC<LessonPreviewProps> = ({ content, title, le
           </div>
         </div>
         
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           <Tabs defaultValue="content">
             <TabsList className="w-full grid grid-cols-2 mb-4">
               <TabsTrigger value="content">

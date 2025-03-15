@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LessonPreview from '@/components/teacher/lesson/LessonPreview';
 import QuizPreview from '@/components/teacher/quiz/QuizPreview';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LessonGeneratorProps {
   onSave: (lessonData: {
@@ -56,6 +57,7 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
   const [activeTab, setActiveTab] = useState('content');
   const [retryCount, setRetryCount] = useState(0);
   const [generationTimer, setGenerationTimer] = useState<number | null>(null);
+  const isMobile = useIsMobile();
   
   const [generatedLesson, setGeneratedLesson] = useState<any>(null);
   const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
@@ -426,18 +428,18 @@ ${generatedLesson.vocabulary.map((item: any) =>
   };
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-1">
+    <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-3 gap-6'}`}>
+      <div className={isMobile ? "col-span-1" : "md:col-span-1"}>
         <Card className="h-full">
-          <CardContent className="p-6">
+          <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
             {renderForm()}
           </CardContent>
         </Card>
       </div>
       
-      <div className="md:col-span-2">
+      <div className={isMobile ? "col-span-1" : "md:col-span-2"}>
         <Card className="h-full">
-          <CardContent className="p-6">
+          <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
             {renderPreview()}
           </CardContent>
         </Card>

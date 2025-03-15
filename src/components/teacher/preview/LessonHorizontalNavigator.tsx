@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LessonHorizontalNavigatorProps {
   currentPage: number;
@@ -23,6 +24,8 @@ const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
   isLastPage,
   completionPercentage
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="border-t pt-4 mt-6">
       <div className="flex justify-between items-center mb-4">
@@ -30,13 +33,14 @@ const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
           variant="outline" 
           onClick={onPrevious}
           disabled={isFirstPage}
-          className="flex items-center"
+          className={`flex items-center ${isMobile ? 'text-xs px-2 py-1 h-8' : ''}`}
+          size={isMobile ? "sm" : "default"}
         >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Previous
+          <ChevronLeft className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
+          {isMobile ? 'Prev' : 'Previous'}
         </Button>
         
-        <div className="text-sm">
+        <div className={`text-sm ${isMobile ? 'text-xs mx-1' : 'mx-2'}`}>
           Page {currentPage + 1} of {totalPages}
         </div>
         
@@ -44,10 +48,11 @@ const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
           variant={isLastPage ? "default" : "outline"} 
           onClick={onNext}
           disabled={false}
-          className="flex items-center"
+          className={`flex items-center ${isMobile ? 'text-xs px-2 py-1 h-8' : ''}`}
+          size={isMobile ? "sm" : "default"}
         >
           {isLastPage ? 'Finish' : 'Next'}
-          {!isLastPage && <ChevronRight className="h-4 w-4 ml-1" />}
+          {!isLastPage && <ChevronRight className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} ml-1`} />}
         </Button>
       </div>
       
