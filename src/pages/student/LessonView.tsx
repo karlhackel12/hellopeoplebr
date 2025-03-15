@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLessonData } from './hooks/useLessonData';
 import { useLessonProgress } from './hooks/useLessonProgress';
 import LessonHeader from './components/LessonHeader';
@@ -26,17 +27,24 @@ const LessonView: React.FC = () => {
     quizQuestions,
     quizLoading,
     questionsLoading,
-    hasQuiz 
+    hasQuiz,
+    isQuizAvailable,
+    hasUnpublishedQuiz
   } = useLessonData(lessonId);
   
   // Lesson progress management
-  const { lessonProgress, updateProgress } = useLessonProgress(lessonId);
+  const { 
+    lessonProgress, 
+    progressLoading,
+    assignment,
+    updateProgress,
+    isUpdating 
+  } = useLessonProgress(lessonId);
   
   // UI state
   const [currentTab, setCurrentTab] = useState<'content' | 'quiz'>('content');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [sections, setSections] = useState<Array<{id: string, title: string, content: string}>>([]);
-  const [isUpdating, setIsUpdating] = useState(false);
   
   // Extract sections from lesson content
   useEffect(() => {
@@ -45,6 +53,19 @@ const LessonView: React.FC = () => {
       setSections(extractedSections);
     }
   }, [lesson?.content]);
+
+  // Debug log
+  useEffect(() => {
+    console.log('LessonView state:', {
+      lessonId,
+      hasQuiz,
+      isQuizAvailable,
+      hasUnpublishedQuiz,
+      quizPublished: quiz?.is_published,
+      assignmentId: assignment?.id,
+      assignmentStatus: assignment?.status
+    });
+  }, [lessonId, hasQuiz, quiz, assignment]);
   
   // Handle section completion toggling
   const handleToggleSectionCompletion = async (sectionTitle: string) => {
@@ -60,7 +81,6 @@ const LessonView: React.FC = () => {
         updatedSections = [...completedSections, sectionTitle];
       }
       
-      setIsUpdating(true);
       await updateProgress({ 
         completed: false, // Don't mark lesson as fully completed yet
         sections: updatedSections
@@ -77,15 +97,12 @@ const LessonView: React.FC = () => {
         title: 'Error',
         description: 'Failed to update section progress',
       });
-    } finally {
-      setIsUpdating(false);
     }
   };
   
   // Handle marking the entire lesson as complete
   const handleMarkLessonComplete = async () => {
     try {
-      setIsUpdating(true);
       await updateProgress({ completed: true });
       
       toast({
@@ -97,8 +114,6 @@ const LessonView: React.FC = () => {
         title: 'Error',
         description: 'Failed to mark lesson as complete',
       });
-    } finally {
-      setIsUpdating(false);
     }
   };
   
@@ -131,7 +146,7 @@ const LessonView: React.FC = () => {
   };
   
   // Show loading state
-  if (lessonLoading) {
+  if (lessonLoading || progressLoading) {
     return (
       <div className="flex justify-center items-center py-24">
         <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
@@ -158,15 +173,6 @@ const LessonView: React.FC = () => {
     ? Math.round((currentSectionIndex) / (totalPages - 1) * 100) 
     : 0;
   
-  // Check if quiz is available to show (exists and is published)
-  const isQuizAvailable = !!quiz && quiz.is_published === true;
-  
-  console.log('Quiz availability:', { 
-    quizExists: !!quiz, 
-    isPublished: quiz?.is_published, 
-    questionCount: quizQuestions?.length || 0 
-  });
-  
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
@@ -179,6 +185,30 @@ const LessonView: React.FC = () => {
         />
         
         <Separator />
+
+        {assignment && (
+          <div className="mb-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                This lesson is part of your assignments. 
+                Status: <span className="font-medium">{assignment.status.replace('_', ' ')}</span>
+                {assignment.due_date && (
+                  <> · Due: {new Date(assignment.due_date).toLocaleDateString()}</>
+                )}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
+        {hasUnpublishedQuiz && (
+          <Alert className="bg-amber-50 text-amber-800 border-amber-200">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              There is a quiz for this lesson, but it hasn't been published yet.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
