@@ -23,6 +23,9 @@ const LessonNavigation: React.FC<LessonNavigationProps> = ({
   currentTab,
   setCurrentTab
 }) => {
+  // Log quiz visibility for debugging
+  console.log('Navigation rendering with hasQuiz:', hasQuiz);
+  
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
@@ -54,8 +57,6 @@ const LessonNavigation: React.FC<LessonNavigationProps> = ({
       {currentTab === 'content' && (
         <div className="space-y-1 border rounded-md p-3">
           <h3 className="text-sm font-medium mb-2">Contents</h3>
-          
-          {/* We'll remove the Introduction button since we're filtering that out */}
           
           {sections.map((section, index) => (
             <Button
