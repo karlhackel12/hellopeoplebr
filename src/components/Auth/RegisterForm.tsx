@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormLabel } from '@/components/ui/form';
@@ -20,6 +20,7 @@ interface RegisterFormProps {
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ invitationData }) => {
   const [hasInvitation, setHasInvitation] = useState(!!invitationData?.isInvited);
+  const [initialValidationDone, setInitialValidationDone] = useState(false);
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -40,25 +41,33 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ invitationData }) => {
     handleInvitationCodeChange 
   } = useInvitationCode(form);
 
+  // Perform initial validation only once
+  useEffect(() => {
+    if (!initialValidationDone && invitationData?.isInvited && invitationData.code) {
+      validateInvitationCode(invitationData.code)
+        .then(() => setInitialValidationDone(true));
+    } else {
+      setInitialValidationDone(true);
+    }
+  }, [invitationData, validateInvitationCode, initialValidationDone]);
+
+  // Set form values from invitation data once
   useEffect(() => {
     if (invitationData?.email) {
-      form.setValue('email', invitationData.email);
-      
-      if (invitationData.isInvited) {
-        form.setValue('role', 'student');
-        form.setValue('invitationCode', invitationData.code || '');
-        setHasInvitation(true);
-        
-        if (invitationData.code) {
-          validateInvitationCode(invitationData.code);
-        }
+      form.setValue('email', invitationData.email, { shouldValidate: false });
+    }
+    
+    if (invitationData?.isInvited) {
+      form.setValue('role', 'student', { shouldValidate: false });
+      if (invitationData.code) {
+        form.setValue('invitationCode', invitationData.code, { shouldValidate: false });
       }
     }
-  }, [invitationData, form, validateInvitationCode]);
+  }, [invitationData, form]);
 
-  const toggleHasInvitation = () => {
+  const toggleHasInvitation = useCallback(() => {
     setHasInvitation(!hasInvitation);
-  };
+  }, [hasInvitation]);
 
   const onSubmit = async (values: RegisterFormValues) => {
     await handleSubmit(
