@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 const CreateLesson: React.FC = () => {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [lessonData, setLessonData] = useState<any>(null);
   
   const handleBack = () => {
     navigate('/teacher/lessons');
@@ -22,6 +23,7 @@ const CreateLesson: React.FC = () => {
     content: string;
     structured_content?: any;
     quiz_questions?: any[];
+    publish?: boolean;
   }) => {
     try {
       setSaving(true);
@@ -40,7 +42,7 @@ const CreateLesson: React.FC = () => {
           content: lessonData.content,
           structured_content: lessonData.structured_content || null,
           created_by: userData.user.id,
-          is_published: false
+          is_published: lessonData.publish || false
         })
         .select()
         .single();
@@ -55,7 +57,7 @@ const CreateLesson: React.FC = () => {
             lesson_id: lesson.id,
             title: `${lessonData.title} Quiz`,
             created_by: userData.user.id,
-            is_published: false
+            is_published: lessonData.publish || false
           })
           .select()
           .single();
@@ -97,7 +99,7 @@ const CreateLesson: React.FC = () => {
         }
       }
       
-      toast.success('Lesson created successfully!');
+      toast.success(lessonData.publish ? 'Lesson published successfully!' : 'Lesson created successfully!');
       navigate(`/teacher/lessons/preview/${lesson.id}`);
     } catch (error) {
       console.error('Error saving lesson:', error);
