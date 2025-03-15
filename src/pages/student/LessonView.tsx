@@ -19,7 +19,15 @@ const LessonView: React.FC = () => {
   const { toast } = useToast();
   
   // Fetch lesson data
-  const { lesson, lessonLoading, quiz, quizQuestions } = useLessonData(lessonId);
+  const { 
+    lesson, 
+    lessonLoading, 
+    quiz, 
+    quizQuestions,
+    quizLoading,
+    questionsLoading,
+    hasQuiz 
+  } = useLessonData(lessonId);
   
   // Lesson progress management
   const { lessonProgress, updateProgress } = useLessonProgress(lessonId);
@@ -150,6 +158,15 @@ const LessonView: React.FC = () => {
     ? Math.round((currentSectionIndex) / (totalPages - 1) * 100) 
     : 0;
   
+  // Check if quiz is available to show (exists and is published)
+  const isQuizAvailable = !!quiz && quiz.is_published === true;
+  
+  console.log('Quiz availability:', { 
+    quizExists: !!quiz, 
+    isPublished: quiz?.is_published, 
+    questionCount: quizQuestions?.length || 0 
+  });
+  
   return (
     <div className="container mx-auto py-10">
       <div className="space-y-6">
@@ -171,7 +188,7 @@ const LessonView: React.FC = () => {
               currentSectionIndex={currentSectionIndex}
               goToSection={goToSection}
               completedSections={completedSections}
-              hasQuiz={!!quiz && quizQuestions.length > 0}
+              hasQuiz={isQuizAvailable}
               currentTab={currentTab}
               setCurrentTab={setCurrentTab}
             />

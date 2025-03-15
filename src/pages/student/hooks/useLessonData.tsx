@@ -8,7 +8,7 @@ export const useLessonData = (lessonId: string | undefined) => {
   const queryClient = useQueryClient();
 
   // Fetch lesson data
-  const { data: lesson, isLoading: lessonLoading } = useQuery({
+  const { data: lesson, isLoading: lessonLoading, error: lessonError } = useQuery({
     queryKey: ['student-lesson', lessonId],
     queryFn: async () => {
       if (!lessonId) throw new Error('Lesson ID is required');
@@ -20,16 +20,19 @@ export const useLessonData = (lessonId: string | undefined) => {
         .single();
       
       if (error) throw error;
+      console.log('Lesson data loaded:', data?.title);
       return data;
     },
     enabled: !!lessonId
   });
 
-  // Fetch quiz data
-  const { data: quiz } = useQuery({
+  // Fetch quiz data - make sure we're looking for any quiz, not just published ones
+  const { data: quiz, isLoading: quizLoading, error: quizError } = useQuery({
     queryKey: ['student-lesson-quiz', lessonId],
     queryFn: async () => {
       if (!lessonId) throw new Error('Lesson ID is required');
+      
+      console.log('Fetching quiz for lesson:', lessonId);
       
       const { data, error } = await supabase
         .from('quizzes')
@@ -41,20 +44,26 @@ export const useLessonData = (lessonId: string | undefined) => {
           is_published
         `)
         .eq('lesson_id', lessonId)
-        .eq('is_published', true)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching quiz:', error);
+        throw error;
+      }
+      
+      console.log('Quiz data loaded:', data ? `${data.title} (published: ${data.is_published})` : 'No quiz found');
       return data;
     },
     enabled: !!lessonId
   });
 
   // Fetch quiz questions if quiz exists
-  const { data: quizQuestions } = useQuery({
+  const { data: quizQuestions, isLoading: questionsLoading, error: questionsError } = useQuery({
     queryKey: ['student-quiz-questions', quiz?.id],
     queryFn: async () => {
       if (!quiz?.id) throw new Error('Quiz ID is required');
+      
+      console.log('Fetching questions for quiz:', quiz.id);
       
       const { data, error } = await supabase
         .from('quiz_questions')
@@ -74,7 +83,12 @@ export const useLessonData = (lessonId: string | undefined) => {
         .eq('quiz_id', quiz.id)
         .order('order_index', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching quiz questions:', error);
+        throw error;
+      }
+      
+      console.log('Quiz questions loaded:', data?.length || 0);
       
       // Ensure the data matches the Question type
       const formattedQuestions: Question[] = (data || []).map(q => ({
@@ -96,10 +110,18 @@ export const useLessonData = (lessonId: string | undefined) => {
     enabled: !!quiz?.id
   });
 
+  const hasErrors = !!lessonError || !!quizError || !!questionsError;
+  if (hasErrors) {
+    console.error('Errors in useLessonData:', { lessonError, quizError, questionsError });
+  }
+
   return {
     lesson,
     lessonLoading,
     quiz,
-    quizQuestions: quizQuestions || []
+    quizLoading,
+    quizQuestions: quizQuestions || [],
+    questionsLoading,
+    hasQuiz: !!quiz
   };
 };

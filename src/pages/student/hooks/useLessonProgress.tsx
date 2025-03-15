@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,6 +48,8 @@ export const useLessonProgress = (lessonId: string | undefined) => {
         completed_sections: sections || []
       };
       
+      console.log('Updating lesson progress:', { lessonId, completed, sections });
+      
       if (lessonProgress) {
         const { error } = await supabase
           .from('user_lesson_progress')
@@ -65,9 +68,28 @@ export const useLessonProgress = (lessonId: string | undefined) => {
         
         if (error) throw error;
       }
+      
+      // Update assignment status if lesson is completed
+      if (completed) {
+        const { error: assignmentError } = await supabase
+          .from('student_assignments')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('lesson_id', lessonId)
+          .eq('student_id', user.id);
+          
+        if (assignmentError) console.error('Error updating assignment status:', assignmentError);
+      }
     },
     onSuccess: () => {
+      // Invalidate all related queries to ensure UI updates properly
       queryClient.invalidateQueries({ queryKey: ['student-lesson-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['student-lesson-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['student-all-lesson-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['student-recent-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['student-due-assignments'] });
     }
   });
 
