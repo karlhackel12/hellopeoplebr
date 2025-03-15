@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Separator } from "@/components/ui/separator";
@@ -64,12 +63,12 @@ const LessonView: React.FC = () => {
     });
   }, [lessonId, hasQuiz, quiz, assignment]);
   
-  // Handle section completion toggling
+  // Handle section completion toggling - the only place where sections are toggled
   const handleToggleSectionCompletion = async (sectionTitle: string) => {
-    if (!lessonProgress) return;
+    if (!lesson) return;
     
     try {
-      const completedSections = lessonProgress.completed_sections || [];
+      const completedSections = lessonProgress?.completed_sections || [];
       let updatedSections: string[];
       
       if (completedSections.includes(sectionTitle)) {
@@ -97,10 +96,18 @@ const LessonView: React.FC = () => {
     }
   };
   
-  // Handle marking the entire lesson as complete
+  // Handle marking the entire lesson as complete - the only place to mark the full lesson complete
   const handleMarkLessonComplete = async () => {
+    if (!lesson) return;
+    
     try {
-      await updateProgress({ completed: true });
+      // We'll keep the existing completed sections
+      const completedSections = lessonProgress?.completed_sections || [];
+      
+      await updateProgress({ 
+        completed: true, 
+        sections: completedSections 
+      });
       
       toast({
         description: "Lesson marked as complete!",

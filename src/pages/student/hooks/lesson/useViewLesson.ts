@@ -13,30 +13,19 @@ export const useViewLesson = (lessonId: string | undefined, isLessonLoading: boo
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
-      // Simply update the last_accessed_at field if a progress record exists
-      const { data: existingProgress } = await supabase
-        .from('user_lesson_progress')
-        .select('id')
-        .eq('lesson_id', lessonId)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const now = new Date().toISOString();
       
-      if (existingProgress) {
-        await supabase
-          .from('user_lesson_progress')
-          .update({ last_accessed_at: new Date().toISOString() })
-          .eq('id', existingProgress.id);
-      } else {
-        // Create a new progress record if none exists
-        await supabase
-          .from('user_lesson_progress')
-          .insert({
-            user_id: user.id,
-            lesson_id: lessonId,
-            last_accessed_at: new Date().toISOString(),
-            completed: false
-          });
-      }
+      // Use upsert operation to avoid conflicts and simplify the code
+      await supabase
+        .from('user_lesson_progress')
+        .upsert({
+          user_id: user.id,
+          lesson_id: lessonId,
+          last_accessed_at: now
+        }, {
+          onConflict: 'user_id,lesson_id',
+          ignoreDuplicates: false
+        });
       
       // If there's an assignment, update its status to "in_progress" if it's "not_started"
       const { data: assignment } = await supabase
@@ -51,7 +40,7 @@ export const useViewLesson = (lessonId: string | undefined, isLessonLoading: boo
           .from('student_assignments')
           .update({ 
             status: 'in_progress',
-            started_at: new Date().toISOString()
+            started_at: now
           })
           .eq('id', assignment.id);
         
