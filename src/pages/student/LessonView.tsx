@@ -1,18 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, AlertCircle } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLessonData } from './hooks/useLessonData';
 import { useLessonProgress } from './hooks/useLessonProgress';
 import LessonHeader from './components/LessonHeader';
-import LessonNavigation from './components/lesson/LessonNavigation';
-import LessonContent from './components/lesson/LessonContent';
-import QuizSection from './components/lesson/QuizSection';
+import LessonContainer from './components/lesson/LessonContainer';
+import AssignmentAlert from './components/lesson/AssignmentAlert';
+import UnpublishedQuizAlert from './components/lesson/UnpublishedQuizAlert';
+import LessonLoadingState from './components/lesson/LessonLoadingState';
+import LessonErrorState from './components/lesson/LessonErrorState';
 import { extractSections } from '@/utils/markdownUtils';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 
 const LessonView: React.FC = () => {
   const { lessonId = '' } = useParams<{ lessonId: string }>();
@@ -25,8 +24,6 @@ const LessonView: React.FC = () => {
     lessonLoading, 
     quiz, 
     quizQuestions,
-    quizLoading,
-    questionsLoading,
     hasQuiz,
     isQuizAvailable,
     hasUnpublishedQuiz
@@ -117,7 +114,7 @@ const LessonView: React.FC = () => {
     }
   };
   
-  // Navigate to previous/next section
+  // Navigation functions
   const goToPreviousSection = () => {
     if (currentSectionIndex > 0) {
       setCurrentSectionIndex(currentSectionIndex - 1);
@@ -132,7 +129,6 @@ const LessonView: React.FC = () => {
     }
   };
   
-  // Go to specific section by index
   const goToSection = (index: number) => {
     if (index >= 0 && index < sections.length) {
       setCurrentSectionIndex(index);
@@ -140,28 +136,18 @@ const LessonView: React.FC = () => {
     }
   };
   
-  // Go back to lessons list
   const handleBack = () => {
     navigate('/student/lessons');
   };
   
   // Show loading state
   if (lessonLoading || progressLoading) {
-    return (
-      <div className="flex justify-center items-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
-      </div>
-    );
+    return <LessonLoadingState />;
   }
   
   // Show error state if lesson not found
   if (!lesson) {
-    return (
-      <div className="text-center py-24">
-        <h2 className="text-2xl font-semibold">Lesson Not Found</h2>
-        <p className="text-muted-foreground">The requested lesson could not be found.</p>
-      </div>
-    );
+    return <LessonErrorState />;
   }
   
   const completedSections = lessonProgress?.completed_sections || [];
@@ -186,71 +172,31 @@ const LessonView: React.FC = () => {
         
         <Separator />
 
-        {assignment && (
-          <div className="mb-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This lesson is part of your assignments. 
-                Status: <span className="font-medium">{assignment.status.replace('_', ' ')}</span>
-                {assignment.due_date && (
-                  <> · Due: {new Date(assignment.due_date).toLocaleDateString()}</>
-                )}
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+        <AssignmentAlert assignment={assignment} />
         
-        {hasUnpublishedQuiz && (
-          <Alert className="bg-amber-50 text-amber-800 border-amber-200">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              There is a quiz for this lesson, but it hasn't been published yet.
-            </AlertDescription>
-          </Alert>
-        )}
+        <UnpublishedQuizAlert hasUnpublishedQuiz={hasUnpublishedQuiz} />
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Sidebar Navigation */}
-          <div className="md:col-span-1">
-            <LessonNavigation 
-              sections={sections}
-              currentSectionIndex={currentSectionIndex}
-              goToSection={goToSection}
-              completedSections={completedSections}
-              hasQuiz={isQuizAvailable}
-              currentTab={currentTab}
-              setCurrentTab={setCurrentTab}
-            />
-          </div>
-          
-          {/* Main Content Area */}
-          <div className="md:col-span-3">
-            {currentTab === 'content' ? (
-              <LessonContent 
-                introContent=""
-                sections={sections}
-                currentSectionIndex={currentSectionIndex}
-                completedSections={completedSections}
-                onToggleComplete={handleToggleSectionCompletion}
-                onPrevious={goToPreviousSection}
-                onNext={goToNextSection}
-                isFirstPage={isFirstPage}
-                isLastPage={isLastPage}
-                completionPercentage={completionPercentage}
-                totalPages={totalPages}
-              />
-            ) : (
-              <QuizSection 
-                questions={quizQuestions || []} 
-                quizId={quiz?.id || ''}
-                lessonId={lessonId}
-                title={quiz?.title || 'Lesson Quiz'}
-                passPercent={quiz?.pass_percent || 70}
-              />
-            )}
-          </div>
-        </div>
+        <LessonContainer 
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+          sections={sections}
+          currentSectionIndex={currentSectionIndex}
+          completedSections={completedSections}
+          goToSection={goToSection}
+          onToggleSectionCompletion={handleToggleSectionCompletion}
+          goToPreviousSection={goToPreviousSection}
+          goToNextSection={goToNextSection}
+          isFirstPage={isFirstPage}
+          isLastPage={isLastPage}
+          completionPercentage={completionPercentage}
+          totalPages={totalPages}
+          hasQuiz={isQuizAvailable}
+          quizQuestions={quizQuestions || []}
+          quizId={quiz?.id || ''}
+          lessonId={lessonId}
+          quizTitle={quiz?.title || 'Lesson Quiz'}
+          quizPassPercent={quiz?.pass_percent || 70}
+        />
       </div>
     </div>
   );

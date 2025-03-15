@@ -1,4 +1,5 @@
 
+import React, { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -183,7 +184,7 @@ export const useLessonData = (lessonId: string | undefined) => {
   });
 
   // Call the viewLesson mutation when the hook is initialized
-  React.useEffect(() => {
+  useEffect(() => {
     if (lessonId && !lessonLoading) {
       viewLessonMutation.mutate();
     }
