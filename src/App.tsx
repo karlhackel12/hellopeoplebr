@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
-import LessonEditor from "./components/teacher/LessonEditor";
+import CreateLesson from "./pages/teacher/CreateLesson";
 import Invitations from "./pages/teacher/Invitations";
 import Students from "./pages/teacher/Students";
 import StudentProfile from "./pages/teacher/StudentProfile";
@@ -98,12 +97,7 @@ const App = () => (
             } />
             <Route path="/teacher/lessons/create" element={
               <PageTransitionWrapper>
-                <LessonEditor />
-              </PageTransitionWrapper>
-            } />
-            <Route path="/teacher/lessons/edit/:id" element={
-              <PageTransitionWrapper>
-                <LessonEditor />
+                <CreateLesson />
               </PageTransitionWrapper>
             } />
             <Route path="/teacher/lessons/preview/:id" element={
@@ -153,7 +147,6 @@ const App = () => (
                 <StudentLessons />
               </PageTransitionWrapper>
             } />
-            {/* Redirect from assignments to lessons */}
             <Route path="/student/assignments" element={
               <Navigate to="/student/lessons" replace />
             } />
@@ -177,7 +170,6 @@ const App = () => (
                 <SpacedRepetitionReview />
               </PageTransitionWrapper>
             } />
-            {/* Voice Practice Routes */}
             <Route path="/student/voice-practice" element={
               <PageTransitionWrapper>
                 <VoicePractice />
