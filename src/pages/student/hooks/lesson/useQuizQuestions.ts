@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Question } from '@/components/teacher/quiz/types';
+import { toast } from 'sonner';
 
 export const useQuizQuestions = (quizId: string | undefined, isPublished: boolean = false) => {
   return useQuery({
@@ -37,6 +38,9 @@ export const useQuizQuestions = (quizId: string | undefined, isPublished: boolea
       
       if (error) {
         console.error('Error fetching quiz questions:', error);
+        toast.error('Erro ao carregar questões', {
+          description: 'Não foi possível carregar as questões do quiz'
+        });
         throw error;
       }
       
@@ -59,6 +63,9 @@ export const useQuizQuestions = (quizId: string | undefined, isPublished: boolea
       
       return formattedQuestions;
     },
-    enabled: !!quizId && isPublished
+    enabled: !!quizId && isPublished,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000 // 10 minutes
   });
 };

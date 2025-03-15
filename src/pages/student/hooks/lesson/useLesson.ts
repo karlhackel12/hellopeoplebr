@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lesson } from '@/types/lesson';
+import { toast } from 'sonner';
 
 export const useLesson = (lessonId: string | undefined) => {
   return useQuery({
@@ -15,7 +16,13 @@ export const useLesson = (lessonId: string | undefined) => {
         .eq('id', lessonId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching lesson:', error);
+        toast.error('Erro ao carregar a lição', {
+          description: 'Não foi possível carregar os dados da lição'
+        });
+        throw error;
+      }
       
       // Map the database fields to match the Lesson type
       if (data) {
@@ -25,6 +32,8 @@ export const useLesson = (lessonId: string | undefined) => {
           title: data.title,
           content: data.content || '',
           teacher_id: data.created_by, // Map created_by to teacher_id
+          is_published: data.is_published,
+          structured_content: data.structured_content || null
         };
         console.log('Lesson data loaded:', lesson.title);
         return lesson;
@@ -32,6 +41,8 @@ export const useLesson = (lessonId: string | undefined) => {
       
       return null;
     },
-    enabled: !!lessonId
+    enabled: !!lessonId,
+    retry: 2,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
