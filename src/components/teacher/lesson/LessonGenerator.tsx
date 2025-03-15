@@ -25,6 +25,7 @@ interface LessonGeneratorProps {
     content: string;
     structured_content?: any;
     quiz_questions?: any[];
+    publish?: boolean;
   }) => void;
   isSaving: boolean;
 }
@@ -196,6 +197,8 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     }
   };
   
+  const [publishOnSave, setPublishOnSave] = useState(false);
+  
   const handleSave = () => {
     if (!generatedLesson) {
       toast.error('No lesson content to save');
@@ -223,7 +226,8 @@ ${generatedLesson.vocabulary.map((item: any) =>
       title: formState.title,
       content: formattedContent,
       structured_content: generatedLesson,
-      quiz_questions: generatedQuiz?.questions
+      quiz_questions: generatedQuiz?.questions,
+      publish: publishOnSave
     });
   };
   
@@ -397,18 +401,33 @@ ${generatedLesson.vocabulary.map((item: any) =>
             </TabsContent>
           </Tabs>
           
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button variant="outline" onClick={resetGeneration}>
-              Regenerate
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="gap-2"
-            >
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {isSaving ? 'Saving...' : 'Save Lesson'}
-            </Button>
+          <div className="flex flex-col md:flex-row md:justify-between space-y-4 md:space-y-0 pt-4">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="publish-checkbox"
+                checked={publishOnSave}
+                onChange={(e) => setPublishOnSave(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="publish-checkbox" className="text-sm font-medium">
+                Publish immediately
+              </label>
+            </div>
+            
+            <div className="flex justify-end space-x-4">
+              <Button variant="outline" onClick={resetGeneration}>
+                Regenerate
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className="gap-2"
+              >
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {isSaving ? 'Saving...' : 'Save Lesson'}
+              </Button>
+            </div>
           </div>
         </div>
       );
