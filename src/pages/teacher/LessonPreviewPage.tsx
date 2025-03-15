@@ -7,12 +7,14 @@ import TeacherLayout from '@/components/layout/TeacherLayout';
 import { LessonPreview } from '@/components/teacher/LessonPreview';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const LessonPreviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [lesson, setLesson] = useState<{ title: string; content: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     const fetchLesson = async () => {
@@ -48,7 +50,7 @@ const LessonPreviewPage: React.FC = () => {
   
   return (
     <TeacherLayout>
-      <div className="container mx-auto p-4 md:p-8">
+      <div className={`${isMobile ? 'px-2 py-4' : 'container mx-auto p-4 md:p-8'}`}>
         <div className="mb-6">
           <Button 
             variant="outline" 
@@ -59,7 +61,7 @@ const LessonPreviewPage: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to Lessons
           </Button>
           
-          <h1 className="text-3xl font-bold">Lesson Preview</h1>
+          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>Lesson Preview</h1>
         </div>
         
         {loading ? (

@@ -1,14 +1,18 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProgressTracker from './ProgressTracker';
 import LessonSectionPage from './LessonSectionPage';
 import LessonHorizontalNavigator from './LessonHorizontalNavigator';
 import { extractSections, formatMarkdownToHtml } from '@/utils/markdownUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 interface LessonContentTabProps {
   content: string;
   completedSections: string[];
   toggleSectionCompletion: (section: string) => void;
 }
+
 const LessonContentTab: React.FC<LessonContentTabProps> = ({
   content,
   completedSections,
@@ -21,6 +25,8 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
     content: string;
   }[]>([]);
   const [introContent, setIntroContent] = useState('');
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     const sections = extractSections(content);
     setSectionData(sections);
@@ -37,6 +43,7 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
       window.scrollTo(0, 0);
     }
   }, [currentPageIndex, sectionData.length]);
+  
   const goToPreviousPage = useCallback(() => {
     if (currentPageIndex > 0) {
       setCurrentPageIndex(prev => prev - 1);
@@ -71,30 +78,55 @@ const LessonContentTab: React.FC<LessonContentTabProps> = ({
       });
     });
   }, [currentPageIndex, sectionData]);
+  
   const isIntroPage = currentPageIndex === 0;
   const currentSection = isIntroPage ? null : sectionData[currentPageIndex - 1];
   const totalPages = sectionData.length + 1; // +1 for intro
 
   // Calculate completion percentage
   const completionPercentage = totalPages > 1 ? Math.round(currentPageIndex / (totalPages - 1) * 100) : 0;
-  return <Card className="border-0 shadow-none my-[25px]">
-      <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-xl">Lesson Content</CardTitle>
+  
+  return (
+    <Card className="border-0 shadow-none my-[25px]">
+      <CardHeader className={`px-0 pt-0 ${isMobile ? 'pb-2' : ''}`}>
+        <CardTitle className={`${isMobile ? 'text-lg' : 'text-xl'}`}>Lesson Content</CardTitle>
       </CardHeader>
       <CardContent className="px-0 space-y-4 py-0">
         {/* Show intro content on first page, or section content for other pages */}
-        {isIntroPage ? <div className="prose max-w-none mb-6 animate-fade-in">
-            <div dangerouslySetInnerHTML={{
-          __html: formatMarkdownToHtml(introContent)
-        }} />
-          </div> : currentSection && <LessonSectionPage id={currentSection.id} title={currentSection.title} content={currentSection.content} isCompleted={completedSections.includes(currentSection.title)} onToggleComplete={() => toggleSectionCompletion(currentSection.title)} />}
+        {isIntroPage ? (
+          <div className="prose max-w-none mb-6 animate-fade-in">
+            <div dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(introContent) }} />
+          </div>
+        ) : currentSection && (
+          <LessonSectionPage 
+            id={currentSection.id} 
+            title={currentSection.title} 
+            content={currentSection.content} 
+            isCompleted={completedSections.includes(currentSection.title)} 
+            onToggleComplete={() => toggleSectionCompletion(currentSection.title)} 
+          />
+        )}
         
         {/* Horizontal navigation */}
-        <LessonHorizontalNavigator currentPage={currentPageIndex} totalPages={totalPages} onPrevious={goToPreviousPage} onNext={goToNextPage} isFirstPage={currentPageIndex === 0} isLastPage={currentPageIndex === totalPages - 1} completionPercentage={completionPercentage} />
+        <LessonHorizontalNavigator 
+          currentPage={currentPageIndex} 
+          totalPages={totalPages} 
+          onPrevious={goToPreviousPage} 
+          onNext={goToNextPage} 
+          isFirstPage={currentPageIndex === 0} 
+          isLastPage={currentPageIndex === totalPages - 1} 
+          completionPercentage={completionPercentage} 
+        />
         
         {/* Progress tracker */}
-        <ProgressTracker completedSections={completedSections} totalSections={sectionData.length} className="mt-8" />
+        <ProgressTracker 
+          completedSections={completedSections} 
+          totalSections={sectionData.length} 
+          className={`${isMobile ? 'mt-4' : 'mt-8'}`} 
+        />
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
 export default LessonContentTab;
