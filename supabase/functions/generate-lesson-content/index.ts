@@ -14,6 +14,23 @@ const corsHeaders = {
   "Content-Type": "application/json"
 };
 
+// Timeout handler for model execution
+const withTimeout = (promise, timeoutMs) => {
+  let timeoutHandle;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`Operation timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([
+    promise,
+    timeoutPromise
+  ]).finally(() => {
+    clearTimeout(timeoutHandle);
+  });
+};
+
 function validateRequest(requestData: any): string | null {
   // Check if the request data is null or undefined
   if (!requestData) {
@@ -43,7 +60,8 @@ function validateRequest(requestData: any): string | null {
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
-  let prompt = `Create a comprehensive English lesson with 25 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
+  // Modified prompt to generate fewer quiz questions (20 instead of 25)
+  let prompt = `Create a comprehensive English lesson with 20 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
@@ -73,7 +91,7 @@ function buildPrompt(requestData: any): string {
   }
 }
 
-Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic. Include exactly 25 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese, not any other language.`;
+Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic. Include exactly 20 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese, not any other language.`;
 
   return prompt;
 }
@@ -116,10 +134,10 @@ function validateOutput(parsedOutput: any): any {
     throw new Error("Quiz questions missing or not an array");
   }
   
-  // Verify quiz question count (should be 25)
+  // Verify quiz question count (should be 20)
   const questionCount = parsedOutput.quiz.questions.length;
   if (questionCount < 10) {
-    console.warn(`Only ${questionCount} quiz questions generated, expected 25`);
+    console.warn(`Only ${questionCount} quiz questions generated, expected 20`);
   }
   
   // Default values if any key properties are missing
@@ -229,10 +247,10 @@ serve(async (req) => {
     console.log("Generated prompt (truncated):", prompt.substring(0, 100) + "...");
 
     try {
-      // Set up model parameters with increased token limit for quiz generation
+      // Set up model parameters with REDUCED token limit for faster generation
       const modelInput = {
         prompt: prompt,
-        max_new_tokens: 4096,  // Increased for quiz content
+        max_new_tokens: 3072,  // Reduced from 4096 for faster generation
         temperature: 0.5,
         top_p: 0.9,
         top_k: 50
@@ -241,11 +259,13 @@ serve(async (req) => {
       console.log("Calling Replicate with model:", MODEL_ID);
       console.log("Model input parameters:", JSON.stringify(modelInput, null, 2));
       
-      // Run the model directly
-      console.log("Starting Replicate API call...");
-      const output = await replicate.run(MODEL_ID, {
-        input: modelInput
-      });
+      // Run the model with a timeout of 40 seconds
+      console.log("Starting Replicate API call with timeout...");
+      
+      const output = await withTimeout(
+        replicate.run(MODEL_ID, { input: modelInput }),
+        40000 // 40 second timeout
+      );
       
       console.log("Model output received");
       console.log("Output type:", typeof output);
@@ -287,13 +307,18 @@ serve(async (req) => {
       );
     } catch (modelError) {
       console.error("Error running model:", modelError);
+      
+      // Check if this is a timeout error
+      const isTimeout = modelError.message && modelError.message.includes("timed out");
+      
       return new Response(
         JSON.stringify({
-          error: "Model execution failed", 
-          details: modelError.message
+          error: isTimeout ? "Model execution timed out" : "Model execution failed", 
+          details: modelError.message,
+          status: "failed"
         }),
         {
-          status: 500,
+          status: isTimeout ? 504 : 500,
           headers: corsHeaders
         }
       );
@@ -304,7 +329,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: "Failed to generate content", 
-        details: error.message 
+        details: error.message,
+        status: "failed"
       }),
       {
         status: 500,

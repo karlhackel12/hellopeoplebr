@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Loader2, Sparkles, FileText, AlertTriangle } from 'lucide-react';
+import { Loader2, Sparkles, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,12 +29,13 @@ interface LessonGeneratorProps {
   isSaving: boolean;
 }
 
-// Generation phases for UI state management
+// More detailed generation phases for better UI feedback
 type GenerationPhase = 
   | 'idle' 
   | 'loading' 
-  | 'analyzing' 
-  | 'generating' 
+  | 'analyzing'
+  | 'generating'
+  | 'retrying'
   | 'complete' 
   | 'error';
 
@@ -55,7 +56,10 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
   // Generation state
   const [generationPhase, setGenerationPhase] = useState<GenerationPhase>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('content');
+  const [retryCount, setRetryCount] = useState(0);
+  const [generationTimer, setGenerationTimer] = useState<number | null>(null);
   
   // Generated content
   const [generatedLesson, setGeneratedLesson] = useState<any>(null);
@@ -78,29 +82,84 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     setGeneratedQuiz(null);
     setGenerationPhase('idle');
     setError(null);
+    setErrorDetails(null);
+    setRetryCount(0);
+    if (generationTimer) {
+      clearTimeout(generationTimer);
+      setGenerationTimer(null);
+    }
   };
   
-  // Generate lesson content
-  const generateLesson = async () => {
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (generationTimer) {
+        clearTimeout(generationTimer);
+      }
+    };
+  }, [generationTimer]);
+  
+  // Generate lesson content with retry logic
+  const generateLesson = async (isRetry = false) => {
     if (!formState.title.trim()) {
       toast.error('Please enter a lesson title');
       return;
     }
     
     try {
-      resetGeneration();
-      setGenerationPhase('loading');
+      if (!isRetry) {
+        resetGeneration();
+      }
       
+      // Set appropriate loading state
+      if (isRetry) {
+        setGenerationPhase('retrying');
+        setRetryCount(prev => prev + 1);
+        toast.info('Retrying lesson generation...', {
+          description: `Attempt ${retryCount + 1}`
+        });
+      } else {
+        setGenerationPhase('loading');
+      }
+      
+      // Set a timer to show more detailed loading states to improve perceived performance
+      const loadingStateTimer = setTimeout(() => {
+        setGenerationPhase('analyzing');
+        
+        const generatingTimer = setTimeout(() => {
+          setGenerationPhase('generating');
+        }, 3000);
+        
+        setGenerationTimer(generatingTimer as unknown as number);
+      }, 2000);
+      
+      setGenerationTimer(loadingStateTimer as unknown as number);
+      
+      // Call edge function with timeout handling
       const response = await supabase.functions.invoke('generate-lesson-content', {
         body: {
           title: formState.title,
           level: formState.level,
           instructions: formState.instructions
-        }
+        },
+        // Set a reasonable timeout for the client
+        abortSignal: new AbortController().signal
       });
       
-      if (response.error || !response.data) {
-        throw new Error(response.error?.message || 'Failed to generate lesson content');
+      // Clear any timers
+      if (generationTimer) {
+        clearTimeout(generationTimer);
+        setGenerationTimer(null);
+      }
+      
+      // Check for errors
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to generate lesson content');
+      }
+      
+      // Check response status
+      if (response.data.status === 'failed') {
+        throw new Error(response.data.error || 'Content generation failed');
       }
       
       if (response.data.status === 'succeeded') {
@@ -109,15 +168,50 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
         setGenerationPhase('complete');
         toast.success('Lesson generated successfully!');
       } else {
-        throw new Error('Content generation failed with: ' + response.data.error);
+        throw new Error('Content generation failed with an unknown error');
       }
     } catch (error: any) {
       console.error('Error generating lesson:', error);
+      
+      // Clear any timers
+      if (generationTimer) {
+        clearTimeout(generationTimer);
+        setGenerationTimer(null);
+      }
+      
       setGenerationPhase('error');
       setError(error.message || 'An unexpected error occurred');
-      toast.error('Failed to generate lesson', {
-        description: 'Please try again or modify your input parameters'
-      });
+      
+      // Extract more detailed error information if available
+      let details = null;
+      try {
+        if (typeof error.message === 'string' && error.message.includes('{')) {
+          const jsonStart = error.message.indexOf('{');
+          const jsonData = JSON.parse(error.message.substring(jsonStart));
+          details = jsonData.details || jsonData.error || null;
+        }
+      } catch (e) {
+        // If parsing fails, use the original error message
+        details = null;
+      }
+      
+      setErrorDetails(details);
+      
+      const isTimeout = error.message && (
+        error.message.includes('timed out') || 
+        error.message.includes('timeout') || 
+        error.message.includes('504')
+      );
+      
+      if (isTimeout) {
+        toast.error('Generation timed out', {
+          description: 'The lesson generation is taking too long. You can try again.'
+        });
+      } else {
+        toast.error('Failed to generate lesson', {
+          description: 'Please try again or modify your input parameters'
+        });
+      }
     }
   };
   
@@ -152,6 +246,22 @@ ${generatedLesson.vocabulary.map((item: any) =>
       structured_content: generatedLesson,
       quiz_questions: generatedQuiz?.questions
     });
+  };
+  
+  // Get a user-friendly message based on the generation phase
+  const getLoadingMessage = () => {
+    switch (generationPhase) {
+      case 'loading':
+        return 'Preparing to generate lesson...';
+      case 'analyzing':
+        return 'Analyzing content requirements...';
+      case 'generating':
+        return 'Creating your lesson and quiz...';
+      case 'retrying':
+        return `Retrying generation (attempt ${retryCount})...`;
+      default:
+        return 'Generating your lesson...';
+    }
   };
   
   // Render form
@@ -201,14 +311,14 @@ ${generatedLesson.vocabulary.map((item: any) =>
       
       <div className="pt-4">
         <Button 
-          onClick={generateLesson} 
-          disabled={generationPhase === 'loading' || !formState.title.trim()}
+          onClick={() => generateLesson(false)} 
+          disabled={generationPhase === 'loading' || generationPhase === 'analyzing' || generationPhase === 'generating' || generationPhase === 'retrying' || !formState.title.trim()}
           className="w-full md:w-auto gap-2"
         >
-          {generationPhase === 'loading' ? (
+          {generationPhase === 'loading' || generationPhase === 'analyzing' || generationPhase === 'generating' || generationPhase === 'retrying' ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generating Lesson...
+              {getLoadingMessage()}
             </>
           ) : (
             <>
@@ -223,18 +333,22 @@ ${generatedLesson.vocabulary.map((item: any) =>
   
   // Render preview 
   const renderPreview = () => {
-    if (generationPhase === 'loading') {
+    // Loading states
+    if (generationPhase === 'loading' || generationPhase === 'analyzing' || generationPhase === 'generating' || generationPhase === 'retrying') {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-          <h2 className="text-xl font-medium mb-2">Generating Your Lesson</h2>
+          <h2 className="text-xl font-medium mb-2">{getLoadingMessage()}</h2>
           <p className="text-muted-foreground max-w-md">
-            This may take a minute or two. We're creating a complete lesson with exercises and quiz...
+            {generationPhase === 'retrying' 
+              ? 'We\'re giving it another try. This may take a minute or two...'
+              : 'This may take a minute or two. We\'re creating a complete lesson with exercises and quiz...'}
           </p>
         </div>
       );
     }
     
+    // Error state
     if (generationPhase === 'error') {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -245,11 +359,32 @@ ${generatedLesson.vocabulary.map((item: any) =>
           <p className="text-muted-foreground max-w-md mb-4">
             {error || "Something went wrong while generating your lesson."}
           </p>
-          <Button variant="outline" onClick={resetGeneration}>Try Again</Button>
+          {errorDetails && (
+            <p className="text-sm text-muted-foreground mb-4 max-w-md">
+              {errorDetails}
+            </p>
+          )}
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={resetGeneration}>Start Over</Button>
+            <Button 
+              onClick={() => generateLesson(true)} 
+              className="gap-2"
+              disabled={retryCount >= 3}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry Generation
+            </Button>
+          </div>
+          {retryCount >= 3 && (
+            <p className="text-sm text-muted-foreground mt-4">
+              Maximum retry attempts reached. Try modifying your inputs or try again later.
+            </p>
+          )}
         </div>
       );
     }
     
+    // Complete state
     if (generationPhase === 'complete' && generatedLesson) {
       return (
         <div className="space-y-6">
@@ -306,6 +441,7 @@ ${generatedLesson.vocabulary.map((item: any) =>
       );
     }
     
+    // Idle state
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="rounded-full bg-muted p-3 mb-4">
