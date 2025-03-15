@@ -22,7 +22,7 @@ const BottomNavigation: React.FC = () => {
     { icon: LayoutDashboard, label: 'Home', path: '/student/dashboard' },
     { icon: BookOpen, label: 'Lessons', path: '/student/lessons' },
     { icon: Brain, label: 'Practice', path: '/student/spaced-repetition' },
-    { icon: Mic, label: 'Voice', path: '/student/voice-practice' },
+    { icon: Mic, label: 'Voice', path: '/student/voice-practice-construction' },
     { icon: User, label: 'Profile', path: '/student/settings' },
   ];
 
