@@ -15,3 +15,15 @@ export interface Question {
   media_url?: string;
   order_index?: number;
 }
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  pass_percent: number;
+  is_published: boolean;
+  lesson_id: string;
+  created_by: string;
+  created_at?: string;
+  updated_at?: string;
+}
