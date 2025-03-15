@@ -124,8 +124,8 @@ const StudentLanding: React.FC = () => {
                 <div className="aspect-[16/9] bg-gradient-to-br from-[#1E88E5]/5 to-background relative">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <img 
-                      src="/placeholder.svg" 
-                      alt="App de estudante mostrando atividades diárias" 
+                      src="https://images.unsplash.com/photo-1498050108023-c5249f4df085" 
+                      alt="App de estudante mostrando atividades diárias de aprendizado" 
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -270,7 +270,7 @@ const StudentLanding: React.FC = () => {
                     <div className="bg-[#F5F7FA] p-6 rounded-lg mb-6">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-12 h-12 rounded-full bg-[#E1E4E8] overflow-hidden">
-                          <img src="/placeholder.svg" alt="Foto do aluno" className="w-full h-full object-cover" />
+                          <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1" alt="Foto do aluno" className="w-full h-full object-cover" />
                         </div>
                         <div>
                           <p className="font-semibold">Roberto Silva</p>

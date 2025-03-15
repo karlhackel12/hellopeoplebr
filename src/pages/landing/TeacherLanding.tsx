@@ -104,7 +104,7 @@ const TeacherLanding: React.FC = () => {
                 <div className="aspect-[16/9] bg-gradient-to-br from-[#1E88E5]/5 to-background relative">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <img 
-                      src="/placeholder.svg" 
+                      src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d" 
                       alt="Dashboard do professor mostrando progresso dos alunos" 
                       className="w-full h-full object-cover"
                     />
