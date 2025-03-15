@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,7 +28,6 @@ interface LessonGeneratorProps {
   isSaving: boolean;
 }
 
-// More detailed generation phases for better UI feedback
 type GenerationPhase = 
   | 'idle' 
   | 'loading' 
@@ -46,14 +44,12 @@ interface FormState {
 }
 
 const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) => {
-  // Form state
   const [formState, setFormState] = useState<FormState>({
     title: '',
     level: 'beginner',
     instructions: '',
   });
   
-  // Generation state
   const [generationPhase, setGenerationPhase] = useState<GenerationPhase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
@@ -61,22 +57,18 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
   const [retryCount, setRetryCount] = useState(0);
   const [generationTimer, setGenerationTimer] = useState<number | null>(null);
   
-  // Generated content
   const [generatedLesson, setGeneratedLesson] = useState<any>(null);
   const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
   
-  // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
   };
   
-  // Handle level selection change
   const handleLevelChange = (value: string) => {
     setFormState(prev => ({ ...prev, level: value }));
   };
   
-  // Reset the generation state
   const resetGeneration = () => {
     setGeneratedLesson(null);
     setGeneratedQuiz(null);
@@ -90,7 +82,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     }
   };
   
-  // Clean up timer on unmount
   useEffect(() => {
     return () => {
       if (generationTimer) {
@@ -99,7 +90,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     };
   }, [generationTimer]);
   
-  // Generate lesson content with retry logic
   const generateLesson = async (isRetry = false) => {
     if (!formState.title.trim()) {
       toast.error('Please enter a lesson title');
@@ -111,7 +101,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
         resetGeneration();
       }
       
-      // Set appropriate loading state
       if (isRetry) {
         setGenerationPhase('retrying');
         setRetryCount(prev => prev + 1);
@@ -122,7 +111,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
         setGenerationPhase('loading');
       }
       
-      // Set a timer to show more detailed loading states to improve perceived performance
       const loadingStateTimer = setTimeout(() => {
         setGenerationPhase('analyzing');
         
@@ -135,29 +123,23 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
       
       setGenerationTimer(loadingStateTimer as unknown as number);
       
-      // Call edge function with timeout handling
       const response = await supabase.functions.invoke('generate-lesson-content', {
         body: {
           title: formState.title,
           level: formState.level,
           instructions: formState.instructions
-        },
-        // Set a reasonable timeout for the client
-        abortSignal: new AbortController().signal
+        }
       });
       
-      // Clear any timers
       if (generationTimer) {
         clearTimeout(generationTimer);
         setGenerationTimer(null);
       }
       
-      // Check for errors
       if (response.error) {
         throw new Error(response.error.message || 'Failed to generate lesson content');
       }
       
-      // Check response status
       if (response.data.status === 'failed') {
         throw new Error(response.data.error || 'Content generation failed');
       }
@@ -173,7 +155,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     } catch (error: any) {
       console.error('Error generating lesson:', error);
       
-      // Clear any timers
       if (generationTimer) {
         clearTimeout(generationTimer);
         setGenerationTimer(null);
@@ -182,7 +163,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
       setGenerationPhase('error');
       setError(error.message || 'An unexpected error occurred');
       
-      // Extract more detailed error information if available
       let details = null;
       try {
         if (typeof error.message === 'string' && error.message.includes('{')) {
@@ -191,7 +171,6 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
           details = jsonData.details || jsonData.error || null;
         }
       } catch (e) {
-        // If parsing fails, use the original error message
         details = null;
       }
       
@@ -215,14 +194,12 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     }
   };
   
-  // Handle save
   const handleSave = () => {
     if (!generatedLesson) {
       toast.error('No lesson content to save');
       return;
     }
     
-    // Format markdown content
     const formattedContent = `
 # ${formState.title}
 
@@ -248,7 +225,6 @@ ${generatedLesson.vocabulary.map((item: any) =>
     });
   };
   
-  // Get a user-friendly message based on the generation phase
   const getLoadingMessage = () => {
     switch (generationPhase) {
       case 'loading':
@@ -264,7 +240,6 @@ ${generatedLesson.vocabulary.map((item: any) =>
     }
   };
   
-  // Render form
   const renderForm = () => (
     <div className="space-y-4">
       <div>
@@ -331,9 +306,7 @@ ${generatedLesson.vocabulary.map((item: any) =>
     </div>
   );
   
-  // Render preview 
   const renderPreview = () => {
-    // Loading states
     if (generationPhase === 'loading' || generationPhase === 'analyzing' || generationPhase === 'generating' || generationPhase === 'retrying') {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -348,7 +321,6 @@ ${generatedLesson.vocabulary.map((item: any) =>
       );
     }
     
-    // Error state
     if (generationPhase === 'error') {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -384,7 +356,6 @@ ${generatedLesson.vocabulary.map((item: any) =>
       );
     }
     
-    // Complete state
     if (generationPhase === 'complete' && generatedLesson) {
       return (
         <div className="space-y-6">
@@ -441,7 +412,6 @@ ${generatedLesson.vocabulary.map((item: any) =>
       );
     }
     
-    // Idle state
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="rounded-full bg-muted p-3 mb-4">
