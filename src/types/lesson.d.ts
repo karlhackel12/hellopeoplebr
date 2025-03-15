@@ -5,6 +5,8 @@ export interface Lesson {
   title: string;
   content: string;
   teacher_id: string;
+  is_published: boolean;
+  structured_content?: any | null;
 }
 
 export interface LessonProgress {
