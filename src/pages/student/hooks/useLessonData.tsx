@@ -26,7 +26,7 @@ export const useLessonData = (lessonId: string | undefined) => {
     enabled: !!lessonId
   });
 
-  // Fetch quiz data - make sure we're looking for any quiz, not just published ones
+  // Fetch quiz data - retrieve any quiz associated with this lesson, regardless of publication status
   const { data: quiz, isLoading: quizLoading, error: quizError } = useQuery({
     queryKey: ['student-lesson-quiz', lessonId],
     queryFn: async () => {
@@ -62,6 +62,12 @@ export const useLessonData = (lessonId: string | undefined) => {
     queryKey: ['student-quiz-questions', quiz?.id],
     queryFn: async () => {
       if (!quiz?.id) throw new Error('Quiz ID is required');
+      
+      // If quiz is not published, don't try to fetch the questions
+      if (!quiz.is_published) {
+        console.log('Quiz exists but is not published, skipping questions fetch');
+        return [];
+      }
       
       console.log('Fetching questions for quiz:', quiz.id);
       
@@ -107,13 +113,81 @@ export const useLessonData = (lessonId: string | undefined) => {
       
       return formattedQuestions;
     },
-    enabled: !!quiz?.id
+    enabled: !!quiz?.id && quiz.is_published === true
   });
 
   const hasErrors = !!lessonError || !!quizError || !!questionsError;
   if (hasErrors) {
     console.error('Errors in useLessonData:', { lessonError, quizError, questionsError });
   }
+
+  // Mark the lesson as viewed to update "Recently Viewed Lessons"
+  // This is separate from progress tracking
+  const viewLessonMutation = useMutation({
+    mutationFn: async () => {
+      if (!lessonId) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      // Simply update the last_accessed_at field if a progress record exists
+      const { data: existingProgress } = await supabase
+        .from('user_lesson_progress')
+        .select('id')
+        .eq('lesson_id', lessonId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (existingProgress) {
+        await supabase
+          .from('user_lesson_progress')
+          .update({ last_accessed_at: new Date().toISOString() })
+          .eq('id', existingProgress.id);
+      } else {
+        // Create a new progress record if none exists
+        await supabase
+          .from('user_lesson_progress')
+          .insert({
+            user_id: user.id,
+            lesson_id: lessonId,
+            last_accessed_at: new Date().toISOString(),
+            completed: false
+          });
+      }
+      
+      // If there's an assignment, update its status to "in_progress" if it's "not_started"
+      const { data: assignment } = await supabase
+        .from('student_assignments')
+        .select('id, status')
+        .eq('lesson_id', lessonId)
+        .eq('student_id', user.id)
+        .maybeSingle();
+      
+      if (assignment && assignment.status === 'not_started') {
+        await supabase
+          .from('student_assignments')
+          .update({ 
+            status: 'in_progress',
+            started_at: new Date().toISOString()
+          })
+          .eq('id', assignment.id);
+        
+        console.log('Updated assignment status to in_progress:', assignment.id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-lesson-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['student-recent-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['student-due-assignments'] });
+    }
+  });
+
+  // Call the viewLesson mutation when the hook is initialized
+  React.useEffect(() => {
+    if (lessonId && !lessonLoading) {
+      viewLessonMutation.mutate();
+    }
+  }, [lessonId, lessonLoading]);
 
   return {
     lesson,
@@ -122,6 +196,8 @@ export const useLessonData = (lessonId: string | undefined) => {
     quizLoading,
     quizQuestions: quizQuestions || [],
     questionsLoading,
-    hasQuiz: !!quiz
+    hasQuiz: !!quiz && quiz.is_published === true,
+    isQuizAvailable: !!quiz && quiz.is_published === true,
+    hasUnpublishedQuiz: !!quiz && !quiz.is_published
   };
 };
