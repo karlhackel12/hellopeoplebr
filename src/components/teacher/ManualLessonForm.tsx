@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { UseFormReturn } from 'react-hook-form';
-import { LessonFormValues } from './lesson-editor/useLessonForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bold, Italic, List, ListOrdered, Heading2, Image, FileText, FileAudio, Paperclip } from 'lucide-react';
@@ -12,6 +10,15 @@ import { LessonPreview } from './LessonPreview';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+interface LessonFormValues {
+  title: string;
+  description: string;
+  content: string;
+  level: string;
+  estimatedMinutes: number;
+  published: boolean;
+}
 
 interface ManualLessonFormProps {
   form: UseFormReturn<LessonFormValues>;
@@ -44,7 +51,6 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({
     }
   };
 
-  // Fetch media when lessonId changes
   useEffect(() => {
     if (lessonId) {
       fetchLessonMedia();
@@ -133,7 +139,6 @@ const ManualLessonForm: React.FC<ManualLessonFormProps> = ({
     });
   };
   
-  // Helper function to show media icon based on type
   const getMediaIcon = (type: string) => {
     switch (type) {
       case 'image':
