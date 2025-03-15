@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { RegisterFormValues } from '../types';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,9 +13,26 @@ type InvitationStatus = {
 export const useInvitationCode = (form: UseFormReturn<any>) => {
   const [invitationStatus, setInvitationStatus] = useState<InvitationStatus | null>(null);
   const [isCheckingCode, setIsCheckingCode] = useState(false);
+  const previousCodeRef = useRef<string>('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const validateInvitationCode = async (code: string) => {
-    if (!code) return false;
+    if (!code || code.length !== 8) return false;
+    
+    // Skip validation if code hasn't changed
+    if (previousCodeRef.current === code) return invitationStatus?.valid || false;
+    
+    // Update ref to prevent duplicate validations
+    previousCodeRef.current = code;
     
     setIsCheckingCode(true);
     setInvitationStatus(null);
@@ -56,7 +73,10 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
       
       // For code-based invitations, there might not be an email
       if (validationResult.student_email && validationResult.student_email.trim() !== '') {
-        form.setValue('email', validationResult.student_email);
+        form.setValue('email', validationResult.student_email, { 
+          shouldValidate: true,
+          shouldDirty: true
+        });
       }
       
       const teacherName = validationResult.teacher_name || 'your teacher';
@@ -81,15 +101,26 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
     }
   };
 
-  const handleInvitationCodeChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInvitationCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const code = event.target.value.toUpperCase();
     
-    if (form.getValues() && typeof form.getValues() === 'object') {
-      (form.getValues() as RegisterFormValues).invitationCode = code;
+    // Update form value without triggering validation
+    form.setValue('invitationCode', code, { 
+      shouldValidate: false,
+      shouldDirty: true
+    });
+    
+    // Clear previous timeout if it exists
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
     
+    // Only validate complete codes or clear status for incomplete ones
     if (code.length === 8) {
-      await validateInvitationCode(code);
+      // Debounce validation to prevent excessive API calls
+      timeoutRef.current = setTimeout(() => {
+        validateInvitationCode(code);
+      }, 300);
     } else {
       setInvitationStatus(null);
     }

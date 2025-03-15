@@ -37,7 +37,8 @@ const InvitationVerificationForm: React.FC<InvitationVerificationFormProps> = ({
                   disabled={isLoading}
                   maxLength={8}
                   onChange={(e) => {
-                    e.target.value = e.target.value.toUpperCase();
+                    const value = e.target.value.toUpperCase();
+                    e.target.value = value;
                     field.onChange(e);
                   }}
                 />
