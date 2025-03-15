@@ -65,40 +65,35 @@ export const useLessonProgress = (lessonId: string | undefined) => {
     enabled: !!lessonId
   });
 
-  // Update progress mutation
+  // Update progress mutation - using UPSERT pattern to avoid duplication errors
   const updateProgressMutation = useMutation({
     mutationFn: async ({ completed, sections }: { completed: boolean, sections?: string[] }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-      
-      const updateData = {
-        completed,
-        completed_at: completed ? new Date().toISOString() : null,
-        last_accessed_at: new Date().toISOString(),
-        completed_sections: sections || []
-      };
-      
-      console.log('Updating lesson progress:', { lessonId, completed, sections });
-      
       try {
-        if (lessonProgress) {
-          const { error } = await supabase
-            .from('user_lesson_progress')
-            .update(updateData)
-            .eq('id', lessonProgress.id);
-          
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from('user_lesson_progress')
-            .insert({
-              user_id: user.id,
-              lesson_id: lessonId,
-              ...updateData
-            });
-          
-          if (error) throw error;
-        }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !lessonId) throw new Error('User not authenticated or lesson ID missing');
+        
+        const now = new Date().toISOString();
+        
+        const updateData = {
+          user_id: user.id,
+          lesson_id: lessonId,
+          completed,
+          completed_at: completed ? now : null,
+          last_accessed_at: now,
+          completed_sections: sections || []
+        };
+        
+        console.log('Updating lesson progress using upsert:', updateData);
+        
+        // Use upsert operation to handle both insert and update cases
+        const { error } = await supabase
+          .from('user_lesson_progress')
+          .upsert(updateData, { 
+            onConflict: 'user_id,lesson_id',
+            ignoreDuplicates: false
+          });
+        
+        if (error) throw error;
         
         // Only update the assignment if it exists and lesson is completed
         if (completed && assignment?.id) {
@@ -108,7 +103,7 @@ export const useLessonProgress = (lessonId: string | undefined) => {
             .from('student_assignments')
             .update({ 
               status: 'completed',
-              completed_at: new Date().toISOString()
+              completed_at: now
             })
             .eq('id', assignment.id);
             
