@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,13 +12,14 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Loader2, Sparkles, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, Sparkles, FileText, AlertTriangle, RefreshCw, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LessonPreview from '@/components/teacher/lesson/LessonPreview';
 import QuizPreview from '@/components/teacher/quiz/QuizPreview';
 import { useIsMobile } from '@/hooks/use-mobile';
+import GardenLoader from '@/components/ui/garden-loader';
 
 interface LessonGeneratorProps {
   onSave: (lessonData: {
@@ -62,14 +64,50 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
   
   const [generatedLesson, setGeneratedLesson] = useState<any>(null);
   const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
+  const [draftSaved, setDraftSaved] = useState(false);
+  
+  // Save form state to local storage (as draft)
+  useEffect(() => {
+    if (formState.title.trim()) {
+      const draftData = JSON.stringify(formState);
+      localStorage.setItem('lesson_generator_draft', draftData);
+      setDraftSaved(true);
+    }
+  }, [formState]);
+  
+  // Load draft from local storage on component mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('lesson_generator_draft');
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        setFormState(parsedDraft);
+        setDraftSaved(true);
+      } catch (e) {
+        console.error('Error parsing saved draft:', e);
+      }
+    }
+  }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
+    setDraftSaved(false);
   };
   
   const handleLevelChange = (value: string) => {
     setFormState(prev => ({ ...prev, level: value }));
+    setDraftSaved(false);
+  };
+  
+  const clearDraft = () => {
+    localStorage.removeItem('lesson_generator_draft');
+    setFormState({
+      title: '',
+      level: 'beginner',
+      instructions: '',
+    });
+    setDraftSaved(false);
   };
   
   const resetGeneration = () => {
@@ -93,9 +131,9 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
     };
   }, [generationTimer]);
   
-  const generateLesson = async (isRetry = false) => {
+  const generateLesson = useCallback(async (isRetry = false) => {
     if (!formState.title.trim()) {
-      toast.error('Please enter a lesson title');
+      toast.error('Por favor, digite um título para a lição');
       return;
     }
     
@@ -107,8 +145,8 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
       if (isRetry) {
         setGenerationPhase('retrying');
         setRetryCount(prev => prev + 1);
-        toast.info('Retrying lesson generation...', {
-          description: `Attempt ${retryCount + 1}`
+        toast.info('Tentando gerar a lição novamente...', {
+          description: `Tentativa ${retryCount + 1}`
         });
       } else {
         setGenerationPhase('loading');
@@ -140,20 +178,20 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
       }
       
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to generate lesson content');
+        throw new Error(response.error.message || 'Falha ao gerar conteúdo da lição');
       }
       
       if (response.data.status === 'failed') {
-        throw new Error(response.data.error || 'Content generation failed');
+        throw new Error(response.data.error || 'Geração de conteúdo falhou');
       }
       
       if (response.data.status === 'succeeded') {
         setGeneratedLesson(response.data.lesson);
         setGeneratedQuiz(response.data.quiz);
         setGenerationPhase('complete');
-        toast.success('Lesson generated successfully!');
+        toast.success('Lição gerada com sucesso!');
       } else {
-        throw new Error('Content generation failed with an unknown error');
+        throw new Error('Geração de conteúdo falhou com um erro desconhecido');
       }
     } catch (error: any) {
       console.error('Error generating lesson:', error);
@@ -164,7 +202,7 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
       }
       
       setGenerationPhase('error');
-      setError(error.message || 'An unexpected error occurred');
+      setError(error.message || 'Ocorreu um erro inesperado');
       
       let details = null;
       try {
@@ -186,22 +224,22 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ onSave, isSaving }) =
       );
       
       if (isTimeout) {
-        toast.error('Generation timed out', {
-          description: 'The lesson generation is taking too long. You can try again.'
+        toast.error('Tempo limite excedido', {
+          description: 'A geração da lição está demorando muito. Tente usar um título mais curto ou menos instruções específicas.'
         });
       } else {
-        toast.error('Failed to generate lesson', {
-          description: 'Please try again or modify your input parameters'
+        toast.error('Falha ao gerar lição', {
+          description: 'Por favor, tente novamente ou modifique os parâmetros de entrada'
         });
       }
     }
-  };
+  }, [formState, retryCount, generationTimer]);
   
   const [publishOnSave, setPublishOnSave] = useState(false);
   
   const handleSave = () => {
     if (!generatedLesson) {
-      toast.error('No lesson content to save');
+      toast.error('Não há conteúdo de lição para salvar');
       return;
     }
     
@@ -229,31 +267,34 @@ ${generatedLesson.vocabulary.map((item: any) =>
       quiz_questions: generatedQuiz?.questions,
       publish: publishOnSave
     });
+    
+    // Clear draft after successful save
+    clearDraft();
   };
   
   const getLoadingMessage = () => {
     switch (generationPhase) {
       case 'loading':
-        return 'Preparing to generate lesson...';
+        return 'Preparando para gerar lição...';
       case 'analyzing':
-        return 'Analyzing content requirements...';
+        return 'Analisando requisitos de conteúdo...';
       case 'generating':
-        return 'Creating your lesson and quiz...';
+        return 'Criando sua lição e quiz...';
       case 'retrying':
-        return `Retrying generation (attempt ${retryCount})...`;
+        return `Tentando novamente (tentativa ${retryCount})...`;
       default:
-        return 'Generating your lesson...';
+        return 'Gerando sua lição...';
     }
   };
   
   const renderForm = () => (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="title">Lesson Title</Label>
+        <Label htmlFor="title">Título da Lição</Label>
         <Input 
           id="title"
           name="title"
-          placeholder="e.g. Present Simple Tense"
+          placeholder="ex. Present Simple Tense"
           value={formState.title}
           onChange={handleChange}
           className="mt-1"
@@ -261,28 +302,28 @@ ${generatedLesson.vocabulary.map((item: any) =>
       </div>
       
       <div>
-        <Label htmlFor="level">Difficulty Level</Label>
+        <Label htmlFor="level">Nível de Dificuldade</Label>
         <Select
           value={formState.level}
           onValueChange={handleLevelChange}
         >
           <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select level" />
+            <SelectValue placeholder="Selecione o nível" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
+            <SelectItem value="beginner">Iniciante</SelectItem>
+            <SelectItem value="intermediate">Intermediário</SelectItem>
+            <SelectItem value="advanced">Avançado</SelectItem>
           </SelectContent>
         </Select>
       </div>
       
       <div>
-        <Label htmlFor="instructions">Special Instructions (Optional)</Label>
+        <Label htmlFor="instructions">Instruções Especiais (Opcional)</Label>
         <Textarea
           id="instructions"
           name="instructions"
-          placeholder="e.g. Focus on business vocabulary, include audio examples, etc."
+          placeholder="ex. Foco em vocabulário de negócios, inclua exemplos de áudio, etc."
           value={formState.instructions}
           onChange={handleChange}
           className="mt-1"
@@ -291,6 +332,12 @@ ${generatedLesson.vocabulary.map((item: any) =>
       </div>
       
       <div className="pt-4">
+        {draftSaved && (
+          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+            <Save className="h-3 w-3" /> Rascunho salvo
+          </p>
+        )}
+        
         <Button 
           onClick={() => generateLesson(false)} 
           disabled={generationPhase === 'loading' || generationPhase === 'analyzing' || generationPhase === 'generating' || generationPhase === 'retrying' || !formState.title.trim()}
@@ -304,7 +351,7 @@ ${generatedLesson.vocabulary.map((item: any) =>
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Generate Lesson Content
+              Gerar Conteúdo da Lição
             </>
           )}
         </Button>
@@ -316,13 +363,25 @@ ${generatedLesson.vocabulary.map((item: any) =>
     if (generationPhase === 'loading' || generationPhase === 'analyzing' || generationPhase === 'generating' || generationPhase === 'retrying') {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+          <div className="mb-4">
+            <GardenLoader 
+              className="h-12 w-12 text-primary" 
+              duration={generationPhase === 'loading' ? 'quick' : generationPhase === 'analyzing' ? 'standard' : 'extended'} 
+            />
+          </div>
           <h2 className="text-xl font-medium mb-2">{getLoadingMessage()}</h2>
           <p className="text-muted-foreground max-w-md">
             {generationPhase === 'retrying' 
-              ? 'We\'re giving it another try. This may take a minute or two...'
-              : 'This may take a minute or two. We\'re creating a complete lesson with exercises and quiz...'}
+              ? 'Estamos tentando novamente. Isso pode levar um minuto ou dois...'
+              : 'Isso pode levar um minuto ou dois. Estamos criando uma lição completa com exercícios e quiz...'}
           </p>
+          {generationPhase === 'generating' && (
+            <div className="mt-6">
+              <p className="text-xs text-muted-foreground">
+                Dica: Para uma geração mais rápida, tente usar títulos mais simples e menos instruções específicas.
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -333,9 +392,9 @@ ${generatedLesson.vocabulary.map((item: any) =>
           <div className="rounded-full bg-red-100 p-3 mb-4">
             <AlertTriangle className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-medium mb-2">Generation Failed</h2>
+          <h2 className="text-xl font-medium mb-2">Falha na Geração</h2>
           <p className="text-muted-foreground max-w-md mb-4">
-            {error || "Something went wrong while generating your lesson."}
+            {error || "Algo deu errado ao gerar sua lição."}
           </p>
           {errorDetails && (
             <p className="text-sm text-muted-foreground mb-4 max-w-md">
@@ -343,19 +402,19 @@ ${generatedLesson.vocabulary.map((item: any) =>
             </p>
           )}
           <div className="flex gap-3">
-            <Button variant="outline" onClick={resetGeneration}>Start Over</Button>
+            <Button variant="outline" onClick={resetGeneration}>Começar Novamente</Button>
             <Button 
               onClick={() => generateLesson(true)} 
               className="gap-2"
               disabled={retryCount >= 3}
             >
               <RefreshCw className="h-4 w-4" />
-              Retry Generation
+              Tentar Novamente
             </Button>
           </div>
           {retryCount >= 3 && (
             <p className="text-sm text-muted-foreground mt-4">
-              Maximum retry attempts reached. Try modifying your inputs or try again later.
+              Número máximo de tentativas alcançado. Tente modificar o título para algo mais curto ou simplificar as instruções.
             </p>
           )}
         </div>
@@ -367,8 +426,8 @@ ${generatedLesson.vocabulary.map((item: any) =>
         <div className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              <TabsTrigger value="content">Lesson Content</TabsTrigger>
-              <TabsTrigger value="quiz">Quiz ({generatedQuiz?.questions?.length || 0} Questions)</TabsTrigger>
+              <TabsTrigger value="content">Conteúdo da Lição</TabsTrigger>
+              <TabsTrigger value="quiz">Quiz ({generatedQuiz?.questions?.length || 0} Questões)</TabsTrigger>
             </TabsList>
             
             <TabsContent value="content" className="mt-4">
@@ -395,7 +454,7 @@ ${generatedLesson.vocabulary.map((item: any) =>
               ) : (
                 <div className="text-center py-12 bg-muted rounded-md">
                   <FileText className="h-8 w-8 mx-auto mb-4 text-muted-foreground opacity-60" />
-                  <p className="text-muted-foreground">No quiz questions generated</p>
+                  <p className="text-muted-foreground">Nenhuma questão de quiz gerada</p>
                 </div>
               )}
             </TabsContent>
@@ -411,13 +470,13 @@ ${generatedLesson.vocabulary.map((item: any) =>
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <label htmlFor="publish-checkbox" className="text-sm font-medium">
-                Publish immediately
+                Publicar imediatamente
               </label>
             </div>
             
             <div className="flex justify-end space-x-4">
               <Button variant="outline" onClick={resetGeneration}>
-                Regenerate
+                Regenerar
               </Button>
               <Button 
                 onClick={handleSave} 
@@ -425,7 +484,7 @@ ${generatedLesson.vocabulary.map((item: any) =>
                 className="gap-2"
               >
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {isSaving ? 'Saving...' : 'Save Lesson'}
+                {isSaving ? 'Salvando...' : 'Salvar Lição'}
               </Button>
             </div>
           </div>
@@ -438,9 +497,9 @@ ${generatedLesson.vocabulary.map((item: any) =>
         <div className="rounded-full bg-muted p-3 mb-4">
           <Sparkles className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h2 className="text-xl font-medium mb-2">Generate a Lesson</h2>
+        <h2 className="text-xl font-medium mb-2">Gerar uma Lição</h2>
         <p className="text-muted-foreground max-w-md">
-          Fill in the form on the left, then click 'Generate Lesson Content' to create a complete lesson with a quiz.
+          Preencha o formulário à esquerda e clique em 'Gerar Conteúdo da Lição' para criar uma lição completa com quiz.
         </p>
       </div>
     );

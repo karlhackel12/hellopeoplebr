@@ -14,7 +14,7 @@ const corsHeaders = {
   "Content-Type": "application/json"
 };
 
-// Timeout handler for model execution
+// Timeout handler for model execution with increased timeout (50 seconds)
 const withTimeout = (promise, timeoutMs) => {
   let timeoutHandle;
   const timeoutPromise = new Promise((_, reject) => {
@@ -60,8 +60,9 @@ function validateRequest(requestData: any): string | null {
 function buildPrompt(requestData: any): string {
   const { title, level = "beginner", instructions = "" } = requestData;
   
-  // Modified prompt to generate fewer quiz questions (20 instead of 25)
-  let prompt = `Create a comprehensive English lesson with 20 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
+  // Further optimized prompt to generate fewer quiz questions (only 10 instead of 20)
+  // and reduced text complexity for faster generation
+  let prompt = `Create a concise English lesson with 10 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
@@ -69,7 +70,7 @@ function buildPrompt(requestData: any): string {
   
   prompt += `\n\nFormat the response as JSON with the following structure:
 {
-  "description": "A brief overview of the English lesson (2-3 sentences)",
+  "description": "A brief overview of the English lesson (1-2 sentences)",
   "keyPhrases": [
     {"phrase": "Key phrase 1", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
     {"phrase": "Key phrase 2", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"}
@@ -91,7 +92,7 @@ function buildPrompt(requestData: any): string {
   }
 }
 
-Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus specifically on the title topic. Include exactly 20 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese, not any other language.`;
+Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus on the title topic. Include exactly 10 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese.`;
 
   return prompt;
 }
@@ -134,10 +135,10 @@ function validateOutput(parsedOutput: any): any {
     throw new Error("Quiz questions missing or not an array");
   }
   
-  // Verify quiz question count (should be 20)
+  // Verify quiz question count
   const questionCount = parsedOutput.quiz.questions.length;
-  if (questionCount < 10) {
-    console.warn(`Only ${questionCount} quiz questions generated, expected 20`);
+  if (questionCount < 5) {
+    console.warn(`Only ${questionCount} quiz questions generated, expected 10`);
   }
   
   // Default values if any key properties are missing
@@ -247,11 +248,11 @@ serve(async (req) => {
     console.log("Generated prompt (truncated):", prompt.substring(0, 100) + "...");
 
     try {
-      // Set up model parameters with REDUCED token limit for faster generation
+      // Set up model parameters with further REDUCED token limit for faster generation
       const modelInput = {
         prompt: prompt,
-        max_new_tokens: 3072,  // Reduced from 4096 for faster generation
-        temperature: 0.5,
+        max_new_tokens: 2048,  // Further reduced from 3072 for faster generation
+        temperature: 0.4,      // Reduced from 0.5 for more deterministic output
         top_p: 0.9,
         top_k: 50
       };
@@ -259,12 +260,12 @@ serve(async (req) => {
       console.log("Calling Replicate with model:", MODEL_ID);
       console.log("Model input parameters:", JSON.stringify(modelInput, null, 2));
       
-      // Run the model with a timeout of 40 seconds
+      // Run the model with an increased timeout of 50 seconds
       console.log("Starting Replicate API call with timeout...");
       
       const output = await withTimeout(
         replicate.run(MODEL_ID, { input: modelInput }),
-        40000 // 40 second timeout
+        50000 // 50 second timeout (increased from 40)
       );
       
       console.log("Model output received");

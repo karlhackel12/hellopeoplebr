@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Quiz {
   id: string;
@@ -32,12 +33,17 @@ export const useQuiz = (lessonId: string | undefined) => {
       
       if (error) {
         console.error('Error fetching quiz:', error);
+        toast.error('Erro ao carregar quiz', {
+          description: 'Não foi possível carregar os dados do quiz'
+        });
         throw error;
       }
       
       console.log('Quiz data loaded:', data ? `${data.title} (published: ${data.is_published})` : 'No quiz found');
       return data;
     },
-    enabled: !!lessonId
+    enabled: !!lessonId,
+    retry: 2,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
