@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import AILessonForm from '../AILessonForm';
 import { LessonFormValues } from './useLessonForm';
 
 interface LessonContentTabsProps {
@@ -17,7 +16,12 @@ const LessonContentTabs: React.FC<LessonContentTabsProps> = ({
 }) => {
   return (
     <div className="mt-6">
-      <AILessonForm form={form} title={form.watch('title')} />
+      <div className="p-8 bg-muted/50 rounded-lg text-center">
+        <h3 className="text-lg font-medium mb-2">Content Editor</h3>
+        <p className="text-muted-foreground">
+          The lesson content editor is currently under development.
+        </p>
+      </div>
     </div>
   );
 };
