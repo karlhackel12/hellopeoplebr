@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import CreateLesson from "./pages/teacher/CreateLesson";
+import EditLesson from "./pages/teacher/EditLesson";
 import Invitations from "./pages/teacher/Invitations";
 import Students from "./pages/teacher/Students";
 import StudentProfile from "./pages/teacher/StudentProfile";
@@ -98,6 +100,11 @@ const App = () => (
             <Route path="/teacher/lessons/create" element={
               <PageTransitionWrapper>
                 <CreateLesson />
+              </PageTransitionWrapper>
+            } />
+            <Route path="/teacher/lessons/edit/:id" element={
+              <PageTransitionWrapper>
+                <EditLesson />
               </PageTransitionWrapper>
             } />
             <Route path="/teacher/lessons/preview/:id" element={
