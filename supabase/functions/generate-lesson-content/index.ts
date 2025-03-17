@@ -58,10 +58,9 @@ function validateRequest(requestData: any): string | null {
 }
 
 function buildPrompt(requestData: any): string {
-  const { title, level = "beginner", instructions = "" } = requestData;
+  const { title, level = "", instructions = "" } = requestData;
   
-  // Further optimized prompt to generate fewer quiz questions (only 10 instead of 20)
-  // and reduced text complexity for faster generation
+
   let prompt = `Create a complete English lesson with 15 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
   
   if (instructions) {
@@ -151,7 +150,7 @@ function validateOutput(parsedOutput: any): any {
   // Verify quiz question count
   const questionCount = parsedOutput.quiz.questions.length;
   if (questionCount < 5) {
-    console.warn(`Only ${questionCount} quiz questions generated, expected 10`);
+    console.warn(`Only ${questionCount} quiz questions generated, expected 15`);
   }
   
   // Default values if any key properties are missing
@@ -265,7 +264,7 @@ serve(async (req) => {
       const modelInput = {
         prompt: prompt,
         max_new_tokens: 2048,  // Further reduced from 3072 for faster generation
-        temperature: 0.4,      // Reduced from 0.5 for more deterministic output
+        temperature: 0.6,      // Reduced from 0.5 for more deterministic output
         top_p: 0.9,
         top_k: 50
       };
