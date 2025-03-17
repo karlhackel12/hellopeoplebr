@@ -14,7 +14,7 @@ const UnpublishedQuizAlert: React.FC<UnpublishedQuizAlertProps> = ({ hasUnpublis
     <Alert className="bg-amber-50 text-amber-800 border-amber-200">
       <AlertCircle className="h-4 w-4" />
       <AlertDescription>
-        There is a quiz for this lesson, but it hasn't been published yet.
+        Existe um quiz para esta lição, mas ele ainda não foi publicado.
       </AlertDescription>
     </Alert>
   );

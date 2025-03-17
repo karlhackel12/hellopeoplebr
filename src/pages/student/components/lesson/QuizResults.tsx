@@ -22,8 +22,8 @@ const QuizResults: React.FC<QuizResultsProps> = ({
       {hasPassed ? (
         <>
           <CheckCircle className="h-16 w-16 mx-auto text-green-500 mb-2" />
-          <h3 className="text-2xl font-semibold">Congratulations!</h3>
-          <p className="text-lg">You passed the quiz with a score of {score}%</p>
+          <h3 className="text-2xl font-semibold">Parabéns!</h3>
+          <p className="text-lg">Você passou no quiz com uma pontuação de {score}%</p>
           <div className="w-1/2 mx-auto my-6">
             <Progress value={score || 0} className="h-3" indicatorClassName="bg-green-500" />
           </div>
@@ -32,14 +32,14 @@ const QuizResults: React.FC<QuizResultsProps> = ({
       ) : (
         <>
           <XCircle className="h-16 w-16 mx-auto text-red-500 mb-2" />
-          <h3 className="text-2xl font-semibold">Quiz Failed</h3>
+          <h3 className="text-2xl font-semibold">Quiz não concluído</h3>
           <p className="text-lg">
-            You scored {score}%, which is below the passing score of {passPercent}%
+            Você obteve {score}%, que está abaixo da pontuação de aprovação de {passPercent}%
           </p>
           <div className="w-1/2 mx-auto my-6">
             <Progress value={score || 0} className="h-3" indicatorClassName="bg-red-500" />
           </div>
-          <p>Don't worry! You can try again.</p>
+          <p>Não se preocupe! Você pode tentar novamente.</p>
         </>
       )}
       
@@ -48,7 +48,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         onClick={onTryAgain} 
         className="mt-4"
       >
-        Try Again
+        Tentar Novamente
       </Button>
     </div>
   );

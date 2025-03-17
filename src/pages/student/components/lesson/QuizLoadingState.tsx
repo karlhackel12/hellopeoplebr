@@ -9,7 +9,7 @@ const QuizLoadingState: React.FC = () => {
       <CardContent className="flex justify-center items-center py-12">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary/70" />
-          <p className="text-muted-foreground">Loading quiz data...</p>
+          <p className="text-muted-foreground">Carregando dados do quiz...</p>
         </div>
       </CardContent>
     </Card>

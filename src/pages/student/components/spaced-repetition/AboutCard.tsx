@@ -8,34 +8,34 @@ const AboutCard = () => {
     <Card>
       <CardHeader>
         <CardTitle className="text-xl flex items-center gap-2">
-          <Info className="h-5 w-5" /> About Spaced Repetition
+          <Info className="h-5 w-5" /> Sobre Repetição Espaçada
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4 text-sm">
           <p>
-            <strong>Spaced Repetition</strong> is a learning technique that incorporates increasing time intervals 
-            between reviews of previously learned material to exploit the psychological spacing effect.
+            <strong>Repetição Espaçada</strong> é uma técnica de aprendizado que incorpora intervalos crescentes 
+            entre revisões de material previamente aprendido para explorar o efeito psicológico do espaçamento.
           </p>
           <div className="flex items-start gap-2">
             <Brain className="h-5 w-5 text-purple-500 mt-1 flex-shrink-0" />
             <p>
-              The system automatically schedules reviews based on how well you remember each item, 
-              showing you difficult content more frequently and easy content less often.
+              O sistema agenda automaticamente revisões com base em quão bem você se lembra de cada item, 
+              mostrando conteúdo difícil com mais frequência e conteúdo fácil com menos frequência.
             </p>
           </div>
           <div className="flex items-start gap-2">
             <Trophy className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
             <p>
-              Earn points for each correctly answered question. The faster you answer and the 
-              better your recall, the more points you'll receive.
+              Ganhe pontos para cada questão respondida corretamente. Quanto mais rápido você responder e 
+              melhor for sua recordação, mais pontos receberá.
             </p>
           </div>
           <div className="flex items-start gap-2">
             <Clock className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
             <p>
-              Just a few minutes of review each day can dramatically improve your long-term retention
-              of the material compared to cramming.
+              Apenas alguns minutos de revisão por dia podem melhorar drasticamente sua retenção 
+              de longo prazo do material, em comparação com estudar tudo de uma vez.
             </p>
           </div>
         </div>

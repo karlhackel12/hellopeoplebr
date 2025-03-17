@@ -38,7 +38,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, progress, assignment })
           <CardTitle className="line-clamp-2">{lesson.title}</CardTitle>
           {isCompleted && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-              <CheckCircle className="mr-1 h-3 w-3" /> Completed
+              <CheckCircle className="mr-1 h-3 w-3" /> Concluída
             </Badge>
           )}
         </div>
@@ -55,7 +55,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, progress, assignment })
       <CardFooter className="pt-4">
         <Button className="w-full group">
           <BookOpen className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-          {isCompleted ? 'Review Lesson' : 'Start Lesson'}
+          {isCompleted ? 'Revisar Lição' : 'Iniciar Lição'}
         </Button>
       </CardFooter>
     </Card>
