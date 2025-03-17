@@ -36,9 +36,9 @@ const StudentsTabs: React.FC<StudentsTabsProps> = ({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
-        <TabsTrigger value="students" className={isMobile ? 'flex-1' : ''}>Students</TabsTrigger>
-        <TabsTrigger value="invite" className={isMobile ? 'flex-1' : ''}>Invite</TabsTrigger>
-        <TabsTrigger value="invitations" className={isMobile ? 'flex-1' : ''}>Pending</TabsTrigger>
+        <TabsTrigger value="students" className={isMobile ? 'flex-1' : ''}>Alunos</TabsTrigger>
+        <TabsTrigger value="invite" className={isMobile ? 'flex-1' : ''}>Convidar</TabsTrigger>
+        <TabsTrigger value="invitations" className={isMobile ? 'flex-1' : ''}>Pendentes</TabsTrigger>
       </TabsList>
       
       <TabsContent value="students">
@@ -51,7 +51,7 @@ const StudentsTabs: React.FC<StudentsTabsProps> = ({
       
       <TabsContent value="invite" className="space-y-4">
         <div className="bg-card rounded-lg p-4 sm:p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Invite a New Student</h2>
+          <h2 className="text-xl font-semibold mb-4">Convidar um Novo Aluno</h2>
           <StudentInviteForm onSuccess={handleInvitationUpdate} />
         </div>
       </TabsContent>

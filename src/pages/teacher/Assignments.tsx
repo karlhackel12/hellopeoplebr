@@ -67,7 +67,7 @@ const Assignments = () => {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching assignments:', error);
+        console.error('Erro ao buscar tarefas:', error);
         toast.error('Erro ao carregar tarefas', {
           description: error.message
         });
@@ -91,7 +91,7 @@ const Assignments = () => {
         .eq('role', 'student');
 
       if (error) {
-        console.error('Error fetching students:', error);
+        console.error('Erro ao buscar alunos:', error);
         toast.error('Erro ao carregar alunos');
         return [];
       }
@@ -117,7 +117,7 @@ const Assignments = () => {
         .order('title');
 
       if (error) {
-        console.error('Error fetching lessons:', error);
+        console.error('Erro ao buscar lições:', error);
         return [];
       }
       
@@ -141,7 +141,7 @@ const Assignments = () => {
         .order('title');
 
       if (error) {
-        console.error('Error fetching quizzes:', error);
+        console.error('Erro ao buscar quizzes:', error);
         return [];
       }
       

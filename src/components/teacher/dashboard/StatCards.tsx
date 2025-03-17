@@ -27,12 +27,12 @@ const StatCards: React.FC = () => {
           <div className="p-3 rounded-full bg-primary/10 text-primary">
             <BookOpen className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold">Create Lesson</h3>
+          <h3 className="font-semibold">Criar Lição</h3>
           <p className="text-sm text-muted-foreground text-center">
-            Create and manage your lessons for students
+            Crie e gerencie suas lições para os alunos
           </p>
           <Button onClick={handleCreateLesson} className="w-full mt-2">
-            Create New Lesson
+            Criar Nova Lição
           </Button>
         </CardContent>
       </Card>
@@ -42,12 +42,12 @@ const StatCards: React.FC = () => {
           <div className="p-3 rounded-full bg-accent/10 text-accent">
             <Users className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold">Manage Students</h3>
+          <h3 className="font-semibold">Gerenciar Alunos</h3>
           <p className="text-sm text-muted-foreground text-center">
-            View and manage your student roster
+            Visualize e gerencie sua lista de alunos
           </p>
           <Button onClick={handleManageStudents} variant="outline" className="w-full mt-2">
-            View Students
+            Ver Alunos
           </Button>
         </CardContent>
       </Card>
@@ -57,12 +57,12 @@ const StatCards: React.FC = () => {
           <div className="p-3 rounded-full bg-destructive/10 text-destructive">
             <ClipboardList className="h-6 w-6" />
           </div>
-          <h3 className="font-semibold">Assignments</h3>
+          <h3 className="font-semibold">Tarefas</h3>
           <p className="text-sm text-muted-foreground text-center">
-            Create and track student assignments
+            Crie e acompanhe as tarefas dos alunos
           </p>
           <Button onClick={handleManageAssignments} variant="outline" className="w-full mt-2">
-            Manage Assignments
+            Gerenciar Tarefas
           </Button>
         </CardContent>
       </Card>

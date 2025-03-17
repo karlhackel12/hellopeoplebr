@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { addDays } from 'date-fns';
 
 const inviteSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
+  email: z.string().email({ message: 'Por favor, insira um endereço de email válido' }),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -34,8 +34,8 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
       // Get current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        toast.error('Authentication error', {
-          description: 'You must be logged in to invite students',
+        toast.error('Erro de autenticação', {
+          description: 'Você precisa estar logado para convidar alunos',
         });
         return;
       }
@@ -64,17 +64,17 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
         .select();
 
       if (error) {
-        console.error('Error creating invitation:', error);
+        console.error('Erro ao criar convite:', error);
         if (error.code === '23505') {
-          toast.error('Invitation already sent', {
-            description: 'You have already invited this student',
+          toast.error('Convite já enviado', {
+            description: 'Você já convidou este aluno',
           });
         } else if (error.code === 'PGRST301') {
-          toast.error('Permission denied', {
-            description: 'You do not have permission to send invitations. Please check your account status.',
+          toast.error('Permissão negada', {
+            description: 'Você não tem permissão para enviar convites. Por favor, verifique o status da sua conta.',
           });
         } else {
-          toast.error('Failed to send invitation', {
+          toast.error('Falha ao enviar convite', {
             description: error.message,
           });
         }
@@ -87,7 +87,7 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
       // Format teacher name for the email
       const teacherName = profileData
         ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
-        : 'Your teacher';
+        : 'Seu professor';
 
       // Send the invitation email using our edge function
       const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
@@ -99,21 +99,21 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
       });
 
       if (emailError) {
-        console.error('Error sending invitation email:', emailError);
-        toast.warning('Invitation created but email delivery failed', {
-          description: 'The invitation was created but we could not send the email. The student can still use the invitation code.',
+        console.error('Erro ao enviar email de convite:', emailError);
+        toast.warning('Convite criado mas falha no envio do email', {
+          description: 'O convite foi criado, mas não foi possível enviar o email. O aluno ainda pode usar o código de convite.',
         });
       } else {
-        toast.success('Invitation sent', {
-          description: `An invitation has been sent to ${values.email}`,
+        toast.success('Convite enviado', {
+          description: `Um convite foi enviado para ${values.email}`,
         });
       }
       
       form.reset();
       onSuccess();
     } catch (error: any) {
-      console.error('Error sending invitation:', error);
-      toast.error('Failed to send invitation', {
+      console.error('Erro ao enviar convite:', error);
+      toast.error('Falha ao enviar convite', {
         description: error.message,
       });
     }
@@ -127,9 +127,9 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Student Email</FormLabel>
+              <FormLabel>Email do Aluno</FormLabel>
               <FormControl>
-                <Input placeholder="student@example.com" type="email" {...field} />
+                <Input placeholder="aluno@exemplo.com" type="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -141,12 +141,12 @@ const EmailInviteForm: React.FC<EmailInviteFormProps> = ({ onSuccess }) => {
           className="w-full"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? 'Sending...' : 'Send Invitation'}
+          {form.formState.isSubmitting ? 'Enviando...' : 'Enviar Convite'}
         </Button>
         
         <Alert>
           <AlertDescription>
-            An email will be sent to the student with instructions to join the platform.
+            Um email será enviado ao aluno com instruções para se juntar à plataforma.
           </AlertDescription>
         </Alert>
       </form>

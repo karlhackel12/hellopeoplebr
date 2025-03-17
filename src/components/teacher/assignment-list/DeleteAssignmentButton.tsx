@@ -40,7 +40,7 @@ const DeleteAssignmentButton: React.FC<DeleteAssignmentButtonProps> = ({
       
       onDelete();
     } catch (error: any) {
-      console.error('Error deleting assignment:', error);
+      console.error('Erro ao excluir tarefa:', error);
       toast.error('Falha ao excluir a tarefa', {
         description: error.message,
       });
