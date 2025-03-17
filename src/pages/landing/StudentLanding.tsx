@@ -124,8 +124,8 @@ const StudentLanding: React.FC = () => {
                 <div className="aspect-[16/9] bg-gradient-to-br from-[#1E88E5]/5 to-background relative">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <img 
-                      src="https://images.unsplash.com/photo-1498050108023-c5249f4df085" 
-                      alt="App de estudante mostrando atividades diárias de aprendizado" 
+                      src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81" 
+                      alt="Estudantes praticando inglês em grupo com dispositivos digitais" 
                       className="w-full h-full object-cover"
                     />
                   </div>

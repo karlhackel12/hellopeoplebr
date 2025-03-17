@@ -54,8 +54,8 @@ const Hero: React.FC = () => {
           <div className="aspect-[16/9] bg-gradient-to-br from-[#1E88E5]/5 to-background relative">
             <div className="absolute inset-0 flex items-center justify-center">
               <img 
-                src="/placeholder.svg" 
-                alt="Dashboard do professor mostrando progresso dos alunos" 
+                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158" 
+                alt="Alunos aprendendo inglês com o auxílio de tecnologia" 
                 className="w-full h-full object-cover"
               />
             </div>
