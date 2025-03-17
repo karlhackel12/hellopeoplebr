@@ -10,7 +10,7 @@ import PerformanceChart from '@/components/teacher/dashboard/PerformanceChart';
 
 const TeacherDashboard: React.FC = () => {
   return (
-    <TeacherLayout pageTitle="Dashboard">
+    <TeacherLayout pageTitle="Painel de Controle">
       <div className="w-full animate-fade-in space-y-6">
         <DashboardHeader />
         

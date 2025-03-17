@@ -68,7 +68,7 @@ const Assignments = () => {
 
       if (error) {
         console.error('Error fetching assignments:', error);
-        toast.error('Error loading assignments', {
+        toast.error('Erro ao carregar tarefas', {
           description: error.message
         });
         return [];
@@ -92,7 +92,7 @@ const Assignments = () => {
 
       if (error) {
         console.error('Error fetching students:', error);
-        toast.error('Error loading students');
+        toast.error('Erro ao carregar alunos');
         return [];
       }
       
@@ -159,23 +159,23 @@ const Assignments = () => {
   const isLoading = loadingStudents || loadingLessons || loadingQuizzes;
 
   return (
-    <TeacherLayout pageTitle="Assignments">
+    <TeacherLayout pageTitle="Tarefas">
       <div className="animate-fade-in">
         {!isMobile && (
           <h1 className="text-3xl font-bold mb-6">
-            {studentName ? `Assignments for ${studentName}` : 'Student Assignments'}
+            {studentName ? `Tarefas para ${studentName}` : 'Tarefas dos Alunos'}
           </h1>
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
-            <TabsTrigger value="create" className={isMobile ? 'flex-1' : ''}>Create Assignment</TabsTrigger>
-            <TabsTrigger value="view" className={isMobile ? 'flex-1' : ''}>View Assignments</TabsTrigger>
+            <TabsTrigger value="create" className={isMobile ? 'flex-1' : ''}>Criar Tarefa</TabsTrigger>
+            <TabsTrigger value="view" className={isMobile ? 'flex-1' : ''}>Ver Tarefas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="create" className="space-y-4">
             <div className="bg-card rounded-lg p-4 sm:p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Assign Content to Student</h2>
+              <h2 className="text-xl font-semibold mb-4">Atribuir Conteúdo ao Aluno</h2>
               <AssignmentForm 
                 students={students}
                 lessons={lessons}

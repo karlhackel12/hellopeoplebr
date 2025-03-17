@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -70,8 +71,8 @@ export const useAuthSubmit = () => {
 
         if (error) throw error;
 
-        toast.success("Login successful", {
-          description: "Welcome back! Redirecting to your dashboard...",
+        toast.success("Login realizado com sucesso", {
+          description: "Bem-vindo de volta! Redirecionando para seu painel...",
         });
         navigate('/dashboard');
       } 
@@ -81,8 +82,8 @@ export const useAuthSubmit = () => {
         if (hasInvitation && registerValues.invitationCode && validateCode) {
           const isValid = await validateCode(registerValues.invitationCode);
           if (!isValid) {
-            toast.error("Invalid invitation", {
-              description: "Please check your invitation code",
+            toast.error("Convite inválido", {
+              description: "Por favor, verifique seu código de convite",
             });
             setIsLoading(false);
             return;
@@ -119,16 +120,16 @@ export const useAuthSubmit = () => {
               const updated = await updateInvitationStatus(code, data.user.id, fullName);
               
               if (updated) {
-                toast.success("Connected to teacher", {
-                  description: "You've been successfully connected to your teacher",
+                toast.success("Conectado ao professor", {
+                  description: "Você foi conectado com sucesso ao seu professor",
                 });
               }
             }
           }
         }
 
-        toast.success("Registration successful", {
-          description: "Your account has been created. Welcome to HelloPeople!",
+        toast.success("Registro realizado com sucesso", {
+          description: "Sua conta foi criada. Bem-vindo ao HelloPeople!",
         });
         
         if (registerValues.role === 'teacher') {
@@ -146,14 +147,14 @@ export const useAuthSubmit = () => {
         
         if (error) throw error;
 
-        toast.success("Reset link sent", {
-          description: "Check your email for password reset instructions.",
+        toast.success("Link de redefinição enviado", {
+          description: "Verifique seu e-mail para instruções de redefinição de senha.",
         });
         navigate('/login');
       }
     } catch (error: any) {
-      toast.error("Authentication error", {
-        description: error.message || "An error occurred during authentication. Please try again.",
+      toast.error("Erro de autenticação", {
+        description: error.message || "Ocorreu um erro durante a autenticação. Por favor, tente novamente.",
       });
     } finally {
       setIsLoading(false);
