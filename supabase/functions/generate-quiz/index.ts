@@ -18,7 +18,7 @@ serve(async (req) => {
   
   try {
     // Parse request data
-    const { lessonContent, numQuestions = 10 } = await req.json();
+    const { lessonContent, numQuestions = 15 } = await req.json();
     
     if (!lessonContent) {
       return new Response(
