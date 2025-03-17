@@ -62,7 +62,7 @@ function buildPrompt(requestData: any): string {
   
   // Further optimized prompt to generate fewer quiz questions (only 10 instead of 20)
   // and reduced text complexity for faster generation
-  let prompt = `Create a concise English lesson with 10 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
+  let prompt = `Create a complete English lesson with 15 quiz questions about "${title}" for ${level} level students. All translations should be in Brazilian Portuguese.`;
   
   if (instructions) {
     prompt += `\n\nAdditional instructions: ${instructions}`;
@@ -70,14 +70,27 @@ function buildPrompt(requestData: any): string {
   
   prompt += `\n\nFormat the response as JSON with the following structure:
 {
-  "description": "A brief overview of the English lesson (1-2 sentences)",
+  "description": "A, overview of the English lesson (20 sentences)",
   "keyPhrases": [
     {"phrase": "Key phrase 1", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
-    {"phrase": "Key phrase 2", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"}
+    {"phrase": "Key phrase 2", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 3", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 4", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 5", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 6", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 7", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"},
+    {"phrase": "Key phrase 8", "translation": "Portuguese translation", "usage": "Example of how to use this phrase"}
   ],
   "vocabulary": [
     {"word": "Word 1", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
-    {"word": "Word 2", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"}
+    {"word": "Word 2", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 3", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 4", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 5", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 6", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 7", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+    {"word": "Word 8", "translation": "Portuguese translation", "partOfSpeech": "noun/verb/adj"},
+
   ],
   "quiz": {
     "questions": [
@@ -92,7 +105,7 @@ function buildPrompt(requestData: any): string {
   }
 }
 
-Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus on the title topic. Include exactly 10 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese.`;
+Make sure the entire response is valid JSON. The content should be appropriate for ${level} level English students and focus on the title topic. Include exactly 15 quiz questions. IMPORTANT: All translations must be in Brazilian Portuguese.`;
 
   return prompt;
 }
