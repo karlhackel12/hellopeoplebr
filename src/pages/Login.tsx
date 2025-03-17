@@ -1,13 +1,10 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
 import Logo from '@/components/ui/Logo';
 import { H1 } from '@/components/ui/typography';
-
 const Login: React.FC = () => {
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+  return <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Auth form */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 md:px-12 lg:px-16 relative">
         <div className="absolute top-8 left-8">
@@ -30,9 +27,7 @@ const Login: React.FC = () => {
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/5 to-background relative">
         <div className="absolute inset-0 flex flex-col justify-center items-center p-12">
           <div className="bg-card/60 backdrop-blur-sm border border-border/30 rounded-2xl p-8 max-w-lg shadow-sm">
-            <blockquote className="text-lg italic text-foreground/80 mb-6">
-              "HelloPeople transformou completamente minha experiência de aprendizado de idiomas. As conversas com IA são incrivelmente naturais, e estou progredindo mais rápido do que jamais consegui com métodos tradicionais."
-            </blockquote>
+            <blockquote className="text-lg italic text-foreground/80 mb-6">"HelloPeople é o aplicativo que eu estava precisando para conseguir estudar entre minhas aulas, agora me sinto mais motivado por consigo sentir uma evolução"</blockquote>
             <div className="flex items-center">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
                 JD
@@ -45,8 +40,6 @@ const Login: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Login;
