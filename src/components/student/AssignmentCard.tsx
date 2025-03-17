@@ -27,21 +27,21 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({ assignment, progress })
     }
   };
   
-  const assignmentType = isLesson ? 'Lesson' : 'Quiz';
+  const assignmentType = isLesson ? 'Lição' : 'Quiz';
   
   let statusBadge;
   switch (assignment.status) {
     case 'not_started':
-      statusBadge = <Badge variant="outline">Not Started</Badge>;
+      statusBadge = <Badge variant="outline">Não Iniciado</Badge>;
       break;
     case 'in_progress':
-      statusBadge = <Badge variant="secondary">In Progress</Badge>;
+      statusBadge = <Badge variant="secondary">Em Andamento</Badge>;
       break;
     case 'completed':
-      statusBadge = <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>;
+      statusBadge = <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">Concluído</Badge>;
       break;
     default:
-      statusBadge = <Badge variant="outline">Pending</Badge>;
+      statusBadge = <Badge variant="outline">Pendente</Badge>;
   }
 
   return (
@@ -66,7 +66,7 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({ assignment, progress })
           {assignment.due_date && (
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="mr-1 h-4 w-4" />
-              Due: {format(new Date(assignment.due_date), 'MMM d, yyyy')}
+              Prazo: {format(new Date(assignment.due_date), 'dd MMM, yyyy')}
             </div>
           )}
           
@@ -82,12 +82,12 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({ assignment, progress })
           {isLesson ? (
             <>
               <BookOpen className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-              {progress?.completed ? 'Review Lesson' : 'Start Lesson'}
+              {progress?.completed ? 'Revisar Lição' : 'Iniciar Lição'}
             </>
           ) : (
             <>
               <BookOpen className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-              View Quiz
+              Ver Quiz
             </>
           )}
           <ArrowRight className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-1" />

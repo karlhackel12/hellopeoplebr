@@ -1,55 +1,22 @@
 
 import React from 'react';
-import { Helmet } from 'react-helmet';
-import { Construction, Wrench, Clock } from 'lucide-react';
-import StudentLayout from '@/components/layout/StudentLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Construction } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 const VoicePracticeConstruction: React.FC = () => {
   return (
-    <StudentLayout>
-      <Helmet>
-        <title>Voice Practice | Under Construction</title>
-      </Helmet>
-      
-      <div className="flex flex-col items-center justify-center py-12">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <Construction className="h-16 w-16 text-amber-500" />
-                <Wrench className="h-8 w-8 text-blue-500 absolute -bottom-1 -right-1 animate-pulse" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl">Voice Practice Coming Soon</CardTitle>
-            <CardDescription>
-              We're working hard to bring you an amazing voice practice experience
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 text-center">
-              <p className="text-muted-foreground">
-                Our team is currently developing an advanced voice practice system with AI-powered feedback, 
-                pronunciation assessment, and interactive conversation practice.
-              </p>
-              
-              <div className="flex justify-center items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>Expected release: Coming soon</span>
-              </div>
-              
-              <div className="pt-4">
-                <Button asChild>
-                  <Link to="/student/dashboard">Return to Dashboard</Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </StudentLayout>
+    <div className="container px-4 py-8 max-w-4xl mx-auto">
+      <Card className="border-2 border-primary/20 shadow-md">
+        <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
+          <Construction className="h-16 w-16 text-primary mb-6" />
+          <h1 className="text-2xl font-bold mb-2">Em Construção</h1>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Estamos trabalhando para trazer o recurso de prática de voz em breve.
+            Volte em breve para experimentar esta funcionalidade!
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

@@ -35,10 +35,10 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl mb-1 flex items-center gap-2">
-              <Brain className="h-5 w-5" /> Spaced Repetition
+              <Brain className="h-5 w-5" /> Repetição Espaçada
             </CardTitle>
             <CardDescription className="text-slate-100 opacity-90">
-              Remember more with less effort
+              Lembre-se de mais com menos esforço
             </CardDescription>
           </div>
           <div className="bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
@@ -60,8 +60,8 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
           <>
             <div className="mb-5">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm text-muted-foreground">Due for review</span>
-                <span className="text-sm font-medium">{dueItemsCount} items</span>
+                <span className="text-sm text-muted-foreground">Pendentes para revisão</span>
+                <span className="text-sm font-medium">{dueItemsCount} itens</span>
               </div>
               <Progress 
                 value={dueItemsCount > 0 ? 100 : 0} 
@@ -74,25 +74,25 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <Trophy className="h-5 w-5 text-amber-500 mb-1" />
                 <div className="text-lg font-bold">{bestStreak}</div>
-                <div className="text-xs text-muted-foreground">Best Streak</div>
+                <div className="text-xs text-muted-foreground">Melhor Sequência</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <Activity className="h-5 w-5 text-blue-500 mb-1" />
                 <div className="text-lg font-bold">{averageScore}</div>
-                <div className="text-xs text-muted-foreground">Avg. Score</div>
+                <div className="text-xs text-muted-foreground">Pont. Média</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <Clock className="h-5 w-5 text-indigo-500 mb-1" />
                 <div className="text-lg font-bold">{totalReviews}</div>
-                <div className="text-xs text-muted-foreground">Total Reviews</div>
+                <div className="text-xs text-muted-foreground">Total de Revisões</div>
               </div>
               
               <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                 <Zap className="h-5 w-5 text-yellow-500 mb-1" />
                 <div className="text-lg font-bold">{totalPoints}</div>
-                <div className="text-xs text-muted-foreground">Total Points</div>
+                <div className="text-xs text-muted-foreground">Total de Pontos</div>
               </div>
             </div>
           </>
@@ -105,7 +105,7 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
           className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
           disabled={dueItemsCount === 0 || loading}
         >
-          {dueItemsCount > 0 ? `Start Review (${dueItemsCount})` : "No Items Due"}
+          {dueItemsCount > 0 ? `Iniciar Revisão (${dueItemsCount})` : "Nenhum Item Pendente"}
         </Button>
       </CardFooter>
     </Card>

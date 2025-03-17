@@ -6,7 +6,7 @@ const VoicePractice: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to the construction page
+    // Redirecionar para a página em construção
     navigate('/student/voice-practice-construction');
   }, [navigate]);
 

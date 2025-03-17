@@ -81,7 +81,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-800">
-                  <p className="font-medium mb-1">Explanation:</p>
+                  <p className="font-medium mb-1">Explicação:</p>
                   <p>{explanation}</p>
                 </div>
               </div>
@@ -98,7 +98,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
             className="gap-2"
             disabled={isSubmitted && !showCorrectAnswers}
           >
-            <ArrowLeft className="h-4 w-4" /> Previous
+            <ArrowLeft className="h-4 w-4" /> Anterior
           </Button>
         ) : (
           <div></div>
@@ -110,8 +110,8 @@ const QuizCard: React.FC<QuizCardProps> = ({
           className="gap-2"
         >
           {isLastQuestion 
-            ? (showCorrectAnswers ? 'View Results' : 'Submit') 
-            : 'Next'}
+            ? (showCorrectAnswers ? 'Ver Resultados' : 'Enviar') 
+            : 'Próximo'}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </CardFooter>

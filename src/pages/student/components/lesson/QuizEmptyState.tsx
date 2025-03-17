@@ -7,7 +7,7 @@ const QuizEmptyState: React.FC = () => {
     <Card className="border shadow-sm">
       <CardContent className="py-12">
         <div className="text-center">
-          <p className="text-muted-foreground">No questions available for this quiz.</p>
+          <p className="text-muted-foreground">Nenhuma questão disponível para este quiz.</p>
         </div>
       </CardContent>
     </Card>
