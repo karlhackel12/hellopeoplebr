@@ -41,9 +41,9 @@ const Students = () => {
   }
 
   return (
-    <TeacherLayout pageTitle="Student Management">
+    <TeacherLayout pageTitle="Gerenciamento de Alunos">
       <div className="animate-fade-in">
-        {!isMobile && <h1 className="text-3xl font-bold mb-6">Student Management</h1>}
+        {!isMobile && <h1 className="text-3xl font-bold mb-6">Gerenciamento de Alunos</h1>}
         
         <StudentsTabs 
           activeTab={activeTab}

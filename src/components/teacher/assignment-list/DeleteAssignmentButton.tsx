@@ -34,14 +34,14 @@ const DeleteAssignmentButton: React.FC<DeleteAssignmentButtonProps> = ({
       
       if (error) throw error;
       
-      toast.success('Assignment deleted', {
-        description: 'The assignment has been successfully deleted',
+      toast.success('Tarefa excluída', {
+        description: 'A tarefa foi excluída com sucesso',
       });
       
       onDelete();
     } catch (error: any) {
       console.error('Error deleting assignment:', error);
-      toast.error('Failed to delete assignment', {
+      toast.error('Falha ao excluir a tarefa', {
         description: error.message,
       });
     }
@@ -53,25 +53,25 @@ const DeleteAssignmentButton: React.FC<DeleteAssignmentButtonProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          title="Delete assignment"
+          title="Excluir tarefa"
         >
           <TrashIcon className="h-4 w-4 text-red-500" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Assignment</AlertDialogTitle>
+          <AlertDialogTitle>Excluir Tarefa</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete this assignment. This action cannot be undone.
+            Isso excluirá permanentemente esta tarefa. Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
             onClick={deleteAssignment}
             className="bg-red-500 text-white hover:bg-red-600"
           >
-            Delete
+            Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

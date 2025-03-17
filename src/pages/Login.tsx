@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
 import Logo from '@/components/ui/Logo';
 import { H1 } from '@/components/ui/typography';
+
 const Login: React.FC = () => {
   return <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Auth form */}
@@ -42,4 +44,5 @@ const Login: React.FC = () => {
       </div>
     </div>;
 };
+
 export default Login;

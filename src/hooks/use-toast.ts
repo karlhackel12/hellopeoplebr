@@ -17,12 +17,12 @@ export function useToast() {
   
   const toast = useCallback(({ title, description, variant }: ToastProps) => {
     if (variant === 'destructive') {
-      return sonnerToast.error(title || 'Error', {
+      return sonnerToast.error(title || 'Erro', {
         description
       });
     }
     
-    return sonnerToast(title || 'Notification', {
+    return sonnerToast(title || 'Notificação', {
       description
     });
   }, []);
@@ -34,12 +34,12 @@ export function useToast() {
 // This avoids the "Invalid hook call" error since we're not using hooks at the module level
 const createToast = ({ title, description, variant }: ToastProps) => {
   if (variant === 'destructive') {
-    return sonnerToast.error(title || 'Error', {
+    return sonnerToast.error(title || 'Erro', {
       description
     });
   }
   
-  return sonnerToast(title || 'Notification', {
+  return sonnerToast(title || 'Notificação', {
     description
   });
 };

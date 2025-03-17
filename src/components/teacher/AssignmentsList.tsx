@@ -46,7 +46,7 @@ const AssignmentsList: React.FC<AssignmentsListProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center my-12">
-        <p>Loading assignments...</p>
+        <p>Carregando tarefas...</p>
       </div>
     );
   }
