@@ -22,18 +22,18 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
           <table className="w-full">
             <thead className="bg-muted text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 text-left">Assignment</th>
-                <th className="px-4 py-3 text-left">Student</th>
-                <th className="px-4 py-3 text-left">Content</th>
+                <th className="px-4 py-3 text-left">Tarefa</th>
+                <th className="px-4 py-3 text-left">Aluno</th>
+                <th className="px-4 py-3 text-left">Conteúdo</th>
                 <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Due Date</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-4 py-3 text-left">Data de Entrega</th>
+                <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                  No assignments match your filters. Try adjusting your search or filters.
+                  Nenhuma tarefa corresponde aos seus filtros. Tente ajustar sua busca ou filtros.
                 </td>
               </tr>
             </tbody>
@@ -49,12 +49,12 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
         <table className="w-full">
           <thead className="bg-muted text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 text-left">Assignment</th>
-              <th className="px-4 py-3 text-left">Student</th>
-              <th className="px-4 py-3 text-left">Content</th>
+              <th className="px-4 py-3 text-left">Tarefa</th>
+              <th className="px-4 py-3 text-left">Aluno</th>
+              <th className="px-4 py-3 text-left">Conteúdo</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Due Date</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3 text-left">Data de Entrega</th>
+              <th className="px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -81,7 +81,7 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Unknown student</span>
+                    <span className="text-muted-foreground">Aluno desconhecido</span>
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -91,7 +91,7 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                     {assignment.quiz_id && (
                       <div className="flex items-center">
                         <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200">
-                          Has Quiz
+                          Tem Quiz
                         </Badge>
                       </div>
                     )}
@@ -102,8 +102,8 @@ const AssignmentsTable: React.FC<AssignmentsTableProps> = ({
                 </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {assignment.due_date 
-                    ? format(new Date(assignment.due_date), 'MMM dd, yyyy')
-                    : 'No due date'
+                    ? format(new Date(assignment.due_date), 'dd/MM/yyyy')
+                    : 'Sem data de entrega'
                   }
                 </td>
                 <td className="px-4 py-3 text-right">

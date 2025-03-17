@@ -13,10 +13,10 @@ const DashboardHeader: React.FC = () => {
   
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
+      <h1 className="text-3xl font-bold">Dashboard do Professor</h1>
       <Button onClick={handleCreateLesson} className="flex items-center gap-2">
         <PlusCircle className="h-4 w-4" />
-        Create Lesson
+        Criar Lição
       </Button>
     </div>
   );

@@ -42,8 +42,8 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
       // Get current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        toast.error('Authentication error', {
-          description: 'You must be logged in to generate invitation codes',
+        toast.error('Erro de autenticação', {
+          description: 'Você precisa estar logado para gerar códigos de convite',
         });
         return;
       }
@@ -64,13 +64,13 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
         .select();
 
       if (error) {
-        console.error('Error generating invitation code:', error);
+        console.error('Erro ao gerar código de convite:', error);
         if (error.code === 'PGRST301') {
-          toast.error('Permission denied', {
-            description: 'You do not have permission to generate invitation codes.',
+          toast.error('Permissão negada', {
+            description: 'Você não tem permissão para gerar códigos de convite.',
           });
         } else {
-          toast.error('Failed to generate invitation code', {
+          toast.error('Falha ao gerar código de convite', {
             description: error.message,
           });
         }
@@ -81,15 +81,15 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
       const invitation = data[0];
       setInvitationCode(invitation.invitation_code);
       
-      toast.success('Invitation code generated', {
-        description: 'Copy and share this code with your student',
+      toast.success('Código de convite gerado', {
+        description: 'Copie e compartilhe este código com seu aluno',
       });
       
       form.reset();
       onSuccess();
     } catch (error: any) {
-      console.error('Error generating invitation code:', error);
-      toast.error('Failed to generate invitation code', {
+      console.error('Erro ao gerar código de convite:', error);
+      toast.error('Falha ao gerar código de convite', {
         description: error.message,
       });
     } finally {
@@ -103,14 +103,14 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
       try {
         await navigator.clipboard.writeText(invitationCode);
         setCopySuccess(true);
-        toast.success('Code copied to clipboard');
+        toast.success('Código copiado para a área de transferência');
         
         setTimeout(() => {
           setCopySuccess(false);
         }, 2000);
       } catch (err) {
-        console.error('Failed to copy code:', err);
-        toast.error('Failed to copy code');
+        console.error('Falha ao copiar código:', err);
+        toast.error('Falha ao copiar código');
       }
     }
   };
@@ -125,7 +125,7 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
     return (
       <div className="space-y-6">
         <div className="bg-muted p-6 rounded-lg text-center">
-          <Badge className="mb-2">Invitation Code</Badge>
+          <Badge className="mb-2">Código de Convite</Badge>
           <div className="text-2xl font-mono tracking-wider my-3">{invitationCode}</div>
           <div className="flex justify-center gap-2 mt-4">
             <Button 
@@ -136,23 +136,23 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
               {copySuccess ? (
                 <>
                   <Check className="h-4 w-4" />
-                  <span>Copied!</span>
+                  <span>Copiado!</span>
                 </>
               ) : (
                 <>
                   <Copy className="h-4 w-4" />
-                  <span>Copy Code</span>
+                  <span>Copiar Código</span>
                 </>
               )}
             </Button>
-            <Button onClick={handleGenerateAnother} variant="secondary">Generate Another</Button>
+            <Button onClick={handleGenerateAnother} variant="secondary">Gerar Outro</Button>
           </div>
         </div>
         
         <Alert>
           <AlertDescription>
-            <p>Share this code with your student. They'll enter it when creating their account.</p>
-            <p className="mt-2 text-sm text-muted-foreground">This code will expire in 30 days if unused.</p>
+            <p>Compartilhe este código com seu aluno. Ele deverá informá-lo ao criar sua conta.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Este código expirará em 30 dias se não for usado.</p>
           </AlertDescription>
         </Alert>
       </div>
@@ -167,9 +167,9 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
           name="note"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Note (Optional)</FormLabel>
+              <FormLabel>Observação (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="For tracking purposes only" {...field} />
+                <Input placeholder="Apenas para fins de controle" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -181,12 +181,12 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
           className="w-full"
           disabled={isGenerating}
         >
-          {isGenerating ? 'Generating...' : 'Generate Invitation Code'}
+          {isGenerating ? 'Gerando...' : 'Gerar Código de Convite'}
         </Button>
         
         <Alert>
           <AlertDescription>
-            You'll need to manually share this code with your student. They will enter it during signup.
+            Você precisará compartilhar manualmente este código com seu aluno. Ele deverá informá-lo durante o cadastro.
           </AlertDescription>
         </Alert>
       </form>

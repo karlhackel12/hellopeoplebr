@@ -79,11 +79,11 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success('Logged out successfully');
+      toast.success('Desconectado com sucesso');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to log out');
+      toast.error('Falha ao sair');
     }
   };
 
@@ -94,22 +94,22 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       icon: LayoutDashboard 
     },
     { 
-      name: 'Lessons', 
+      name: 'Lições', 
       href: '/teacher/lessons', 
       icon: BookOpen 
     },
     { 
-      name: 'Students', 
+      name: 'Alunos', 
       href: '/teacher/students', 
       icon: Users 
     },
     { 
-      name: 'Assignments', 
+      name: 'Tarefas', 
       href: '/teacher/assignments', 
       icon: ClipboardList 
     },
     { 
-      name: 'Settings', 
+      name: 'Configurações', 
       href: '/teacher/settings', 
       icon: Settings 
     }
@@ -187,7 +187,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
-            {!collapsed && <span className="font-medium">Logout</span>}
+            {!collapsed && <span className="font-medium">Sair</span>}
           </Button>
         </div>
       </div>
@@ -247,7 +247,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
               onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
-              <span className="font-medium">Logout</span>
+              <span className="font-medium">Sair</span>
             </Button>
           </div>
         </div>

@@ -31,7 +31,7 @@ const AssignmentsFilter: React.FC<AssignmentsFilterProps> = ({
       <div className="relative flex-1">
         <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search assignments or students..."
+          placeholder="Buscar tarefas ou alunos..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9"
@@ -43,14 +43,14 @@ const AssignmentsFilter: React.FC<AssignmentsFilterProps> = ({
           <FilterIcon className="h-4 w-4 text-muted-foreground" />
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
             <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="not_started">Not Started</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="late">Late</SelectItem>
+              <SelectItem value="all">Todos Status</SelectItem>
+              <SelectItem value="not_started">Não Iniciada</SelectItem>
+              <SelectItem value="in_progress">Em Progresso</SelectItem>
+              <SelectItem value="completed">Concluída</SelectItem>
+              <SelectItem value="late">Atrasada</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -59,11 +59,11 @@ const AssignmentsFilter: React.FC<AssignmentsFilterProps> = ({
           <BookOpenIcon className="h-4 w-4 text-muted-foreground" />
           <Select value={contentTypeFilter} onValueChange={onContentTypeFilterChange}>
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Filter by type" />
+              <SelectValue placeholder="Filtrar por tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Content</SelectItem>
-              <SelectItem value="lesson">Lessons</SelectItem>
+              <SelectItem value="all">Todo Conteúdo</SelectItem>
+              <SelectItem value="lesson">Lições</SelectItem>
               <SelectItem value="quiz">Quizzes</SelectItem>
             </SelectContent>
           </Select>
@@ -73,7 +73,7 @@ const AssignmentsFilter: React.FC<AssignmentsFilterProps> = ({
           variant="outline"
           size="icon"
           onClick={onSortOrderChange}
-          title={`Sort by date ${sortOrder === 'asc' ? 'newest first' : 'oldest first'}`}
+          title={`Ordenar por data ${sortOrder === 'asc' ? 'mais recente primeiro' : 'mais antigo primeiro'}`}
         >
           <ArrowUpDown className="h-4 w-4" />
         </Button>
