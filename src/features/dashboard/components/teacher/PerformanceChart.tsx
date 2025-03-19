@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,6 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import React from 'react';
 
 const PerformanceChart: React.FC = () => {
   const { data, isLoading, refetch, isRefetching } = useQuery({
@@ -220,7 +219,7 @@ const PerformanceChart: React.FC = () => {
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis.Element 
+                  <XAxis 
                     dataKey="name" 
                     angle={-45} 
                     textAnchor="end"
@@ -228,7 +227,7 @@ const PerformanceChart: React.FC = () => {
                     height={60}
                   />
                   <YAxis />
-                  <Tooltip
+                  <ChartTooltip
                     content={<ChartTooltipContent nameKey="name" />}
                   />
                   <Legend />

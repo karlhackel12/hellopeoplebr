@@ -41,12 +41,13 @@ const VoicePractice: React.FC = () => {
           <TabsTrigger value="new-conversation">Nova Conversa</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
+        
         <TabsContent value="new-conversation">
-          <VoiceChatComponent assignedLessons={assignedLessons as AssignedLesson[]} />
+          <VoiceChatComponent assignedLessons={assignedLessons || []} />
         </TabsContent>
         
         <TabsContent value="history">
-          <VoicePracticeHistory sessions={sessions} />
+          <VoicePracticeHistory sessions={sessions || []} />
         </TabsContent>
       </Tabs>
     </div>

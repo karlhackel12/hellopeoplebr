@@ -15,7 +15,28 @@ serve(async (req) => {
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY is not set');
+      console.error('OPENAI_API_KEY não está configurada');
+      return new Response(
+        JSON.stringify({ error: 'Configuração da API não encontrada' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      console.error('Erro ao processar corpo da requisição:', e);
+      return new Response(
+        JSON.stringify({ error: 'Corpo da requisição inválido' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const { 
@@ -28,7 +49,30 @@ serve(async (req) => {
       markAsCompleted = false,
       lessonId = null,
       assignmentId = null
-    } = await req.json();
+    } = requestBody;
+
+    // Validar parâmetros obrigatórios
+    if (!userTranscript) {
+      console.error('userTranscript não fornecido');
+      return new Response(
+        JSON.stringify({ error: 'Parâmetro userTranscript é obrigatório' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    if (!userId) {
+      console.error('userId não fornecido');
+      return new Response(
+        JSON.stringify({ error: 'Parâmetro userId é obrigatório' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     // If just marking as completed, update the conversation session
     if (markAsCompleted && conversationId && userId) {
@@ -101,10 +145,6 @@ serve(async (req) => {
       );
     }
 
-    if (!userTranscript) {
-      throw new Error('Missing required parameter: userTranscript');
-    }
-
     // Fetch conversation history if continuing a conversation
     let messages = [];
     
@@ -140,29 +180,83 @@ serve(async (req) => {
       { role: 'user', content: userTranscript }
     ];
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: apiMessages,
-        temperature: 0.7,
-        max_tokens: 500
-      }),
-    });
+    // Call OpenAI API with retry mechanism
+    let retryCount = 0;
+    const maxRetries = 3;
+    let aiResponse = '';
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${error}`);
+    while (retryCount < maxRetries) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4',
+            messages: apiMessages,
+            temperature: 0.7,
+            max_tokens: 500,
+            stream: true
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.error(`Tentativa ${retryCount + 1} falhou:`, error);
+          retryCount++;
+          if (retryCount === maxRetries) {
+            throw new Error(`OpenAI API error após ${maxRetries} tentativas: ${error}`);
+          }
+          // Esperar antes de tentar novamente
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          continue;
+        }
+
+        // Processar streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error('Failed to get response reader');
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                break;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.choices[0].delta.content) {
+                  aiResponse += parsed.choices[0].delta.content;
+                }
+              } catch (e) {
+                console.error('Erro ao processar chunk:', e);
+              }
+            }
+          }
+        }
+        break; // Se chegou aqui, a requisição foi bem sucedida
+      } catch (error) {
+        console.error(`Erro na tentativa ${retryCount + 1}:`, error);
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
 
-    const result = await response.json();
-    const aiResponse = result.choices[0].message.content;
-    
     // If there's a valid conversationId, store the messages
     let newConversationId = conversationId;
     
@@ -175,25 +269,32 @@ serve(async (req) => {
       
       // If no conversationId, create a new conversation session
       if (!conversationId) {
-        const { data: sessionData, error: sessionError } = await supabaseAdmin
+        const sessionData = {
+          user_id: userId,
+          difficulty_level: difficulty,
+          topic: lessonTopics.length > 0 ? lessonTopics[0] : 'General Conversation',
+          vocabulary_used: vocabularyItems,
+          is_required: lessonId ? true : false,
+          lesson_id: lessonId
+        };
+
+        // Adicionar assignment_id apenas se existir
+        if (assignmentId) {
+          sessionData.assignment_id = assignmentId;
+        }
+
+        const { data: newSession, error: sessionError } = await supabaseAdmin
           .from('conversation_sessions')
-          .insert({
-            user_id: userId,
-            difficulty_level: difficulty,
-            topic: lessonTopics.length > 0 ? lessonTopics[0] : 'General Conversation',
-            vocabulary_used: vocabularyItems,
-            is_required: lessonId ? true : false,
-            lesson_id: lessonId,
-            assignment_id: assignmentId
-          })
+          .insert(sessionData)
           .select('id')
           .single();
         
         if (sessionError) {
+          console.error('Erro ao criar sessão:', sessionError);
           throw new Error(`Error creating conversation session: ${sessionError.message}`);
         }
         
-        newConversationId = sessionData.id;
+        newConversationId = newSession.id;
       }
       
       // Save user message
@@ -223,9 +324,12 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (error) {
-    console.error('Error in voice-conversation function:', error);
+    console.error('Erro na função voice-conversation:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
