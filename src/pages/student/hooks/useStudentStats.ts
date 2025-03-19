@@ -1,11 +1,9 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
 
 export const useStudentStats = () => {
-  const queryClient = useQueryClient();
-  
-  const { data: stats, isLoading, refetch } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['student-stats'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -41,56 +39,8 @@ export const useStudentStats = () => {
         lessonsCompleted: lessonProgress?.length || 0,
         totalMinutes: voiceMinutes + lessonMinutes
       };
-    },
-    staleTime: 60 * 1000, // Reduzido para 1 minuto
-    refetchOnWindowFocus: true,
-    refetchOnMount: true
+    }
   });
   
-  // Atualizações automáticas a cada 2 minutos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 2 * 60 * 1000); // 2 minutos
-    
-    return () => clearInterval(interval);
-  }, [refetch]);
-  
-  // Configurar subscriptions para atualizações em tempo real
-  useEffect(() => {
-    // Escutar mudanças na tabela de progresso das lições
-    const lessonSubscription = supabase
-      .channel('lesson-progress-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'user_lesson_progress' 
-      }, () => {
-        queryClient.invalidateQueries({ queryKey: ['student-stats'] });
-      })
-      .subscribe();
-      
-    // Escutar mudanças nas sessões de prática de voz
-    const voiceSubscription = supabase
-      .channel('voice-session-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'voice_practice_sessions' 
-      }, () => {
-        queryClient.invalidateQueries({ queryKey: ['student-stats'] });
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(lessonSubscription);
-      supabase.removeChannel(voiceSubscription);
-    };
-  }, [queryClient]);
-  
-  return { 
-    stats, 
-    isLoading,
-    refetch
-  };
+  return { stats, isLoading };
 };

@@ -1,26 +1,19 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const PAGE_SIZE = 20;
-const CACHE_TIME = 5 * 60 * 1000; // 5 minutos
-const STALE_TIME = 2 * 60 * 1000; // 2 minutos
-
-export const useSpacedRepetitionStats = (userId: string | null, page: number = 1) => {
+export const useSpacedRepetitionStats = (userId: string | null) => {
   const { data: itemStats, isLoading } = useQuery({
-    queryKey: ['spaced-repetition-stats', userId, page],
+    queryKey: ['spaced-repetition-stats', userId],
     queryFn: async () => {
-      if (!userId) return { stats: {}, total: 0 };
+      if (!userId) return {};
       
-      const start = (page - 1) * PAGE_SIZE;
-      const end = start + PAGE_SIZE - 1;
-      
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('spaced_repetition_stats')
-        .select('item_id, quality_response, points_earned, streak, review_date', { count: 'exact' })
+        .select('*')
         .eq('user_id', userId)
-        .order('review_date', { ascending: false })
-        .range(start, end);
+        .order('review_date', { ascending: false });
       
       if (error) {
         toast.error('Failed to fetch review stats');
@@ -35,21 +28,10 @@ export const useSpacedRepetitionStats = (userId: string | null, page: number = 1
         return acc;
       }, {} as Record<string, any[]>);
       
-      return {
-        stats: statsByItem,
-        total: count || 0
-      };
+      return statsByItem;
     },
-    enabled: !!userId,
-    staleTime: STALE_TIME,
-    cacheTime: CACHE_TIME,
-    keepPreviousData: true
+    enabled: !!userId
   });
 
-  return { 
-    itemStats: itemStats?.stats || {}, 
-    total: itemStats?.total || 0,
-    isLoading,
-    hasMore: itemStats ? (page * PAGE_SIZE) < itemStats.total : false
-  };
+  return { itemStats, isLoading };
 };

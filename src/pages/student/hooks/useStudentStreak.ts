@@ -1,11 +1,9 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
 
 export const useStudentStreak = () => {
-  const queryClient = useQueryClient();
-  
-  const { data: streak, isLoading, refetch } = useQuery({
+  const { data: streak, isLoading } = useQuery({
     queryKey: ['student-streak'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -27,39 +25,8 @@ export const useStudentStreak = () => {
         streakCount,
         lastActive: data?.[0]?.completed_at || null
       };
-    },
-    staleTime: 60 * 1000, // Reduzido para 1 minuto
-    refetchOnWindowFocus: true,
-    refetchOnMount: true
+    }
   });
-  
-  // Atualizações automáticas a cada 2 minutos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 2 * 60 * 1000); // 2 minutos
-    
-    return () => clearInterval(interval);
-  }, [refetch]);
-  
-  // Configurar subscriptions para atualizações em tempo real
-  useEffect(() => {
-    // Escutar mudanças na tabela de progresso das lições (afeta o streak)
-    const lessonProgressSubscription = supabase
-      .channel('lesson-progress-streak-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'user_lesson_progress' 
-      }, () => {
-        queryClient.invalidateQueries({ queryKey: ['student-streak'] });
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(lessonProgressSubscription);
-    };
-  }, [queryClient]);
   
   // Calculate streak based on consecutive daily activity
   const calculateStreak = (data: any[] | null) => {
@@ -97,9 +64,5 @@ export const useStudentStreak = () => {
     return streakCount;
   };
   
-  return { 
-    streak, 
-    isLoading,
-    refetch 
-  };
+  return { streak, isLoading };
 };

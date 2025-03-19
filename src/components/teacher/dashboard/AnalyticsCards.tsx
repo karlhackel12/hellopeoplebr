@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Users, 
@@ -6,16 +7,14 @@ import {
   ClipboardCheck, 
   Brain,
   Mic,
-  Award,
-  RefreshCw,
+  Award
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 
 const AnalyticsCards: React.FC = () => {
   // Fetch analytics data
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['teacher-analytics'],
     queryFn: async () => {
       const { data: authData } = await supabase.auth.getUser();
@@ -75,139 +74,78 @@ const AnalyticsCards: React.FC = () => {
         voiceSessionsCount: voiceSessionsCount || 0,
         spacedRepetitionCount: spacedRepetitionCount || 0
       };
-    },
-    staleTime: 60 * 1000, // 1 minuto (reduzido de 5 minutos)
-    refetchOnWindowFocus: true,
-    refetchOnMount: true
+    }
   });
-
-  // Recarregar dados a cada 2 minutos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 2 * 60 * 1000); // 2 minutos
-
-    // Limpar intervalo quando o componente for desmontado
-    return () => clearInterval(interval);
-  }, [refetch]);
-
-  // Configurar uma subscription para atualizações em tempo real
-  useEffect(() => {
-    // Escutar por mudanças nas tabelas relevantes
-    const assignmentsSubscription = supabase
-      .channel('table-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'student_assignments' 
-      }, () => {
-        refetch();
-      })
-      .subscribe();
-
-    // Inscrever-se para outras tabelas relevantes
-    const voiceSessionsSubscription = supabase
-      .channel('voice-sessions-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'voice_practice_sessions' 
-      }, () => {
-        refetch();
-      })
-      .subscribe();
-
-    return () => {
-      // Limpar as subscriptions quando o componente for desmontado
-      supabase.removeChannel(assignmentsSubscription);
-      supabase.removeChannel(voiceSessionsSubscription);
-    };
-  }, [refetch]);
 
   const analyticsCards = [
     {
-      title: 'Alunos',
+      title: 'Students',
       value: data?.studentsCount || 0,
       icon: Users,
-      description: 'Total de alunos registrados',
+      description: 'Total registered students',
       color: 'bg-blue-100 text-blue-700 dark:bg-blue-700/20 dark:text-blue-400'
     },
     {
-      title: 'Lições',
+      title: 'Lessons',
       value: data?.lessonsCount || 0,
       icon: BookOpen,
-      description: 'Lições criadas',
+      description: 'Created lessons',
       color: 'bg-green-100 text-green-700 dark:bg-green-700/20 dark:text-green-400'
     },
     {
-      title: 'Conclusão de Tarefas',
+      title: 'Assignment Completion',
       value: `${data?.assignmentCompletionRate || 0}%`,
       icon: ClipboardCheck,
-      description: 'Taxa média de conclusão',
+      description: 'Average completion rate',
       color: 'bg-purple-100 text-purple-700 dark:bg-purple-700/20 dark:text-purple-400'
     },
     {
-      title: 'Desempenho em Quizes',
+      title: 'Quiz Performance',
       value: `${data?.averageQuizScore || 0}%`,
       icon: Award,
-      description: 'Pontuação média nos quizes',
+      description: 'Average quiz score',
       color: 'bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400'
     },
     {
-      title: 'Sessões de Voz',
+      title: 'Voice Sessions',
       value: data?.voiceSessionsCount || 0,
       icon: Mic,
-      description: 'Sessões de prática de voz',
+      description: 'Voice practice sessions',
       color: 'bg-red-100 text-red-700 dark:bg-red-700/20 dark:text-red-400'
     },
     {
-      title: 'Repetição Espaçada',
+      title: 'Spaced Repetition',
       value: data?.spacedRepetitionCount || 0,
       icon: Brain,
-      description: 'Itens de memória criados',
+      description: 'Memory items created',
       color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-700/20 dark:text-indigo-400'
     }
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button 
-          onClick={() => refetch()} 
-          variant="outline" 
-          size="sm"
-          disabled={isRefetching}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
-          {isRefetching ? 'Atualizando...' : 'Atualizar dados'}
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {analyticsCards.map((card, index) => (
-          <Card key={index} className="bg-card hover:shadow-md transition-all duration-300">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <div className={`p-2 rounded-md mr-3 ${card.color}`}>
-                  <card.icon className="h-5 w-5" />
-                </div>
-                {card.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold mb-1">
-                {isLoading || isRefetching ? (
-                  <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
-                ) : (
-                  card.value
-                )}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      {analyticsCards.map((card, index) => (
+        <Card key={index} className="bg-card hover:shadow-md transition-all duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium flex items-center">
+              <div className={`p-2 rounded-md mr-3 ${card.color}`}>
+                <card.icon className="h-5 w-5" />
               </div>
-              <p className="text-sm text-muted-foreground">{card.description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              {card.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-1">
+              {isLoading ? (
+                <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+              ) : (
+                card.value
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{card.description}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

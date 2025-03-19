@@ -1,10 +1,9 @@
-import React, { useMemo, useCallback, Suspense, lazy } from 'react';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Timer, ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
-
-// Lazy load RecallRatingSystem
-const RecallRatingSystem = lazy(() => import('./RecallRatingSystem'));
+import RecallRatingSystem from './RecallRatingSystem';
 
 interface Option {
   id: string;
@@ -46,84 +45,6 @@ const ReviewQuestionCard: React.FC<ReviewQuestionCardProps> = ({
   onRateRecall,
   onPrevious
 }) => {
-  const handleOptionClick = useCallback((optionId: string) => {
-    if (!showingAnswer && !showingRating) {
-      onSelectOption(optionId);
-    }
-  }, [showingAnswer, showingRating, onSelectOption]);
-
-  const optionButtons = useMemo(() => {
-    return currentQuestion?.options?.map((option) => (
-      <Button
-        key={option.id}
-        variant={
-          showingAnswer 
-            ? option.is_correct 
-              ? "outline" 
-              : selectedOption === option.id 
-                ? "outline" 
-                : "ghost"
-            : "outline"
-        }
-        className={`w-full justify-start text-left h-auto py-3 px-4 ${
-          showingAnswer && (
-            option.is_correct 
-              ? "border-green-500 bg-green-50" 
-              : selectedOption === option.id 
-                ? "border-red-500 bg-red-50"
-                : ""
-          )
-        }`}
-        onClick={() => handleOptionClick(option.id)}
-        disabled={showingAnswer}
-      >
-        {option.option_text}
-        
-        {showingAnswer && option.is_correct && (
-          <Check className="ml-auto h-5 w-5 text-green-500" />
-        )}
-        
-        {showingAnswer && !option.is_correct && selectedOption === option.id && (
-          <X className="ml-auto h-5 w-5 text-red-500" />
-        )}
-      </Button>
-    ));
-  }, [currentQuestion, showingAnswer, selectedOption, handleOptionClick]);
-
-  const footerContent = useMemo(() => (
-    <div className="flex justify-between items-center w-full">
-      {currentItemIndex > 0 ? (
-        <Button 
-          variant="outline" 
-          onClick={onPrevious}
-          disabled={showingRating || isSubmitting}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Previous
-        </Button>
-      ) : (
-        <div></div>
-      )}
-      
-      {!showingAnswer && !showingRating && (
-        <Button 
-          variant="outline" 
-          onClick={onShowAnswer}
-        >
-          Show Answer
-        </Button>
-      )}
-      
-      {showingAnswer && !showingRating && (
-        <Button 
-          variant="default" 
-          onClick={() => onRateRecall(-1)}
-        >
-          Rate Recall <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-      )}
-    </div>
-  ), [currentItemIndex, showingAnswer, showingRating, isSubmitting, onPrevious, onShowAnswer, onRateRecall]);
-
   return (
     <Card className="mx-auto max-w-2xl">
       <CardContent className="p-6">
@@ -132,16 +53,48 @@ const ReviewQuestionCard: React.FC<ReviewQuestionCardProps> = ({
             <h3 className="text-xl font-medium mb-6">{currentQuestion.question_text}</h3>
             
             <div className="space-y-3 my-6">
-              {optionButtons}
+              {currentQuestion.options?.map((option) => (
+                <Button
+                  key={option.id}
+                  variant={
+                    showingAnswer 
+                      ? option.is_correct 
+                        ? "outline" 
+                        : selectedOption === option.id 
+                          ? "outline" 
+                          : "ghost"
+                      : "outline"
+                  }
+                  className={`w-full justify-start text-left h-auto py-3 px-4 ${
+                    showingAnswer && (
+                      option.is_correct 
+                        ? "border-green-500 bg-green-50" 
+                        : selectedOption === option.id 
+                          ? "border-red-500 bg-red-50"
+                          : ""
+                    )
+                  }`}
+                  onClick={() => onSelectOption(option.id)}
+                  disabled={showingAnswer}
+                >
+                  {option.option_text}
+                  
+                  {showingAnswer && option.is_correct && (
+                    <Check className="ml-auto h-5 w-5 text-green-500" />
+                  )}
+                  
+                  {showingAnswer && !option.is_correct && selectedOption === option.id && (
+                    <X className="ml-auto h-5 w-5 text-red-500" />
+                  )}
+                </Button>
+              ))}
             </div>
             
             {showingRating && (
-              <Suspense fallback={<div className="animate-pulse h-12 bg-gray-200 rounded"></div>}>
-                <RecallRatingSystem 
-                  onRateRecall={onRateRecall} 
-                  isSubmitting={isSubmitting} 
-                />
-              </Suspense>
+              <RecallRatingSystem 
+                onRateRecall={onRateRecall} 
+                isSubmitting={isSubmitting} 
+              />
             )}
             
             {!showingAnswer && !showingRating && (
@@ -161,10 +114,40 @@ const ReviewQuestionCard: React.FC<ReviewQuestionCardProps> = ({
       </CardContent>
       
       <CardFooter className="bg-slate-50 border-t px-6 py-4">
-        {footerContent}
+        <div className="flex justify-between items-center w-full">
+          {currentItemIndex > 0 ? (
+            <Button 
+              variant="outline" 
+              onClick={onPrevious}
+              disabled={showingRating || isSubmitting}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" /> Previous
+            </Button>
+          ) : (
+            <div></div>
+          )}
+          
+          {!showingAnswer && !showingRating && (
+            <Button 
+              variant="outline" 
+              onClick={onShowAnswer}
+            >
+              Show Answer
+            </Button>
+          )}
+          
+          {showingAnswer && !showingRating && (
+            <Button 
+              variant="default" 
+              onClick={() => onRateRecall(-1)}
+            >
+              Rate Recall <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );
 };
 
-export default React.memo(ReviewQuestionCard);
+export default ReviewQuestionCard;

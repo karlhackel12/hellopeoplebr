@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -10,11 +11,7 @@ export const useSpacedRepetitionUserStats = (userId: string | null) => {
       
       const { data, error } = await supabase
         .from('spaced_repetition_stats')
-        .select(`
-          count: count(*),
-          best_streak: max(streak),
-          total_score: sum(points_earned)
-        `)
+        .select('*')
         .eq('user_id', userId);
       
       if (error) {
@@ -22,10 +19,11 @@ export const useSpacedRepetitionUserStats = (userId: string | null) => {
         throw error;
       }
       
-      const stats = data?.[0] || { count: 0, best_streak: 0, total_score: 0 };
-      const totalReviews = stats.count;
-      const bestStreak = stats.best_streak;
-      const averageScore = totalReviews > 0 ? Math.round(stats.total_score / totalReviews) : 0;
+      const stats = data || [];
+      const totalReviews = stats.length;
+      const bestStreak = stats.reduce((max, stat) => Math.max(max, stat.streak), 0);
+      const totalScore = stats.reduce((sum, stat) => sum + (stat.points_earned || 0), 0);
+      const averageScore = totalReviews > 0 ? Math.round(totalScore / totalReviews) : 0;
       
       return { totalReviews, bestStreak, averageScore };
     },
