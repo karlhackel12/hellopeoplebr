@@ -32,8 +32,17 @@ serve(async (req) => {
       lessonContent = null,
     } = await req.json();
 
+    console.log("Received request with params:", { 
+      conversationId, 
+      lessonTopics, 
+      difficulty, 
+      markAsCompleted,
+      lessonId
+    });
+
     // If just marking as completed, update the conversation session
     if (markAsCompleted && conversationId && userId) {
+      console.log("Marking conversation as completed:", conversationId);
       // Create Supabase client
       const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -112,6 +121,7 @@ serve(async (req) => {
     let lessonContentFromDB = null;
     
     if (conversationId) {
+      console.log("Fetching conversation history for ID:", conversationId);
       // Create Supabase client
       const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -134,6 +144,7 @@ serve(async (req) => {
       
       // If we have a lessonId, fetch the lesson content to provide context
       if (lessonId) {
+        console.log("Fetching lesson content for ID:", lessonId);
         const { data: lessonData, error: lessonError } = await supabaseAdmin
           .from('lessons')
           .select('title, content')
@@ -142,6 +153,7 @@ serve(async (req) => {
         
         if (!lessonError && lessonData) {
           lessonContentFromDB = lessonData;
+          console.log("Retrieved lesson content:", lessonData.title);
         }
       }
     }
@@ -154,12 +166,16 @@ serve(async (req) => {
       lessonContent || (lessonContentFromDB ? lessonContentFromDB.content : null)
     );
     
+    console.log("Using system prompt:", systemPrompt.substring(0, 200) + "...");
+    
     // Prepare messages for OpenAI API
     const apiMessages = [
       { role: 'system', content: systemPrompt },
       ...messages,
       { role: 'user', content: userTranscript }
     ];
+
+    console.log(`Calling OpenAI with ${apiMessages.length} messages`);
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -178,11 +194,14 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text();
+      console.error("OpenAI API error:", error);
       throw new Error(`OpenAI API error: ${error}`);
     }
 
     const result = await response.json();
     const aiResponse = result.choices[0].message.content;
+    
+    console.log("Received AI response, length:", aiResponse.length);
     
     // If there's a valid conversationId, store the messages
     let newConversationId = conversationId;
@@ -196,6 +215,7 @@ serve(async (req) => {
       
       // If no conversationId, create a new conversation session
       if (!conversationId) {
+        console.log("Creating new conversation session");
         const { data: sessionData, error: sessionError } = await supabaseAdmin
           .from('conversation_sessions')
           .insert({
@@ -211,9 +231,11 @@ serve(async (req) => {
           .single();
         
         if (sessionError) {
+          console.error("Error creating conversation session:", sessionError);
           throw new Error(`Error creating conversation session: ${sessionError.message}`);
         }
         
+        console.log("Created new conversation with ID:", sessionData.id);
         newConversationId = sessionData.id;
       }
       
@@ -234,6 +256,8 @@ serve(async (req) => {
           role: 'assistant',
           content: aiResponse
         });
+        
+      console.log("Saved conversation messages to database");
     }
 
     return new Response(
@@ -394,7 +418,11 @@ ${vocabularyItems.join(', ')}`;
   
   prompt += `\n\nAsk questions that encourage them to use vocabulary relevant to the topics. 
 Keep the conversation flowing naturally. If they make grammatical errors, weave corrections 
-into your responses subtly without explicitly pointing them out, unless they are a beginner.`;
+into your responses subtly without explicitly pointing them out, unless they are a beginner.
+
+Remember, you are specifically designed for verbal conversation practice. Your responses should sound
+natural when spoken aloud. Use a conversational, friendly tone as if you're speaking to the learner
+directly. Be engaging and encouraging throughout the conversation.`;
 
   return prompt;
 }
