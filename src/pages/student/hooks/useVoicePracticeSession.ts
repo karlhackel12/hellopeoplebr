@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeVoiceChat } from '@/hooks/useRealtimeVoiceChat';
@@ -14,6 +14,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('conversation');
   const [connectionRetries, setConnectionRetries] = useState(0);
+  const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
 
   const { data: lessonData, isLoading: lessonLoading } = useLesson(
     sessionDetails?.lesson_id || undefined
@@ -32,6 +33,37 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     startRecording,
     stopRecording
   } = useRealtimeVoiceChat();
+
+  const connectToVoiceService = useCallback(async () => {
+    try {
+      console.log('Attempting to connect to voice service...');
+      await connect();
+      setConnectionRetries(0);
+      
+      // Clear any existing retry timeout
+      if (retryTimeoutId !== null) {
+        clearTimeout(retryTimeoutId);
+        setRetryTimeoutId(null);
+      }
+    } catch (error) {
+      console.error("Error connecting to voice service:", error);
+      
+      if (connectionRetries < 3) {
+        // Retry connection with exponential backoff
+        const retryDelay = Math.min(1000 * Math.pow(2, connectionRetries), 8000);
+        toast.error(`Connection failed. Retrying in ${retryDelay/1000} seconds...`);
+        
+        const timeoutId = window.setTimeout(() => {
+          setConnectionRetries(prev => prev + 1);
+          connectToVoiceService();
+        }, retryDelay);
+        
+        setRetryTimeoutId(timeoutId);
+      } else {
+        toast.error("Failed to connect to voice service after multiple attempts. Please try again later.");
+      }
+    }
+  }, [connect, connectionRetries, retryTimeoutId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -55,13 +87,18 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
           .eq('id', sessionId)
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching session details:', error);
+          throw error;
+        }
+        
+        console.log('Fetched session details:', data);
         setSessionDetails(data);
         
-        if (!data.completed_at) {
-          connectToVoiceService();
-        } else {
+        if (data.completed_at) {
           setIsComplete(true);
+        } else {
+          connectToVoiceService();
         }
       } catch (error) {
         console.error('Error fetching session details:', error);
@@ -75,28 +112,13 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     
     return () => {
       disconnect();
-    };
-  }, [sessionId, disconnect]);
-
-  const connectToVoiceService = async () => {
-    try {
-      await connect();
-      setConnectionRetries(0);
-    } catch (error) {
-      console.error("Error connecting to voice service:", error);
       
-      if (connectionRetries < 2) {
-        // Retry connection
-        toast.error("Connection failed. Retrying...");
-        setTimeout(() => {
-          setConnectionRetries(prev => prev + 1);
-          connectToVoiceService();
-        }, 2000);
-      } else {
-        toast.error("Failed to connect to voice service after multiple attempts. Please try again later.");
+      // Clear any retry timeout
+      if (retryTimeoutId !== null) {
+        clearTimeout(retryTimeoutId);
       }
-    }
-  };
+    };
+  }, [sessionId, disconnect, connectToVoiceService, retryTimeoutId]);
 
   useEffect(() => {
     // Check if we need to display connection error to the user

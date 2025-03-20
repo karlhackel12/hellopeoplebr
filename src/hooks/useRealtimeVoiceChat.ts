@@ -29,7 +29,7 @@ export const useRealtimeVoiceChat = () => {
       console.log('Connecting to voice service...');
       setConnectionError(null);
       
-      // Get the project reference from environment
+      // Get the project reference
       const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_REF;
       console.log('Using project ref:', projectRef);
       
@@ -38,7 +38,7 @@ export const useRealtimeVoiceChat = () => {
       }
       
       // Use the correct WebSocket URL format
-      const wsUrl = `wss://${projectRef}.functions.supabase.co/v1/realtime-voice`;
+      const wsUrl = `wss://${projectRef}.supabase.co/functions/v1/realtime-voice`;
       console.log('Connecting to WebSocket URL:', wsUrl);
       
       if (!webSocketServiceRef.current) {
