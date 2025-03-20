@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVoicePractice } from './hooks/useVoicePractice';
@@ -6,7 +5,7 @@ import { useLesson } from './hooks/lesson/useLesson';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PauseCircle, Send, X, BookOpen, MessageSquare, Info, ArrowLeft, VolumeUp } from 'lucide-react';
+import { Mic, MicOff, PauseCircle, Send, X, BookOpen, MessageSquare, Info, ArrowLeft, Volume } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import VoiceWaveform from './components/voice-practice/VoiceWaveform';
@@ -50,7 +49,6 @@ const VoicePracticeSession: React.FC = () => {
   const [activeTab, setActiveTab] = useState('conversation');
   const chatContainerRef = useRef<HTMLDivElement>(null);
   
-  // Fetch lesson content if there's a lesson associated with this session
   const { data: lessonData, isLoading: lessonLoading } = useLesson(
     sessionDetails?.lesson_id || undefined
   );
@@ -67,7 +65,6 @@ const VoicePracticeSession: React.FC = () => {
   } = useVoiceRecorder();
   
   useEffect(() => {
-    // Scroll to bottom when messages change
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
@@ -99,10 +96,8 @@ const VoicePracticeSession: React.FC = () => {
         
         setSessionDetails(data);
         
-        // Check if already complete
         if (data.completed_at) {
           setIsComplete(true);
-          // Fetch conversation history
           const { data: messageData, error: messagesError } = await supabase
             .from('conversation_messages')
             .select('role, content, created_at')
@@ -117,11 +112,9 @@ const VoicePracticeSession: React.FC = () => {
             })));
           }
         } else {
-          // Set start time if this is a new session
           startTimeRef.current = new Date();
           setConversationId(sessionId);
           
-          // Add welcome message
           const welcomeMsg = getWelcomeMessage(data.difficulty_level, data.lesson?.title);
           setMessages([
             {
@@ -194,7 +187,6 @@ const VoicePracticeSession: React.FC = () => {
     try {
       setAiSpeaking(true);
       
-      // Add a temporary "thinking" message
       setMessages(prev => [
         ...prev, 
         { 
@@ -205,7 +197,6 @@ const VoicePracticeSession: React.FC = () => {
         }
       ]);
       
-      // Call the Supabase Edge Function for voice conversation
       const { data, error } = await supabase.functions.invoke('voice-conversation', {
         body: {
           userTranscript: userMessage.content,
@@ -221,7 +212,6 @@ const VoicePracticeSession: React.FC = () => {
       
       if (error) throw error;
       
-      // Remove the temporary message
       setMessages(prev => prev.filter(msg => !msg.isPartial));
       
       if (data.response) {
@@ -240,7 +230,6 @@ const VoicePracticeSession: React.FC = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       
-      // Remove the temporary message
       setMessages(prev => prev.filter(msg => !msg.isPartial));
       
       toast.error('Failed to send message');
@@ -256,7 +245,6 @@ const VoicePracticeSession: React.FC = () => {
       const endTime = new Date();
       const durationSeconds = Math.floor((endTime.getTime() - startTimeRef.current.getTime()) / 1000);
       
-      // Mark the conversation as completed
       await supabase.functions.invoke('voice-conversation', {
         body: {
           conversationId,
@@ -464,7 +452,7 @@ const VoicePracticeSession: React.FC = () => {
                     >
                       {message.role === 'assistant' && !message.isPartial && (
                         <div className="flex items-center gap-1.5 mb-1 text-xs opacity-70">
-                          <VolumeUp className="h-3 w-3 text-orange-500" />
+                          <Volume className="h-3 w-3 text-orange-500" />
                           AI Assistant
                         </div>
                       )}
@@ -511,7 +499,6 @@ const VoicePracticeSession: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-col w-full gap-2">
-                  {/* Voice recording status and waveform */}
                   <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                     <div className="flex-1 relative">
                       <VoiceWaveform 
@@ -538,7 +525,6 @@ const VoicePracticeSession: React.FC = () => {
                     </Button>
                   </div>
                   
-                  {/* Input area and send button */}
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <textarea
@@ -583,7 +569,7 @@ const VoicePracticeSession: React.FC = () => {
                 )}
               </div>
               <Button 
-                variant="white" 
+                variant="outline"
                 size="sm" 
                 className="bg-white text-orange-600 hover:bg-white/90"
                 onClick={() => setActiveTab('conversation')}
