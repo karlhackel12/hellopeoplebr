@@ -33,9 +33,9 @@ export class WebSocketService {
             console.error('WebSocket connection timeout');
             this.ws?.close();
             this.isConnecting = false;
-            reject(new Error('Connection timeout'));
+            reject(new Error('Timeout de conexão'));
           }
-        }, 10000); // 10 second timeout
+        }, 15000); // Increased timeout to 15 seconds
         
         this.ws.onopen = () => {
           console.log('WebSocket connected successfully');
@@ -50,6 +50,12 @@ export class WebSocketService {
             const data = JSON.parse(event.data);
             console.log('Received message:', data.type);
             
+            // Check for error messages from the server
+            if (data.type === 'error') {
+              console.error('Server error:', data.message);
+              toast.error('Erro do servidor: ' + data.message);
+            }
+            
             this.messageHandlers.forEach(handler => handler(data));
           } catch (error) {
             console.error('Error parsing message:', error);
@@ -60,7 +66,7 @@ export class WebSocketService {
           console.error('WebSocket error:', error);
           clearTimeout(connectionTimeout);
           this.isConnecting = false;
-          reject(error);
+          reject(new Error('Erro de conexão com o servidor'));
         };
         
         this.ws.onclose = (event) => {
@@ -73,12 +79,12 @@ export class WebSocketService {
             resolve(); // Resolve anyway as we're trying to reconnect
           } else {
             this.isConnecting = false;
-            reject(new Error(`Connection closed: ${event.reason}`));
+            reject(new Error(`Conexão fechada: ${event.reason || 'Razão desconhecida'}`));
           }
         };
       } catch (error) {
         console.error('Error creating WebSocket:', error);
-        toast.error('Connection failed: ' + (error instanceof Error ? error.message : String(error)));
+        toast.error('Falha na conexão: ' + (error instanceof Error ? error.message : String(error)));
         this.isConnecting = false;
         reject(error);
       }
@@ -93,7 +99,7 @@ export class WebSocketService {
       this.connect().catch(error => {
         console.error('Reconnection failed:', error);
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          toast.error(`Failed to reconnect after ${this.maxReconnectAttempts} attempts`);
+          toast.error(`Falha ao reconectar após ${this.maxReconnectAttempts} tentativas`);
         }
       });
     }, 1000 * Math.min(this.reconnectAttempts, 5)); // Exponential backoff up to 5 seconds
@@ -101,10 +107,15 @@ export class WebSocketService {
   
   public send(message: WebSocketMessage): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+      try {
+        this.ws.send(JSON.stringify(message));
+      } catch (error) {
+        console.error('Error sending message:', error);
+        toast.error('Erro ao enviar mensagem');
+      }
     } else {
       console.error('WebSocket not connected, cannot send message');
-      toast.error('Connection lost. Please try again.');
+      toast.error('Conexão perdida. Por favor, tente novamente.');
     }
   }
   

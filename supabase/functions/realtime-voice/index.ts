@@ -49,8 +49,9 @@ serve(async (req) => {
                 openAISocket.close();
               }
               
-              // Create OpenAI WebSocket connection
-              const url = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17`;
+              // Create OpenAI WebSocket connection with updated model
+              // Using gpt-4o-realtime instead of specific date-tagged version
+              const url = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime`;
               console.log("Connecting to OpenAI at:", url);
               
               openAISocket = new WebSocket(url);

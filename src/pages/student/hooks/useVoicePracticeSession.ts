@@ -15,6 +15,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
   const [activeTab, setActiveTab] = useState('conversation');
   const [connectionRetries, setConnectionRetries] = useState(0);
   const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const { data: lessonData, isLoading: lessonLoading } = useLesson(
     sessionDetails?.lesson_id || undefined
@@ -35,6 +36,9 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
   } = useRealtimeVoiceChat();
 
   const connectToVoiceService = useCallback(async () => {
+    if (isConnecting) return;
+    
+    setIsConnecting(true);
     try {
       console.log('Attempting to connect to voice service...');
       await connect();
@@ -51,19 +55,22 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
       if (connectionRetries < 3) {
         // Retry connection with exponential backoff
         const retryDelay = Math.min(1000 * Math.pow(2, connectionRetries), 8000);
-        toast.error(`Connection failed. Retrying in ${retryDelay/1000} seconds...`);
+        toast.error(`Falha na conexão. Tentando novamente em ${retryDelay/1000} segundos...`);
         
         const timeoutId = window.setTimeout(() => {
           setConnectionRetries(prev => prev + 1);
+          setIsConnecting(false);
           connectToVoiceService();
         }, retryDelay);
         
         setRetryTimeoutId(timeoutId);
       } else {
-        toast.error("Failed to connect to voice service after multiple attempts. Please try again later.");
+        toast.error("Falha ao conectar após várias tentativas. Por favor, tente novamente mais tarde.");
       }
+    } finally {
+      setIsConnecting(false);
     }
-  }, [connect, connectionRetries, retryTimeoutId]);
+  }, [connect, connectionRetries, retryTimeoutId, isConnecting]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -102,7 +109,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
         }
       } catch (error) {
         console.error('Error fetching session details:', error);
-        toast.error('Failed to load session details');
+        toast.error('Falha ao carregar detalhes da sessão');
       } finally {
         setLoading(false);
       }
@@ -123,11 +130,35 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
   useEffect(() => {
     // Check if we need to display connection error to the user
     if (connectionError && !isConnected) {
-      toast.error(`Connection error: ${connectionError}`);
+      toast.error(`Erro de conexão: ${connectionError}`);
     }
   }, [connectionError, isConnected]);
 
-  const handleCompleteSession = () => {
+  const handleCompleteSession = async () => {
+    if (!isComplete && sessionId) {
+      try {
+        // Calculate session duration (in seconds)
+        let durationSeconds = 0;
+        if (sessionDetails?.started_at) {
+          const startTime = new Date(sessionDetails.started_at).getTime();
+          const endTime = new Date().getTime();
+          durationSeconds = Math.floor((endTime - startTime) / 1000);
+        }
+        
+        await supabase
+          .from('voice_practice_sessions')
+          .update({
+            completed_at: new Date().toISOString(),
+            duration_seconds: durationSeconds
+          })
+          .eq('id', sessionId);
+        
+        toast.success('Sessão de prática completa!');
+      } catch (error) {
+        console.error('Error completing session:', error);
+        toast.error('Falha ao completar a sessão');
+      }
+    }
     navigate('/student/voice-practice');
   };
 
@@ -172,6 +203,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     transcript,
     messages,
     connectionError,
+    isConnecting,
     handleCompleteSession,
     toggleRecording,
     handleBackClick,
