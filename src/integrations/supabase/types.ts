@@ -854,6 +854,7 @@ export type Database = {
       user_quiz_attempts: {
         Row: {
           completed_at: string | null
+          created_at: string
           id: string
           passed: boolean
           quiz_id: string
@@ -864,6 +865,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          created_at?: string
           id?: string
           passed?: boolean
           quiz_id: string
@@ -874,6 +876,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          created_at?: string
           id?: string
           passed?: boolean
           quiz_id?: string

@@ -20,7 +20,7 @@ const AnalyticsCards: React.FC = () => {
       const { data: authData } = await supabase.auth.getUser();
       const teacherId = authData.user?.id;
       
-      if (!teacherId) throw new Error("Not authenticated");
+      if (!teacherId) throw new Error("Não autenticado");
       
       // Get student count
       const { count: studentsCount } = await supabase
@@ -46,10 +46,11 @@ const AnalyticsCards: React.FC = () => {
         ? Math.round((completedAssignments / totalAssignments) * 100) 
         : 0;
       
-      // Average quiz score
+      // Average quiz score - now using started_at instead of created_at
       const { data: quizAttempts } = await supabase
         .from('user_quiz_attempts')
-        .select('score');
+        .select('score')
+        .order('started_at', { ascending: false });
       
       const totalScore = quizAttempts?.reduce((sum, attempt) => sum + attempt.score, 0) || 0;
       const averageScore = quizAttempts && quizAttempts.length > 0 

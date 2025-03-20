@@ -11,19 +11,27 @@ const PerformanceChart: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['student-performance-chart'],
     queryFn: async () => {
-      // Get quiz attempts
-      const { data: quizAttempts } = await supabase
+      // Get quiz attempts - now using the correct fields
+      const { data: quizAttempts, error: quizError } = await supabase
         .from('user_quiz_attempts')
         .select('quiz_id, score, user_id')
-        .order('created_at', { ascending: false })
+        .order('started_at', { ascending: false })
         .limit(50);
       
+      if (quizError) {
+        console.error('Error fetching quiz attempts:', quizError);
+      }
+      
       // Get voice practice analytics
-      const { data: voicePractice } = await supabase
+      const { data: voicePractice, error: voiceError } = await supabase
         .from('voice_practice_feedback')
         .select('user_id, fluency_score, pronunciation_score, grammar_score')
         .order('created_at', { ascending: false })
         .limit(50);
+      
+      if (voiceError) {
+        console.error('Error fetching voice practice feedback:', voiceError);
+      }
       
       // Process data for chart
       const studentPerformance: Record<string, any> = {};
