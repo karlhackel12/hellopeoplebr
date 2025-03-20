@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,157 +16,153 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { toast } from 'sonner';
 import { useOnboarding } from '@/components/student/OnboardingContext';
 import { UploadCloud, User, Bell, Shield } from 'lucide-react';
-
 const profileFormSchema = z.object({
   first_name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
+    message: "First name must be at least 2 characters."
   }),
   last_name: z.string().min(2, {
-    message: "Sobrenome deve ter pelo menos 2 caracteres.",
+    message: "Last name must be at least 2 characters."
   }),
   email: z.string().email({
-    message: "Por favor, insira um endereço de e-mail válido.",
+    message: "Please enter a valid email address."
   }).optional(),
-  avatar_url: z.string().optional(),
+  avatar_url: z.string().optional()
 });
-
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
 const StudentSettings: React.FC = () => {
   const queryClient = useQueryClient();
-  const { completeStep, saveProgress } = useOnboarding();
+  const {
+    completeStep,
+    saveProgress
+  } = useOnboarding();
   const [activeTab, setActiveTab] = useState('profile');
-  
-  // Busca os dados do perfil do usuário
-  const { data: profile, isLoading: loadingProfile } = useQuery({
+
+  // Fetch the user's profile data
+  const {
+    data: profile,
+    isLoading: loadingProfile
+  } = useQuery({
     queryKey: ['student-profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('Usuário não autenticado');
-      
-      // Busca dados do perfil
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get profile data
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (error) throw error;
-      
-      // Busca email do usuário
-      const { data: authData } = await supabase.auth.getUser();
-      
+
+      // Get user email
+      const {
+        data: authData
+      } = await supabase.auth.getUser();
       return {
         ...data,
-        email: authData.user?.email || '',
+        email: authData.user?.email || ''
       };
     }
   });
-  
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       first_name: '',
       last_name: '',
       email: '',
-      avatar_url: '',
+      avatar_url: ''
     },
-    mode: "onChange",
+    mode: "onChange"
   });
-  
-  // Atualiza os valores do formulário quando os dados do perfil são carregados
+
+  // Update form values when profile data is loaded
   React.useEffect(() => {
     if (profile) {
       form.reset({
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: profile.email || '',
-        avatar_url: profile.avatar_url || '',
+        avatar_url: profile.avatar_url || ''
       });
     }
   }, [profile, form]);
-  
   const updateProfileMutation = useMutation({
     mutationFn: async (values: ProfileFormValues) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('Usuário não autenticado');
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: values.first_name,
-          last_name: values.last_name,
-          avatar_url: values.avatar_url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-      
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      const {
+        error
+      } = await supabase.from('profiles').update({
+        first_name: values.first_name,
+        last_name: values.last_name,
+        avatar_url: values.avatar_url,
+        updated_at: new Date().toISOString()
+      }).eq('id', user.id);
       if (error) throw error;
-      
       return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-profile'] });
-      toast.success('Perfil atualizado com sucesso');
-      
-      // Marca a etapa "Completar Perfil" como concluída
+      queryClient.invalidateQueries({
+        queryKey: ['student-profile']
+      });
+      toast.success('Profile updated successfully');
+
+      // Mark the "Complete Profile" step as completed
       completeStep('Complete Profile');
       saveProgress();
     },
-    onError: (error) => {
-      console.error('Erro ao atualizar perfil:', error);
-      toast.error('Falha ao atualizar perfil');
+    onError: error => {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     }
   });
-  
   const onSubmit = (values: ProfileFormValues) => {
     updateProfileMutation.mutate(values);
   };
-  
-  return (
-    <StudentLayout>
+  return <StudentLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas configurações e preferências de conta
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full sm:w-auto grid-cols-2 sm:grid-cols-3">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Perfil</span>
+              <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
             <TabsTrigger value="account" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Conta</span>
+              <span className="hidden sm:inline">Account</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notificações</span>
+              <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Informações de Perfil</CardTitle>
+                <CardTitle>Profile Information</CardTitle>
                 <CardDescription>
-                  Atualize suas informações pessoais
+                  Update your personal information
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loadingProfile ? (
-                  <div className="animate-pulse">
+                {loadingProfile ? <div className="animate-pulse">
                     <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
                     <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-                  </div>
-                ) : (
-                  <Form {...form}>
+                  </div> : <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="flex flex-col sm:flex-row gap-4 items-start">
                         <div className="flex-shrink-0">
@@ -180,92 +175,76 @@ const StudentSettings: React.FC = () => {
                         </div>
                         
                         <div className="space-y-1">
-                          <h3 className="font-medium">Foto de Perfil</h3>
+                          <h3 className="font-medium">Profile Picture</h3>
                           <p className="text-sm text-muted-foreground">
-                            Sua foto de perfil será visível para seus professores
+                            Your profile picture will be visible to your teachers
                           </p>
                           <div className="mt-2">
                             <Button type="button" variant="outline" className="gap-2">
                               <UploadCloud className="h-4 w-4" />
-                              Carregar Imagem
+                              Upload Image
                             </Button>
                           </div>
                         </div>
                       </div>
                       
                       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="first_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nome</FormLabel>
+                        <FormField control={form.control} name="first_name" render={({
+                      field
+                    }) => <FormItem>
+                              <FormLabel>First Name</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
                               <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                            </FormItem>} />
                         
-                        <FormField
-                          control={form.control}
-                          name="last_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Sobrenome</FormLabel>
+                        <FormField control={form.control} name="last_name" render={({
+                      field
+                    }) => <FormItem>
+                              <FormLabel>Last Name</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
                               <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                            </FormItem>} />
                       </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>E-mail</FormLabel>
+                      <FormField control={form.control} name="email" render={({
+                    field
+                  }) => <FormItem>
+                            <FormLabel>Email</FormLabel>
                             <FormControl>
                               <Input {...field} disabled />
                             </FormControl>
                             <FormDescription>
-                              Entre em contato com seu professor para atualizar seu endereço de e-mail
+                              Contact your teacher to update your email address
                             </FormDescription>
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
                       <div className="flex justify-end">
-                        <Button 
-                          type="submit" 
-                          disabled={!form.formState.isDirty || updateProfileMutation.isPending}
-                        >
-                          {updateProfileMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                        <Button type="submit" disabled={!form.formState.isDirty || updateProfileMutation.isPending}>
+                          {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                         </Button>
                       </div>
                     </form>
-                  </Form>
-                )}
+                  </Form>}
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle>Configurações de Aprendizado</CardTitle>
+                <CardTitle>Learning Settings</CardTitle>
                 <CardDescription>
-                  Configure sua experiência de aprendizado
+                  Configure your learning experience
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <Label>Seu Papel</Label>
+                    <Label>Your Role</Label>
                     <div className="flex items-center mt-1">
-                      <Badge variant="secondary">Estudante</Badge>
+                      <Badge variant="secondary">Student</Badge>
                     </div>
                   </div>
                 </div>
@@ -276,29 +255,29 @@ const StudentSettings: React.FC = () => {
           <TabsContent value="account" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Segurança da Conta</CardTitle>
+                <CardTitle>Account Security</CardTitle>
                 <CardDescription>
-                  Gerencie as configurações de segurança da sua conta
+                  Manage your account security settings
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current-password">Senha Atual</Label>
+                    <Label htmlFor="current-password">Current Password</Label>
                     <Input type="password" id="current-password" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
+                    <Label htmlFor="new-password">New Password</Label>
                     <Input type="password" id="new-password" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                    <Label htmlFor="confirm-password">Confirm New Password</Label>
                     <Input type="password" id="confirm-password" />
                   </div>
                   
-                  <Button className="mt-4">Alterar Senha</Button>
+                  <Button className="mt-4">Change Password</Button>
                 </div>
               </CardContent>
             </Card>
@@ -307,15 +286,15 @@ const StudentSettings: React.FC = () => {
           <TabsContent value="notifications" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Preferências de Notificação</CardTitle>
+                <CardTitle>Notification Preferences</CardTitle>
                 <CardDescription>
-                  Controle como você recebe notificações
+                  Control how you receive notifications
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-muted-foreground">
-                    As configurações de notificação estarão disponíveis em atualizações futuras.
+                    Notification settings will be available in future updates.
                   </p>
                 </div>
               </CardContent>
@@ -323,8 +302,6 @@ const StudentSettings: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </StudentLayout>
-  );
+    </StudentLayout>;
 };
-
 export default StudentSettings;

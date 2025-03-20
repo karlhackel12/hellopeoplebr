@@ -1,4 +1,3 @@
-
 import React from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -12,7 +11,6 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import AssignmentCard from '@/components/student/AssignmentCard';
 import GardenProgress from '@/components/ui/garden-progress';
-
 const StudentLessons: React.FC = () => {
   // Fetch student assignments (lessons and quizzes)
   const {
@@ -26,7 +24,7 @@ const StudentLessons: React.FC = () => {
           user
         }
       } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!user) throw new Error('User not authenticated');
       const {
         data,
         error
@@ -69,7 +67,7 @@ const StudentLessons: React.FC = () => {
           user
         }
       } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!user) throw new Error('User not authenticated');
       const {
         data,
         error
@@ -107,7 +105,7 @@ const StudentLessons: React.FC = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Minhas Lições</h1>
+            <h1 className="text-2xl font-bold tracking-tight">My Lessons</h1>
             
           </div>
         </div>
@@ -119,10 +117,10 @@ const StudentLessons: React.FC = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-xl mb-1 flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" /> Painel de Aprendizado
+                    <BookOpen className="h-5 w-5" /> Learning Dashboard
                   </CardTitle>
                   <CardDescription className="text-slate-100 opacity-90">
-                    Acompanhe sua jornada de aprendizado
+                    Track your learning journey
                   </CardDescription>
                 </div>
                 <div className="bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
@@ -145,7 +143,7 @@ const StudentLessons: React.FC = () => {
                 </div> : <>
                   <div className="mb-5">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm text-muted-foreground">Taxa de conclusão</span>
+                      <span className="text-sm text-muted-foreground">Completion rate</span>
                       <span className="text-sm font-medium">{completionRate}%</span>
                     </div>
                     <Progress value={completionRate} className="h-2" indicatorClassName={completionRate > 75 ? "bg-green-500" : completionRate > 25 ? "bg-yellow-500" : "bg-red-500"} />
@@ -155,24 +153,24 @@ const StudentLessons: React.FC = () => {
                     <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                       <Trophy className="h-5 w-5 text-amber-500 mb-1" />
                       <div className="text-lg font-bold">{completedCount}</div>
-                      <div className="text-xs text-muted-foreground">Concluídas</div>
+                      <div className="text-xs text-muted-foreground">Completed</div>
                     </div>
                     
                     <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                       <Activity className="h-5 w-5 text-blue-500 mb-1" />
                       <div className="text-lg font-bold">{inProgressCount}</div>
-                      <div className="text-xs text-muted-foreground">Em Progresso</div>
+                      <div className="text-xs text-muted-foreground">In Progress</div>
                     </div>
                     
                     <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                       <Clock className="h-5 w-5 text-indigo-500 mb-1" />
                       <div className="text-lg font-bold">{averageCompletionTimeInDays}</div>
-                      <div className="text-xs text-muted-foreground">Média de Dias</div>
+                      <div className="text-xs text-muted-foreground">Avg. Days</div>
                     </div>
                     
                     <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
                       <GardenProgress value={completionRate} className="flex items-center justify-center" />
-                      <div className="text-xs text-muted-foreground mt-1">Crescimento</div>
+                      <div className="text-xs text-muted-foreground mt-1">Growth</div>
                     </div>
                   </div>
                 </>}
@@ -180,7 +178,7 @@ const StudentLessons: React.FC = () => {
             
             <CardFooter className="border-t bg-slate-50 px-6">
               <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={isLoading || dueSoonAssignments.length === 0} onClick={() => document.getElementById('due-soon-tab')?.click()}>
-                {dueSoonAssignments.length > 0 ? `Iniciar Lições com Prazo Próximo (${dueSoonAssignments.length})` : "Nenhuma Lição com Prazo Próximo"}
+                {dueSoonAssignments.length > 0 ? `Start Due Soon Lessons (${dueSoonAssignments.length})` : "No Lessons Due Soon"}
               </Button>
             </CardFooter>
           </Card>
@@ -189,34 +187,34 @@ const StudentLessons: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
-                <Info className="h-5 w-5" /> Dicas de Aprendizado
+                <Info className="h-5 w-5" /> Learning Tips
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 text-sm">
                 <p>
-                  <strong>Aprendizado efetivo</strong> requer prática regular e engajamento ativo 
-                  com o material. Aqui estão algumas dicas para maximizar seu aprendizado:
+                  <strong>Effective learning</strong> requires regular practice and active engagement 
+                  with the material. Here are some tips to maximize your learning:
                 </p>
                 <div className="flex items-start gap-2">
                   <Clock className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                   <p>
-                    <strong>Agende sessões regulares de estudo</strong> - Sessões curtas e consistentes são mais
-                    eficazes do que estudar muito de uma vez.
+                    <strong>Schedule regular study sessions</strong> - Consistent short sessions are more
+                    effective than occasional cramming.
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <Trophy className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
                   <p>
-                    <strong>Teste-se frequentemente</strong> - Use os quizzes e adicione perguntas
-                    ao seu sistema de repetição espaçada para melhorar a memória de longo prazo.
+                    <strong>Test yourself frequently</strong> - Use the quizzes and then add questions
+                    to your spaced repetition system to improve long-term memory.
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <Zap className="h-5 w-5 text-yellow-500 mt-1 flex-shrink-0" />
                   <p>
-                    <strong>Aplique o que aprende</strong> - Tente usar novos conceitos em cenários
-                    do mundo real para solidificar sua compreensão.
+                    <strong>Apply what you learn</strong> - Try to use new concepts in real-world
+                    scenarios to solidify your understanding.
                   </p>
                 </div>
               </div>
@@ -227,16 +225,16 @@ const StudentLessons: React.FC = () => {
         <Tabs defaultValue="all">
           <TabsList className="w-full sm:w-auto flex flex-wrap">
             <TabsTrigger value="all" className="flex items-center gap-1.5">
-              <List className="h-4 w-4" /> Todas as Lições
+              <List className="h-4 w-4" /> All Lessons
             </TabsTrigger>
             <TabsTrigger value="in-progress" className="flex items-center gap-1.5">
-              <Activity className="h-4 w-4" /> Em Progresso
+              <Activity className="h-4 w-4" /> In Progress
             </TabsTrigger>
             <TabsTrigger id="due-soon-tab" value="due-soon" className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" /> Prazo Próximo
+              <Calendar className="h-4 w-4" /> Due Soon
             </TabsTrigger>
             <TabsTrigger value="completed" className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4" /> Concluídas
+              <Trophy className="h-4 w-4" /> Completed
             </TabsTrigger>
           </TabsList>
           
@@ -245,32 +243,30 @@ const StudentLessons: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="in-progress" className="mt-6">
-            <RenderAssignments assignments={inProgressAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição em progresso" getProgress={getLessonProgress} />
+            <RenderAssignments assignments={inProgressAssignments} isLoading={isLoading} emptyMessage="No lessons in progress" getProgress={getLessonProgress} />
           </TabsContent>
           
           <TabsContent value="due-soon" className="mt-6">
-            <RenderAssignments assignments={dueSoonAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição com prazo próximo" getProgress={getLessonProgress} />
+            <RenderAssignments assignments={dueSoonAssignments} isLoading={isLoading} emptyMessage="No lessons due soon" getProgress={getLessonProgress} />
           </TabsContent>
           
           <TabsContent value="completed" className="mt-6">
-            <RenderAssignments assignments={completedAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição concluída" getProgress={getLessonProgress} />
+            <RenderAssignments assignments={completedAssignments} isLoading={isLoading} emptyMessage="No completed lessons" getProgress={getLessonProgress} />
           </TabsContent>
         </Tabs>
       </div>
     </StudentLayout>;
 };
-
 interface RenderAssignmentsProps {
   assignments?: any[];
   isLoading: boolean;
   emptyMessage?: string;
   getProgress: (lessonId: string) => any;
 }
-
 const RenderAssignments: React.FC<RenderAssignmentsProps> = ({
   assignments,
   isLoading,
-  emptyMessage = "Nenhuma tarefa encontrada",
+  emptyMessage = "No assignments found",
   getProgress
 }) => {
   if (isLoading) {
@@ -296,8 +292,8 @@ const RenderAssignments: React.FC<RenderAssignmentsProps> = ({
         <BookOpen className="h-12 w-12 text-muted-foreground/60 mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-1">{emptyMessage}</h3>
         <p className="text-muted-foreground max-w-md mx-auto">
-          Você não tem nenhuma tarefa nesta categoria ainda. 
-          À medida que avançar em seu aprendizado, elas aparecerão aqui.
+          You don't have any assignments in this category yet. 
+          As you progress in your learning, they will appear here.
         </p>
       </div>;
   }
@@ -305,5 +301,4 @@ const RenderAssignments: React.FC<RenderAssignmentsProps> = ({
       {assignments.map(assignment => <AssignmentCard key={assignment.id} assignment={assignment} progress={assignment.lesson_id ? getProgress(assignment.lesson_id) : null} />)}
     </div>;
 };
-
 export default StudentLessons;
