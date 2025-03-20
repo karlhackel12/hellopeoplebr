@@ -50,7 +50,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          toast.error('Please log in to access student pages');
+          toast.error('Faça login para acessar as páginas de estudante');
           navigate('/login');
           return;
         }
@@ -65,8 +65,8 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
         if (error) throw error;
         
         if (profile?.role !== 'student') {
-          toast.error('Access Denied', {
-            description: 'Only students can access this page',
+          toast.error('Acesso Negado', {
+            description: 'Apenas estudantes podem acessar esta página',
           });
           navigate('/');
           return;
