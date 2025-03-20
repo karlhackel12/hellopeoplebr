@@ -19,6 +19,7 @@ const useVoiceRecorder = (options: UseVoiceRecorderOptions = {}) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const volumeDataArrayRef = useRef<Uint8Array | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   
   // Check for recording permission
   useEffect(() => {
@@ -43,6 +44,9 @@ const useVoiceRecorder = (options: UseVoiceRecorderOptions = {}) => {
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -83,6 +87,19 @@ const useVoiceRecorder = (options: UseVoiceRecorderOptions = {}) => {
     try {
       audioChunksRef.current = [];
       
+      // Clean up any existing streams
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+      
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: { 
           echoCancellation: true,
@@ -90,6 +107,8 @@ const useVoiceRecorder = (options: UseVoiceRecorderOptions = {}) => {
           autoGainControl: true
         } 
       });
+      
+      streamRef.current = stream;
       
       // Set up audio context for level monitoring
       audioContextRef.current = new AudioContext();
@@ -126,21 +145,25 @@ const useVoiceRecorder = (options: UseVoiceRecorderOptions = {}) => {
             
             if (!base64Audio) return;
             
-            // Call Supabase Edge Function for transcription
-            const { data, error } = await supabase.functions.invoke('voice-transcription', {
-              body: { 
-                audio: base64Audio,
-                language 
+            try {
+              // Call Supabase Edge Function for transcription
+              const { data, error } = await supabase.functions.invoke('voice-transcription', {
+                body: { 
+                  audio: base64Audio,
+                  language 
+                }
+              });
+              
+              if (error) {
+                console.error('Transcription error:', error);
+                return;
               }
-            });
-            
-            if (error) {
-              console.error('Transcription error:', error);
-              return;
-            }
-            
-            if (data?.text) {
-              setTranscript(data.text);
+              
+              if (data?.text) {
+                setTranscript(data.text);
+              }
+            } catch (e) {
+              console.error('Error invoking transcription function:', e);
             }
           };
         } catch (error) {
