@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package openai.voice;
+
+service VoiceService {
+  // Converte áudio em texto (Speech-to-Text)
+  rpc Transcribe (TranscribeRequest) returns (TranscribeResponse);
+  
+  // Responde a uma mensagem de voz e retorna texto
+  rpc ChatCompletion (ChatCompletionRequest) returns (ChatCompletionResponse);
+  
+  // Converte texto em áudio (Text-to-Speech)
+  rpc TextToSpeech (TextToSpeechRequest) returns (TextToSpeechResponse);
+  
+  // Streaming bidirecional para conversa em tempo real
+  rpc StreamingConversation (stream AudioChunk) returns (stream ResponseChunk);
+}
+
+// Mensagem para solicitação de transcrição
+message TranscribeRequest {
+  bytes audio_data = 1;      // Dados de áudio em formato binário
+  string model = 2;          // Modelo a ser usado para transcrição (ex: "whisper-1")
+  string language = 3;       // Código de idioma opcional (ex: "pt", "en")
+  bool prompt_boost = 4;     // Se deve tentar melhorar a precisão com contexto
+  string prompt = 5;         // Texto de contexto para melhorar a transcrição
+}
+
+// Resposta da transcrição
+message TranscribeResponse {
+  string text = 1;           // Texto transcrito
+  float confidence = 2;      // Nível de confiança da transcrição (0-1)
+  repeated string segments = 3; // Segmentos de texto com timestamps
+}
+
+// Mensagem para solicitação de chat completion
+message ChatCompletionRequest {
+  repeated Message messages = 1;    // Histórico de mensagens
+  string model = 2;                 // Modelo a ser usado (ex: "gpt-4")
+  float temperature = 3;            // Temperatura para geração (0-2)
+  string system_prompt = 4;         // Instruções de sistema
+}
+
+// Mensagem individual para o chat
+message Message {
+  string role = 1;      // "user", "assistant", "system"
+  string content = 2;   // Conteúdo da mensagem
+}
+
+// Resposta do chat completion
+message ChatCompletionResponse {
+  string text = 1;       // Texto da resposta
+  string model = 2;      // Modelo usado para a geração
+  int32 tokens_used = 3; // Número de tokens utilizados
+}
+
+// Mensagem para solicitação de text-to-speech
+message TextToSpeechRequest {
+  string text = 1;       // Texto a ser convertido em áudio
+  string voice = 2;      // Voz a ser usada (ex: "alloy", "echo", "fable", "onyx", "nova", "shimmer")
+  string model = 3;      // Modelo a ser usado (ex: "tts-1")
+  float speed = 4;       // Velocidade da fala (0.25-4.0)
+}
+
+// Resposta do text-to-speech
+message TextToSpeechResponse {
+  bytes audio_data = 1;  // Dados de áudio em formato binário
+  string format = 2;     // Formato do áudio (ex: "mp3", "opus", "aac", "flac")
+}
+
+// Chunk de áudio para streaming
+message AudioChunk {
+  bytes audio_data = 1;  // Dados de áudio em formato binário
+  bool is_final = 2;     // Indica se é o último chunk
+}
+
+// Chunk de resposta para streaming
+message ResponseChunk {
+  oneof content {
+    string text = 1;     // Texto parcial ou completo
+    bytes audio = 2;     // Áudio parcial ou completo
+  }
+  bool is_final = 3;     // Indica se é o último chunk
+} 
