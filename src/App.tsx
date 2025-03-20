@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -191,6 +190,11 @@ const App = () => (
               <PageTransitionWrapper>
                 <VoicePracticeSession />
               </PageTransitionWrapper>
+            } />
+            
+            {/* Rota para corrigir erro de digitação */}
+            <Route path="/student/voice-pratice" element={
+              <Navigate to="/student/voice-practice" replace />
             } />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
