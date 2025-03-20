@@ -1,3 +1,4 @@
+
 import { WebSocketService } from './websocketService';
 import { AudioRecorder, AudioQueue } from '@/utils/audioProcessing';
 import { toast } from 'sonner';
@@ -27,6 +28,8 @@ export class VoiceChatState {
   
   private setupMessageHandlers(): void {
     this.webSocketService.addMessageHandler((data) => {
+      console.log("Received message in VoiceChatState:", data.type);
+      
       switch (data.type) {
         case 'response.audio.delta':
           if (data.delta) {
@@ -117,7 +120,7 @@ export class VoiceChatState {
       type: 'session.update',
       session: {
         modalities: ['text', 'audio'],
-        instructions: 'You are a helpful AI assistant engaging in natural conversation. Provide clear and concise responses.',
+        instructions: 'You are a helpful AI assistant engaging in natural conversation to help users practice English. Be patient, encouraging, and provide clear and concise responses. If the user makes a language mistake, gently correct it.',
         voice: 'alloy',
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',
@@ -136,7 +139,7 @@ export class VoiceChatState {
     // Initialize with a welcome message
     this.updateMessages([{
       role: 'assistant',
-      content: 'Hello! I\'m your voice assistant. How can I help you today?',
+      content: 'Hello! I\'m your voice assistant for English practice. How can I help you today?',
       timestamp: new Date()
     }]);
   }

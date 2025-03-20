@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    'import.meta.env.VITE_USE_EDGE_FUNCTIONS': JSON.stringify('true')
+    'import.meta.env.VITE_USE_EDGE_FUNCTIONS': JSON.stringify('true'),
+    'import.meta.env.VITE_SUPABASE_PROJECT_REF': JSON.stringify('roljsmhhptuwtsbirsxe')
   }
 }));
