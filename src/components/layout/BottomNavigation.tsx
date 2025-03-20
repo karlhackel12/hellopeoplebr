@@ -21,8 +21,8 @@ const BottomNavigation: React.FC = () => {
   const navigationItems: NavigationItem[] = [
     { icon: LayoutDashboard, label: 'Início', path: '/student/dashboard' },
     { icon: BookOpen, label: 'Aulas', path: '/student/lessons' },
-    { icon: Brain, label: 'Prática', path: '/student/voice-practice' },
-    { icon: Mic, label: 'Voz', path: '/student/voice-practice-construction' },
+    { icon: Brain, label: 'Prática', path: '/student/spaced-repetition' },
+    { icon: Mic, label: 'Voz', path: '/student/voice-practice' },
     { icon: User, label: 'Perfil', path: '/student/settings' },
   ];
 
