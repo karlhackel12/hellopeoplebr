@@ -7,6 +7,7 @@ import TeacherSidebar from './TeacherSidebar';
 import TeacherBottomNavigation from './TeacherBottomNavigation';
 import MobileHeader from './MobileHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
+import LandscapeFooter from './LandscapeFooter';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -84,32 +85,36 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {isMobile && (
-        <MobileHeader 
-          onMenuToggle={toggleMobileMenu}
-          pageTitle={pageTitle}
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex flex-1">
+        {isMobile && (
+          <MobileHeader 
+            onMenuToggle={toggleMobileMenu}
+            pageTitle={pageTitle}
+          />
+        )}
+        
+        <TeacherSidebar 
+          collapsed={sidebarCollapsed} 
+          onToggle={toggleSidebar}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={() => setMobileMenuOpen(false)}
         />
-      )}
+        
+        <main 
+          className={`flex-grow transition-all duration-300 ${
+            isMobile ? 'pt-16 pb-20 px-4' : 'pt-6 pb-10'
+          } ${
+            isMobile ? '' : sidebarCollapsed ? 'md:ml-20 md:px-6' : 'md:ml-64 md:px-8'
+          } overflow-x-hidden`}
+        >
+          <div className="w-full">{children}</div>
+        </main>
+        
+        <TeacherBottomNavigation />
+      </div>
       
-      <TeacherSidebar 
-        collapsed={sidebarCollapsed} 
-        onToggle={toggleSidebar}
-        mobileOpen={mobileMenuOpen}
-        onMobileClose={() => setMobileMenuOpen(false)}
-      />
-      
-      <main 
-        className={`flex-grow transition-all duration-300 ${
-          isMobile ? 'pt-16 pb-20 px-4' : 'pt-6 pb-10'
-        } ${
-          isMobile ? '' : sidebarCollapsed ? 'md:ml-20 md:px-6' : 'md:ml-64 md:px-8'
-        } overflow-x-hidden`}
-      >
-        <div className="w-full">{children}</div>
-      </main>
-      
-      <TeacherBottomNavigation />
+      <LandscapeFooter />
     </div>
   );
 };
