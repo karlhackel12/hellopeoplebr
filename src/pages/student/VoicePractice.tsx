@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { useVoicePractice } from './hooks/useVoicePractice';
@@ -87,7 +86,6 @@ const VoicePractice: React.FC = () => {
     'Environment'
   ];
 
-  // Group sessions by lesson for better organization
   const sessionsByLesson = sessions?.reduce((acc: Record<string, any[]>, session) => {
     const lessonId = session.lesson_id || 'no-lesson';
     if (!acc[lessonId]) {
@@ -339,7 +337,7 @@ const VoicePractice: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {dueAssignments.map(assignment => (
-                  assignment.lesson && (
+                  assignment.lessons && (
                     <Card key={assignment.id} className="overflow-hidden">
                       <div className="bg-orange-50 px-4 py-3 border-b flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -353,7 +351,7 @@ const VoicePractice: React.FC = () => {
                       <CardContent className="py-4">
                         <div className="flex justify-between items-center">
                           <div>
-                            <h4 className="font-medium">{assignment.lesson.title}</h4>
+                            <h4 className="font-medium">{assignment.lessons.title}</h4>
                             <p className="text-sm text-muted-foreground">
                               {assignment.description || 'Practice conversation based on this lesson'}
                             </p>
@@ -362,7 +360,7 @@ const VoicePractice: React.FC = () => {
                             className="bg-orange-500 hover:bg-orange-600"
                             onClick={() => startAssignedSession(
                               assignment.lesson_id, 
-                              assignment.lesson.title,
+                              assignment.lessons.title,
                               assignment.id
                             )}
                             disabled={isCreatingSession}
