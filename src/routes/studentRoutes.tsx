@@ -6,6 +6,7 @@ import VoicePractice from '@/pages/student/VoicePractice';
 import VoicePracticeSession from '@/pages/student/VoicePracticeSession';
 import VoicePracticeConstruction from '@/pages/student/VoicePracticeConstruction';
 import LessonView from '@/pages/student/LessonView';
+import SpacedRepetitionPage from '@/pages/student/SpacedRepetition';
 
 // Implementação simples do StudentProtectedRoute para evitar erros
 const StudentProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -37,6 +38,7 @@ export const StudentRoutes = () => {
                 <Route path="voice-practice" element={<VoicePractice />} />
                 <Route path="voice-practice-construction" element={<VoicePracticeConstruction />} />
                 <Route path="voice-practice/session/:sessionId" element={<VoicePracticeSession />} />
+                <Route path="spaced-repetition" element={<SpacedRepetitionPage />} />
                 <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
               </Routes>
             </StudentLayout>
