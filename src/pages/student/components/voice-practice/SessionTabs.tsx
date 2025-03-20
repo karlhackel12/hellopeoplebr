@@ -51,12 +51,12 @@ const SessionTabs: React.FC<SessionTabsProps> = ({
       <TabsContent value="conversation" className="mt-0 flex-1 flex flex-col">
         <div className="bg-gradient-to-r from-orange-500 to-amber-400 text-white p-4 rounded-t-lg mb-0">
           <h1 className="text-xl font-bold tracking-tight">
-            {sessionDetails?.lesson?.title || sessionDetails?.topic || 'Voice Practice'}
+            {sessionDetails?.lesson?.title || sessionDetails?.topic || 'Prática de Voz'}
           </h1>
           <p className="text-sm opacity-90">
-            {sessionDetails?.difficulty_level === 1 ? 'Beginner' : 
-             sessionDetails?.difficulty_level === 2 ? 'Intermediate' : 'Advanced'} Level Practice
-            {sessionDetails?.lesson && ` • Based on ${sessionDetails.lesson.title}`}
+            {sessionDetails?.difficulty_level === 1 ? 'Nível Iniciante' : 
+             sessionDetails?.difficulty_level === 2 ? 'Nível Intermediário' : 'Nível Avançado'}
+            {sessionDetails?.lesson && ` • Baseado em ${sessionDetails.lesson.title}`}
           </p>
         </div>
         
