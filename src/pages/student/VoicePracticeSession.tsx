@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVoicePractice } from './hooks/useVoicePractice';
 import { useLesson } from './hooks/lesson/useLesson';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, PauseCircle, BookOpen, MessageSquare, Info, ArrowLeft, Volume } from 'lucide-react';
 import { toast } from 'sonner';
