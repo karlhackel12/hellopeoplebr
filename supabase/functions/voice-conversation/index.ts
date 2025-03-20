@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -27,7 +28,8 @@ serve(async (req) => {
       userId,
       markAsCompleted = false,
       lessonId = null,
-      assignmentId = null
+      assignmentId = null,
+      lessonContent = null,
     } = await req.json();
 
     // If just marking as completed, update the conversation session
@@ -107,6 +109,7 @@ serve(async (req) => {
 
     // Fetch conversation history if continuing a conversation
     let messages = [];
+    let lessonContentFromDB = null;
     
     if (conversationId) {
       // Create Supabase client
@@ -128,10 +131,28 @@ serve(async (req) => {
       if (historyData && historyData.length > 0) {
         messages = historyData.map(msg => ({ role: msg.role, content: msg.content }));
       }
+      
+      // If we have a lessonId, fetch the lesson content to provide context
+      if (lessonId) {
+        const { data: lessonData, error: lessonError } = await supabaseAdmin
+          .from('lessons')
+          .select('title, content')
+          .eq('id', lessonId)
+          .single();
+        
+        if (!lessonError && lessonData) {
+          lessonContentFromDB = lessonData;
+        }
+      }
     }
 
-    // Build system prompt
-    const systemPrompt = buildSystemPrompt(difficulty, lessonTopics, vocabularyItems);
+    // Build system prompt with lesson content for context
+    const systemPrompt = buildSystemPrompt(
+      difficulty, 
+      lessonTopics, 
+      vocabularyItems, 
+      lessonContent || (lessonContentFromDB ? lessonContentFromDB.content : null)
+    );
     
     // Prepare messages for OpenAI API
     const apiMessages = [
@@ -260,6 +281,19 @@ function createClient(supabaseUrl, supabaseKey) {
             });
             const data = await response.json();
             return { data: data.length > 0 ? data[0] : null, error: null };
+          },
+          single: async () => {
+            const response = await fetch(`${supabaseUrl}/rest/v1/${table}?select=${columns}&${column}=eq.${value}&limit=1`, {
+              headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+              }
+            });
+            const data = await response.json();
+            if (data.length === 0) {
+              return { data: null, error: { message: 'No rows found' } };
+            }
+            return { data: data[0], error: null };
           }
         })
       }),
@@ -289,7 +323,8 @@ function createClient(supabaseUrl, supabaseKey) {
       }),
       update: (updates) => ({
         eq: async (column, value) => {
-          const response = await fetch(`${supabaseUrl}/rest/v1/${table}?${column}=eq.${value}`, {
+          const endpoint = `${supabaseUrl}/rest/v1/${table}?${column}=eq.${value}`;
+          const response = await fetch(endpoint, {
             method: 'PATCH',
             headers: {
               'apikey': supabaseKey,
@@ -312,7 +347,7 @@ function createClient(supabaseUrl, supabaseKey) {
   };
 }
 
-function buildSystemPrompt(difficulty, lessonTopics, vocabularyItems) {
+function buildSystemPrompt(difficulty, lessonTopics, vocabularyItems, lessonContent = null) {
   // Base instructions for the conversation agent
   let prompt = `You are a helpful English conversation partner for a language learner. 
 Your goal is to have a natural conversation while helping them practice English.`;
@@ -336,6 +371,19 @@ Use idioms, cultural references, and advanced grammar structures.`;
   if (lessonTopics && lessonTopics.length > 0) {
     prompt += `\n\nThe conversation should focus on these topics from their recent lessons:
 - ${lessonTopics.join('\n- ')}`;
+  }
+  
+  // Add lesson content if provided
+  if (lessonContent) {
+    // Strip HTML tags from lesson content for cleaner prompt
+    const cleanContent = lessonContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    if (cleanContent.length > 1000) {
+      // Limit content length to avoid token issues
+      prompt += `\n\nThe student is studying this lesson (summarized): ${cleanContent.substring(0, 1000)}...`;
+    } else {
+      prompt += `\n\nThe student is studying this lesson: ${cleanContent}`;
+    }
   }
   
   // Add vocabulary guidance if provided

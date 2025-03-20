@@ -502,7 +502,7 @@ export const useVoicePractice = () => {
     requiredSessions,
     assignedLessonsWithoutSessions,
     isLoading: isLoadingSessions || isLoadingScores || isLoadingFeedback || isLoadingAssignedLessons,
-    createSession: createSessionMutation.mutate,
+    createSession: createSessionMutation.mutateAsync,
     completeSession: completeSessionMutation.mutate,
     addFeedback: addFeedbackMutation.mutate,
     recordConfidenceScore: recordConfidenceScoreMutation.mutate

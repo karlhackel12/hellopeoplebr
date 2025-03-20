@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVoicePractice } from './hooks/useVoicePractice';
+import { useLesson } from './hooks/lesson/useLesson';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PauseCircle, Send, X } from 'lucide-react';
+import { Mic, MicOff, PauseCircle, Send, X, BookOpen, MessageSquare, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import VoiceWaveform from './components/voice-practice/VoiceWaveform';
@@ -20,6 +21,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -41,6 +44,12 @@ const VoicePracticeSession: React.FC = () => {
   const startTimeRef = useRef<Date | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { completeSession } = useVoicePractice();
+  const [activeTab, setActiveTab] = useState('conversation');
+  
+  // Fetch lesson content if there's a lesson associated with this session
+  const { data: lessonData, isLoading: lessonLoading } = useLesson(
+    sessionDetails?.lesson_id || undefined
+  );
   
   const {
     isRecording,
@@ -102,7 +111,7 @@ const VoicePracticeSession: React.FC = () => {
           setConversationId(sessionId);
           
           // Add welcome message
-          const welcomeMsg = getWelcomeMessage(data.difficulty_level);
+          const welcomeMsg = getWelcomeMessage(data.difficulty_level, data.lesson?.title);
           setMessages([
             {
               role: 'assistant',
@@ -133,17 +142,31 @@ const VoicePracticeSession: React.FC = () => {
     }
   }, [transcript, isRecording]);
   
-  const getWelcomeMessage = (difficultyLevel: number) => {
+  const getWelcomeMessage = (difficultyLevel: number, lessonTitle?: string) => {
+    let baseMessage = '';
+    
     switch (difficultyLevel) {
       case 1:
-        return "Hello! I'm your English conversation partner. Let's practice speaking together. Take your time and speak clearly. What would you like to talk about today?";
+        baseMessage = "Hello! I'm your English conversation partner. Let's practice speaking together. Take your time and speak clearly.";
+        break;
       case 2:
-        return "Hi there! I'm your English conversation partner. I'm here to help you practice your speaking skills. What topic would you like to discuss today?";
+        baseMessage = "Hi there! I'm your English conversation partner. I'm here to help you practice your speaking skills.";
+        break;
       case 3:
-        return "Welcome to our conversation practice! I'm your advanced English partner. I'll challenge you with sophisticated vocabulary and complex topics. What would you like to explore in our discussion today?";
+        baseMessage = "Welcome to our conversation practice! I'm your advanced English partner. I'll challenge you with sophisticated vocabulary and complex topics.";
+        break;
       default:
-        return "Hello! I'm your English conversation partner. What would you like to talk about today?";
+        baseMessage = "Hello! I'm your English conversation partner.";
+        break;
     }
+    
+    if (lessonTitle) {
+      baseMessage += ` Today we'll be discussing topics related to "${lessonTitle}". `;
+    }
+    
+    baseMessage += " What would you like to talk about today?";
+    
+    return baseMessage;
   };
   
   const handleSendMessage = async () => {
@@ -247,6 +270,52 @@ const VoicePracticeSession: React.FC = () => {
     }
   };
   
+  const renderLessonContent = () => {
+    if (lessonLoading) {
+      return (
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      );
+    }
+    
+    if (!lessonData) {
+      return (
+        <div className="text-center py-8">
+          <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Lesson Content</h3>
+          <p className="text-sm text-muted-foreground">
+            This practice session is not associated with any lesson content.
+          </p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="space-y-4">
+        <div className="border rounded-md p-4 bg-orange-50">
+          <h3 className="font-medium text-lg mb-2">{lessonData.title}</h3>
+          <div className="prose prose-sm max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: lessonData.content }} />
+        </div>
+        
+        {sessionDetails?.vocabulary_used && sessionDetails.vocabulary_used.length > 0 && (
+          <div className="border rounded-md p-4">
+            <h3 className="font-medium mb-2">Practice these vocabulary items:</h3>
+            <div className="flex flex-wrap gap-2">
+              {sessionDetails.vocabulary_used.map((word: string, index: number) => (
+                <Badge key={index} variant="secondary" className="bg-orange-100">
+                  {word}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
   if (loading) {
     return (
       <div className="container px-4 py-8 max-w-4xl mx-auto">
@@ -307,6 +376,12 @@ const VoicePracticeSession: React.FC = () => {
             {sessionDetails?.difficulty_level === 1 ? 'Beginner' : 
              sessionDetails?.difficulty_level === 2 ? 'Intermediate' : 'Advanced'} Level Practice
           </CardTitle>
+          {sessionDetails?.lesson && (
+            <CardDescription className="flex items-center gap-1.5">
+              <BookOpen className="h-4 w-4 text-orange-500" />
+              Based on lesson: {sessionDetails.lesson.title}
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -330,116 +405,146 @@ const VoicePracticeSession: React.FC = () => {
       </Card>
       
       <Card className="mb-6">
-        <CardContent className="p-0">
-          <div className="h-[400px] overflow-y-auto p-6">
-            <div className="flex flex-col space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    <p>{message.content}</p>
-                    <p className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
+        <Tabs 
+          defaultValue={sessionDetails?.lesson_id ? "lesson" : "conversation"} 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
+            <TabsTrigger value="conversation" className="flex items-center gap-1.5">
+              <MessageSquare className="h-4 w-4" /> Conversation
+            </TabsTrigger>
+            <TabsTrigger 
+              value="lesson" 
+              className="flex items-center gap-1.5"
+              disabled={!sessionDetails?.lesson_id}
+            >
+              <BookOpen className="h-4 w-4" /> Lesson
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="conversation" className="mt-0">
+            <CardContent className="p-0">
+              <div className="h-[400px] overflow-y-auto p-6">
+                <div className="flex flex-col space-y-4">
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          message.role === 'user'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        <p>{message.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {message.timestamp.toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-        </CardContent>
+              </div>
+            </CardContent>
+          </TabsContent>
+          
+          <TabsContent value="lesson" className="mt-0">
+            <CardContent className="h-[400px] overflow-y-auto p-6">
+              {renderLessonContent()}
+            </CardContent>
+          </TabsContent>
         
-        <CardFooter className="border-t p-4">
-          {isComplete ? (
-            <div className="w-full flex flex-col items-center justify-center py-4">
-              <p className="text-center mb-4">
-                This practice session has been completed.
-              </p>
-              <Button 
-                onClick={() => navigate('/student/voice-practice')}
-                className="bg-orange-500 hover:bg-orange-600"
-              >
-                Return to Practice Hub
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col w-full gap-4">
-              <div className="flex items-center gap-2">
-                <VoiceWaveform 
-                  audioLevel={isRecording ? audioLevel : 0} 
-                  isActive={isRecording} 
-                  className="h-12"
-                  color="orange"
-                />
-                <Button
-                  variant={isRecording ? "destructive" : "default"}
-                  size="icon"
-                  className={isRecording ? "" : "bg-orange-500 hover:bg-orange-600"}
-                  onClick={toggleRecording}
-                  disabled={aiSpeaking}
+          <CardFooter className="border-t p-4">
+            {isComplete ? (
+              <div className="w-full flex flex-col items-center justify-center py-4">
+                <p className="text-center mb-4">
+                  This practice session has been completed.
+                </p>
+                <Button 
+                  onClick={() => navigate('/student/voice-practice')}
+                  className="bg-orange-500 hover:bg-orange-600"
                 >
-                  {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  Return to Practice Hub
                 </Button>
               </div>
-              
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <textarea
-                    className="w-full p-3 border rounded-md resize-none bg-background"
-                    placeholder="Type or speak your message..."
-                    rows={2}
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    disabled={aiSpeaking}
+            ) : (
+              <div className="flex flex-col w-full gap-4">
+                <div className="flex items-center gap-2">
+                  <VoiceWaveform 
+                    audioLevel={isRecording ? audioLevel : 0} 
+                    isActive={isRecording} 
+                    className="h-12"
+                    color="orange"
                   />
-                  {transcript && isRecording && (
-                    <div className="absolute bottom-2 right-2">
-                      <span className="inline-block h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+                  <Button
+                    variant={isRecording ? "destructive" : "default"}
+                    size="icon"
+                    className={isRecording ? "" : "bg-orange-500 hover:bg-orange-600"}
+                    onClick={toggleRecording}
+                    disabled={aiSpeaking || activeTab !== "conversation"}
+                  >
+                    {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  </Button>
+                </div>
+                
+                {activeTab === "conversation" && (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <textarea
+                        className="w-full p-3 border rounded-md resize-none bg-background"
+                        placeholder="Type or speak your message..."
+                        rows={2}
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        disabled={aiSpeaking}
+                      />
+                      {transcript && isRecording && (
+                        <div className="absolute bottom-2 right-2">
+                          <span className="inline-block h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    className="bg-orange-500 hover:bg-orange-600"
-                    onClick={handleSendMessage}
-                    disabled={!userInput.trim() || aiSpeaking}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleCompleteSession}
-                    disabled={messages.length <= 1 || aiSpeaking}
-                  >
-                    <PauseCircle className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        className="bg-orange-500 hover:bg-orange-600"
+                        onClick={handleSendMessage}
+                        disabled={!userInput.trim() || aiSpeaking}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleCompleteSession}
+                        disabled={messages.length <= 1 || aiSpeaking}
+                      >
+                        <PauseCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {aiSpeaking && activeTab === "conversation" && (
+                  <div className="w-full flex justify-center">
+                    <span className="text-sm flex items-center gap-2 text-muted-foreground">
+                      <span className="inline-block h-2 w-2 bg-orange-500 rounded-full animate-pulse"></span>
+                      AI is generating response...
+                    </span>
+                  </div>
+                )}
               </div>
-              
-              {aiSpeaking && (
-                <div className="w-full flex justify-center">
-                  <span className="text-sm flex items-center gap-2 text-muted-foreground">
-                    <span className="inline-block h-2 w-2 bg-orange-500 rounded-full animate-pulse"></span>
-                    AI is generating response...
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </CardFooter>
+            )}
+          </CardFooter>
+        </Tabs>
       </Card>
       
       <AlertDialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>

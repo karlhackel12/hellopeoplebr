@@ -49,7 +49,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const { audio } = await req.json();
+    const { audio, language = 'en' } = await req.json();
     
     if (!audio) {
       throw new Error('Missing required parameter: audio');
@@ -63,7 +63,9 @@ serve(async (req) => {
     const blob = new Blob([binaryAudio], { type: 'audio/webm' });
     formData.append('file', blob, 'audio.webm');
     formData.append('model', 'whisper-1');
-    formData.append('language', 'en');
+    formData.append('language', language);
+
+    console.log(`Transcribing audio with language: ${language}`);
 
     // Send to OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {

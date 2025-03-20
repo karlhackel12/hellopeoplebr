@@ -2,7 +2,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const useVoiceRecorder = () => {
+interface UseVoiceRecorderOptions {
+  language?: string;
+}
+
+const useVoiceRecorder = (options: UseVoiceRecorderOptions = {}) => {
+  const { language = 'en' } = options;
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
@@ -123,7 +128,10 @@ const useVoiceRecorder = () => {
             
             // Call Supabase Edge Function for transcription
             const { data, error } = await supabase.functions.invoke('voice-transcription', {
-              body: { audio: base64Audio }
+              body: { 
+                audio: base64Audio,
+                language 
+              }
             });
             
             if (error) {
