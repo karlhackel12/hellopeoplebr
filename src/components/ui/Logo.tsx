@@ -19,15 +19,19 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', colored = true, iconOnly = fal
     <Link 
       to="/" 
       className={`font-bold tracking-tight ${sizeClasses[size]} transition-all duration-300 
-      ${colored ? 'text-[#1E88E5]' : 'text-foreground'} hover:opacity-90 font-display`}
+      ${colored ? 'text-[#FF9800]' : 'text-foreground'} hover:opacity-90 font-display flex items-center gap-2`}
     >
-      <span className="flex items-center gap-1.5">
-        <span className="relative">
-          <span className="absolute -inset-1 rounded-full bg-[#1E88E5]/10 animate-pulse-light"></span>
-          Hello
+      <img 
+        src="/lovable-uploads/e99ff4dd-ccfd-4b13-8e1a-de24aa2a5260.png" 
+        alt="HelloPeople Logo" 
+        className={`${size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 'w-10 h-10'}`} 
+      />
+      {!iconOnly && (
+        <span className="flex items-center">
+          <span className="text-[#FF9800]">Hello</span>
+          <span className="text-[#2196F3]">People</span>
         </span>
-        {!iconOnly && <span className="relative text-[#26A69A]">People</span>}
-      </span>
+      )}
     </Link>
   );
 };
