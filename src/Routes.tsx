@@ -10,8 +10,11 @@ import VoicePracticeSession from '@/pages/student/VoicePracticeSession';
 import VoicePracticeConstruction from '@/pages/student/VoicePracticeConstruction';
 import { StudentRoutes } from './routes/studentRoutes';
 import LandscapeFooter from './components/layout/LandscapeFooter';
+import { useIsMobile } from './hooks/use-mobile';
 
 export default function AppRoutes() {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1">
@@ -39,7 +42,9 @@ export default function AppRoutes() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-      <LandscapeFooter />
+      <div className={`${isMobile ? 'fixed bottom-16 left-0 right-0 z-50' : ''}`}>
+        <LandscapeFooter />
+      </div>
     </div>
   );
 }

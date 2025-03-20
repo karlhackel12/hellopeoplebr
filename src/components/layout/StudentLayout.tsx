@@ -127,7 +127,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
         <main 
           className={`flex-grow transition-all duration-300 ${
             isMobile 
-              ? 'pt-16 pb-20 px-4' 
+              ? 'pt-16 pb-28 px-4' 
               : `pt-6 pb-10 px-4 md:px-6 lg:px-8 ${
                   sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
                 }`
@@ -135,8 +135,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
         >
           <div className="w-full">{children}</div>
         </main>
-        
-        <BottomNavigation />
         
         {isMobile && mobileMenuOpen && (
           <div 
@@ -157,9 +155,13 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
             </div>
           </div>
         )}
+        
+        <BottomNavigation />
       </div>
       
-      <LandscapeFooter />
+      <div className={`${isMobile ? 'fixed bottom-16 left-0 right-0' : ''}`}>
+        <LandscapeFooter />
+      </div>
     </div>
   );
 };

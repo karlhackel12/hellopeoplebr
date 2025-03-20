@@ -103,7 +103,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
         
         <main 
           className={`flex-grow transition-all duration-300 ${
-            isMobile ? 'pt-16 pb-20 px-4' : 'pt-6 pb-10'
+            isMobile ? 'pt-16 pb-28 px-4' : 'pt-6 pb-10'
           } ${
             isMobile ? '' : sidebarCollapsed ? 'md:ml-20 md:px-6' : 'md:ml-64 md:px-8'
           } overflow-x-hidden`}
@@ -114,7 +114,9 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
         <TeacherBottomNavigation />
       </div>
       
-      <LandscapeFooter />
+      <div className={`${isMobile ? 'fixed bottom-16 left-0 right-0' : ''}`}>
+        <LandscapeFooter />
+      </div>
     </div>
   );
 };

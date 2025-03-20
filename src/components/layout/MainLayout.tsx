@@ -2,6 +2,7 @@
 import React, { ReactNode } from 'react';
 import Navbar from './Navbar';
 import LandscapeFooter from './LandscapeFooter';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -9,13 +10,19 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, hideFooter = false }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Navbar />
       <main className="flex-1">
         {children}
       </main>
-      {!hideFooter && <LandscapeFooter />}
+      {!hideFooter && (
+        <div className={isMobile ? 'fixed bottom-0 left-0 right-0 z-[60]' : ''}>
+          <LandscapeFooter />
+        </div>
+      )}
     </div>
   );
 };
