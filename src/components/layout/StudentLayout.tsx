@@ -127,7 +127,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
         <main 
           className={`flex-grow transition-all duration-300 ${
             isMobile 
-              ? 'pt-16 pb-28 px-4' 
+              ? 'pt-20 pb-28 px-4' 
               : `pt-6 pb-10 px-4 md:px-6 lg:px-8 ${
                   sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
                 }`
