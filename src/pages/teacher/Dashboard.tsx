@@ -14,19 +14,19 @@ const TeacherDashboard: React.FC = () => {
       <div className="w-full animate-fade-in space-y-6">
         <DashboardHeader />
         
-        {/* Analytics Cards */}
+        {/* Cartões de Análise */}
         <AnalyticsCards />
         
-        {/* Performance Chart and Student Search */}
+        {/* Gráfico de Desempenho e Busca de Alunos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <PerformanceChart />
           <StudentSearch />
         </div>
         
-        {/* Quick Actions */}
+        {/* Ações Rápidas */}
         <StatCards />
         
-        {/* Recent Lessons */}
+        {/* Aulas Recentes */}
         <RecentLessons />
       </div>
     </TeacherLayout>
