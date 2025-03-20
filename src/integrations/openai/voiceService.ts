@@ -178,10 +178,16 @@ class GrpcVoiceService {
         oneofs: true
       });
       
-      const protoDefinition = grpc.loadPackageDefinition(packageDefinition);
+      const protoDescriptor = grpc.loadPackageDefinition(packageDefinition) as any;
+      
       // Acessar o serviço VoiceService dentro do namespace correto
-      if (protoDefinition.openai && protoDefinition.openai.voice && protoDefinition.openai.voice.VoiceService) {
-        this.client = new protoDefinition.openai.voice.VoiceService(
+      // Corrigido: Usando uma verificação de tipo mais segura com acesso explícito aos namespaces
+      if (protoDescriptor.openai && 
+          protoDescriptor.openai.voice && 
+          protoDescriptor.openai.voice.VoiceService) {
+        const VoiceService = protoDescriptor.openai.voice.VoiceService;
+        
+        this.client = new VoiceService(
           `${GRPC_SERVER_HOST}:${GRPC_SERVER_PORT}`,
           grpc.credentials.createInsecure()
         );
