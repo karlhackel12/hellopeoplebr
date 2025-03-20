@@ -33,11 +33,16 @@ export const useRealtimeVoiceChat = () => {
 
   const connect = async () => {
     try {
-      const ws = await supabase.functions.invoke('realtime-voice', {
-        body: { type: 'connect' }
-      });
+      console.log('Connecting to voice service...');
       
-      wsRef.current = new WebSocket(ws.data.url);
+      // Here's the issue - the previous code was trying to use response.data.url
+      // but the Edge Function doesn't return a URL, it directly upgrades the connection
+      
+      // Create WebSocket connection directly to the edge function
+      const wsUrl = `wss://${import.meta.env.VITE_SUPABASE_PROJECT_REF}.functions.supabase.co/realtime-voice`;
+      console.log('Connecting to WebSocket URL:', wsUrl);
+      
+      wsRef.current = new WebSocket(wsUrl);
       
       wsRef.current.onopen = () => {
         console.log('WebSocket connected');
@@ -73,7 +78,36 @@ export const useRealtimeVoiceChat = () => {
             break;
             
           case 'response.audio_transcript.done':
-            setTranscript('');
+            // Add the transcript as a message
+            if (transcript) {
+              setMessages(prev => [...prev, {
+                role: 'user',
+                content: transcript,
+                timestamp: new Date()
+              }]);
+              setTranscript('');
+            }
+            break;
+            
+          case 'response.text.delta':
+            if (data.delta) {
+              // This is the assistant's text response
+              const lastMessage = messages[messages.length - 1];
+              if (lastMessage && lastMessage.role === 'assistant') {
+                // Update last assistant message
+                setMessages(prev => [
+                  ...prev.slice(0, -1),
+                  { ...lastMessage, content: lastMessage.content + data.delta }
+                ]);
+              } else {
+                // Create new assistant message
+                setMessages(prev => [...prev, {
+                  role: 'assistant',
+                  content: data.delta,
+                  timestamp: new Date()
+                }]);
+              }
+            }
             break;
             
           case 'session.connected':
@@ -83,7 +117,7 @@ export const useRealtimeVoiceChat = () => {
               type: 'session.update',
               session: {
                 modalities: ['text', 'audio'],
-                instructions: 'You are a helpful AI assistant engaging in natural conversation.',
+                instructions: 'You are a helpful AI assistant engaging in natural conversation. Provide clear and concise responses.',
                 voice: 'alloy',
                 input_audio_format: 'pcm16',
                 output_audio_format: 'pcm16',
@@ -98,6 +132,13 @@ export const useRealtimeVoiceChat = () => {
                 }
               }
             }));
+            
+            // Initialize with a welcome message
+            setMessages([{
+              role: 'assistant',
+              content: 'Hello! I\'m your voice assistant. How can I help you today?',
+              timestamp: new Date()
+            }]);
             break;
             
           case 'error':
