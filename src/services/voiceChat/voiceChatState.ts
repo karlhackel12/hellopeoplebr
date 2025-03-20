@@ -1,6 +1,6 @@
 
 import { WebSocketService } from './websocketService';
-import { AudioRecorder, AudioQueue } from '@/utils/audioProcessing';
+import { AudioQueue } from '@/utils/audioProcessing';
 import { Message, VoiceChatStateUpdate } from './types';
 import { MessageHandlers } from './messageHandlers';
 import { RecorderManager } from './recorderManager';
@@ -34,6 +34,9 @@ export class VoiceChatState {
       this.updateMessages.bind(this),
       this.debugLog.bind(this)
     );
+    
+    // Set the message getter function
+    this.messageHandlers.setMessagesGetter(this.getMessages.bind(this));
     
     this.recorderManager = new RecorderManager(
       webSocketService,
@@ -131,5 +134,5 @@ export class VoiceChatState {
   }
 }
 
-// Re-export the types for easier imports
-export { Message, VoiceChatStateUpdate } from './types';
+// Fix the re-export by using 'export type'
+export type { Message, VoiceChatStateUpdate } from './types';

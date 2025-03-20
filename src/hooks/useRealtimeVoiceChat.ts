@@ -1,6 +1,8 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { WebSocketService } from '@/services/voiceChat/websocketService';
-import { VoiceChatState, Message, VoiceChatStateUpdate } from '@/services/voiceChat/voiceChatState';
+import { VoiceChatState } from '@/services/voiceChat/voiceChatState';
+import type { Message, VoiceChatStateUpdate } from '@/services/voiceChat/types';
 import { toast } from 'sonner';
 
 interface UseRealtimeVoiceChatOptions {
@@ -68,7 +70,8 @@ export const useRealtimeVoiceChat = (options: UseRealtimeVoiceChatOptions = {}) 
       if (!voiceChatStateRef.current) {
         voiceChatStateRef.current = new VoiceChatState(
           webSocketServiceRef.current, 
-          handleStateUpdate
+          handleStateUpdate,
+          debug
         );
       }
       
