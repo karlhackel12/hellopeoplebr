@@ -43,8 +43,8 @@ const RecentLessons: React.FC = () => {
       if (error) throw error;
       setLessons(data || []);
     } catch (error) {
-      toast.error('Error', {
-        description: 'Failed to load lessons'
+      toast.error('Erro', {
+        description: 'Falha ao carregar lições'
       });
       console.error('Error fetching lessons:', error);
     } finally {
@@ -63,15 +63,15 @@ const RecentLessons: React.FC = () => {
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Recent Lessons</h2>
+        <h2 className="text-xl font-semibold">Lições Recentes</h2>
         <Button variant="outline" size="sm" onClick={handleViewAllLessons}>
-          View All Lessons
+          Ver Todas as Lições
         </Button>
       </div>
 
       {loading ? (
         <div className="py-4 text-center">
-          <p className="text-muted-foreground">Loading lessons...</p>
+          <p className="text-muted-foreground">Carregando lições...</p>
         </div>
       ) : lessons.length === 0 ? (
         <Card className="bg-muted/50">
@@ -79,16 +79,16 @@ const RecentLessons: React.FC = () => {
             <div className="rounded-full bg-muted p-3 mb-4">
               <BookOpen className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No lessons created yet</h3>
+            <h3 className="text-lg font-medium mb-2">Nenhuma lição criada ainda</h3>
             <p className="text-muted-foreground text-center max-w-md mb-6">
-              Create your first lesson for your students.
+              Crie sua primeira lição para seus alunos.
             </p>
             <Button
               onClick={handleCreateLesson}
               className="gap-2"
             >
               <PlusCircle className="h-4 w-4" />
-              Create First Lesson
+              Criar Primeira Lição
             </Button>
           </CardContent>
         </Card>

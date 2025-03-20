@@ -79,45 +79,45 @@ const AnalyticsCards: React.FC = () => {
 
   const analyticsCards = [
     {
-      title: 'Students',
+      title: 'Alunos',
       value: data?.studentsCount || 0,
       icon: Users,
-      description: 'Total registered students',
+      description: 'Total de alunos registrados',
       color: 'bg-blue-100 text-blue-700 dark:bg-blue-700/20 dark:text-blue-400'
     },
     {
-      title: 'Lessons',
+      title: 'Lições',
       value: data?.lessonsCount || 0,
       icon: BookOpen,
-      description: 'Created lessons',
+      description: 'Lições criadas',
       color: 'bg-green-100 text-green-700 dark:bg-green-700/20 dark:text-green-400'
     },
     {
-      title: 'Assignment Completion',
+      title: 'Conclusão de Tarefas',
       value: `${data?.assignmentCompletionRate || 0}%`,
       icon: ClipboardCheck,
-      description: 'Average completion rate',
+      description: 'Taxa média de conclusão',
       color: 'bg-purple-100 text-purple-700 dark:bg-purple-700/20 dark:text-purple-400'
     },
     {
-      title: 'Quiz Performance',
+      title: 'Desempenho no Quiz',
       value: `${data?.averageQuizScore || 0}%`,
       icon: Award,
-      description: 'Average quiz score',
+      description: 'Pontuação média no quiz',
       color: 'bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400'
     },
     {
-      title: 'Voice Sessions',
+      title: 'Sessões de Voz',
       value: data?.voiceSessionsCount || 0,
       icon: Mic,
-      description: 'Voice practice sessions',
+      description: 'Sessões de prática de voz',
       color: 'bg-red-100 text-red-700 dark:bg-red-700/20 dark:text-red-400'
     },
     {
-      title: 'Spaced Repetition',
+      title: 'Repetição Espaçada',
       value: data?.spacedRepetitionCount || 0,
       icon: Brain,
-      description: 'Memory items created',
+      description: 'Itens de memória criados',
       color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-700/20 dark:text-indigo-400'
     }
   ];
