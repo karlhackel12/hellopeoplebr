@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import StudentSidebar from './StudentSidebar';
 import BottomNavigation from './BottomNavigation';
 import MobileHeader from './MobileHeader';
+import LandscapeFooter from './LandscapeFooter';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StudentLayoutProps {
@@ -107,54 +108,58 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {!isMobile && (
-        <StudentSidebar 
-          collapsed={sidebarCollapsed} 
-          onToggle={toggleSidebar}
-          isOpen={mobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex flex-1">
+        {!isMobile && (
+          <StudentSidebar 
+            collapsed={sidebarCollapsed} 
+            onToggle={toggleSidebar}
+            isOpen={mobileMenuOpen}
+            onClose={() => setMobileMenuOpen(false)}
+          />
+        )}
+        
+        <MobileHeader 
+          onMenuToggle={toggleMobileMenu} 
+          pageTitle={pageTitle} 
         />
-      )}
-      
-      <MobileHeader 
-        onMenuToggle={toggleMobileMenu} 
-        pageTitle={pageTitle} 
-      />
-      
-      <main 
-        className={`flex-grow transition-all duration-300 ${
-          isMobile 
-            ? 'pt-16 pb-20 px-4' 
-            : `pt-6 pb-10 px-4 md:px-6 lg:px-8 ${
-                sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
-              }`
-        }`}
-      >
-        <div className="w-full">{children}</div>
-      </main>
-      
-      <BottomNavigation />
-      
-      {isMobile && mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
-          onClick={() => setMobileMenuOpen(false)}
+        
+        <main 
+          className={`flex-grow transition-all duration-300 ${
+            isMobile 
+              ? 'pt-16 pb-20 px-4' 
+              : `pt-6 pb-10 px-4 md:px-6 lg:px-8 ${
+                  sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
+                }`
+          }`}
         >
+          <div className="w-full">{children}</div>
+        </main>
+        
+        <BottomNavigation />
+        
+        {isMobile && mobileMenuOpen && (
           <div 
-            className="absolute inset-y-0 left-0 w-64 bg-background border-r border-border"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+            onClick={() => setMobileMenuOpen(false)}
           >
-            <StudentSidebar 
-              collapsed={false} 
-              onToggle={() => {}}
-              isOpen={true}
-              onClose={() => setMobileMenuOpen(false)}
-              isMobileView
-            />
+            <div 
+              className="absolute inset-y-0 left-0 w-64 bg-background border-r border-border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <StudentSidebar 
+                collapsed={false} 
+                onToggle={() => {}}
+                isOpen={true}
+                onClose={() => setMobileMenuOpen(false)}
+                isMobileView
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      
+      <LandscapeFooter />
     </div>
   );
 };
