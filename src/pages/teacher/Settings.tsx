@@ -12,48 +12,48 @@ const Settings: React.FC = () => {
   const isMobile = useIsMobile();
 
   return (
-    <TeacherLayout pageTitle="Settings">
+    <TeacherLayout pageTitle="Configurações">
       <div className="mb-8 animate-fade-in">
-        {!isMobile && <h1 className="text-3xl font-bold mb-6">Settings</h1>}
+        {!isMobile && <h1 className="text-3xl font-bold mb-6">Configurações</h1>}
         
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
-            <TabsTrigger value="profile" className={isMobile ? 'flex-1' : ''}>Profile</TabsTrigger>
-            <TabsTrigger value="account" className={isMobile ? 'flex-1' : ''}>Account</TabsTrigger>
-            <TabsTrigger value="preferences" className={isMobile ? 'flex-1' : ''}>Preferences</TabsTrigger>
+            <TabsTrigger value="profile" className={isMobile ? 'flex-1' : ''}>Perfil</TabsTrigger>
+            <TabsTrigger value="account" className={isMobile ? 'flex-1' : ''}>Conta</TabsTrigger>
+            <TabsTrigger value="preferences" className={isMobile ? 'flex-1' : ''}>Preferências</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile">
             <Card>
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
+                <CardTitle>Informações do Perfil</CardTitle>
                 <CardDescription>
-                  Update your profile information visible to students.
+                  Atualize suas informações pessoais visíveis para os alunos.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="Your first name" />
+                    <Label htmlFor="firstName">Nome</Label>
+                    <Input id="firstName" placeholder="Seu nome" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Your last name" />
+                    <Label htmlFor="lastName">Sobrenome</Label>
+                    <Input id="lastName" placeholder="Seu sobrenome" />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio">Biografia</Label>
                   <textarea 
                     id="bio" 
                     className="w-full min-h-[120px] p-2 border rounded-md resize-y" 
-                    placeholder="Tell students about yourself..."
+                    placeholder="Conte aos alunos sobre você..."
                   />
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button type="submit">Save Changes</Button>
+                  <Button type="submit">Salvar Alterações</Button>
                 </div>
               </CardContent>
             </Card>
@@ -62,24 +62,24 @@ const Settings: React.FC = () => {
           <TabsContent value="account">
             <Card>
               <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
+                <CardTitle>Configurações da Conta</CardTitle>
                 <CardDescription>
-                  Manage your account details and security settings.
+                  Gerencie os detalhes da sua conta e configurações de segurança.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" placeholder="your@email.com" />
+                  <Label htmlFor="email">Endereço de E-mail</Label>
+                  <Input id="email" type="email" placeholder="seu@email.com" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Change Password</Label>
-                  <Input id="password" type="password" placeholder="New password" />
+                  <Label htmlFor="password">Alterar Senha</Label>
+                  <Input id="password" type="password" placeholder="Nova senha" />
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button type="submit">Update Account</Button>
+                  <Button type="submit">Atualizar Conta</Button>
                 </div>
               </CardContent>
             </Card>
@@ -88,14 +88,14 @@ const Settings: React.FC = () => {
           <TabsContent value="preferences">
             <Card>
               <CardHeader>
-                <CardTitle>Teaching Preferences</CardTitle>
+                <CardTitle>Preferências de Ensino</CardTitle>
                 <CardDescription>
-                  Customize your teaching experience.
+                  Personalize sua experiência de ensino.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-center py-4 text-muted-foreground">
-                  Preferences settings coming soon!
+                  Configurações de preferências em breve!
                 </p>
               </CardContent>
             </Card>
