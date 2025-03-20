@@ -29,7 +29,7 @@ const LessonHeader: React.FC<LessonHeaderProps> = ({
           className="mr-2 group transition-all hover:-translate-x-1"
         >
           <ArrowLeft className="h-4 w-4 mr-1 group-hover:scale-110" />
-          Back
+          Voltar
         </Button>
       </div>
       
@@ -40,7 +40,7 @@ const LessonHeader: React.FC<LessonHeaderProps> = ({
           {isCompleted ? (
             <Badge className="bg-primary/10 text-primary border-primary/20 px-3 py-1">
               <CheckCircle className="h-4 w-4 mr-2" />
-              Completed
+              Concluída
             </Badge>
           ) : (
             <Button 
@@ -48,7 +48,7 @@ const LessonHeader: React.FC<LessonHeaderProps> = ({
               disabled={isUpdating}
               className="transition-all hover:scale-105"
             >
-              Mark as Complete
+              Marcar como Concluída
             </Button>
           )}
         </div>

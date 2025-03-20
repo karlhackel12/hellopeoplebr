@@ -91,7 +91,7 @@ const LessonView: React.FC = () => {
           quizQuestions={quizQuestions || []}
           quizId={quiz?.id || ''}
           lessonId={lessonId}
-          quizTitle={quiz?.title || 'Lesson Quiz'}
+          quizTitle={quiz?.title || 'Quiz da Lição'}
           quizPassPercent={quiz?.pass_percent || 70}
         />
       </div>
