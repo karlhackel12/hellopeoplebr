@@ -87,6 +87,7 @@ export type Database = {
       }
       conversation_sessions: {
         Row: {
+          assignment_id: string | null
           completed_at: string | null
           created_at: string | null
           difficulty_level: number
@@ -100,6 +101,7 @@ export type Database = {
           vocabulary_used: string[] | null
         }
         Insert: {
+          assignment_id?: string | null
           completed_at?: string | null
           created_at?: string | null
           difficulty_level: number
@@ -113,6 +115,7 @@ export type Database = {
           vocabulary_used?: string[] | null
         }
         Update: {
+          assignment_id?: string | null
           completed_at?: string | null
           created_at?: string | null
           difficulty_level?: number
@@ -126,6 +129,13 @@ export type Database = {
           vocabulary_used?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "conversation_sessions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "student_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversation_sessions_lesson_id_fkey"
             columns: ["lesson_id"]
