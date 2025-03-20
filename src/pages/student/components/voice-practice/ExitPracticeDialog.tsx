@@ -26,18 +26,18 @@ const ExitPracticeDialog: React.FC<ExitPracticeDialogProps> = ({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Exit Practice Session?</AlertDialogTitle>
+          <AlertDialogTitle>Sair da Sessão de Prática?</AlertDialogTitle>
           <AlertDialogDescription>
-            This session is not marked as complete. You can return to it later, but your progress won't be saved until you complete it.
+            Esta sessão não está marcada como concluída. Você pode retornar a ela mais tarde, mas seu progresso não será salvo até que você a conclua.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             className="bg-orange-500 hover:bg-orange-600"
             onClick={onConfirm}
           >
-            Exit Without Completing
+            Sair Sem Concluir
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

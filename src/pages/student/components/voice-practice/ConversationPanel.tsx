@@ -66,7 +66,7 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
                 {message.role === 'assistant' && (
                   <div className="flex items-center gap-1.5 mb-1 text-xs opacity-70">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-orange-500"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-                    AI Assistant
+                    Assistente IA
                   </div>
                 )}
                 <p>{message.content}</p>
@@ -94,13 +94,13 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
         {isComplete ? (
           <div className="w-full flex flex-col items-center justify-center py-4">
             <p className="text-center mb-4">
-              This practice session has been completed.
+              Esta sessão de prática foi concluída.
             </p>
             <Button 
               onClick={onComplete}
               className="bg-orange-500 hover:bg-orange-600"
             >
-              Return to Practice Hub
+              Retornar à Central de Prática
             </Button>
           </div>
         ) : (
@@ -116,13 +116,13 @@ const ConversationPanel: React.FC<ConversationPanelProps> = ({
                 {isRecording && (
                   <div className="absolute top-1 left-3">
                     <span className="inline-block h-2 w-2 bg-red-500 rounded-full animate-pulse mr-1"></span>
-                    <span className="text-xs text-gray-600">Recording...</span>
+                    <span className="text-xs text-gray-600">Gravando...</span>
                   </div>
                 )}
                 {isSpeaking && (
                   <div className="absolute top-1 left-3">
                     <span className="inline-block h-2 w-2 bg-orange-500 rounded-full animate-pulse mr-1"></span>
-                    <span className="text-xs text-gray-600">AI Speaking...</span>
+                    <span className="text-xs text-gray-600">IA Falando...</span>
                   </div>
                 )}
               </div>

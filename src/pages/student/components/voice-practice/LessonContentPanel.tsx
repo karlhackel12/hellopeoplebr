@@ -32,9 +32,9 @@ const LessonContentPanel: React.FC<LessonContentPanelProps> = ({
     return (
       <div className="text-center py-8">
         <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium mb-2">No Lesson Content</h3>
+        <h3 className="text-lg font-medium mb-2">Nenhum Conteúdo de Aula</h3>
         <p className="text-sm text-muted-foreground">
-          This practice session is not associated with any lesson content.
+          Esta sessão de prática não está associada a nenhum conteúdo de aula.
         </p>
       </div>
     );
@@ -45,7 +45,7 @@ const LessonContentPanel: React.FC<LessonContentPanelProps> = ({
       <div className="bg-gradient-to-r from-orange-500 to-amber-400 text-white p-4 rounded-t-lg flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <BookOpen className="h-5 w-5" /> Lesson Content
+            <BookOpen className="h-5 w-5" /> Conteúdo da Aula
           </h1>
           {sessionDetails?.lesson && (
             <p className="text-sm opacity-90">{sessionDetails.lesson.title}</p>
@@ -57,7 +57,7 @@ const LessonContentPanel: React.FC<LessonContentPanelProps> = ({
           className="bg-white text-orange-600 hover:bg-white/90"
           onClick={onBackToChat}
         >
-          <MessageSquare className="h-4 w-4 mr-1" /> Back to Chat
+          <MessageSquare className="h-4 w-4 mr-1" /> Voltar ao Chat
         </Button>
       </div>
       
@@ -70,7 +70,7 @@ const LessonContentPanel: React.FC<LessonContentPanelProps> = ({
           
           {sessionDetails?.vocabulary_used && sessionDetails.vocabulary_used.length > 0 && (
             <div className="border rounded-md p-4">
-              <h3 className="font-medium mb-2">Practice these vocabulary items:</h3>
+              <h3 className="font-medium mb-2">Pratique estes itens de vocabulário:</h3>
               <div className="flex flex-wrap gap-2">
                 {sessionDetails.vocabulary_used.map((word: string, index: number) => (
                   <Badge key={index} variant="secondary" className="bg-orange-100">

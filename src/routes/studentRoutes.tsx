@@ -5,6 +5,7 @@ import StudentLayout from '@/components/layout/StudentLayout';
 import VoicePractice from '@/pages/student/VoicePractice';
 import VoicePracticeSession from '@/pages/student/VoicePracticeSession';
 import VoicePracticeConstruction from '@/pages/student/VoicePracticeConstruction';
+import LessonView from '@/pages/student/LessonView';
 
 // Implementação simples do StudentProtectedRoute para evitar erros
 const StudentProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -14,7 +15,6 @@ const StudentProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const StudentDashboard = () => <div>Painel do Estudante</div>;
 const LessonsList = () => <div>Lista de Lições</div>;
-const LessonView = () => <div>Visualização de Lição</div>;
 const QuizView = () => <div>Visualização de Quiz</div>;
 const StudentSettings = () => <div>Configurações do Estudante</div>;
 
