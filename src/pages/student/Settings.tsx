@@ -20,13 +20,13 @@ import { UploadCloud, User, Bell, Shield } from 'lucide-react';
 
 const profileFormSchema = z.object({
   first_name: z.string().min(2, {
-    message: "First name must be at least 2 characters.",
+    message: "Nome deve ter pelo menos 2 caracteres.",
   }),
   last_name: z.string().min(2, {
-    message: "Last name must be at least 2 characters.",
+    message: "Sobrenome deve ter pelo menos 2 caracteres.",
   }),
   email: z.string().email({
-    message: "Please enter a valid email address.",
+    message: "Por favor, insira um endereço de e-mail válido.",
   }).optional(),
   avatar_url: z.string().optional(),
 });
@@ -38,15 +38,15 @@ const StudentSettings: React.FC = () => {
   const { completeStep, saveProgress } = useOnboarding();
   const [activeTab, setActiveTab] = useState('profile');
   
-  // Fetch the user's profile data
+  // Busca os dados do perfil do usuário
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['student-profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error('Usuário não autenticado');
       
-      // Get profile data
+      // Busca dados do perfil
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -55,7 +55,7 @@ const StudentSettings: React.FC = () => {
       
       if (error) throw error;
       
-      // Get user email
+      // Busca email do usuário
       const { data: authData } = await supabase.auth.getUser();
       
       return {
@@ -76,7 +76,7 @@ const StudentSettings: React.FC = () => {
     mode: "onChange",
   });
   
-  // Update form values when profile data is loaded
+  // Atualiza os valores do formulário quando os dados do perfil são carregados
   React.useEffect(() => {
     if (profile) {
       form.reset({
@@ -92,7 +92,7 @@ const StudentSettings: React.FC = () => {
     mutationFn: async (values: ProfileFormValues) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error('Usuário não autenticado');
       
       const { error } = await supabase
         .from('profiles')
@@ -110,15 +110,15 @@ const StudentSettings: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-profile'] });
-      toast.success('Profile updated successfully');
+      toast.success('Perfil atualizado com sucesso');
       
-      // Mark the "Complete Profile" step as completed
+      // Marca a etapa "Completar Perfil" como concluída
       completeStep('Complete Profile');
       saveProgress();
     },
     onError: (error) => {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      console.error('Erro ao atualizar perfil:', error);
+      toast.error('Falha ao atualizar perfil');
     }
   });
   
@@ -130,9 +130,9 @@ const StudentSettings: React.FC = () => {
     <StudentLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
           <p className="text-muted-foreground">
-            Manage your account settings and preferences
+            Gerencie suas configurações e preferências de conta
           </p>
         </div>
         
@@ -140,24 +140,24 @@ const StudentSettings: React.FC = () => {
           <TabsList className="grid w-full sm:w-auto grid-cols-2 sm:grid-cols-3">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Profile</span>
+              <span className="hidden sm:inline">Perfil</span>
             </TabsTrigger>
             <TabsTrigger value="account" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Account</span>
+              <span className="hidden sm:inline">Conta</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notifications</span>
+              <span className="hidden sm:inline">Notificações</span>
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
+                <CardTitle>Informações de Perfil</CardTitle>
                 <CardDescription>
-                  Update your personal information
+                  Atualize suas informações pessoais
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -180,14 +180,14 @@ const StudentSettings: React.FC = () => {
                         </div>
                         
                         <div className="space-y-1">
-                          <h3 className="font-medium">Profile Picture</h3>
+                          <h3 className="font-medium">Foto de Perfil</h3>
                           <p className="text-sm text-muted-foreground">
-                            Your profile picture will be visible to your teachers
+                            Sua foto de perfil será visível para seus professores
                           </p>
                           <div className="mt-2">
                             <Button type="button" variant="outline" className="gap-2">
                               <UploadCloud className="h-4 w-4" />
-                              Upload Image
+                              Carregar Imagem
                             </Button>
                           </div>
                         </div>
@@ -199,7 +199,7 @@ const StudentSettings: React.FC = () => {
                           name="first_name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>First Name</FormLabel>
+                              <FormLabel>Nome</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -213,7 +213,7 @@ const StudentSettings: React.FC = () => {
                           name="last_name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Last Name</FormLabel>
+                              <FormLabel>Sobrenome</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -228,12 +228,12 @@ const StudentSettings: React.FC = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>E-mail</FormLabel>
                             <FormControl>
                               <Input {...field} disabled />
                             </FormControl>
                             <FormDescription>
-                              Contact your teacher to update your email address
+                              Entre em contato com seu professor para atualizar seu endereço de e-mail
                             </FormDescription>
                           </FormItem>
                         )}
@@ -244,7 +244,7 @@ const StudentSettings: React.FC = () => {
                           type="submit" 
                           disabled={!form.formState.isDirty || updateProfileMutation.isPending}
                         >
-                          {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+                          {updateProfileMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
                         </Button>
                       </div>
                     </form>
@@ -255,17 +255,17 @@ const StudentSettings: React.FC = () => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Learning Settings</CardTitle>
+                <CardTitle>Configurações de Aprendizado</CardTitle>
                 <CardDescription>
-                  Configure your learning experience
+                  Configure sua experiência de aprendizado
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <Label>Your Role</Label>
+                    <Label>Seu Papel</Label>
                     <div className="flex items-center mt-1">
-                      <Badge variant="secondary">Student</Badge>
+                      <Badge variant="secondary">Estudante</Badge>
                     </div>
                   </div>
                 </div>
@@ -276,29 +276,29 @@ const StudentSettings: React.FC = () => {
           <TabsContent value="account" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Account Security</CardTitle>
+                <CardTitle>Segurança da Conta</CardTitle>
                 <CardDescription>
-                  Manage your account security settings
+                  Gerencie as configurações de segurança da sua conta
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current-password">Current Password</Label>
+                    <Label htmlFor="current-password">Senha Atual</Label>
                     <Input type="password" id="current-password" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
+                    <Label htmlFor="new-password">Nova Senha</Label>
                     <Input type="password" id="new-password" />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm New Password</Label>
+                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
                     <Input type="password" id="confirm-password" />
                   </div>
                   
-                  <Button className="mt-4">Change Password</Button>
+                  <Button className="mt-4">Alterar Senha</Button>
                 </div>
               </CardContent>
             </Card>
@@ -307,15 +307,15 @@ const StudentSettings: React.FC = () => {
           <TabsContent value="notifications" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
+                <CardTitle>Preferências de Notificação</CardTitle>
                 <CardDescription>
-                  Control how you receive notifications
+                  Controle como você recebe notificações
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-muted-foreground">
-                    Notification settings will be available in future updates.
+                    As configurações de notificação estarão disponíveis em atualizações futuras.
                   </p>
                 </div>
               </CardContent>
