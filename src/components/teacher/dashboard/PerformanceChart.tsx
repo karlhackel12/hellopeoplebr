@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
@@ -30,7 +31,7 @@ const PerformanceChart: React.FC = () => {
       quizAttempts?.forEach(attempt => {
         const studentId = attempt.user_id;
         // Use student ID as name since we can't access profiles data
-        const studentName = `Student ${studentId.slice(0, 5)}`;
+        const studentName = `Aluno ${studentId.slice(0, 5)}`;
         
         if (!studentPerformance[studentId]) {
           studentPerformance[studentId] = {
@@ -56,7 +57,7 @@ const PerformanceChart: React.FC = () => {
       voicePractice?.forEach(practice => {
         const studentId = practice.user_id;
         // Use student ID as name since we can't access profiles data
-        const studentName = `Student ${studentId.slice(0, 5)}`;
+        const studentName = `Aluno ${studentId.slice(0, 5)}`;
         
         if (!studentPerformance[studentId]) {
           studentPerformance[studentId] = {
@@ -109,19 +110,19 @@ const PerformanceChart: React.FC = () => {
 
   const chartConfig = {
     quizScore: { 
-      label: "Quiz Score",
+      label: "Pontuação Quiz",
       color: "#4f46e5"
     },
     fluency: { 
-      label: "Fluency",
+      label: "Fluência",
       color: "#06b6d4"
     },
     pronunciation: { 
-      label: "Pronunciation",
+      label: "Pronúncia",
       color: "#10b981"
     },
     grammar: { 
-      label: "Grammar",
+      label: "Gramática",
       color: "#f59e0b"
     }
   };
@@ -129,9 +130,9 @@ const PerformanceChart: React.FC = () => {
   return (
     <Card className="col-span-1 md:col-span-2 mb-8">
       <CardHeader>
-        <CardTitle>Student Performance</CardTitle>
+        <CardTitle>Desempenho dos Alunos</CardTitle>
         <CardDescription>
-          Comparison of student performance across different metrics
+          Comparação do desempenho dos alunos em diferentes métricas
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -175,7 +176,7 @@ const PerformanceChart: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            No performance data available yet
+            Nenhum dado de desempenho disponível ainda
           </div>
         )}
       </CardContent>

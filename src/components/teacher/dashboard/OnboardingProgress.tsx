@@ -88,8 +88,8 @@ const OnboardingProgress: React.FC = () => {
     return (
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Student Onboarding</CardTitle>
-          <CardDescription>Loading student onboarding data...</CardDescription>
+          <CardTitle>Onboarding de Alunos</CardTitle>
+          <CardDescription>Carregando dados de onboarding dos alunos...</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -98,13 +98,13 @@ const OnboardingProgress: React.FC = () => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Student Onboarding Progress</CardTitle>
-        <CardDescription>Track your students' progress through the onboarding process</CardDescription>
+        <CardTitle>Progresso de Onboarding dos Alunos</CardTitle>
+        <CardDescription>Acompanhe o progresso dos seus alunos no processo de onboarding</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Overall Progress</span>
+            <span className="text-sm text-muted-foreground">Progresso Geral</span>
             <span className="text-sm font-medium">{onboardingData?.averageProgress || 0}%</span>
           </div>
           <Progress value={onboardingData?.averageProgress || 0} className="h-2" />
@@ -118,7 +118,7 @@ const OnboardingProgress: React.FC = () => {
                   <UserCheck className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Completed</p>
+                  <p className="text-sm font-medium">Concluído</p>
                   <p className="text-2xl font-bold">{onboardingData?.completedOnboarding || 0}</p>
                 </div>
               </div>
@@ -132,7 +132,7 @@ const OnboardingProgress: React.FC = () => {
                   <Users className="h-4 w-4 text-orange-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">In Progress</p>
+                  <p className="text-sm font-medium">Em Progresso</p>
                   <p className="text-2xl font-bold">{onboardingData?.inProgressOnboarding || 0}</p>
                 </div>
               </div>
@@ -146,7 +146,7 @@ const OnboardingProgress: React.FC = () => {
                   <UserX className="h-4 w-4 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Not Started</p>
+                  <p className="text-sm font-medium">Não Iniciado</p>
                   <p className="text-2xl font-bold">{onboardingData?.notStartedOnboarding || 0}</p>
                 </div>
               </div>
