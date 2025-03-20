@@ -11,13 +11,7 @@ const LandscapeFooter: React.FC<LandscapeFooterProps> = ({ className }) => {
   
   return (
     <footer className={`w-full relative ${isMobile ? 'z-[60]' : ''} ${className}`}>
-      <div className="w-full relative">
-        <img 
-          src="/lovable-uploads/a1e35609-ee80-4df4-812b-fa009b5fc788.png" 
-          alt="Footer with green hills and orange flowers"
-          className="w-full h-auto object-cover" 
-        />
-      </div>
+      <div className="w-full h-6 bg-gradient-to-r from-[#F2FCE2] to-[#E2F1C7]"></div>
     </footer>
   );
 };

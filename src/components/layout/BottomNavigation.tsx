@@ -9,6 +9,7 @@ interface NavigationItem {
   icon: React.ElementType;
   label: string;
   path: string;
+  activeColor: string;
 }
 
 const BottomNavigation: React.FC = () => {
@@ -19,11 +20,36 @@ const BottomNavigation: React.FC = () => {
   if (!isMobile) return null;
   
   const navigationItems: NavigationItem[] = [
-    { icon: LayoutDashboard, label: 'Início', path: '/student/dashboard' },
-    { icon: BookOpen, label: 'Aulas', path: '/student/lessons' },
-    { icon: Brain, label: 'Prática', path: '/student/spaced-repetition' },
-    { icon: Mic, label: 'Voz', path: '/student/voice-practice' },
-    { icon: User, label: 'Perfil', path: '/student/settings' },
+    { 
+      icon: LayoutDashboard, 
+      label: 'Início', 
+      path: '/student/dashboard',
+      activeColor: 'text-[#1EAEDB]' 
+    },
+    { 
+      icon: BookOpen, 
+      label: 'Aulas', 
+      path: '/student/lessons',
+      activeColor: 'text-[#36B37E]' 
+    },
+    { 
+      icon: Brain, 
+      label: 'Prática', 
+      path: '/student/spaced-repetition',
+      activeColor: 'text-[#F97316]' 
+    },
+    { 
+      icon: Mic, 
+      label: 'Voz', 
+      path: '/student/voice-practice',
+      activeColor: 'text-[#0EA5E9]' 
+    },
+    { 
+      icon: User, 
+      label: 'Perfil', 
+      path: '/student/settings',
+      activeColor: 'text-primary' 
+    },
   ];
 
   const isActive = (path: string) => {
@@ -40,7 +66,7 @@ const BottomNavigation: React.FC = () => {
             className={cn(
               "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-colors w-full",
               isActive(item.path) 
-                ? "text-primary" 
+                ? item.activeColor
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
