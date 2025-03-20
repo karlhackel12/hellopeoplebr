@@ -10,24 +10,21 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ size = 'md', colored = true, iconOnly = false }) => {
   const sizeClasses = {
-    sm: 'text-xl',
-    md: 'text-2xl',
-    lg: 'text-3xl',
+    sm: 'h-6 md:h-7',
+    md: 'h-8 md:h-9',
+    lg: 'h-10 md:h-12',
   };
   
   return (
     <Link 
       to="/" 
-      className={`font-bold tracking-tight ${sizeClasses[size]} transition-all duration-300 
-      ${colored ? 'text-[#1E88E5]' : 'text-foreground'} hover:opacity-90 font-display`}
+      className={`font-bold transition-all duration-300 hover:opacity-90`}
     >
-      <span className="flex items-center gap-1.5">
-        <span className="relative">
-          <span className="absolute -inset-1 rounded-full bg-[#1E88E5]/10 animate-pulse-light"></span>
-          Hello
-        </span>
-        {!iconOnly && <span className="relative text-[#26A69A]">People</span>}
-      </span>
+      <img 
+        src="/lovable-uploads/21c3c456-0bb5-4305-9eec-88c3bd45f361.png" 
+        alt="HelloPeople Logo" 
+        className={`${sizeClasses[size]}`} 
+      />
     </Link>
   );
 };
