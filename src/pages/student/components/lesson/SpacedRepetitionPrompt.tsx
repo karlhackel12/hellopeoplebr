@@ -28,11 +28,11 @@ const SpacedRepetitionPrompt: React.FC<SpacedRepetitionPromptProps> = ({
     try {
       setAdding(true);
       await addQuestionsFromQuiz({ quizId, lessonId });
-      toast.success("Questions added to spaced repetition system!");
+      toast.success("Questões adicionadas ao sistema de repetição espaçada!");
       onClose();
     } catch (error) {
       console.error('Failed to add questions to review:', error);
-      toast.error('Failed to add questions to spaced repetition system');
+      toast.error('Falha ao adicionar questões ao sistema de repetição espaçada');
     } finally {
       setAdding(false);
     }
@@ -47,10 +47,10 @@ const SpacedRepetitionPrompt: React.FC<SpacedRepetitionPromptProps> = ({
           </div>
           
           <div className="flex-1">
-            <h4 className="font-medium text-indigo-800 mb-1">Boost Your Long-Term Memory</h4>
+            <h4 className="font-medium text-indigo-800 mb-1">Melhore Sua Memória de Longo Prazo</h4>
             <p className="text-sm text-indigo-700 mb-3">
-              Add these quiz questions to your spaced repetition system to improve
-              retention and make sure you remember this material for years to come.
+              Adicione estas questões do quiz ao seu sistema de repetição espaçada para melhorar
+              a retenção e garantir que você se lembre deste material por anos.
             </p>
             
             <div className="flex items-center gap-2">
@@ -62,7 +62,7 @@ const SpacedRepetitionPrompt: React.FC<SpacedRepetitionPromptProps> = ({
                 disabled={adding}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {adding ? "Adding..." : "Add to Spaced Repetition"}
+                {adding ? "Adicionando..." : "Adicionar à Repetição Espaçada"}
               </Button>
               
               <Button
@@ -72,7 +72,7 @@ const SpacedRepetitionPrompt: React.FC<SpacedRepetitionPromptProps> = ({
                 onClick={onClose}
                 disabled={adding}
               >
-                Dismiss
+                Dispensar
               </Button>
             </div>
           </div>
