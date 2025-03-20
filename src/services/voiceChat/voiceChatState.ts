@@ -9,6 +9,14 @@ export interface Message {
   timestamp: Date;
 }
 
+export interface VoiceChatStateUpdate {
+  messages: Message[];
+  isRecording: boolean;
+  isSpeaking: boolean;
+  audioLevel: number;
+  transcript: string;
+}
+
 export class VoiceChatState {
   private messages: Message[] = [];
   private isRecording = false;
@@ -17,25 +25,42 @@ export class VoiceChatState {
   private transcript = '';
   private recorder: AudioRecorder | null = null;
   private audioQueue: AudioQueue;
+  private isDebugMode = false;
   
   constructor(
     private webSocketService: WebSocketService,
-    private onStateChange: (state: VoiceChatStateUpdate) => void
+    private onStateChange: (state: VoiceChatStateUpdate) => void,
+    debug = false
   ) {
+    this.isDebugMode = debug;
     this.audioQueue = new AudioQueue();
     this.setupMessageHandlers();
   }
   
+  private debugLog(...args: any[]) {
+    if (this.isDebugMode) {
+      console.log('[VoiceChatState]', ...args);
+    }
+  }
+  
   private setupMessageHandlers(): void {
     this.webSocketService.addMessageHandler((data) => {
-      console.log("Received message in VoiceChatState:", data.type);
+      this.debugLog("Received message:", data.type);
       
       switch (data.type) {
+        case 'session.connected':
+          this.initializeSession();
+          break;
+          
         case 'response.audio.delta':
           if (data.delta) {
-            const audioData = Uint8Array.from(atob(data.delta), c => c.charCodeAt(0));
-            this.audioQueue.addToQueue(audioData);
-            this.updateSpeakingState(true);
+            try {
+              const audioData = Uint8Array.from(atob(data.delta), c => c.charCodeAt(0));
+              this.audioQueue.addToQueue(audioData);
+              this.updateSpeakingState(true);
+            } catch (error) {
+              console.error('Error processing audio delta:', error);
+            }
           }
           break;
           
@@ -57,16 +82,30 @@ export class VoiceChatState {
           this.handleTextDelta(data.delta);
           break;
           
-        case 'session.connected':
-          this.initializeSession();
-          break;
-          
         case 'error':
           console.error('WebSocket error:', data.message);
-          toast.error('Connection error: ' + data.message);
+          toast.error('Erro na conversação: ' + data.message);
+          break;
+          
+        case 'session.disconnected':
+          this.handleDisconnect(data);
           break;
       }
     });
+  }
+  
+  private handleDisconnect(data: any): void {
+    this.debugLog("Session disconnected:", data);
+    
+    // Only show toast if it's not a normal closure
+    if (data.code !== 1000) {
+      toast.error('Sessão encerrada pelo servidor: ' + (data.reason || 'Erro desconhecido'));
+    }
+    
+    // Stop recording if active
+    if (this.isRecording) {
+      this.stopRecording();
+    }
   }
   
   private updateSpeakingState(isSpeaking: boolean): void {
@@ -113,7 +152,7 @@ export class VoiceChatState {
   }
   
   private initializeSession(): void {
-    console.log('Session initialized');
+    this.debugLog('Session initialized');
     
     // Send session configuration
     this.webSocketService.send({
@@ -167,31 +206,42 @@ export class VoiceChatState {
   public startRecording(): void {
     if (this.isRecording) return;
     
-    this.recorder = new AudioRecorder((audioData) => {
-      if (this.webSocketService.isConnected()) {
-        const base64Audio = this.audioQueue.encodeAudioData(audioData);
-        if (base64Audio) {
-          this.webSocketService.send({
-            type: 'input_audio_buffer.append',
-            audio: base64Audio
-          });
+    try {
+      this.debugLog('Starting audio recorder');
+      this.recorder = new AudioRecorder((audioData) => {
+        if (this.webSocketService.isConnected()) {
+          try {
+            const base64Audio = this.audioQueue.encodeAudioData(audioData);
+            if (base64Audio) {
+              this.webSocketService.send({
+                type: 'input_audio_buffer.append',
+                audio: base64Audio
+              });
+            }
+          } catch (error) {
+            console.error('Error encoding or sending audio data:', error);
+          }
         }
-      }
-    });
-    
-    this.recorder.start()
-      .then(() => {
-        this.isRecording = true;
-        this.notifyStateChange();
-      })
-      .catch(error => {
-        console.error('Error starting recording:', error);
-        toast.error('Failed to start recording');
       });
+      
+      this.recorder.start()
+        .then(() => {
+          this.isRecording = true;
+          this.notifyStateChange();
+        })
+        .catch(error => {
+          console.error('Error starting recording:', error);
+          toast.error('Falha ao iniciar gravação: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
+        });
+    } catch (error) {
+      console.error('Error creating recorder:', error);
+      toast.error('Falha ao acessar microfone');
+    }
   }
   
   public stopRecording(): void {
     if (this.recorder) {
+      this.debugLog('Stopping audio recorder');
       this.recorder.stop();
       this.recorder = null;
       this.isRecording = false;
@@ -200,6 +250,7 @@ export class VoiceChatState {
   }
   
   public cleanup(): void {
+    this.debugLog('Cleaning up VoiceChatState');
     this.stopRecording();
     this.audioQueue.stop();
   }
@@ -213,12 +264,4 @@ export class VoiceChatState {
       transcript: this.transcript
     };
   }
-}
-
-export interface VoiceChatStateUpdate {
-  messages: Message[];
-  isRecording: boolean;
-  isSpeaking: boolean;
-  audioLevel: number;
-  transcript: string;
 }

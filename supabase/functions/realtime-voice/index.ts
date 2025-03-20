@@ -23,6 +23,15 @@ serve(async (req) => {
       });
     }
     
+    // Validate API key format (basic validation)
+    if (!OPENAI_API_KEY.startsWith('sk-') || OPENAI_API_KEY.length < 20) {
+      console.error('OPENAI_API_KEY has invalid format');
+      return new Response(JSON.stringify({ error: 'Invalid API key format' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
     const upgradeHeader = req.headers.get('Upgrade');
     
     // WebSocket upgrade
@@ -36,6 +45,7 @@ serve(async (req) => {
         
         // Client WebSocket connection
         let openAISocket: WebSocket | null = null;
+        let connectionTimer: number | null = null;
         
         // Handle messages from client
         socket.onmessage = async (event) => {
@@ -49,16 +59,37 @@ serve(async (req) => {
                 openAISocket.close();
               }
               
-              // Create OpenAI WebSocket connection with updated model
-              // Using gpt-4o-realtime instead of specific date-tagged version
+              // Clear any existing connection timeout
+              if (connectionTimer !== null) {
+                clearTimeout(connectionTimer);
+              }
+              
+              // Use gpt-4o model - stable version
               const url = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime`;
               console.log("Connecting to OpenAI at:", url);
               
               openAISocket = new WebSocket(url);
               
+              // Set up connection timeout
+              connectionTimer = setTimeout(() => {
+                if (openAISocket && openAISocket.readyState !== WebSocket.OPEN) {
+                  console.error("OpenAI WebSocket connection timeout");
+                  socket.send(JSON.stringify({
+                    type: 'error',
+                    message: 'Timeout connecting to OpenAI service'
+                  }));
+                  openAISocket.close();
+                }
+              }, 15000);
+              
               // Set up event handlers for OpenAI WebSocket
               openAISocket.onopen = () => {
                 console.log("Connected to OpenAI Realtime API");
+                
+                if (connectionTimer !== null) {
+                  clearTimeout(connectionTimer);
+                  connectionTimer = null;
+                }
                 
                 // Send OpenAI API key for authentication
                 openAISocket.send(JSON.stringify({
@@ -92,7 +123,8 @@ serve(async (req) => {
                 console.log(`OpenAI WebSocket closed: code=${closeEvent.code}, reason=${closeEvent.reason}`);
                 socket.send(JSON.stringify({
                   type: 'session.disconnected',
-                  reason: closeEvent.reason || 'Connection closed by server'
+                  reason: closeEvent.reason || 'Connection closed by server',
+                  code: closeEvent.code
                 }));
               };
             } 
@@ -118,6 +150,12 @@ serve(async (req) => {
         // Handle client disconnect
         socket.onclose = (closeEvent) => {
           console.log(`Client WebSocket closed: code=${closeEvent.code}, reason=${closeEvent.reason}`);
+          
+          if (connectionTimer !== null) {
+            clearTimeout(connectionTimer);
+            connectionTimer = null;
+          }
+          
           if (openAISocket) {
             openAISocket.close();
           }
@@ -125,6 +163,12 @@ serve(async (req) => {
         
         socket.onerror = (error) => {
           console.error("Client WebSocket error:", error);
+          
+          if (connectionTimer !== null) {
+            clearTimeout(connectionTimer);
+            connectionTimer = null;
+          }
+          
           if (openAISocket) {
             openAISocket.close();
           }

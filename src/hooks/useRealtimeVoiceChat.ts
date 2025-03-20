@@ -1,10 +1,16 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { WebSocketService } from '@/services/voiceChat/websocketService';
 import { VoiceChatState, Message, VoiceChatStateUpdate } from '@/services/voiceChat/voiceChatState';
 import { toast } from 'sonner';
 
-export const useRealtimeVoiceChat = () => {
+interface UseRealtimeVoiceChatOptions {
+  debug?: boolean;
+}
+
+export const useRealtimeVoiceChat = (options: UseRealtimeVoiceChatOptions = {}) => {
+  const { debug = false } = options;
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -12,6 +18,7 @@ export const useRealtimeVoiceChat = () => {
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcript, setTranscript] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   
   const webSocketServiceRef = useRef<WebSocketService | null>(null);
   const voiceChatStateRef = useRef<VoiceChatState | null>(null);
@@ -24,14 +31,26 @@ export const useRealtimeVoiceChat = () => {
     setTranscript(state.transcript);
   };
   
-  const connect = async () => {
+  const debugLog = useCallback((...args: any[]) => {
+    if (debug) {
+      console.log('[useRealtimeVoiceChat]', ...args);
+    }
+  }, [debug]);
+  
+  const connect = useCallback(async () => {
+    if (isConnecting) {
+      debugLog('Already connecting, ignoring connect request');
+      return;
+    }
+    
     try {
-      console.log('Connecting to voice service...');
+      setIsConnecting(true);
       setConnectionError(null);
+      debugLog('Connecting to voice service...');
       
       // Get the project reference
       const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_REF;
-      console.log('Using project ref:', projectRef);
+      debugLog('Using project ref:', projectRef);
       
       if (!projectRef) {
         throw new Error('VITE_SUPABASE_PROJECT_REF is not defined');
@@ -39,11 +58,13 @@ export const useRealtimeVoiceChat = () => {
       
       // Use the correct WebSocket URL format
       const wsUrl = `wss://${projectRef}.supabase.co/functions/v1/realtime-voice`;
-      console.log('Connecting to WebSocket URL:', wsUrl);
+      debugLog('Connecting to WebSocket URL:', wsUrl);
       
       if (!webSocketServiceRef.current) {
-        webSocketServiceRef.current = new WebSocketService(wsUrl);
+        webSocketServiceRef.current = new WebSocketService(wsUrl, debug);
       }
+      
+      await webSocketServiceRef.current.connect();
       
       if (!voiceChatStateRef.current) {
         voiceChatStateRef.current = new VoiceChatState(
@@ -52,7 +73,6 @@ export const useRealtimeVoiceChat = () => {
         );
       }
       
-      await webSocketServiceRef.current.connect();
       setIsConnected(true);
       
       // Initialize session
@@ -66,36 +86,51 @@ export const useRealtimeVoiceChat = () => {
       setConnectionError(errorMessage);
       toast.error('Falha ao conectar ao serviço de voz: ' + errorMessage);
       throw error;
+    } finally {
+      setIsConnecting(false);
     }
-  };
+  }, [debug, debugLog, isConnecting]);
 
-  const startRecording = async () => {
+  const startRecording = useCallback(async () => {
     if (!isConnected) {
-      await connect();
+      debugLog('Not connected, connecting first...');
+      try {
+        await connect();
+      } catch (error) {
+        debugLog('Failed to connect before recording:', error);
+        return;
+      }
     }
     
+    debugLog('Starting recording...');
     voiceChatStateRef.current?.startRecording();
-  };
+  }, [connect, debugLog, isConnected]);
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
+    debugLog('Stopping recording...');
     voiceChatStateRef.current?.stopRecording();
-  };
+  }, [debugLog]);
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
+    debugLog('Disconnecting...');
     stopRecording();
+    voiceChatStateRef.current?.cleanup();
     webSocketServiceRef.current?.close();
     setIsConnected(false);
-  };
+  }, [debugLog, stopRecording]);
   
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      debugLog('Component unmounting, cleaning up...');
       voiceChatStateRef.current?.cleanup();
       webSocketServiceRef.current?.close();
     };
-  }, []);
+  }, [debugLog]);
 
   return {
     isConnected,
+    isConnecting,
     isRecording,
     isSpeaking,
     audioLevel,
