@@ -37,11 +37,18 @@ const Navbar: React.FC = () => {
   return (
     <header 
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 md:px-8',
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 md:px-8 relative',
         isScrolled ? 'py-3 glass' : 'py-5 bg-transparent'
       )}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* Cloud Background Effect */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-[5%] w-64 h-24 bg-[#D3E4FD]/40 rounded-full blur-3xl"></div>
+        <div className="absolute top-10 right-[15%] w-72 h-16 bg-[#0EA5E9]/20 rounded-full blur-3xl"></div>
+        <div className="absolute -top-5 left-[35%] w-40 h-20 bg-[#33C3F0]/30 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
         <Logo />
         
         {/* Desktop Navigation */}

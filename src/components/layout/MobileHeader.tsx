@@ -16,8 +16,14 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ onMenuToggle, pageTitle }) 
   if (!isMobile) return null;
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-border z-40 px-4">
-      <div className="flex items-center justify-between h-full">
+    <header className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-border z-40 px-4 relative">
+      {/* Cloud Background Effect (more subtle for mobile) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-[10%] w-32 h-10 bg-[#D3E4FD]/30 rounded-full blur-2xl"></div>
+        <div className="absolute top-3 right-[20%] w-20 h-8 bg-[#0EA5E9]/20 rounded-full blur-2xl"></div>
+      </div>
+      
+      <div className="flex items-center justify-between h-full relative z-10">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={onMenuToggle} className="mr-2 -ml-2">
             <Menu className="h-5 w-5" />
