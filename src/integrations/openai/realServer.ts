@@ -1,3 +1,4 @@
+
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import * as fs from 'fs';
@@ -52,6 +53,20 @@ const cleanupTempFile = (filePath: string) => {
   } catch (error) {
     console.error('Erro ao remover arquivo temporário:', error);
   }
+};
+
+// Helper function to convert ReadableStream to Buffer
+const streamToBuffer = async (stream: ReadableStream<Uint8Array>): Promise<Buffer> => {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  
+  return Buffer.concat(chunks);
 };
 
 // Implementação do serviço
@@ -169,12 +184,7 @@ server.addService(voiceService.VoiceService.service, {
       });
       
       // Converter o stream em buffer
-      const chunks: Uint8Array[] = [];
-      const buffer = await new Promise<Buffer>((resolve, reject) => {
-        mp3.body.on('data', (chunk) => chunks.push(chunk));
-        mp3.body.on('end', () => resolve(Buffer.concat(chunks)));
-        mp3.body.on('error', reject);
-      });
+      const buffer = await streamToBuffer(mp3.body);
       
       // Formatar resposta para o formato gRPC
       const response = {
@@ -280,12 +290,7 @@ server.addService(voiceService.VoiceService.service, {
             });
             
             // Converter o stream em buffer
-            const chunks: Uint8Array[] = [];
-            const buffer = await new Promise<Buffer>((resolve, reject) => {
-              mp3.body.on('data', (chunk) => chunks.push(chunk));
-              mp3.body.on('end', () => resolve(Buffer.concat(chunks)));
-              mp3.body.on('error', reject);
-            });
+            const buffer = await streamToBuffer(mp3.body);
             
             // Enviar áudio para o cliente
             call.write({
@@ -363,4 +368,4 @@ if (require.main === module) {
   });
 }
 
-export default server; 
+export default server;

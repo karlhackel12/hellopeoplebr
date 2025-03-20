@@ -76,14 +76,14 @@ export default function VoicePractice() {
       // Criar nova sessão no banco de dados
       const { data, error } = await supabase
         .from('voice_practice_sessions')
-        .insert([
-          {
-            user_id: user.id,
-            category,
-            name,
-            status: 'in_progress'
-          }
-        ])
+        .insert({
+          user_id: user.id,
+          topic: category, // Use topic em vez de category para corresponder ao esquema
+          is_conversation: true,
+          conversation_topic: name, // Armazenar o nome como conversation_topic
+          difficulty_level: 1,
+          status: 'in_progress' // Remover status que não existe na tabela
+        })
         .select()
         .single();
       
@@ -193,7 +193,7 @@ export default function VoicePractice() {
                 onClick={() => continueSession(session.id)}
               >
                 <div>
-                  <h3 className="font-medium">{session.name || 'Sessão de Prática'}</h3>
+                  <h3 className="font-medium">{session.conversation_topic || 'Sessão de Prática'}</h3>
                   <p className="text-sm text-muted-foreground">
                     {new Date(session.created_at).toLocaleDateString('pt-BR')}
                   </p>

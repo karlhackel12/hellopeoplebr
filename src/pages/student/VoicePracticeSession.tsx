@@ -16,7 +16,7 @@ export default function VoicePracticeSession() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [category, setCategory] = useState<string>('conversation');
+  const [topic, setTopic] = useState<string>('conversation');
   const [sessionName, setSessionName] = useState<string>('Prática de Conversação');
   
   const { 
@@ -30,7 +30,7 @@ export default function VoicePracticeSession() {
     error,
     isStreaming
   } = useVoicePractice({
-    category,
+    category: topic, // Mudamos de category para topic para consistência
     onError: (err) => {
       toast({
         variant: "destructive",
@@ -41,7 +41,7 @@ export default function VoicePracticeSession() {
     simulationMode: true // Usar modo de simulação para testes
   });
 
-  // Carregar categoria da sessão se um ID for fornecido
+  // Carregar dados da sessão se um ID for fornecido
   useEffect(() => {
     const loadSessionData = async () => {
       if (!sessionId) return;
@@ -49,14 +49,14 @@ export default function VoicePracticeSession() {
       try {
         const { data, error } = await supabase
           .from('voice_practice_sessions')
-          .select('category, name')
+          .select('topic, conversation_topic') // Usar os campos corretos da tabela
           .eq('id', sessionId)
           .single();
         
         if (error) throw error;
         if (data) {
-          setCategory(data.category || 'conversation');
-          setSessionName(data.name || 'Prática de Conversação');
+          setTopic(data.topic || 'conversation');
+          setSessionName(data.conversation_topic || 'Prática de Conversação');
         }
       } catch (err) {
         console.error('Erro ao carregar dados da sessão:', err);

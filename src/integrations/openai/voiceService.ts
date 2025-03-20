@@ -8,6 +8,9 @@ import { openai } from './config';
 // Carrega as variáveis de ambiente
 config();
 
+// Interface para definir o tipo de voz da OpenAI
+type OpenAIVoice = 'nova' | 'alloy' | 'echo' | 'fable' | 'onyx' | 'shimmer' | 'ash' | 'coral' | 'sage';
+
 // Configuração do servidor gRPC
 const GRPC_SERVER_PORT = process.env.GRPC_SERVER_PORT || '50051';
 const GRPC_SERVER_HOST = process.env.GRPC_SERVER_HOST || 'localhost';
@@ -33,7 +36,7 @@ interface ChatCompletionOptions {
 // Interface para text-to-speech
 interface TextToSpeechOptions {
   text: string;
-  voice?: string;
+  voice?: OpenAIVoice;
   model?: string;
   speed?: number;
 }
@@ -161,7 +164,6 @@ class SimulatedVoiceService {
 // Implementação do serviço com gRPC
 class GrpcVoiceService {
   private client: any;
-  private protoDefinition: any;
   
   constructor() {
     try {
@@ -176,15 +178,18 @@ class GrpcVoiceService {
         oneofs: true
       });
       
-      this.protoDefinition = grpc.loadPackageDefinition(packageDefinition).openai.voice;
-      
-      // Criar cliente gRPC
-      this.client = new this.protoDefinition.VoiceService(
-        `${GRPC_SERVER_HOST}:${GRPC_SERVER_PORT}`,
-        grpc.credentials.createInsecure()
-      );
-      
-      console.log(`Cliente gRPC conectado a ${GRPC_SERVER_HOST}:${GRPC_SERVER_PORT}`);
+      const protoDefinition = grpc.loadPackageDefinition(packageDefinition);
+      // Acessar o serviço VoiceService dentro do namespace correto
+      if (protoDefinition.openai && protoDefinition.openai.voice && protoDefinition.openai.voice.VoiceService) {
+        this.client = new protoDefinition.openai.voice.VoiceService(
+          `${GRPC_SERVER_HOST}:${GRPC_SERVER_PORT}`,
+          grpc.credentials.createInsecure()
+        );
+        
+        console.log(`Cliente gRPC conectado a ${GRPC_SERVER_HOST}:${GRPC_SERVER_PORT}`);
+      } else {
+        throw new Error('Serviço VoiceService não encontrado no arquivo proto');
+      }
     } catch (error) {
       console.error('Erro ao inicializar cliente gRPC:', error);
       throw new Error('Não foi possível inicializar o serviço de voz');
@@ -440,19 +445,11 @@ if (USE_SIMULATION) {
   voiceService = new SimulatedVoiceService();
 } else {
   try {
-    // Verificar se o gRPC está disponível
-    const testClient = new (grpc.loadPackageDefinition(
-      protoLoader.loadSync(path.resolve(process.cwd(), 'src/integrations/openai/voiceApi.proto'))
-    ).openai.voice.VoiceService)(
-      `${GRPC_SERVER_HOST}:${GRPC_SERVER_PORT}`,
-      grpc.credentials.createInsecure()
-    );
-    
-    // Se conseguiu criar o cliente, usar gRPC
-    console.log('Usando serviço de voz gRPC');
+    // Tentar inicializar o cliente gRPC
     voiceService = new GrpcVoiceService();
+    console.log('Usando serviço de voz gRPC');
   } catch (error) {
-    // Se não conseguiu, usar API direta da OpenAI
+    // Se falhar, usar a API direta
     console.log('Usando serviço de voz com API direta da OpenAI');
     voiceService = new DirectOpenAIVoiceService();
   }
