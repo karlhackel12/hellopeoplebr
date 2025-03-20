@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVoicePractice } from './hooks/useVoicePractice';
@@ -90,7 +89,12 @@ const VoicePracticeSession: React.FC = () => {
         setSessionDetails(data);
         
         if (!data.completed_at) {
-          await connect();
+          try {
+            await connect();
+          } catch (connectError) {
+            console.error("Error connecting to voice service:", connectError);
+            toast.error("Failed to connect to voice service. Please try again.");
+          }
         } else {
           setIsComplete(true);
         }
