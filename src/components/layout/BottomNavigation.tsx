@@ -31,7 +31,7 @@ const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 px-2 py-1">
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-[70] px-2 py-1">
       <div className="flex justify-between items-center">
         {navigationItems.map((item) => (
           <button
