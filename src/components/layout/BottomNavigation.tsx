@@ -19,11 +19,11 @@ const BottomNavigation: React.FC = () => {
   if (!isMobile) return null;
   
   const navigationItems: NavigationItem[] = [
-    { icon: LayoutDashboard, label: 'Home', path: '/student/dashboard' },
-    { icon: BookOpen, label: 'Lessons', path: '/student/lessons' },
-    { icon: Brain, label: 'Practice', path: '/student/spaced-repetition' },
-    { icon: Mic, label: 'Voice', path: '/student/voice-practice-construction' },
-    { icon: User, label: 'Profile', path: '/student/settings' },
+    { icon: LayoutDashboard, label: 'Início', path: '/student/dashboard' },
+    { icon: BookOpen, label: 'Aulas', path: '/student/lessons' },
+    { icon: Brain, label: 'Prática', path: '/student/spaced-repetition' },
+    { icon: Mic, label: 'Voz', path: '/student/voice-practice-construction' },
+    { icon: User, label: 'Perfil', path: '/student/settings' },
   ];
 
   const isActive = (path: string) => {

@@ -72,37 +72,37 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success('Logged out successfully');
+      toast.success('Sessão encerrada com sucesso');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to log out');
+      toast.error('Falha ao encerrar sessão');
     }
   };
 
   const navigationLinks = [
     { 
-      name: 'Dashboard', 
+      name: 'Painel', 
       href: '/student/dashboard', 
       icon: LayoutDashboard 
     },
     { 
-      name: 'My Lessons', 
+      name: 'Minhas Aulas', 
       href: '/student/lessons', 
       icon: BookOpen 
     },
     { 
-      name: 'Spaced Repetition', 
+      name: 'Repetição Espaçada', 
       href: '/student/spaced-repetition', 
       icon: Brain 
     },
     { 
-      name: 'Voice Practice', 
+      name: 'Prática de Voz', 
       href: '/student/voice-practice', 
       icon: Mic 
     },
     { 
-      name: 'Settings', 
+      name: 'Configurações', 
       href: '/student/settings', 
       icon: Settings 
     }
@@ -187,7 +187,7 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5" />
-            {!collapsed && <span className="font-medium">Logout</span>}
+            {!collapsed && <span className="font-medium">Sair</span>}
           </Button>
         </div>
       </div>
