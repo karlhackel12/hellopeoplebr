@@ -5,6 +5,8 @@ import { Message } from './types';
 import { toast } from 'sonner';
 
 export class MessageHandlers {
+  private messagesGetter: () => Message[];
+  
   constructor(
     private webSocketService: WebSocketService,
     private audioQueue: AudioQueue,
@@ -14,7 +16,15 @@ export class MessageHandlers {
     private addMessage: (message: Message) => void,
     private updateMessages: (messages: Message[]) => void,
     private debugLog: (...args: any[]) => void
-  ) {}
+  ) {
+    // Default implementation that will be overridden
+    this.messagesGetter = () => [];
+  }
+  
+  // Method to set the message getter function
+  setMessagesGetter(getter: () => Message[]): void {
+    this.messagesGetter = getter;
+  }
 
   setupMessageHandlers(): void {
     this.webSocketService.addMessageHandler((data) => {
@@ -83,8 +93,9 @@ export class MessageHandlers {
   private handleTextDelta(delta: string | undefined): void {
     if (!delta) return;
     
-    const messages = this.getMessages();
-    const lastMessage = messages[messages.length - 1];
+    // Use the getter to get the current messages
+    const messages = this.messagesGetter();
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
     
     if (lastMessage && lastMessage.role === 'assistant') {
       // Update last assistant message
@@ -132,10 +143,5 @@ export class MessageHandlers {
       content: 'Hello! I\'m your voice assistant for English practice. How can I help you today?',
       timestamp: new Date()
     }]);
-  }
-
-  private getMessages(): Message[] {
-    // This will be implemented in the VoiceChatState class
-    return [];
   }
 }
