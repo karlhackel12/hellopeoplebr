@@ -5,10 +5,16 @@ export class AudioRecorder {
   private audioContext: AudioContext | null = null;
   private processor: ScriptProcessorNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
+  private isStarted = false;
 
   constructor(private onAudioData: (audioData: Float32Array) => void) {}
 
   async start() {
+    if (this.isStarted) {
+      console.warn('AudioRecorder already started');
+      return;
+    }
+    
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -34,13 +40,19 @@ export class AudioRecorder {
       
       this.source.connect(this.processor);
       this.processor.connect(this.audioContext.destination);
+      this.isStarted = true;
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      this.cleanup();
       throw error;
     }
   }
 
   stop() {
+    this.cleanup();
+  }
+  
+  private cleanup() {
     if (this.source) {
       this.source.disconnect();
       this.source = null;
@@ -54,9 +66,12 @@ export class AudioRecorder {
       this.stream = null;
     }
     if (this.audioContext) {
-      this.audioContext.close();
+      this.audioContext.close().catch(err => {
+        console.error('Error closing audio context:', err);
+      });
       this.audioContext = null;
     }
+    this.isStarted = false;
   }
 }
 
@@ -64,10 +79,14 @@ export class AudioRecorder {
 export class AudioQueue {
   private queue: Uint8Array[] = [];
   private isPlaying = false;
-  private audioContext: AudioContext;
+  private audioContext: AudioContext | null = null;
 
   constructor() {
-    this.audioContext = new AudioContext({ sampleRate: 24000 });
+    try {
+      this.audioContext = new AudioContext({ sampleRate: 24000 });
+    } catch (error) {
+      console.error('Failed to create AudioContext:', error);
+    }
   }
 
   async addToQueue(audioData: Uint8Array) {
@@ -78,6 +97,13 @@ export class AudioQueue {
   }
 
   private async playNext() {
+    if (!this.audioContext) {
+      console.error('AudioContext not available');
+      this.queue = [];
+      this.isPlaying = false;
+      return;
+    }
+    
     if (this.queue.length === 0) {
       this.isPlaying = false;
       return;
@@ -98,6 +124,7 @@ export class AudioQueue {
       source.start(0);
     } catch (error) {
       console.error('Error playing audio:', error);
+      // Continue to next chunk even if current fails
       this.playNext();
     }
   }
@@ -140,27 +167,42 @@ export class AudioQueue {
 
   // Convert Float32Array audio data to base64 string for sending to server
   encodeAudioData(float32Array: Float32Array): string {
-    const int16Array = new Int16Array(float32Array.length);
-    for (let i = 0; i < float32Array.length; i++) {
-      const s = Math.max(-1, Math.min(1, float32Array[i]));
-      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    try {
+      const int16Array = new Int16Array(float32Array.length);
+      for (let i = 0; i < float32Array.length; i++) {
+        const s = Math.max(-1, Math.min(1, float32Array[i]));
+        int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      
+      const uint8Array = new Uint8Array(int16Array.buffer);
+      let binary = '';
+      const chunkSize = 0x8000;
+      
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      
+      return btoa(binary);
+    } catch (error) {
+      console.error('Error encoding audio data:', error);
+      throw error;
     }
-    
-    const uint8Array = new Uint8Array(int16Array.buffer);
-    let binary = '';
-    const chunkSize = 0x8000;
-    
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-      binary += String.fromCharCode.apply(null, Array.from(chunk));
-    }
-    
-    return btoa(binary);
   }
 
   stop() {
     this.queue = [];
     this.isPlaying = false;
-    this.audioContext.close();
+    
+    if (this.audioContext) {
+      try {
+        this.audioContext.close().catch(err => {
+          console.error('Error closing audio context:', err);
+        });
+        this.audioContext = null;
+      } catch (error) {
+        console.error('Error stopping audio queue:', error);
+      }
+    }
   }
 }

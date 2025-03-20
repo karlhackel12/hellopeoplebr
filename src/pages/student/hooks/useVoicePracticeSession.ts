@@ -15,7 +15,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
   const [activeTab, setActiveTab] = useState('conversation');
   const [connectionRetries, setConnectionRetries] = useState(0);
   const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   const { data: lessonData, isLoading: lessonLoading } = useLesson(
     sessionDetails?.lesson_id || undefined
@@ -23,6 +23,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
 
   const {
     isConnected,
+    isConnecting,
     isRecording,
     isSpeaking,
     audioLevel,
@@ -33,14 +34,38 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     disconnect,
     startRecording,
     stopRecording
-  } = useRealtimeVoiceChat();
+  } = useRealtimeVoiceChat({ debug: debugMode });
+
+  const debugLog = useCallback((...args: any[]) => {
+    if (debugMode) {
+      console.log('[useVoicePracticeSession]', ...args);
+    }
+  }, [debugMode]);
+
+  // Enable debug mode with keyboard shortcut (Ctrl+Alt+D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.altKey && e.key === 'd') {
+        setDebugMode(prev => {
+          const newValue = !prev;
+          toast.success(newValue ? 'Modo debug ativado' : 'Modo debug desativado');
+          return newValue;
+        });
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const connectToVoiceService = useCallback(async () => {
-    if (isConnecting) return;
+    if (isConnecting || isConnected) {
+      debugLog('Already connecting or connected, skipping connect');
+      return;
+    }
     
-    setIsConnecting(true);
     try {
-      console.log('Attempting to connect to voice service...');
+      debugLog('Attempting to connect to voice service...');
       await connect();
       setConnectionRetries(0);
       
@@ -55,11 +80,10 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
       if (connectionRetries < 3) {
         // Retry connection with exponential backoff
         const retryDelay = Math.min(1000 * Math.pow(2, connectionRetries), 8000);
-        toast.error(`Falha na conexão. Tentando novamente em ${retryDelay/1000} segundos...`);
+        toast.error(`Falha na conexão. Tentando novamente em ${Math.round(retryDelay/1000)} segundos...`);
         
         const timeoutId = window.setTimeout(() => {
           setConnectionRetries(prev => prev + 1);
-          setIsConnecting(false);
           connectToVoiceService();
         }, retryDelay);
         
@@ -67,10 +91,8 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
       } else {
         toast.error("Falha ao conectar após várias tentativas. Por favor, tente novamente mais tarde.");
       }
-    } finally {
-      setIsConnecting(false);
     }
-  }, [connect, connectionRetries, retryTimeoutId, isConnecting]);
+  }, [connect, connectionRetries, retryTimeoutId, isConnecting, isConnected, debugLog]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -99,12 +121,13 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
           throw error;
         }
         
-        console.log('Fetched session details:', data);
+        debugLog('Fetched session details:', data);
         setSessionDetails(data);
         
         if (data.completed_at) {
           setIsComplete(true);
         } else {
+          // Don't auto-connect if already completed
           connectToVoiceService();
         }
       } catch (error) {
@@ -118,6 +141,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     fetchSessionDetails();
     
     return () => {
+      debugLog('Cleaning up session...');
       disconnect();
       
       // Clear any retry timeout
@@ -125,18 +149,20 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
         clearTimeout(retryTimeoutId);
       }
     };
-  }, [sessionId, disconnect, connectToVoiceService, retryTimeoutId]);
+  }, [sessionId, disconnect, connectToVoiceService, retryTimeoutId, debugLog]);
 
   useEffect(() => {
     // Check if we need to display connection error to the user
-    if (connectionError && !isConnected) {
-      toast.error(`Erro de conexão: ${connectionError}`);
+    if (connectionError && !isConnected && !isConnecting) {
+      debugLog('Connection error:', connectionError);
+      // Don't show toast here as it's already handled in the hook
     }
-  }, [connectionError, isConnected]);
+  }, [connectionError, isConnected, isConnecting, debugLog]);
 
   const handleCompleteSession = async () => {
     if (!isComplete && sessionId) {
       try {
+        debugLog('Completing session...');
         // Calculate session duration (in seconds)
         let durationSeconds = 0;
         if (sessionDetails?.started_at) {
@@ -153,39 +179,62 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
           })
           .eq('id', sessionId);
         
+        setIsComplete(true);
         toast.success('Sessão de prática completa!');
       } catch (error) {
         console.error('Error completing session:', error);
         toast.error('Falha ao completar a sessão');
       }
     }
+    
+    debugLog('Navigating back to voice practice menu...');
+    disconnect();
     navigate('/student/voice-practice');
   };
 
-  const toggleRecording = () => {
+  const toggleRecording = useCallback(() => {
     if (isRecording) {
       stopRecording();
     } else {
       startRecording();
     }
-  };
+  }, [isRecording, startRecording, stopRecording]);
 
-  const handleBackClick = () => {
+  const handleBackClick = useCallback(() => {
     if (!isComplete && messages.length > 1) {
       setExitDialogOpen(true);
     } else {
+      disconnect();
       navigate('/student/voice-practice');
     }
-  };
+  }, [isComplete, messages, disconnect, navigate]);
 
-  const handleExitConfirm = () => {
+  const handleExitConfirm = useCallback(() => {
     setExitDialogOpen(false);
+    disconnect();
     navigate('/student/voice-practice');
-  };
+  }, [disconnect, navigate]);
 
-  const toggleLessonView = () => {
+  const toggleLessonView = useCallback(() => {
     setActiveTab(activeTab === 'lesson' ? 'conversation' : 'lesson');
-  };
+  }, [activeTab]);
+
+  // Retry connection if needed when error changes
+  useEffect(() => {
+    if (connectionError && !isConnected && !isConnecting && connectionRetries === 0) {
+      debugLog('Trying to reconnect after connection error...');
+      const timeoutId = window.setTimeout(() => {
+        connectToVoiceService();
+      }, 3000);
+      
+      setRetryTimeoutId(timeoutId);
+      setConnectionRetries(1);
+      
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }
+  }, [connectionError, isConnected, isConnecting, connectionRetries, connectToVoiceService, debugLog]);
 
   return {
     sessionDetails,
