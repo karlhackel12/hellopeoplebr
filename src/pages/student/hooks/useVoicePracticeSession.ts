@@ -13,6 +13,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
   const [isComplete, setIsComplete] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('conversation');
+  const [connectionRetries, setConnectionRetries] = useState(0);
 
   const { data: lessonData, isLoading: lessonLoading } = useLesson(
     sessionDetails?.lesson_id || undefined
@@ -25,6 +26,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     audioLevel,
     transcript,
     messages,
+    connectionError,
     connect,
     disconnect,
     startRecording,
@@ -57,12 +59,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
         setSessionDetails(data);
         
         if (!data.completed_at) {
-          try {
-            await connect();
-          } catch (connectError) {
-            console.error("Error connecting to voice service:", connectError);
-            toast.error("Failed to connect to voice service. Please try again.");
-          }
+          connectToVoiceService();
         } else {
           setIsComplete(true);
         }
@@ -79,7 +76,34 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     return () => {
       disconnect();
     };
-  }, [sessionId, connect, disconnect]);
+  }, [sessionId, disconnect]);
+
+  const connectToVoiceService = async () => {
+    try {
+      await connect();
+      setConnectionRetries(0);
+    } catch (error) {
+      console.error("Error connecting to voice service:", error);
+      
+      if (connectionRetries < 2) {
+        // Retry connection
+        toast.error("Connection failed. Retrying...");
+        setTimeout(() => {
+          setConnectionRetries(prev => prev + 1);
+          connectToVoiceService();
+        }, 2000);
+      } else {
+        toast.error("Failed to connect to voice service after multiple attempts. Please try again later.");
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Check if we need to display connection error to the user
+    if (connectionError && !isConnected) {
+      toast.error(`Connection error: ${connectionError}`);
+    }
+  }, [connectionError, isConnected]);
 
   const handleCompleteSession = () => {
     navigate('/student/voice-practice');
@@ -125,6 +149,7 @@ export const useVoicePracticeSession = (sessionId: string | undefined) => {
     audioLevel,
     transcript,
     messages,
+    connectionError,
     handleCompleteSession,
     toggleRecording,
     handleBackClick,

@@ -9,6 +9,8 @@ export interface WebSocketMessage {
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private messageHandlers: ((data: any) => void)[] = [];
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 3;
   
   constructor(private wsUrl: string) {}
   
@@ -20,38 +22,92 @@ export class WebSocketService {
         this.ws = new WebSocket(this.wsUrl);
         
         this.ws.onopen = () => {
-          console.log('WebSocket connected');
+          console.log('WebSocket connected successfully');
+          this.reconnectAttempts = 0;
+          resolve();
+        };
+        
+        this.ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('Received message:', data.type);
+            
+            this.messageHandlers.forEach(handler => handler(data));
+          } catch (error) {
+            console.error('Error parsing message:', error);
+          }
+        };
+        
+        this.ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          reject(error);
+        };
+        
+        this.ws.onclose = (event) => {
+          console.log(`WebSocket closed: code=${event.code}, reason=${event.reason}`);
+          if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.attemptReconnect(resolve, reject);
+          } else {
+            reject(new Error(`Connection closed: ${event.reason}`));
+          }
+        };
+      } catch (error) {
+        console.error('Error creating WebSocket:', error);
+        toast.error('Connection failed: ' + error.message);
+        reject(error);
+      }
+    });
+  }
+  
+  private attemptReconnect(resolve: (value: void) => void, reject: (reason: any) => void): void {
+    this.reconnectAttempts++;
+    console.log(`Attempting to reconnect (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+    
+    setTimeout(() => {
+      try {
+        this.ws = new WebSocket(this.wsUrl);
+        
+        this.ws.onopen = () => {
+          console.log('WebSocket reconnected successfully');
+          this.reconnectAttempts = 0;
           resolve();
         };
         
         this.ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          console.log('Received message:', data.type);
-          
           this.messageHandlers.forEach(handler => handler(data));
         };
         
         this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          toast.error('Connection error occurred');
+          console.error('WebSocket reconnection error:', error);
           reject(error);
         };
         
-        this.ws.onclose = () => {
-          console.log('WebSocket closed');
+        this.ws.onclose = (event) => {
+          console.log(`WebSocket reconnection closed: code=${event.code}, reason=${event.reason}`);
+          if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.attemptReconnect(resolve, reject);
+          } else {
+            reject(new Error(`Reconnection failed after ${this.maxReconnectAttempts} attempts`));
+          }
         };
       } catch (error) {
-        console.error('Error connecting:', error);
-        reject(error);
+        console.error('Error during reconnection:', error);
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.attemptReconnect(resolve, reject);
+        } else {
+          reject(new Error(`Failed to reconnect after ${this.maxReconnectAttempts} attempts`));
+        }
       }
-    });
+    }, 1000 * this.reconnectAttempts); // Exponential backoff
   }
   
   public send(message: WebSocketMessage): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.error('WebSocket not connected');
+      console.error('WebSocket not connected, cannot send message');
+      toast.error('Connection lost. Please try again.');
     }
   }
   

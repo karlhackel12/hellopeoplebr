@@ -11,6 +11,7 @@ export const useRealtimeVoiceChat = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcript, setTranscript] = useState('');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   
   const webSocketServiceRef = useRef<WebSocketService | null>(null);
   const voiceChatStateRef = useRef<VoiceChatState | null>(null);
@@ -26,8 +27,19 @@ export const useRealtimeVoiceChat = () => {
   const connect = async () => {
     try {
       console.log('Connecting to voice service...');
+      setConnectionError(null);
       
-      const wsUrl = `wss://${import.meta.env.VITE_SUPABASE_PROJECT_REF}.functions.supabase.co/realtime-voice`;
+      // Get the project reference from environment
+      const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_REF;
+      console.log('Using project ref:', projectRef);
+      
+      if (!projectRef) {
+        throw new Error('VITE_SUPABASE_PROJECT_REF is not defined');
+      }
+      
+      // Use the correct WebSocket URL format
+      const wsUrl = `wss://${projectRef}.functions.supabase.co/v1/realtime-voice`;
+      console.log('Connecting to WebSocket URL:', wsUrl);
       
       if (!webSocketServiceRef.current) {
         webSocketServiceRef.current = new WebSocketService(wsUrl);
@@ -50,7 +62,10 @@ export const useRealtimeVoiceChat = () => {
       
     } catch (error) {
       console.error('Error connecting:', error);
-      toast.error('Failed to connect to voice service');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setConnectionError(errorMessage);
+      toast.error('Failed to connect to voice service: ' + errorMessage);
+      throw error;
     }
   };
 
@@ -86,6 +101,7 @@ export const useRealtimeVoiceChat = () => {
     audioLevel,
     transcript,
     messages,
+    connectionError,
     connect,
     disconnect,
     startRecording,
