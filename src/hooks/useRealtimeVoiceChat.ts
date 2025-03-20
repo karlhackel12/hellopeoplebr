@@ -64,7 +64,7 @@ export const useRealtimeVoiceChat = () => {
       console.error('Error connecting:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setConnectionError(errorMessage);
-      toast.error('Failed to connect to voice service: ' + errorMessage);
+      toast.error('Falha ao conectar ao serviço de voz: ' + errorMessage);
       throw error;
     }
   };
