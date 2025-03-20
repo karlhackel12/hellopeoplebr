@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,35 +11,46 @@ import { useIsMobile } from '@/hooks/use-mobile';
 interface StudentLayoutProps {
   children: ReactNode;
   pageTitle?: string;
+  mobileMenuOpen?: boolean;
+  onMobileMenuClose?: () => void;
 }
 
-const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) => {
+const StudentLayout: React.FC<StudentLayoutProps> = ({ 
+  children, 
+  pageTitle,
+  mobileMenuOpen: externalMobileMenuOpen,
+  onMobileMenuClose
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  
+  const mobileMenuOpen = externalMobileMenuOpen !== undefined ? externalMobileMenuOpen : internalMobileMenuOpen;
+  const setMobileMenuOpen = (state: boolean) => {
+    if (externalMobileMenuOpen !== undefined && onMobileMenuClose) {
+      if (!state) onMobileMenuClose();
+    } else {
+      setInternalMobileMenuOpen(state);
+    }
+  };
 
   useEffect(() => {
-    // Close mobile menu when route changes
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
-    // Check if on mobile and collapse sidebar by default
     const handleResize = () => {
       setSidebarCollapsed(window.innerWidth < 1024);
     };
     
-    // Set initial state
     handleResize();
     
-    // Add event listener
     window.addEventListener('resize', handleResize);
     
-    // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -55,7 +65,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
           return;
         }
         
-        // Check if user is a student
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
@@ -119,15 +128,17 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, pageTitle }) =>
           />
         )}
         
-        <MobileHeader 
-          onMenuToggle={toggleMobileMenu} 
-          pageTitle={pageTitle} 
-        />
+        {!externalMobileMenuOpen && (
+          <MobileHeader 
+            onMenuToggle={toggleMobileMenu} 
+            pageTitle={pageTitle} 
+          />
+        )}
         
         <main 
           className={`flex-grow transition-all duration-300 ${
             isMobile 
-              ? 'pt-16 pb-28 px-4' 
+              ? 'pt-0 pb-28 px-4' 
               : `pt-6 pb-10 px-4 md:px-6 lg:px-8 ${
                   sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
                 }`
