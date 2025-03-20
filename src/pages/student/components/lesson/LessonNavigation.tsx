@@ -37,7 +37,7 @@ const LessonNavigation: React.FC<LessonNavigationProps> = ({
           className="flex-1"
         >
           <BookOpen className="h-4 w-4 mr-2" />
-          Lesson
+          Aula
         </Button>
         
         {hasQuiz && (
@@ -56,7 +56,7 @@ const LessonNavigation: React.FC<LessonNavigationProps> = ({
       {/* Section Navigation */}
       {currentTab === 'content' && (
         <div className="space-y-1 border rounded-md p-3">
-          <h3 className="text-sm font-medium mb-2">Contents</h3>
+          <h3 className="text-sm font-medium mb-2">Conteúdo</h3>
           
           {sections.map((section, index) => (
             <Button

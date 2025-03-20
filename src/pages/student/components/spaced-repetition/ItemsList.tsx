@@ -56,15 +56,15 @@ const ItemsList: React.FC<ItemsListProps> = ({
         <div key={item.id} className="py-3 flex justify-between items-center">
           <div>
             <h3 className="font-medium">
-              {item.question?.question_text || item.lesson?.title || 'Unnamed item'}
+              {item.question?.question_text || item.lesson?.title || 'Item sem nome'}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {icon === 'calendar' ? 'Due: ' : 'Next review: '}
+              {icon === 'calendar' ? 'Vencimento: ' : 'Próxima revisão: '}
               {formatDistanceToNow(new Date(item.next_review_date), { addSuffix: true })}
             </p>
           </div>
           <div className="text-sm">
-            Difficulty: {Math.round(item.difficulty * 100) / 100}
+            Dificuldade: {Math.round(item.difficulty * 100) / 100}
           </div>
         </div>
       ))}
