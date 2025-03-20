@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useVoicePractice } from './hooks/useVoicePractice';
 import { useLesson } from './hooks/lesson/useLesson';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PauseCircle, Send, X, BookOpen, MessageSquare, Info, ArrowLeft, Volume } from 'lucide-react';
+import { Mic, MicOff, PauseCircle, BookOpen, MessageSquare, Info, ArrowLeft, Volume } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import VoiceWaveform from './components/voice-practice/VoiceWaveform';
-import useVoiceRecorder from './hooks/useVoiceRecorder';
+import { useRealtimeVoiceChat } from '@/hooks/useRealtimeVoiceChat';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,6 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  isPartial?: boolean;
 }
 
 const VoicePracticeSession: React.FC = () => {
@@ -36,40 +35,34 @@ const VoicePracticeSession: React.FC = () => {
   const navigate = useNavigate();
   const [sessionDetails, setSessionDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [userInput, setUserInput] = useState('');
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [aiSpeaking, setAiSpeaking] = useState(false);
-  const [liveTranscript, setLiveTranscript] = useState('');
-  const startTimeRef = useRef<Date | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { completeSession } = useVoicePractice();
   const [activeTab, setActiveTab] = useState('conversation');
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  
+
   const { data: lessonData, isLoading: lessonLoading } = useLesson(
     sessionDetails?.lesson_id || undefined
   );
-  
+
   const {
+    isConnected,
     isRecording,
-    startRecording,
-    stopRecording,
-    transcript,
-    clearTranscript,
+    isSpeaking,
     audioLevel,
-    hasRecordingPermission,
-    requestPermission,
-  } = useVoiceRecorder();
-  
+    transcript,
+    messages,
+    connect,
+    disconnect,
+    startRecording,
+    stopRecording
+  } = useRealtimeVoiceChat();
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages, liveTranscript]);
-  
+  }, [messages, transcript]);
+
   useEffect(() => {
     if (!sessionId) return;
     
@@ -93,36 +86,12 @@ const VoicePracticeSession: React.FC = () => {
           .single();
         
         if (error) throw error;
-        
         setSessionDetails(data);
         
-        if (data.completed_at) {
-          setIsComplete(true);
-          const { data: messageData, error: messagesError } = await supabase
-            .from('conversation_messages')
-            .select('role, content, created_at')
-            .eq('conversation_id', sessionId)
-            .order('created_at', { ascending: true });
-          
-          if (!messagesError && messageData) {
-            setMessages(messageData.map(msg => ({
-              role: msg.role as 'user' | 'assistant',
-              content: msg.content,
-              timestamp: new Date(msg.created_at)
-            })));
-          }
+        if (!data.completed_at) {
+          await connect();
         } else {
-          startTimeRef.current = new Date();
-          setConversationId(sessionId);
-          
-          const welcomeMsg = getWelcomeMessage(data.difficulty_level, data.lesson?.title);
-          setMessages([
-            {
-              role: 'assistant',
-              content: welcomeMsg,
-              timestamp: new Date()
-            }
-          ]);
+          setIsComplete(true);
         }
       } catch (error) {
         console.error('Error fetching session details:', error);
@@ -133,159 +102,24 @@ const VoicePracticeSession: React.FC = () => {
     };
     
     fetchSessionDetails();
-  }, [sessionId]);
-  
-  useEffect(() => {
-    if (transcript && !isRecording) {
-      setLiveTranscript('');
-      setUserInput(transcript);
-    } else if (transcript && isRecording) {
-      setLiveTranscript(transcript);
-    }
-  }, [transcript, isRecording]);
-  
-  const getWelcomeMessage = (difficultyLevel: number, lessonTitle?: string) => {
-    let baseMessage = '';
     
-    switch (difficultyLevel) {
-      case 1:
-        baseMessage = "Hello! I'm your English conversation partner. Let's practice speaking together. Take your time and speak clearly.";
-        break;
-      case 2:
-        baseMessage = "Hi there! I'm your English conversation partner. I'm here to help you practice your speaking skills.";
-        break;
-      case 3:
-        baseMessage = "Welcome to our conversation practice! I'm your advanced English partner. I'll challenge you with sophisticated vocabulary and complex topics.";
-        break;
-      default:
-        baseMessage = "Hello! I'm your English conversation partner.";
-        break;
-    }
-    
-    if (lessonTitle) {
-      baseMessage += ` Today we'll be discussing topics related to "${lessonTitle}". `;
-    }
-    
-    baseMessage += " What would you like to talk about today?";
-    
-    return baseMessage;
-  };
-  
-  const handleSendMessage = async () => {
-    if (!userInput.trim() || !conversationId) return;
-    
-    const userMessage = {
-      role: 'user' as const,
-      content: userInput,
-      timestamp: new Date()
+    return () => {
+      disconnect();
     };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setUserInput('');
-    clearTranscript();
-    
-    try {
-      setAiSpeaking(true);
-      
-      setMessages(prev => [
-        ...prev, 
-        { 
-          role: 'assistant', 
-          content: '...', 
-          timestamp: new Date(),
-          isPartial: true
-        }
-      ]);
-      
-      const { data, error } = await supabase.functions.invoke('voice-conversation', {
-        body: {
-          userTranscript: userMessage.content,
-          conversationId,
-          lessonTopics: sessionDetails.lesson ? [sessionDetails.lesson.title] : [],
-          vocabularyItems: sessionDetails.vocabulary_used || [],
-          difficulty: sessionDetails.difficulty_level,
-          userId: (await supabase.auth.getUser()).data.user?.id,
-          lessonId: sessionDetails.lesson_id,
-          assignmentId: sessionDetails.assignment_id
-        }
-      });
-      
-      if (error) throw error;
-      
-      setMessages(prev => prev.filter(msg => !msg.isPartial));
-      
-      if (data.response) {
-        const assistantMessage = {
-          role: 'assistant' as const,
-          content: data.response,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, assistantMessage]);
-      }
-      
-      if (data.conversationId && !conversationId) {
-        setConversationId(data.conversationId);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      
-      setMessages(prev => prev.filter(msg => !msg.isPartial));
-      
-      toast.error('Failed to send message');
-    } finally {
-      setAiSpeaking(false);
-    }
-  };
-  
+  }, [sessionId]);
+
   const handleCompleteSession = async () => {
-    if (!sessionId || !startTimeRef.current) return;
-    
-    try {
-      const endTime = new Date();
-      const durationSeconds = Math.floor((endTime.getTime() - startTimeRef.current.getTime()) / 1000);
-      
-      await supabase.functions.invoke('voice-conversation', {
-        body: {
-          conversationId,
-          markAsCompleted: true,
-          userId: (await supabase.auth.getUser()).data.user?.id,
-          lessonId: sessionDetails.lesson_id,
-          assignmentId: sessionDetails.assignment_id
-        }
-      });
-      
-      await completeSession({
-        sessionId,
-        durationSeconds
-      });
-      
-      toast.success('Practice session completed!');
-      setIsComplete(true);
-    } catch (error) {
-      console.error('Error completing session:', error);
-      toast.error('Failed to complete session');
-    }
+    navigate('/student/voice-practice');
   };
-  
+
   const toggleRecording = async () => {
-    if (!hasRecordingPermission) {
-      const granted = await requestPermission();
-      if (!granted) {
-        toast.error('Microphone permission is required for voice practice');
-        return;
-      }
-    }
-    
     if (isRecording) {
       stopRecording();
     } else {
       startRecording();
-      clearTranscript();
-      setLiveTranscript('');
     }
   };
-  
+
   const renderLessonContent = () => {
     if (lessonLoading) {
       return (
@@ -331,7 +165,7 @@ const VoicePracticeSession: React.FC = () => {
       </div>
     );
   };
-  
+
   if (loading) {
     return (
       <div className="container px-4 py-8 max-w-4xl mx-auto">
@@ -364,7 +198,7 @@ const VoicePracticeSession: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container px-4 py-5 max-w-4xl mx-auto h-[calc(100vh-50px)] flex flex-col">
       <div className="flex justify-between items-center mb-4">
@@ -410,7 +244,6 @@ const VoicePracticeSession: React.FC = () => {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs 
-          defaultValue="conversation" 
           value={activeTab} 
           onValueChange={setActiveTab}
           className="w-full h-full flex flex-col"
@@ -437,8 +270,7 @@ const VoicePracticeSession: React.FC = () => {
                     key={index}
                     className={cn(
                       "flex", 
-                      message.role === 'user' ? "justify-end" : "justify-start",
-                      message.isPartial ? "opacity-60" : ""
+                      message.role === 'user' ? "justify-end" : "justify-start"
                     )}
                   >
                     <div
@@ -446,11 +278,10 @@ const VoicePracticeSession: React.FC = () => {
                         "max-w-[85%] rounded-xl px-4 py-2.5", 
                         message.role === 'user'
                           ? "bg-orange-500 text-white rounded-tr-none"
-                          : "bg-white shadow-sm text-gray-800 rounded-tl-none border",
-                        message.isPartial ? "animate-pulse" : ""
+                          : "bg-white shadow-sm text-gray-800 rounded-tl-none border"
                       )}
                     >
-                      {message.role === 'assistant' && !message.isPartial && (
+                      {message.role === 'assistant' && (
                         <div className="flex items-center gap-1.5 mb-1 text-xs opacity-70">
                           <Volume className="h-3 w-3 text-orange-500" />
                           AI Assistant
@@ -467,20 +298,13 @@ const VoicePracticeSession: React.FC = () => {
                   </div>
                 ))}
                 
-                {liveTranscript && (
+                {transcript && (
                   <div className="flex justify-end">
                     <div className="max-w-[85%] rounded-xl px-4 py-2.5 bg-orange-500 bg-opacity-50 text-white rounded-tr-none animate-pulse">
-                      <p>{liveTranscript}</p>
-                      <div className="flex justify-end mt-1">
-                        <span className="inline-block h-2 w-2 bg-white rounded-full animate-pulse mr-1"></span>
-                        <span className="inline-block h-2 w-2 bg-white rounded-full animate-pulse mr-1" style={{ animationDelay: '0.2s' }}></span>
-                        <span className="inline-block h-2 w-2 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></span>
-                      </div>
+                      <p>{transcript}</p>
                     </div>
                   </div>
                 )}
-                
-                <div ref={messagesEndRef} />
               </div>
             </div>
             
@@ -502,8 +326,8 @@ const VoicePracticeSession: React.FC = () => {
                   <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                     <div className="flex-1 relative">
                       <VoiceWaveform 
-                        audioLevel={isRecording ? audioLevel : 0} 
-                        isActive={isRecording} 
+                        audioLevel={audioLevel} 
+                        isActive={isRecording || isSpeaking} 
                         className="h-10"
                         color="orange"
                       />
@@ -513,46 +337,23 @@ const VoicePracticeSession: React.FC = () => {
                           <span className="text-xs text-gray-600">Recording...</span>
                         </div>
                       )}
+                      {isSpeaking && (
+                        <div className="absolute top-1 left-3">
+                          <span className="inline-block h-2 w-2 bg-orange-500 rounded-full animate-pulse mr-1"></span>
+                          <span className="text-xs text-gray-600">AI Speaking...</span>
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant={isRecording ? "destructive" : "default"}
                       size="icon"
                       className={isRecording ? "" : "bg-orange-500 hover:bg-orange-600"}
                       onClick={toggleRecording}
-                      disabled={aiSpeaking}
+                      disabled={isSpeaking}
                     >
                       {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </Button>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <textarea
-                        className="w-full p-3 border rounded-md resize-none bg-background"
-                        placeholder="Type or speak your message..."
-                        rows={2}
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        disabled={aiSpeaking}
-                      />
-                    </div>
-                    <Button
-                      className="bg-orange-500 hover:bg-orange-600 self-end"
-                      onClick={handleSendMessage}
-                      disabled={!userInput.trim() || aiSpeaking}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {aiSpeaking && (
-                    <div className="w-full flex justify-center">
-                      <span className="text-sm flex items-center gap-2 text-muted-foreground">
-                        <span className="inline-block h-2 w-2 bg-orange-500 rounded-full animate-pulse"></span>
-                        AI is generating response...
-                      </span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
