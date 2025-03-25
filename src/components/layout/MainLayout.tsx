@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import Navbar from './Navbar';
 import LandscapeFooter from './LandscapeFooter';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -11,6 +12,9 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, hideFooter = false }) => {
   const isMobile = useIsMobile();
+  
+  // Set up analytics tracking for auth events
+  useAuthWithAnalytics();
   
   return (
     <div className="flex flex-col min-h-screen bg-background">

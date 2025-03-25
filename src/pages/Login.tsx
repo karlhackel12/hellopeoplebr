@@ -1,11 +1,19 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
 import Logo from '@/components/ui/Logo';
 import { H1 } from '@/components/ui/typography';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 const Login: React.FC = () => {
+  const { trackEvent } = useAnalytics();
+  
+  useEffect(() => {
+    // Track page view
+    trackEvent('login_page_viewed');
+  }, [trackEvent]);
+
   return <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left side - Auth form */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 md:px-12 lg:px-16 relative">

@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
@@ -8,6 +7,8 @@ import TeacherBottomNavigation from './TeacherBottomNavigation';
 import MobileHeader from './MobileHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import LandscapeFooter from './LandscapeFooter';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -21,20 +22,19 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { trackEvent } = useAnalytics();
+  
+  useAuthWithAnalytics();
 
   useEffect(() => {
-    // Check if on mobile and collapse sidebar by default
     const handleResize = () => {
       setSidebarCollapsed(window.innerWidth < 1024);
     };
     
-    // Set initial state
     handleResize();
     
-    // Add event listener
     window.addEventListener('resize', handleResize);
     
-    // Cleanup
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -50,6 +50,8 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
           return;
         }
         setAuthorized(true);
+        
+        trackEvent('teacher_dashboard_accessed', { page_title: pageTitle });
       } catch (error) {
         console.error('Auth check error:', error);
         navigate('/login');
@@ -59,7 +61,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
     };
 
     checkAccess();
-  }, [navigate]);
+  }, [navigate, pageTitle, trackEvent]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
