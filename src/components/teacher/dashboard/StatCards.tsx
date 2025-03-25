@@ -4,19 +4,36 @@ import { Button } from '@/components/ui/button';
 import { Users, ClipboardList, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 const StatCards: React.FC = () => {
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
   
   const handleManageStudents = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'manage_students',
+      location: 'dashboard_stat_cards'
+    });
+    
     navigate('/teacher/students');
   };
   
   const handleCreateLesson = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'create_lesson',
+      location: 'dashboard_stat_cards'
+    });
+    
     navigate('/teacher/lessons/create');
   };
   
   const handleManageAssignments = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'manage_assignments',
+      location: 'dashboard_stat_cards'
+    });
+    
     navigate('/teacher/assignments');
   };
   

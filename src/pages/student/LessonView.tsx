@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Separator } from "@/components/ui/separator";
 import { useViewLesson } from './hooks/useViewLesson';
 import LessonHeader from './components/LessonHeader';
@@ -8,8 +8,11 @@ import AssignmentAlert from './components/lesson/AssignmentAlert';
 import UnpublishedQuizAlert from './components/lesson/UnpublishedQuizAlert';
 import LessonLoadingState from './components/lesson/LessonLoadingState';
 import LessonErrorState from './components/lesson/LessonErrorState';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 const LessonView: React.FC = () => {
+  const { trackEvent } = useAnalytics();
+  
   const {
     lesson,
     lessonId,
@@ -46,6 +49,62 @@ const LessonView: React.FC = () => {
     completionPercentage
   } = useViewLesson();
   
+  // Track lesson view and completion events
+  useEffect(() => {
+    if (!lessonLoading && lesson) {
+      trackEvent(ANALYTICS_EVENTS.STUDENT.LESSON_STARTED, {
+        lesson_id: lessonId,
+        lesson_title: lesson.title,
+        is_assignment: !!assignment,
+        has_quiz: hasQuiz
+      });
+    }
+  }, [lessonLoading, lesson, lessonId, assignment, hasQuiz, trackEvent]);
+
+  // Track tab changes
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+    
+    trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
+      page: `lesson_${tab}`,
+      lesson_id: lessonId
+    });
+  };
+
+  // Enhanced section navigation with analytics
+  const handleGoToSection = (index: number) => {
+    trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
+      action: 'go_to_section',
+      section_index: index,
+      lesson_id: lessonId
+    });
+    
+    goToSection(index);
+  };
+
+  // Enhanced section completion toggle with analytics
+  const handleSectionCompletion = (sectionId: string, completed: boolean) => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: completed ? 'mark_section_complete' : 'mark_section_incomplete',
+      section_id: sectionId,
+      lesson_id: lessonId
+    });
+    
+    handleToggleSectionCompletion(sectionId, completed);
+  };
+
+  // Enhanced lesson completion with analytics
+  const markLessonComplete = async () => {
+    trackEvent(ANALYTICS_EVENTS.STUDENT.LESSON_COMPLETED, {
+      lesson_id: lessonId,
+      completion_percentage: completionPercentage,
+      completed_sections: completedSections.length,
+      total_sections: sections.length
+    });
+    
+    await handleMarkLessonComplete();
+  };
+  
   // Show loading state
   if (lessonLoading || progressLoading) {
     return <LessonLoadingState />;
@@ -62,7 +121,7 @@ const LessonView: React.FC = () => {
         <LessonHeader 
           title={lesson.title}
           isCompleted={isLessonComplete}
-          onMarkComplete={handleMarkLessonComplete}
+          onMarkComplete={markLessonComplete}
           onBack={handleBack}
           isUpdating={isUpdating}
         />
@@ -75,14 +134,28 @@ const LessonView: React.FC = () => {
         
         <LessonContainer 
           currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
+          setCurrentTab={handleTabChange}
           sections={sections}
           currentSectionIndex={currentSectionIndex}
           completedSections={completedSections}
-          goToSection={goToSection}
-          onToggleSectionCompletion={handleToggleSectionCompletion}
-          goToPreviousSection={goToPreviousSection}
-          goToNextSection={goToNextSection}
+          goToSection={handleGoToSection}
+          onToggleSectionCompletion={handleSectionCompletion}
+          goToPreviousSection={() => {
+            trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+              button: 'previous_section',
+              lesson_id: lessonId,
+              current_section: currentSectionIndex
+            });
+            goToPreviousSection();
+          }}
+          goToNextSection={() => {
+            trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+              button: 'next_section',
+              lesson_id: lessonId,
+              current_section: currentSectionIndex
+            });
+            goToNextSection();
+          }}
           isFirstPage={isFirstPage}
           isLastPage={isLastPage}
           completionPercentage={completionPercentage}

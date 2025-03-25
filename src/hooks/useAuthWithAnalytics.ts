@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAnalytics } from './useAnalytics';
+import { useAnalytics, ANALYTICS_EVENTS } from './useAnalytics';
 
 export function useAuthWithAnalytics() {
   const { trackEvent, identifyUser, resetIdentity } = useAnalytics();
@@ -12,14 +12,16 @@ export function useAuthWithAnalytics() {
       console.log('Auth state changed:', event);
 
       if (event === 'SIGNED_IN') {
-        trackEvent('user_signed_in');
+        trackEvent(ANALYTICS_EVENTS.AUTH.SIGNED_IN);
         identifyUser();
       } else if (event === 'SIGNED_UP') {
-        trackEvent('user_signed_up');
+        trackEvent(ANALYTICS_EVENTS.AUTH.SIGNED_UP);
         identifyUser();
       } else if (event === 'SIGNED_OUT') {
-        trackEvent('user_signed_out');
+        trackEvent(ANALYTICS_EVENTS.AUTH.SIGNED_OUT);
         resetIdentity();
+      } else if (event === 'PASSWORD_RECOVERY') {
+        trackEvent(ANALYTICS_EVENTS.AUTH.PASSWORD_RESET);
       }
     });
 

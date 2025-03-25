@@ -8,6 +8,7 @@ import { Edit, Trash2, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 interface LessonCardProps {
   lesson: {
@@ -21,8 +22,15 @@ interface LessonCardProps {
 
 const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
   
   const handleEdit = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'edit_lesson',
+      lesson_id: lesson.id,
+      is_published: lesson.is_published
+    });
+    
     navigate(`/teacher/lessons/edit/${lesson.id}`);
   };
   
@@ -31,6 +39,12 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
     
     if (confirm) {
       try {
+        // Track deletion attempt
+        trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_DELETED, {
+          lesson_id: lesson.id,
+          is_published: lesson.is_published
+        });
+        
         const { error } = await supabase.from('lessons').delete().eq('id', lesson.id);
         
         if (error) throw error;
@@ -50,6 +64,12 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onUpdate }) => {
   };
   
   const handleView = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'preview_lesson',
+      lesson_id: lesson.id,
+      is_published: lesson.is_published
+    });
+    
     navigate(`/teacher/lessons/preview/${lesson.id}`);
   };
   

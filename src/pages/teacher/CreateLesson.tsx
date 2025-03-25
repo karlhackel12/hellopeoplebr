@@ -8,11 +8,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import LessonGenerator from '@/components/teacher/lesson/LessonGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 const CreateLesson: React.FC = () => {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [lessonData, setLessonData] = useState<any>(null);
+  const { trackEvent } = useAnalytics();
   
   const handleBack = () => {
     navigate('/teacher/lessons');
@@ -34,6 +36,13 @@ const CreateLesson: React.FC = () => {
         throw new Error("Not authenticated");
       }
 
+      // Track event - lesson creation started
+      trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_CREATED, {
+        has_quiz: lessonData.quiz_questions?.length > 0,
+        is_published: lessonData.publish || false,
+        content_length: lessonData.content?.length || 0
+      });
+
       // Insert lesson
       const { data: lesson, error: lessonError } = await supabase
         .from('lessons')
@@ -51,6 +60,13 @@ const CreateLesson: React.FC = () => {
       
       // Create quiz if questions exist
       if (lessonData.quiz_questions && lessonData.quiz_questions.length > 0) {
+        // Track quiz creation
+        trackEvent(ANALYTICS_EVENTS.TEACHER.QUIZ_CREATED, {
+          lesson_id: lesson.id,
+          questions_count: lessonData.quiz_questions.length,
+          is_published: lessonData.publish || false
+        });
+
         const { data: quiz, error: quizError } = await supabase
           .from('quizzes')
           .insert({
@@ -97,6 +113,14 @@ const CreateLesson: React.FC = () => {
             
           if (optionsError) throw optionsError;
         }
+      }
+      
+      // Track publication status
+      if (lessonData.publish) {
+        trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_PUBLISHED, {
+          lesson_id: lesson.id,
+          title_length: lessonData.title.length
+        });
       }
       
       toast.success(lessonData.publish ? 'Lesson published successfully!' : 'Lesson created successfully!');

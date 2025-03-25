@@ -3,11 +3,18 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 const DashboardHeader: React.FC = () => {
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
   
   const handleCreateLesson = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'create_lesson_from_dashboard',
+      location: 'dashboard_header'
+    });
+    
     navigate('/teacher/lessons/create');
   };
   

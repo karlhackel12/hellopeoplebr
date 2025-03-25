@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 import { 
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ const EditLesson: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { trackEvent } = useAnalytics();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,6 +69,13 @@ const EditLesson: React.FC = () => {
       setTitle(data.title || '');
       setContent(data.content || '');
       setIsPublished(data.is_published || false);
+
+      // Track lesson edit view
+      trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
+        page: 'lesson_edit',
+        lesson_id: id,
+        lesson_published: data.is_published || false
+      });
     } catch (error) {
       console.error('Error fetching lesson:', error);
       toast.error('Failed to load lesson', {
@@ -101,6 +110,13 @@ const EditLesson: React.FC = () => {
         
       if (error) throw error;
       
+      // Track lesson update
+      trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_UPDATED, {
+        lesson_id: id,
+        content_length: content.length,
+        is_published: isPublished
+      });
+      
       toast.success('Lesson saved successfully!');
     } catch (error) {
       console.error('Error saving lesson:', error);
@@ -127,6 +143,13 @@ const EditLesson: React.FC = () => {
       if (error) throw error;
       
       setIsPublished(true);
+      
+      // Track lesson publication
+      trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_PUBLISHED, {
+        lesson_id: id,
+        title_length: title.length
+      });
+      
       toast.success('Lesson published successfully!');
       setShowPublishConfirm(false);
     } catch (error) {
@@ -154,6 +177,13 @@ const EditLesson: React.FC = () => {
       if (error) throw error;
       
       setIsPublished(false);
+      
+      // Track lesson unpublication
+      trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_UPDATED, {
+        lesson_id: id,
+        action: 'unpublish'
+      });
+      
       toast.success('Lesson unpublished successfully!');
       setShowUnpublishConfirm(false);
     } catch (error) {
@@ -167,6 +197,12 @@ const EditLesson: React.FC = () => {
   };
   
   const handlePreview = () => {
+    // Track preview click
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'lesson_preview',
+      lesson_id: id
+    });
+    
     navigate(`/teacher/lessons/preview/${id}`);
   };
   

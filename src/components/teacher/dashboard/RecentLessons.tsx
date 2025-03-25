@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import LessonCard from '@/components/teacher/LessonCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 type Lesson = {
   id: string;
@@ -19,6 +20,7 @@ const RecentLessons: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
 
   useEffect(() => {
     fetchLessons();
@@ -41,7 +43,14 @@ const RecentLessons: React.FC = () => {
         ascending: false
       }).limit(6);
       if (error) throw error;
+      
       setLessons(data || []);
+      
+      // Track lessons loaded
+      trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
+        component: 'recent_lessons',
+        lessons_count: data?.length || 0
+      });
     } catch (error) {
       toast.error('Erro', {
         description: 'Falha ao carregar lições'
@@ -53,10 +62,20 @@ const RecentLessons: React.FC = () => {
   };
 
   const handleCreateLesson = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'create_lesson',
+      location: 'recent_lessons'
+    });
+    
     navigate('/teacher/lessons/create');
   };
 
   const handleViewAllLessons = () => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'view_all_lessons',
+      location: 'dashboard'
+    });
+    
     navigate('/teacher/lessons');
   };
 
