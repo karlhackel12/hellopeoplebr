@@ -37,7 +37,7 @@ export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) =>
 
   // Track page views
   useEffect(() => {
-    if (posthog.apiKey) {
+    if (posthog.config?.token) {
       // Capture page view
       posthog.capture('$pageview', {
         current_url: window.location.href,

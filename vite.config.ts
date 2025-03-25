@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
   define: {
     'import.meta.env.VITE_USE_EDGE_FUNCTIONS': JSON.stringify('true'),
     'import.meta.env.VITE_SUPABASE_PROJECT_REF': JSON.stringify('roljsmhhptuwtsbirsxe'),
-    'import.meta.env.VITE_POSTHOG_API_KEY': JSON.stringify(process.env.VITE_POSTHOG_API_KEY || ''),
+    'import.meta.env.VITE_POSTHOG_API_KEY': JSON.stringify(process.env.VITE_POSTHOG_API_KEY || 'phc_aULYGi6SXXLc9Pkrr4v0s0Y27IAfY1864ZbbUnvhSY3'),
     'import.meta.env.VITE_POSTHOG_HOST': JSON.stringify(process.env.VITE_POSTHOG_HOST || 'https://app.posthog.com')
   }
 }));

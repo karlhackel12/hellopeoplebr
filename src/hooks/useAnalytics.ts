@@ -8,7 +8,7 @@ export function useAnalytics() {
    * Track an event with PostHog
    */
   const trackEvent = useCallback((eventName: string, properties?: Record<string, any>) => {
-    if (posthog.apiKey) {
+    if (posthog.config?.token) {
       posthog.capture(eventName, properties);
     }
   }, []);
@@ -20,7 +20,7 @@ export function useAnalytics() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user && posthog.apiKey) {
+      if (user && posthog.config?.token) {
         // Identify the user in PostHog
         posthog.identify(user.id, {
           email: user.email,
@@ -40,7 +40,7 @@ export function useAnalytics() {
    * Reset user identity (on logout)
    */
   const resetIdentity = useCallback(() => {
-    if (posthog.apiKey) {
+    if (posthog.config?.token) {
       posthog.reset();
     }
   }, []);
