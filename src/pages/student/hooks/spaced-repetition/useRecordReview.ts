@@ -4,19 +4,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateNextReview, calculatePoints } from '@/utils/spacedRepetition';
 import { ReviewResult } from '../useSpacedRepetition';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 export const useRecordReview = (userId: string | null) => {
   const queryClient = useQueryClient();
+  const { trackEvent } = useAnalytics();
 
-  const recordReviewMutation = useMutation<ReviewResult, Error, { 
-    itemId: string, 
-    qualityResponse: number, 
-    responseTimeMs: number 
-  }>({
+  const recordReviewMutation = useMutation({
     mutationFn: async ({ 
       itemId, 
       qualityResponse, 
       responseTimeMs 
+    }: {
+      itemId: string, 
+      qualityResponse: number, 
+      responseTimeMs: number 
     }) => {
       if (!userId) throw new Error('User is not authenticated');
       
@@ -77,6 +79,15 @@ export const useRecordReview = (userId: string | null) => {
         .eq('user_id', userId);
       
       if (updateError) throw updateError;
+      
+      // Track the spaced repetition review event
+      trackEvent(ANALYTICS_EVENTS.FEATURE.SPACED_REPETITION_USED, {
+        quality_response: validQualityResponse,
+        response_time_ms: responseTimeMs,
+        points_earned: points,
+        streak: newStreak,
+        interval_days: newInterval
+      });
       
       return { 
         reviewStat,

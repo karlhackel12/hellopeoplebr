@@ -14,7 +14,8 @@ export function useAuthWithAnalytics() {
       if (event === 'SIGNED_IN') {
         trackEvent(ANALYTICS_EVENTS.AUTH.SIGNED_IN);
         identifyUser();
-      } else if (event === 'SIGNED_UP') {
+      } else if (event === 'SIGNED_UP' || event === 'USER_UPDATED') {
+        // Handle sign up event - In Supabase this is USER_UPDATED
         trackEvent(ANALYTICS_EVENTS.AUTH.SIGNED_UP);
         identifyUser();
       } else if (event === 'SIGNED_OUT') {

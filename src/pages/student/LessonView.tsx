@@ -62,7 +62,7 @@ const LessonView: React.FC = () => {
   }, [lessonLoading, lesson, lessonId, assignment, hasQuiz, trackEvent]);
 
   // Track tab changes
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: 'content' | 'quiz') => {
     setCurrentTab(tab);
     
     trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
@@ -83,14 +83,14 @@ const LessonView: React.FC = () => {
   };
 
   // Enhanced section completion toggle with analytics
-  const handleSectionCompletion = (sectionId: string, completed: boolean) => {
+  const handleSectionCompletion = (sectionTitle: string) => {
     trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
-      button: completed ? 'mark_section_complete' : 'mark_section_incomplete',
-      section_id: sectionId,
+      button: completedSections.includes(sectionTitle) ? 'mark_section_incomplete' : 'mark_section_complete',
+      section_id: sectionTitle,
       lesson_id: lessonId
     });
     
-    handleToggleSectionCompletion(sectionId, completed);
+    handleToggleSectionCompletion(sectionTitle);
   };
 
   // Enhanced lesson completion with analytics
