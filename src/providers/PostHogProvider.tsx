@@ -1,7 +1,15 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, createContext, useContext } from 'react';
 import posthog from 'posthog-js';
 import { useLocation } from 'react-router-dom';
+
+interface PostHogContextType {
+  posthogLoaded: boolean;
+}
+
+const PostHogContext = createContext<PostHogContextType>({ posthogLoaded: false });
+
+export const usePostHog = () => useContext(PostHogContext);
 
 interface PostHogProviderProps {
   children: React.ReactNode;
@@ -9,6 +17,7 @@ interface PostHogProviderProps {
 
 export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) => {
   const location = useLocation();
+  const [posthogLoaded, setPosthogLoaded] = useState(false);
 
   useEffect(() => {
     // Initialize PostHog
@@ -19,11 +28,13 @@ export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) =>
       posthog.init(apiKey, {
         api_host: apiHost,
         capture_pageview: false, // We'll handle pageviews manually
-        loaded: (posthog) => {
+        loaded: (posthogInstance) => {
           if (import.meta.env.DEV) {
             // In development, you can enable debug mode
-            posthog.debug();
+            posthogInstance.debug();
           }
+          console.log('PostHog initialized successfully');
+          setPosthogLoaded(true);
         },
       });
     } else {
@@ -37,14 +48,18 @@ export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) =>
 
   // Track page views
   useEffect(() => {
-    if (posthog.config?.token) {
+    if (posthogLoaded && posthog.config?.token) {
       // Capture page view
       posthog.capture('$pageview', {
         current_url: window.location.href,
         path: location.pathname,
       });
     }
-  }, [location]);
+  }, [location, posthogLoaded]);
 
-  return <>{children}</>;
+  return (
+    <PostHogContext.Provider value={{ posthogLoaded }}>
+      {children}
+    </PostHogContext.Provider>
+  );
 };

@@ -1,3 +1,4 @@
+
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +8,7 @@ import BottomNavigation from './BottomNavigation';
 import MobileHeader from './MobileHeader';
 import LandscapeFooter from './LandscapeFooter';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
 
 interface StudentLayoutProps {
   children: ReactNode;
@@ -28,6 +30,9 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  
+  // Set up analytics tracking for auth events
+  useAuthWithAnalytics();
   
   const mobileMenuOpen = externalMobileMenuOpen !== undefined ? externalMobileMenuOpen : internalMobileMenuOpen;
   const setMobileMenuOpen = (state: boolean) => {

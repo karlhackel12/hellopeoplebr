@@ -3,15 +3,20 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { useUserTypeRouter, UserType } from '@/hooks/useUserTypeRouter';
+import { usePostHog } from '@/providers/PostHogProvider';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { getUserType, navigateToUserLanding } = useUserTypeRouter();
+  const { posthogLoaded } = usePostHog();
   
   useEffect(() => {
-    // Use the hook to determine where to send the user
-    navigateToUserLanding();
-  }, [navigate, navigateToUserLanding]);
+    // First check if PostHog is loaded to ensure analytics are ready
+    if (posthogLoaded) {
+      // Then navigate to the appropriate landing page
+      navigateToUserLanding();
+    }
+  }, [navigate, navigateToUserLanding, posthogLoaded]);
   
   // This is just a loading state while the routing happens
   return (

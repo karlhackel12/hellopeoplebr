@@ -2,11 +2,18 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAnalytics, ANALYTICS_EVENTS } from './useAnalytics';
+import { usePostHog } from '@/providers/PostHogProvider';
 
 export function useAuthWithAnalytics() {
   const { trackEvent, identifyUser, resetIdentity } = useAnalytics();
+  const { posthogLoaded } = usePostHog();
 
   useEffect(() => {
+    // Only set up the listener when PostHog is loaded
+    if (!posthogLoaded) {
+      return () => {}; // Return empty cleanup function when not initialized
+    }
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event);
@@ -29,7 +36,7 @@ export function useAuthWithAnalytics() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [trackEvent, identifyUser, resetIdentity]);
+  }, [trackEvent, identifyUser, resetIdentity, posthogLoaded]);
 
   return null;
 }

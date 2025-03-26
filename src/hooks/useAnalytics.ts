@@ -2,6 +2,7 @@
 import posthog from 'posthog-js';
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { usePostHog } from '@/providers/PostHogProvider';
 
 // Event category constants to maintain consistency
 export const ANALYTICS_EVENTS = {
@@ -51,19 +52,28 @@ export const ANALYTICS_EVENTS = {
 };
 
 export function useAnalytics() {
+  const { posthogLoaded } = usePostHog();
+
   /**
    * Track an event with PostHog
    */
   const trackEvent = useCallback((eventName: string, properties?: Record<string, any>) => {
-    if (posthog.config?.token) {
+    if (posthogLoaded && posthog.config?.token) {
       posthog.capture(eventName, properties);
+    } else {
+      console.debug('PostHog not loaded yet. Event queued:', eventName);
     }
-  }, []);
+  }, [posthogLoaded]);
 
   /**
    * Identify a user with PostHog
    */
   const identifyUser = useCallback(async () => {
+    if (!posthogLoaded) {
+      console.debug('PostHog not loaded yet. User identification delayed.');
+      return false;
+    }
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -81,16 +91,16 @@ export function useAnalytics() {
       console.error('Error identifying user:', error);
       return false;
     }
-  }, []);
+  }, [posthogLoaded]);
 
   /**
    * Reset user identity (on logout)
    */
   const resetIdentity = useCallback(() => {
-    if (posthog.config?.token) {
+    if (posthogLoaded && posthog.config?.token) {
       posthog.reset();
     }
-  }, []);
+  }, [posthogLoaded]);
 
   return {
     trackEvent,
