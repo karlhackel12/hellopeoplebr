@@ -1,10 +1,6 @@
-
 import React from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
-import VoicePractice from '@/pages/student/VoicePractice';
-import VoicePracticeSession from '@/pages/student/VoicePracticeSession';
-import VoicePracticeConstruction from '@/pages/student/VoicePracticeConstruction';
 import LessonView from '@/pages/student/LessonView';
 import SpacedRepetitionPage from '@/pages/student/SpacedRepetition';
 
@@ -35,9 +31,6 @@ export const StudentRoutes = () => {
                 <Route path="quizzes/view/:quizId" element={<QuizView />} />
                 <Route path="quizzes/take/:quizId" element={<QuizView />} />
                 <Route path="settings" element={<StudentSettings />} />
-                <Route path="voice-practice" element={<VoicePractice />} />
-                <Route path="voice-practice-construction" element={<VoicePracticeConstruction />} />
-                <Route path="voice-practice/session/:sessionId" element={<VoicePracticeSession />} />
                 <Route path="spaced-repetition" element={<SpacedRepetitionPage />} />
                 <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
               </Routes>

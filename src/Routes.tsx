@@ -1,13 +1,9 @@
-
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
 import Lessons from '@/pages/teacher/Lessons';
 import CreateLesson from '@/pages/teacher/CreateLesson';
 import EditLesson from '@/pages/teacher/EditLesson';
 import NotFound from '@/pages/NotFound';
-import VoicePractice from '@/pages/student/VoicePractice';
-import VoicePracticeSession from '@/pages/student/VoicePracticeSession';
-import VoicePracticeConstruction from '@/pages/student/VoicePracticeConstruction';
 import { StudentRoutes } from './routes/studentRoutes';
 import LandscapeFooter from './components/layout/LandscapeFooter';
 import { useIsMobile } from './hooks/use-mobile';
@@ -32,11 +28,6 @@ export default function AppRoutes() {
           
           {/* Student routes */}
           <Route path="/student/*" element={<StudentRoutes />} />
-          
-          {/* Voice Practice */}
-          <Route path="/student/voice-practice" element={<VoicePractice />} />
-          <Route path="/student/voice-practice-construction" element={<VoicePracticeConstruction />} />
-          <Route path="/student/voice-practice/session/:sessionId" element={<VoicePracticeSession />} />
           
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
