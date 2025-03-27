@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Brain, Mic, User } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Brain, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -37,12 +37,6 @@ const BottomNavigation: React.FC = () => {
       label: 'Prática', 
       path: '/student/spaced-repetition',
       activeColor: 'text-[#F97316]' 
-    },
-    { 
-      icon: Mic, 
-      label: 'Voz', 
-      path: '/student/voice-practice',
-      activeColor: 'text-[#0EA5E9]' 
     },
     { 
       icon: User, 
