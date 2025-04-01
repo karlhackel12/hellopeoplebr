@@ -6,14 +6,15 @@ import { Loader2, ArrowRight } from 'lucide-react';
 type SubmitButtonProps = {
   isLoading: boolean;
   type: 'login' | 'register' | 'forgotPassword';
+  disabled?: boolean;
 };
 
-const SubmitButton: React.FC<SubmitButtonProps> = ({ isLoading, type }) => {
+const SubmitButton: React.FC<SubmitButtonProps> = ({ isLoading, type, disabled = false }) => {
   return (
     <Button
       type="submit"
       className="w-full h-11 font-medium"
-      disabled={isLoading}
+      disabled={isLoading || disabled}
     >
       {isLoading ? (
         <>
