@@ -1,162 +1,132 @@
 
 import React from 'react';
-import { Check, Users } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { FormLabel } from '@/components/ui/form';
+import { Link } from 'react-router-dom';
+import { Check, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FormProvider, useForm } from 'react-hook-form';
 
 interface PricingPlansProps {
-  onPlanSelect?: (plan: string) => void;
+  onPlanSelect?: (planId: string) => void;
   selectedPlan?: string | null;
   compact?: boolean;
 }
 
 const PricingPlans: React.FC<PricingPlansProps> = ({ 
   onPlanSelect, 
-  selectedPlan,
+  selectedPlan = null,
   compact = false 
 }) => {
-  const handlePlanChange = (value: string) => {
-    if (onPlanSelect) {
-      onPlanSelect(value);
-    }
-  };
-  
+  const methods = useForm();
   const plans = [
     {
       id: 'basic',
-      name: 'Iniciante',
-      price: 'R$29,90',
+      name: 'Básico',
+      price: 'R$79',
+      period: '/mês',
+      description: 'Perfeito para professores iniciantes',
       features: [
-        'Acesso a todas as ferramentas',
-        'Geração ilimitada de lições',
-        'Dashboard de alunos',
-        'Até 10 alunos'
+        'Até 10 alunos',
+        'Geração de conteúdo com IA',
+        'Acompanhamento de progresso',
+        'Suporte por e-mail'
       ],
-      capacity: 10,
-      icon: <Users className="h-5 w-5 text-[#26A69A] shrink-0" />
+      cta: 'Comece Agora',
+      popular: false
     },
     {
       id: 'pro',
       name: 'Profissional',
-      price: 'R$49,90',
+      price: 'R$149',
+      period: '/mês',
+      description: 'Ideal para professores estabelecidos',
       features: [
-        'Acesso a todas as ferramentas',
-        'Geração ilimitada de lições',
-        'Dashboard avançado',
-        'Até 20 alunos'
+        'Até 25 alunos',
+        'Tudo do plano Básico',
+        'Análises avançadas',
+        'Ferramentas de colaboração',
+        'Suporte prioritário'
       ],
-      capacity: 20,
-      popular: true,
-      icon: <Users className="h-5 w-5 text-[#26A69A] shrink-0" />
+      cta: 'Escolher Profissional',
+      popular: true
     },
     {
-      id: 'premium',
-      name: 'Avançado',
-      price: 'R$69,90',
+      id: 'business',
+      name: 'Business',
+      price: 'R$299',
+      period: '/mês',
+      description: 'Para escolas e grupos de professores',
       features: [
-        'Acesso a todas as ferramentas',
-        'Geração ilimitada de lições',
-        'Suporte premium',
-        'Alunos ilimitados'
+        'Até 100 alunos',
+        'Tudo do plano Profissional',
+        'Painel administrativo',
+        'API de integração',
+        'Gerenciador de equipe',
+        'Suporte dedicado'
       ],
-      capacity: null,
-      icon: <Users className="h-5 w-5 text-[#26A69A] shrink-0" />
+      cta: 'Contatar Vendas',
+      popular: false
     }
   ];
 
-  if (compact) {
-    return (
-      <RadioGroup 
-        value={selectedPlan || ''} 
-        onValueChange={handlePlanChange}
-        className="space-y-2"
-      >
+  const handleSelectPlan = (planId: string) => {
+    if (onPlanSelect) {
+      onPlanSelect(planId);
+    } else {
+      // If no onPlanSelect is provided, navigate to register page with plan ID
+      window.location.href = `/register?plan=${planId}`;
+    }
+  };
+
+  return (
+    <FormProvider {...methods}>
+      <div className={`grid ${compact ? 'grid-cols-1 md:grid-cols-3 gap-4' : 'grid-cols-1 md:grid-cols-3 gap-8'} max-w-6xl mx-auto`}>
         {plans.map((plan) => (
-          <div key={plan.id} className={`flex items-center space-x-2 border rounded-md p-3 ${
-            plan.popular ? 'border-primary' : 'border-border'
-          } ${selectedPlan === plan.id ? 'bg-primary/5' : ''}`}>
-            <RadioGroupItem value={plan.id} id={plan.id} />
-            <FormLabel htmlFor={plan.id} className="flex-1 cursor-pointer">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-semibold">{plan.name}</span>
-                  {plan.popular && (
-                    <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary text-white rounded-sm">
-                      POPULAR
-                    </span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span className="font-bold">{plan.price}</span>
-                  <span className="text-xs text-muted-foreground">/mês</span>
-                </div>
-              </div>
-              <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                {plan.icon}
-                <span className="ml-1">
-                  {plan.capacity ? `Até ${plan.capacity} alunos` : 'Alunos ilimitados'}
+          <div 
+            key={plan.id}
+            className={`relative bg-white border ${selectedPlan === plan.id ? 'border-primary ring-2 ring-primary/20' : 'border-border'} rounded-xl shadow-sm overflow-hidden ${compact ? 'p-4' : 'p-6'} ${plan.popular ? 'md:-mt-4 md:mb-4' : ''}`}
+          >
+            {plan.popular && !compact && (
+              <Badge className="absolute top-6 right-6" variant="default">Mais Popular</Badge>
+            )}
+            
+            <div className={compact ? 'mb-2' : 'mb-4'}>
+              <h3 className={`font-bold font-display ${compact ? 'text-lg' : 'text-xl'}`}>{plan.name}</h3>
+              {!compact && <p className="text-muted-foreground text-sm mt-1">{plan.description}</p>}
+            </div>
+            
+            <div className={compact ? 'mb-3' : 'mb-6'}>
+              <span className={`font-bold ${compact ? 'text-2xl' : 'text-3xl'}`}>{plan.price}</span>
+              <span className="text-muted-foreground">{plan.period}</span>
+            </div>
+            
+            {!compact && (
+              <ul className="space-y-2 mb-6">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-start">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            
+            <Button 
+              onClick={() => handleSelectPlan(plan.id)} 
+              className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''} ${compact ? 'h-8 text-sm' : ''}`}
+              variant={plan.popular ? 'default' : 'outline'}
+            >
+              {selectedPlan === plan.id ? (
+                <span className="flex items-center">
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Selecionado
                 </span>
-              </div>
-            </FormLabel>
+              ) : compact ? 'Selecionar' : plan.cta}
+            </Button>
           </div>
         ))}
-      </RadioGroup>
-    );
-  }
-
-  // Default fuller version
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-      {plans.map((plan) => (
-        <div 
-          key={plan.id}
-          className={`relative bg-white rounded-xl shadow-md border overflow-hidden transform transition-transform hover:scale-105 ${
-            plan.popular ? 'border-2 border-[#1E88E5] shadow-lg' : 'border-border'
-          }`}
-        >
-          {plan.popular && (
-            <div className="absolute top-0 right-0">
-              <div className="bg-[#1E88E5] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                POPULAR
-              </div>
-            </div>
-          )}
-          <div className="p-8">
-            <h3 className="text-2xl font-bold font-display mb-4">{plan.name}</h3>
-            <div className="mb-6">
-              <span className="text-4xl font-bold text-[#1E88E5]">{plan.price}</span>
-              <span className="text-muted-foreground">/mês</span>
-            </div>
-            <ul className="space-y-4 mb-8">
-              {plan.features.map((feature, index) => (
-                <li key={`${plan.id}-feature-${index}`} className="flex items-start gap-3">
-                  {index === plan.features.length - 1 ? plan.icon : (
-                    <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  )}
-                  <span className={index === plan.features.length - 1 ? "font-bold" : ""}>
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {onPlanSelect && (
-              <button 
-                onClick={() => handlePlanChange(plan.id)}
-                className={`w-full py-3 px-4 rounded-md text-white font-medium transition-colors ${
-                  selectedPlan === plan.id 
-                    ? 'bg-primary/80'
-                    : plan.popular 
-                      ? 'bg-[#36B37E] hover:bg-[#36B37E]/90' 
-                      : 'bg-[#1E88E5] hover:bg-[#1E88E5]/90'
-                }`}
-              >
-                {selectedPlan === plan.id ? 'Selecionado' : 'Escolher Plano'}
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
+      </div>
+    </FormProvider>
   );
 };
 
