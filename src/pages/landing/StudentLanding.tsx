@@ -114,9 +114,10 @@ const StudentLanding: React.FC = () => {
                   </div>
                 </form>
                 
-                <p className="mt-6 text-sm text-muted-foreground animate-fade-in animate-delay-300">
-                  Peça seu código de convite ao seu professor de inglês
-                </p>
+                <div className="mt-6 text-sm text-muted-foreground animate-fade-in animate-delay-300 p-4 bg-blue-50 rounded-lg inline-block">
+                  <p className="font-medium text-blue-700">Seu acesso é gratuito!</p>
+                  <p>Peça seu código de convite ao seu professor de inglês</p>
+                </div>
               </div>
               
               {/* Hero Image */}
@@ -227,10 +228,10 @@ const StudentLanding: React.FC = () => {
                 <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="h-12 w-12 rounded-full bg-[#1E88E5] text-white flex items-center justify-center text-xl font-bold">1</div>
-                    <h3 className="text-xl font-semibold">Acesse a Plataforma</h3>
+                    <h3 className="text-xl font-semibold">Receba o Convite</h3>
                   </div>
                   <p className="text-muted-foreground">
-                    Use o código de convite fornecido pelo seu professor para acessar sua conta.
+                    Seu professor de inglês deve te convidar para que você tenha acesso à plataforma gratuitamente.
                   </p>
                 </div>
                 
@@ -287,6 +288,13 @@ const StudentLanding: React.FC = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FFB400" className="text-yellow-500"><path d="M12 17.8 5.8 21 7 14.1 2 9.3l7-1L12 2l3 6.3 7 1-5 4.8 1.2 6.9-6.2-3.2z"></path></svg>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FFB400" className="text-yellow-500"><path d="M12 17.8 5.8 21 7 14.1 2 9.3l7-1L12 2l3 6.3 7 1-5 4.8 1.2 6.9-6.2-3.2z"></path></svg>
                       </div>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 rounded-lg mb-6">
+                      <h3 className="font-semibold text-blue-800 mb-2">Acesso Exclusivo Por Convite</h3>
+                      <p className="text-blue-700">
+                        O acesso ao HelloPeople é exclusivo para alunos convidados por professores. Pergunte ao seu professor de inglês sobre como obter acesso.
+                      </p>
                     </div>
                     
                     <form onSubmit={handleSubmit} className="mt-8">

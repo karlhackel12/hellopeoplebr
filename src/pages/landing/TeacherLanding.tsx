@@ -8,7 +8,7 @@ import {
   Clock, 
   BarChart, 
   Users, 
-  PieChart, 
+  Gift, 
   CreditCard 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ const TeacherLanding: React.FC = () => {
     <>
       <Helmet>
         <title>HelloPeople - Para Professores de Inglês</title>
-        <meta name="description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional. Plataforma 100% gratuita para professores de inglês." />
+        <meta name="description" content="Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas. Plataforma completa para professores de inglês." />
         <meta name="keywords" content="professores de inglês, ensino com IA, ferramentas para professores de inglês, IA para ensino de inglês" />
       </Helmet>
       
@@ -47,7 +47,7 @@ const TeacherLanding: React.FC = () => {
                 </Link>
                 <Link to="/register">
                   <Button size="sm" className="font-medium bg-[#36B37E] hover:bg-[#36B37E]/90">
-                    Comece Grátis
+                    Comece Agora
                   </Button>
                 </Link>
               </div>
@@ -72,17 +72,17 @@ const TeacherLanding: React.FC = () => {
                 </div>
                 
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display tracking-tight mb-6 animate-slide-up">
-                  Estenda o Aprendizado de Inglês <span className="text-[#1E88E5]">Além da Sala de Aula</span>
+                  Potencialize o Aprendizado de Inglês <span className="text-[#1E88E5]">Dos Seus Alunos</span>
                 </h1>
                 
                 <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up animate-delay-100">
-                  Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional
+                  Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas
                 </p>
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-slide-up animate-delay-200">
                   <Link to="/register">
                     <Button size="lg" className="font-medium w-full sm:w-auto px-8 bg-[#36B37E] hover:bg-[#36B37E]/90">
-                      Comece Gratuitamente
+                      Comece Agora
                       <ArrowRight size={16} className="ml-2" />
                     </Button>
                   </Link>
@@ -95,7 +95,7 @@ const TeacherLanding: React.FC = () => {
                 </div>
                 
                 <p className="mt-6 text-sm text-muted-foreground animate-fade-in animate-delay-300">
-                  Sem cartão de crédito. Sem custos ocultos. 100% gratuito para professores.
+                  Planos a partir de R$29,90 por mês - Experimente 7 dias grátis
                 </p>
               </div>
               
@@ -171,10 +171,10 @@ const TeacherLanding: React.FC = () => {
                 
                 <FeatureCard
                   icon={<div className="h-10 w-10 rounded-full bg-[#FF8F00]/10 flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-[#FF8F00]" />
+                    <Gift className="h-6 w-6 text-[#FF8F00]" />
                   </div>}
-                  title="Comissões por Assinatura"
-                  description="Ganhe até 30% de comissão nas assinaturas dos seus alunos, com pagamentos mensais automatizados."
+                  title="Programa de Indicação"
+                  description="Ganhe 15% de comissão nas assinaturas de professores que você indicar, sem limite de indicações."
                 />
               </div>
               
@@ -183,7 +183,7 @@ const TeacherLanding: React.FC = () => {
                   href="/register" 
                   className="font-medium bg-[#36B37E] hover:bg-[#36B37E]/90 px-8 py-6 text-lg"
                 >
-                  Comece Gratuitamente como Professor
+                  Comece sua Jornada como Professor
                   <ArrowRight size={20} className="ml-2" />
                 </CTAButton>
               </div>
@@ -207,10 +207,10 @@ const TeacherLanding: React.FC = () => {
                 <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="h-12 w-12 rounded-full bg-[#1E88E5] text-white flex items-center justify-center text-xl font-bold">1</div>
-                    <h3 className="text-xl font-semibold">Crie sua Conta</h3>
+                    <h3 className="text-xl font-semibold">Escolha seu Plano</h3>
                   </div>
                   <p className="text-muted-foreground">
-                    Registre-se gratuitamente e configure seu perfil de professor em menos de 5 minutos.
+                    Selecione o plano que melhor atende ao tamanho da sua turma e configure seu perfil.
                   </p>
                 </div>
                 
@@ -237,36 +237,31 @@ const TeacherLanding: React.FC = () => {
             </div>
           </section>
           
-          {/* Commission Calculator */}
+          {/* Referral Program */}
           <section className="py-20 bg-gradient-to-br from-[#1E88E5]/5 to-background">
             <div className="container px-6 md:px-8">
               <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
                 <div className="grid md:grid-cols-5 gap-0">
                   <div className="md:col-span-3 p-8 md:p-12">
                     <h2 className="text-2xl md:text-3xl font-bold mb-6 font-display">
-                      Calcule Sua Renda Adicional
+                      Programa de Indicação
                     </h2>
                     <p className="text-lg text-muted-foreground mb-8">
-                      Ganhe até 30% de comissão nas assinaturas dos seus alunos na plataforma.
+                      Indique outros professores e ganhe 15% de comissão sobre o valor da assinatura deles.
                     </p>
                     
-                    <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="grid grid-cols-1 gap-6 mb-8">
                       <div className="bg-[#F5F7FA] p-6 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">5 Alunos</h3>
-                          <PieChart className="h-5 w-5 text-[#1E88E5]" />
+                          <h3 className="font-semibold">Como funciona:</h3>
+                          <Gift className="h-5 w-5 text-[#1E88E5]" />
                         </div>
-                        <div className="text-2xl font-bold text-[#36B37E]">R$ 150,00</div>
-                        <div className="text-sm text-muted-foreground">por mês</div>
-                      </div>
-                      
-                      <div className="bg-[#F5F7FA] p-6 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">10 Alunos</h3>
-                          <PieChart className="h-5 w-5 text-[#1E88E5]" />
-                        </div>
-                        <div className="text-2xl font-bold text-[#36B37E]">R$ 300,00</div>
-                        <div className="text-sm text-muted-foreground">por mês</div>
+                        <ol className="space-y-2 list-decimal pl-6">
+                          <li>Compartilhe seu código de indicação com outros professores</li>
+                          <li>Quando eles assinarem usando seu código, você recebe 15% do valor mensalmente</li>
+                          <li>Não há limite para o número de indicações que você pode fazer</li>
+                          <li>Os pagamentos são realizados mensalmente diretamente em sua conta</li>
+                        </ol>
                       </div>
                     </div>
                     
@@ -274,7 +269,7 @@ const TeacherLanding: React.FC = () => {
                       href="/register" 
                       className="font-medium bg-[#36B37E] hover:bg-[#36B37E]/90 w-full sm:w-auto"
                     >
-                      Comece a Ganhar Agora
+                      Comece a Indicar e Ganhar
                       <ArrowRight size={16} className="ml-2" />
                     </CTAButton>
                   </div>
@@ -284,7 +279,7 @@ const TeacherLanding: React.FC = () => {
                       <div className="text-center">
                         <h3 className="font-bold text-lg mb-2">O que professores dizem</h3>
                         <p className="text-muted-foreground italic mb-4">
-                          "Comecei a usar o HelloPeople há 3 meses. Meus alunos praticam mais, aprendem mais rápido e estou ganhando R$400 extras por mês."
+                          "Indiquei 3 colegas professores e estou ganhando cerca de R$20 por mês com cada um. É um valor que ajuda a complementar minha renda e melhorar a experiência dos meus alunos."
                         </p>
                         <div>
                           <p className="font-semibold">Carla Mendes</p>
