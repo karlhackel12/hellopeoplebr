@@ -16,7 +16,6 @@ interface PostHogProviderProps {
 }
 
 export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) => {
-  const location = useLocation();
   const [posthogLoaded, setPosthogLoaded] = useState(false);
 
   useEffect(() => {
@@ -27,7 +26,7 @@ export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) =>
     if (apiKey) {
       posthog.init(apiKey, {
         api_host: apiHost,
-        capture_pageview: false, // We'll handle pageviews manually
+        capture_pageview: true, // Changed to true to handle pageviews automatically
         loaded: (posthogInstance) => {
           if (import.meta.env.DEV) {
             // In development, you can enable debug mode
@@ -45,17 +44,6 @@ export const PostHogProvider: React.FC<PostHogProviderProps> = ({ children }) =>
       // Cleanup if necessary
     };
   }, []);
-
-  // Track page views
-  useEffect(() => {
-    if (posthogLoaded && posthog.config?.token) {
-      // Capture page view
-      posthog.capture('$pageview', {
-        current_url: window.location.href,
-        path: location.pathname,
-      });
-    }
-  }, [location, posthogLoaded]);
 
   return (
     <PostHogContext.Provider value={{ posthogLoaded }}>

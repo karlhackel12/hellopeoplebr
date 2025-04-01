@@ -2,12 +2,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { useUserTypeRouter, UserType } from '@/hooks/useUserTypeRouter';
+import { useUserTypeRouter } from '@/hooks/useUserTypeRouter';
 import { usePostHog } from '@/providers/PostHogProvider';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
-  const { getUserType, navigateToUserLanding } = useUserTypeRouter();
+  const { navigateToUserLanding } = useUserTypeRouter();
   const { posthogLoaded } = usePostHog();
   
   useEffect(() => {
