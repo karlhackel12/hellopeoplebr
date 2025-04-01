@@ -22,7 +22,7 @@ const PricingPlans: React.FC<PricingPlansProps> = ({
     {
       id: 'basic',
       name: 'Básico',
-      price: 'R$79',
+      price: 'R$29,90',
       period: '/mês',
       description: 'Perfeito para professores iniciantes',
       features: [
@@ -37,11 +37,11 @@ const PricingPlans: React.FC<PricingPlansProps> = ({
     {
       id: 'pro',
       name: 'Profissional',
-      price: 'R$149',
+      price: 'R$49,90',
       period: '/mês',
       description: 'Ideal para professores estabelecidos',
       features: [
-        'Até 25 alunos',
+        'Até 20 alunos',
         'Tudo do plano Básico',
         'Análises avançadas',
         'Ferramentas de colaboração',
@@ -53,11 +53,11 @@ const PricingPlans: React.FC<PricingPlansProps> = ({
     {
       id: 'business',
       name: 'Business',
-      price: 'R$299',
+      price: 'R$59,90',
       period: '/mês',
       description: 'Para escolas e grupos de professores',
       features: [
-        'Até 100 alunos',
+        'Mais de 20 alunos',
         'Tudo do plano Profissional',
         'Painel administrativo',
         'API de integração',

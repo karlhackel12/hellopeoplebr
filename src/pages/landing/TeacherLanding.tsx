@@ -56,7 +56,6 @@ const TeacherLanding: React.FC = () => {
         </header>
         
         <main className="flex-grow pt-24">
-          {/* Hero Section */}
           <section className="relative pt-16 pb-16 md:pt-24 md:pb-24 overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full">
               <div className="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-[#1E88E5]/5 rounded-full blur-3xl" />
@@ -99,7 +98,6 @@ const TeacherLanding: React.FC = () => {
                 </p>
               </div>
               
-              {/* Hero Image */}
               <div className="mt-12 md:mt-16 max-w-5xl mx-auto rounded-xl overflow-hidden shadow-xl border border-border/60 animate-scale-in animate-delay-400">
                 <div className="aspect-[16/9] bg-gradient-to-br from-[#1E88E5]/5 to-background relative">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -114,11 +112,9 @@ const TeacherLanding: React.FC = () => {
             </div>
           </section>
           
-          {/* Problem & Solution Cards */}
           <section className="py-16 bg-gradient-to-b from-background to-background/50">
             <div className="container px-6 md:px-8">
               <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                {/* Problem Section Card */}
                 <FeatureCard
                   icon={<div className="h-10 w-10 rounded-full bg-[#FF8F00]/10 flex items-center justify-center">
                     <Clock className="h-6 w-6 text-[#FF8F00]" />
@@ -127,7 +123,6 @@ const TeacherLanding: React.FC = () => {
                   description="Apenas 1-2 horas por semana em sala de aula não são suficientes. 80% do que é aprendido é esquecido após uma semana sem prática."
                 />
                 
-                {/* Solution Overview Card */}
                 <FeatureCard
                   icon={<div className="h-10 w-10 rounded-full bg-[#26A69A]/10 flex items-center justify-center">
                     <BarChart className="h-6 w-6 text-[#26A69A]" />
@@ -139,7 +134,6 @@ const TeacherLanding: React.FC = () => {
             </div>
           </section>
           
-          {/* Core Features for Teachers */}
           <section id="recursos" className="py-20 bg-gradient-to-br from-[#1E88E5]/5 to-background">
             <div className="container px-6 md:px-8">
               <div className="text-center max-w-3xl mx-auto mb-16">
@@ -152,7 +146,6 @@ const TeacherLanding: React.FC = () => {
               </div>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {/* Feature Cards */}
                 <FeatureCard
                   icon={<div className="h-10 w-10 rounded-full bg-[#1E88E5]/10 flex items-center justify-center">
                     <Users className="h-6 w-6 text-[#1E88E5]" />
@@ -190,7 +183,6 @@ const TeacherLanding: React.FC = () => {
             </div>
           </section>
           
-          {/* How It Works */}
           <section id="como-funciona" className="py-20 bg-gradient-to-br from-background to-[#1E88E5]/5">
             <div className="container px-6 md:px-8">
               <div className="text-center max-w-3xl mx-auto mb-16">
@@ -203,7 +195,6 @@ const TeacherLanding: React.FC = () => {
               </div>
               
               <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {/* Steps */}
                 <div className="bg-card/40 backdrop-blur-sm border border-border/60 rounded-xl p-6 shadow-sm">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="h-12 w-12 rounded-full bg-[#1E88E5] text-white flex items-center justify-center text-xl font-bold">1</div>
@@ -237,10 +228,8 @@ const TeacherLanding: React.FC = () => {
             </div>
           </section>
           
-          {/* Pricing Section */}
           <Pricing />
           
-          {/* Referral Program */}
           <section className="py-20 bg-gradient-to-br from-[#1E88E5]/5 to-background">
             <div className="container px-6 md:px-8">
               <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
