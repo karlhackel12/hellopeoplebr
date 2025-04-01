@@ -34,6 +34,9 @@ const Navbar: React.FC = () => {
     { title: 'FAQ', href: '/#faq' },
   ];
 
+  // Check if we're on the homepage
+  const isHomePage = location.pathname === '/';
+
   return (
     <header 
       className={cn(
@@ -50,7 +53,7 @@ const Navbar: React.FC = () => {
             {navLinks.map((link) => (
               <li key={link.title}>
                 <a 
-                  href={link.href} 
+                  href={isHomePage ? link.href.replace('/', '') : link.href} 
                   className="text-foreground/80 hover:text-foreground transition-colors"
                 >
                   {link.title}
@@ -99,7 +102,7 @@ const Navbar: React.FC = () => {
               {navLinks.map((link) => (
                 <li key={link.title}>
                   <a 
-                    href={link.href} 
+                    href={isHomePage ? link.href.replace('/', '') : link.href}
                     className="text-foreground/80 hover:text-foreground block py-1"
                   >
                     {link.title}

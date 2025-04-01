@@ -10,12 +10,12 @@ import {
 const Faq: React.FC = () => {
   const faqs = [
     {
-      question: "Preciso pagar algo para usar a plataforma como professor?",
-      answer: "Não! O HelloPeople é 100% gratuito para professores. Você não precisa de cartão de crédito e não há custos ocultos."
+      question: "Qual plano devo escolher para começar?",
+      answer: "Recomendamos o plano que melhor atenda ao número de alunos que você tem. Temos o plano Básico (R$29,90/mês) para até 10 alunos, o Profissional (R$49,90/mês) para até 20 alunos, e o Business (R$59,90/mês) para mais de 20 alunos."
     },
     {
-      question: "Como funciona o modelo de comissão?",
-      answer: "Você recebe 40% de cada assinatura de aluno (R$15,96 por aluno/mês). Por exemplo, com 5 alunos, você ganha R$79,80 extras todo mês. As comissões são transferidas automaticamente para sua conta bancária no início de cada mês."
+      question: "Como funciona o programa de indicação?",
+      answer: "Você recebe 15% de comissão sobre o valor da assinatura dos professores que você indicar. Por exemplo, se indicar um colega que assine o plano Profissional (R$49,90/mês), você ganha R$7,48 mensalmente por cada indicação. Não há limite para o número de professores que você pode indicar."
     },
     {
       question: "Quanto tempo precisarei dedicar como professor?",
@@ -31,7 +31,7 @@ const Faq: React.FC = () => {
     },
     {
       question: "Existe um número mínimo de alunos para começar?",
-      answer: "Não, você pode começar a usar a plataforma com apenas um aluno. Não há requisitos mínimos ou taxas mensais."
+      answer: "Não, você pode começar a usar a plataforma com apenas um aluno. Nossos planos são baseados no número máximo de alunos que você pode gerenciar, com o plano Básico permitindo até 10 alunos por R$29,90/mês."
     },
     {
       question: "Quanto tempo economizarei na preparação de aulas?",
@@ -42,8 +42,8 @@ const Faq: React.FC = () => {
       answer: "O HelloPeople não substitui suas aulas, mas as estende para além da sala de aula. Ele reforça o que você ensina através de prática consistente, permite acompanhar o progresso dos alunos, e identifica áreas que precisam de mais atenção nas próximas aulas."
     },
     {
-      question: "Como recebo minhas comissões?",
-      answer: "As comissões são calculadas automaticamente e transferidas para sua conta bancária no início de cada mês. Trabalhamos com Pix e transferência bancária."
+      question: "Como recebo minhas comissões de indicação?",
+      answer: "As comissões são calculadas automaticamente e transferidas para sua conta bancária no início de cada mês. Trabalhamos com Pix e transferência bancária para facilitar o recebimento de suas comissões."
     }
   ];
 
