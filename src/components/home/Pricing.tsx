@@ -2,7 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Check, Users } from 'lucide-react';
+import { Check, Gift } from 'lucide-react';
+import PricingPlans from './PricingPlans';
 
 const Pricing: React.FC = () => {
   return (
@@ -17,114 +18,7 @@ const Pricing: React.FC = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Basic Plan */}
-          <div className="bg-white rounded-xl shadow-md border border-border overflow-hidden transform transition-transform hover:scale-105">
-            <div className="p-8">
-              <h3 className="text-2xl font-bold font-display mb-4">Iniciante</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-[#1E88E5]">R$29,90</span>
-                <span className="text-muted-foreground">/mês</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Acesso a todas as ferramentas</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Geração ilimitada de lições</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Dashboard de alunos</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Users className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span className="font-bold">Até 10 alunos</span>
-                </li>
-              </ul>
-              <Link to="/register">
-                <Button className="w-full bg-[#1E88E5] hover:bg-[#1E88E5]/90 text-lg py-6">
-                  Comece Agora
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          {/* Standard Plan */}
-          <div className="relative bg-white rounded-xl shadow-lg border-2 border-[#1E88E5] overflow-hidden transform transition-transform hover:scale-105">
-            <div className="absolute top-0 right-0">
-              <div className="bg-[#1E88E5] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                POPULAR
-              </div>
-            </div>
-            <div className="p-8">
-              <h3 className="text-2xl font-bold font-display mb-4">Profissional</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-[#1E88E5]">R$49,90</span>
-                <span className="text-muted-foreground">/mês</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Acesso a todas as ferramentas</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Geração ilimitada de lições</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Dashboard avançado</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Users className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span className="font-bold">Até 20 alunos</span>
-                </li>
-              </ul>
-              <Link to="/register">
-                <Button className="w-full bg-[#36B37E] hover:bg-[#36B37E]/90 text-lg py-6">
-                  Escolher Plano
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          {/* Premium Plan */}
-          <div className="bg-white rounded-xl shadow-md border border-border overflow-hidden transform transition-transform hover:scale-105">
-            <div className="p-8">
-              <h3 className="text-2xl font-bold font-display mb-4">Avançado</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-[#1E88E5]">R$69,90</span>
-                <span className="text-muted-foreground">/mês</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Acesso a todas as ferramentas</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Geração ilimitada de lições</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span>Suporte premium</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Users className="h-5 w-5 text-[#26A69A] shrink-0 mt-0.5" />
-                  <span className="font-bold">Alunos ilimitados</span>
-                </li>
-              </ul>
-              <Link to="/register">
-                <Button className="w-full bg-[#1E88E5] hover:bg-[#1E88E5]/90 text-lg py-6">
-                  Escolher Plano
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+        <PricingPlans />
         
         {/* Referral Program */}
         <div className="mt-16 max-w-4xl mx-auto bg-white rounded-xl shadow-md border border-border overflow-hidden">

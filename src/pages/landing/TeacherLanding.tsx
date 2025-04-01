@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
@@ -19,6 +18,7 @@ import {
 } from '@/components/landing/SharedComponents';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import Pricing from '@/components/home/Pricing';
 
 const TeacherLanding: React.FC = () => {
   return (
@@ -236,6 +236,9 @@ const TeacherLanding: React.FC = () => {
               </div>
             </div>
           </section>
+          
+          {/* Pricing Section */}
+          <Pricing />
           
           {/* Referral Program */}
           <section className="py-20 bg-gradient-to-br from-[#1E88E5]/5 to-background">
