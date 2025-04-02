@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Brain, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { format, isPast, isToday, parseISO } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Brain, Book } from 'lucide-react';
 
 interface ItemsListProps {
   items: any[];
@@ -14,86 +14,66 @@ interface ItemsListProps {
 
 const ItemsList: React.FC<ItemsListProps> = ({ items, emptyMessage, isLoading }) => {
   if (isLoading) {
-    return <div className="p-4 text-center">Carregando...</div>;
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (!items || items.length === 0) {
     return (
-      <div className="p-6 text-center">
-        <Brain className="mx-auto h-12 w-12 text-muted-foreground/30 mb-3" />
+      <div className="text-center py-8 border rounded-lg">
+        <div className="flex justify-center mb-2">
+          <Brain className="h-12 w-12 text-muted-foreground/50" />
+        </div>
         <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
 
-  const getReviewStatus = (nextReviewAt: string) => {
-    if (!nextReviewAt) return null;
-    
-    const reviewDate = parseISO(nextReviewAt);
-    
-    if (isPast(reviewDate)) {
-      return <Badge className="bg-[#9b87f5]">Atrasado</Badge>;
-    }
-    
-    if (isToday(reviewDate)) {
-      return <Badge className="bg-[#9b87f5]">Hoje</Badge>;
-    }
-    
-    return (
-      <Badge variant="outline" className="border-[#9b87f5] text-[#9b87f5]">
-        {format(reviewDate, "d 'de' MMMM", { locale: pt })}
-      </Badge>
-    );
-  };
-
-  const getQuestionText = (item: any) => {
-    // Handle different data structures
-    if (item.question?.text) {
-      return item.question.text;
-    }
-    
-    if (item.question?.question_text) {
-      return item.question.question_text;
-    }
-    
-    return 'Questão sem texto';
-  };
-
-  const getAnswerText = (item: any) => {
-    // Handle different data structures for options
-    if (item.question?.options) {
-      const correctOption = item.question.options.find((o: any) => o.is_correct);
-      if (correctOption) {
-        return correctOption.option_text || correctOption.text || 'Sem resposta';
-      }
-    }
-    
-    return 'Sem resposta';
-  };
-
-  const getNextReviewDate = (item: any) => {
-    return item.next_review_at || item.next_review_date;
-  };
-
   return (
-    <div className="space-y-3 p-1">
-      {items.map((item) => (
-        <Card key={item.id} className="overflow-hidden">
-          <CardContent className="p-4 flex justify-between items-center">
-            <div className="flex-1">
-              <h3 className="font-medium mb-1">
-                {getQuestionText(item)}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-1">
-                {getAnswerText(item)}
-              </p>
+    <div className="space-y-4">
+      {items.map((item) => {
+        const questionText = item.question?.question_text || 'Conteúdo da lição';
+        const title = item.question ? 'Pergunta' : (item.lesson?.title || 'Lição');
+        const date = new Date(item.next_review_date);
+        const formattedDate = format(date, "dd 'de' MMMM", { locale: ptBR });
+        const isToday = new Date().toDateString() === date.toDateString();
+        const isPast = date < new Date() && !isToday;
+
+        return (
+          <div key={item.id} className="border rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {item.question ? (
+                    <Brain className="h-4 w-4 text-purple-500" />
+                  ) : (
+                    <Book className="h-4 w-4 text-blue-500" />
+                  )}
+                  <span className="font-medium text-sm">{title}</span>
+                </div>
+                <p className="text-sm line-clamp-2">{questionText}</p>
+              </div>
+              
+              <Badge variant={isPast ? "destructive" : (isToday ? "default" : "secondary")}>
+                {isToday ? 'Hoje' : (isPast ? 'Atrasado' : formattedDate)}
+              </Badge>
             </div>
-            <div className="ml-4">
-              {getReviewStatus(getNextReviewDate(item))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 };
