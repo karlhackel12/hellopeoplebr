@@ -13,7 +13,7 @@ const Features: React.FC = () => {
       title: "Prática Diária",
       heading: "Atividades Diárias de 5-15 Minutos",
       description: "Microaprendizado consistente que se encaixa perfeitamente na rotina dos alunos.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/e99ff4dd-ccfd-4b13-8e1a-de24aa2a5260.png",
       points: [
         "Atividades curtas e focadas de 5-15 minutos por dia",
         "Lembretes automáticos via WhatsApp para manter o engajamento",
@@ -26,7 +26,7 @@ const Features: React.FC = () => {
       title: "IA Personalizada",
       heading: "Conteúdo Adaptado com Inteligência Artificial",
       description: "Atividades geradas por IA com base no que foi ensinado em sala de aula.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/e99ff4dd-ccfd-4b13-8e1a-de24aa2a5260.png",
       points: [
         "Material personalizado baseado no conteúdo das suas aulas",
         "Adaptação automática ao nível e progresso de cada aluno",
@@ -39,7 +39,7 @@ const Features: React.FC = () => {
       title: "Repetição Espaçada",
       heading: "Sistema Científico de Memorização",
       description: "Algoritmo baseado em neurociência que otimiza a retenção de vocabulário e gramática.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/e99ff4dd-ccfd-4b13-8e1a-de24aa2a5260.png",
       points: [
         "Revisão otimizada de vocabulário no momento ideal para memorização",
         "Aumenta a retenção de longo prazo em até 50%",
@@ -52,7 +52,7 @@ const Features: React.FC = () => {
       title: "Prática de Pronúncia",
       heading: "Feedback de Pronúncia com IA",
       description: "Tecnologia de reconhecimento de voz que ajuda a aperfeiçoar a pronúncia.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/e99ff4dd-ccfd-4b13-8e1a-de24aa2a5260.png",
       points: [
         "Feedback detalhado sobre pronúncia com tecnologia OpenAI",
         "Identificação de padrões de erro específicos para cada aluno",
@@ -65,7 +65,7 @@ const Features: React.FC = () => {
       title: "Gamificação",
       heading: "Elementos de Jogo para Motivação",
       description: "Sistema de conquistas, sequências e competições amigáveis que mantêm o engajamento.",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/e99ff4dd-ccfd-4b13-8e1a-de24aa2a5260.png",
       points: [
         "Conquistas e badges para celebrar o progresso",
         "Competições amigáveis entre colegas de classe",
@@ -123,7 +123,7 @@ const Features: React.FC = () => {
                       <img 
                         src={feature.image} 
                         alt={feature.title} 
-                        className="rounded-lg max-h-80 object-cover"
+                        className="w-full h-auto max-h-80 object-contain rounded-lg"
                       />
                     </div>
                   </div>
