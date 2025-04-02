@@ -10,8 +10,7 @@ import { Brain } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SpacedRepetitionPage: React.FC = () => {
-  const { dueItems, userStats, totalPoints, isLoading } = useSpacedRepetition();
-  const { userId } = dueItems?.[0]?.user_id ? { userId: dueItems[0].user_id } : useSpacedRepetition();
+  const { dueItems, userStats, totalPoints, isLoading, userId } = useSpacedRepetition();
   const { allItems, isLoading: isLoadingAllItems } = useSpacedRepetitionAllItems(userId);
 
   return (

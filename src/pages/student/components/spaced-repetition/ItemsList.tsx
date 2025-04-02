@@ -52,13 +52,17 @@ const ItemsList: React.FC<ItemsListProps> = ({ items, emptyMessage, isLoading })
         <Card key={item.id} className="overflow-hidden">
           <CardContent className="p-4 flex justify-between items-center">
             <div className="flex-1">
-              <h3 className="font-medium mb-1">{item.question?.text || 'Questão sem texto'}</h3>
+              <h3 className="font-medium mb-1">
+                {item.question?.text || item.question?.question_text || 'Questão sem texto'}
+              </h3>
               <p className="text-sm text-muted-foreground line-clamp-1">
-                {item.question?.options?.find((o: any) => o.is_correct)?.text || 'Sem resposta'}
+                {item.question?.options?.find((o: any) => o.is_correct)?.text || 
+                 item.question?.options?.find((o: any) => o.is_correct)?.option_text || 
+                 'Sem resposta'}
               </p>
             </div>
             <div className="ml-4">
-              {getReviewStatus(item.next_review_at)}
+              {getReviewStatus(item.next_review_at || item.next_review_date)}
             </div>
           </CardContent>
         </Card>
