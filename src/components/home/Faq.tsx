@@ -48,13 +48,13 @@ const Faq: React.FC = () => {
   ];
 
   return (
-    <section id="faq" className="py-20 md:py-28">
-      <div className="container px-6 md:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 font-display">
+    <section id="faq" className="py-12 sm:py-16 md:py-20 lg:py-28">
+      <div className="container px-4 sm:px-6 md:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 font-display">
             Perguntas Frequentes
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
             Tudo o que você precisa saber sobre a plataforma HelloPeople
           </p>
         </div>
@@ -63,10 +63,10 @@ const Faq: React.FC = () => {
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-lg font-medium text-left">
+                <AccordionTrigger className="text-base sm:text-lg font-medium text-left py-3 sm:py-4">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-base">
+                <AccordionContent className="text-muted-foreground text-sm sm:text-base">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

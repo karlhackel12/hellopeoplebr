@@ -25,7 +25,13 @@ const Index: React.FC = () => {
         const targetElement = document.querySelector(anchor.hash);
         
         if (targetElement) {
-          targetElement.scrollIntoView({
+          // Add offset for fixed header
+          const headerOffset = 80;
+          const elementPosition = targetElement.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+          window.scrollTo({
+            top: offsetPosition,
             behavior: 'smooth'
           });
           
@@ -45,14 +51,16 @@ const Index: React.FC = () => {
   return (
     <FormProvider {...methods}>
       <MainLayout>
-        <Hero />
-        <Benefits />
-        <Features />
-        <HowItWorks />
-        <Pricing />
-        <Testimonials />
-        <Faq />
-        <CtaSection />
+        <div className="w-full overflow-hidden">
+          <Hero />
+          <Benefits />
+          <Features />
+          <HowItWorks />
+          <Pricing />
+          <Testimonials />
+          <Faq />
+          <CtaSection />
+        </div>
       </MainLayout>
     </FormProvider>
   );
