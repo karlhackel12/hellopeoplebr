@@ -46,8 +46,8 @@ const SpacedRepetitionPage: React.FC = () => {
           </div>
         ) : (
           <SpacedRepetitionTabs 
-            dueItems={dueItems} 
-            allItems={allItems}
+            dueItems={dueItems || []} 
+            allItems={allItems || []}
             isLoading={isLoading || isLoadingAllItems} 
           />
         )}

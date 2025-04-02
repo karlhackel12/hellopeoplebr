@@ -1,8 +1,10 @@
+
 import React from 'react';
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
 import LessonView from '@/pages/student/LessonView';
 import SpacedRepetitionPage from '@/pages/student/SpacedRepetition';
+import SpacedRepetitionReview from '@/pages/student/SpacedRepetitionReview';
 
 // Implementação simples do StudentProtectedRoute para evitar erros
 const StudentProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -22,19 +24,18 @@ export const StudentRoutes = () => {
         path="/*"
         element={
           <StudentProtectedRoute>
-            <StudentLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
-                <Route path="dashboard" element={<StudentDashboard />} />
-                <Route path="lessons" element={<LessonsList />} />
-                <Route path="lessons/view/:lessonId" element={<LessonView />} />
-                <Route path="quizzes/view/:quizId" element={<QuizView />} />
-                <Route path="quizzes/take/:quizId" element={<QuizView />} />
-                <Route path="settings" element={<StudentSettings />} />
-                <Route path="spaced-repetition" element={<SpacedRepetitionPage />} />
-                <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
-              </Routes>
-            </StudentLayout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+              <Route path="dashboard" element={<StudentDashboard />} />
+              <Route path="lessons" element={<LessonsList />} />
+              <Route path="lessons/view/:lessonId" element={<LessonView />} />
+              <Route path="quizzes/view/:quizId" element={<QuizView />} />
+              <Route path="quizzes/take/:quizId" element={<QuizView />} />
+              <Route path="settings" element={<StudentSettings />} />
+              <Route path="spaced-repetition" element={<SpacedRepetitionPage />} />
+              <Route path="spaced-repetition/review" element={<SpacedRepetitionReview />} />
+              <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
+            </Routes>
           </StudentProtectedRoute>
         }
       />

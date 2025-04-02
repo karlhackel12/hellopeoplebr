@@ -26,7 +26,9 @@ const PageTransition: React.FC<PageTransitionProps> = ({
         mountOnEnter
         unmountOnExit
       >
-        {children}
+        <div className="page-transition-wrapper">
+          {children}
+        </div>
       </CSSTransition>
     </TransitionGroup>
   );

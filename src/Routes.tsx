@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
 import Lessons from '@/pages/teacher/Lessons';
