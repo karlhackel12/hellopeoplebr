@@ -1,57 +1,60 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
-
-// Rating descriptions for SM-2 algorithm
-const ratingDescriptions = [
-  { value: 0, label: "Complete blackout", description: "I didn't remember at all" },
-  { value: 1, label: "Incorrect response", description: "I recognized the answer though" },
-  { value: 2, label: "Incorrect response", description: "But the answer feels familiar" },
-  { value: 3, label: "Correct response", description: "But with significant difficulty" },
-  { value: 4, label: "Correct response", description: "After some hesitation" },
-  { value: 5, label: "Perfect response", description: "Immediate recall" }
-];
+import { cn } from '@/lib/utils';
 
 interface RecallRatingSystemProps {
-  onRateRecall: (rating: number) => void;
-  isSubmitting: boolean;
+  onRate: (rating: number) => void;
+  disabled?: boolean;
 }
 
-const RecallRatingSystem: React.FC<RecallRatingSystemProps> = ({ 
-  onRateRecall, 
-  isSubmitting 
-}) => {
-  // Validate rating before passing to onRateRecall
-  const handleRating = (rating: number) => {
-    // Ensure rating is within valid range 0-5
-    const validRating = Math.min(5, Math.max(0, rating));
-    onRateRecall(validRating);
-  };
+const RecallRatingSystem: React.FC<RecallRatingSystemProps> = ({ onRate, disabled = false }) => {
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
+  
+  const ratings = [
+    { value: 0, label: 'Esqueci Completamente', color: 'bg-red-500' },
+    { value: 1, label: 'Lembrei com Muita Dificuldade', color: 'bg-red-400' },
+    { value: 2, label: 'Lembrei com Dificuldade', color: 'bg-orange-400' },
+    { value: 3, label: 'Lembrei Razoavelmente', color: 'bg-yellow-500' },
+    { value: 4, label: 'Lembrei Bem', color: 'bg-green-400' },
+    { value: 5, label: 'Lembrei Perfeitamente', color: 'bg-green-500' }
+  ];
   
   return (
-    <div className="mt-8 border-t pt-6">
-      <h4 className="text-sm font-medium mb-2">How would you rate your recall?</h4>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {ratingDescriptions.map((rating) => (
+    <div className="space-y-4">
+      <div className="flex justify-between gap-1 h-10">
+        {ratings.map((rating) => (
+          <div 
+            key={rating.value}
+            className="flex-1 flex flex-col items-center"
+            onMouseEnter={() => setHoveredRating(rating.value)}
+            onMouseLeave={() => setHoveredRating(null)}
+          >
+            <div 
+              className={cn(
+                "w-full h-2 rounded transition-all",
+                hoveredRating !== null && hoveredRating >= rating.value ? rating.color : 'bg-gray-200'
+              )}
+            />
+          </div>
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-3 gap-3">
+        {ratings.map((rating) => (
           <Button
             key={rating.value}
             variant="outline"
-            className={`h-auto py-2 flex flex-col items-center ${
-              rating.value <= 2 ? "hover:border-red-500" : "hover:border-green-500"
-            }`}
-            onClick={() => handleRating(rating.value)}
-            disabled={isSubmitting}
+            className={cn(
+              "h-auto py-3 px-2 text-xs font-normal",
+              hoveredRating === rating.value && "border-[#9b87f5] bg-purple-50"
+            )}
+            onClick={() => onRate(rating.value)}
+            disabled={disabled}
+            onMouseEnter={() => setHoveredRating(rating.value)}
+            onMouseLeave={() => setHoveredRating(null)}
           >
-            <span className="text-lg">
-              {rating.value <= 2 ? (
-                <ThumbsDown className={`h-5 w-5 mb-1 ${rating.value === 0 ? "text-red-600" : "text-orange-500"}`} />
-              ) : (
-                <ThumbsUp className={`h-5 w-5 mb-1 ${rating.value === 5 ? "text-green-600" : "text-blue-500"}`} />
-              )}
-            </span>
-            <span className="font-medium text-sm">{rating.label}</span>
-            <span className="text-xs text-muted-foreground">{rating.description}</span>
+            {rating.label}
           </Button>
         ))}
       </div>

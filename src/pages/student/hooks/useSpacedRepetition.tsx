@@ -40,6 +40,7 @@ export const useSpacedRepetition = () => {
   const isLoading = isLoadingUser || isLoadingDueItems || isLoadingStats;
 
   return {
+    userId,
     dueItems,
     itemStats,
     totalPoints,

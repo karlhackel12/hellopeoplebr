@@ -32,7 +32,7 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
   
   return (
     <Card className="relative overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-orange-500 via-orange-400 to-orange-300 text-white">
+      <CardHeader className="bg-gradient-to-r from-[#9b87f5] via-[#a794f6] to-[#b3a1f7] text-white">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl mb-1 flex items-center gap-2">
@@ -67,7 +67,7 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
                   {dueItemsCount > 0 ? `${dueItemsCount} itens para revisar hoje` : "Nenhum item para revisar hoje"}
                 </span>
                 {dueItemsCount > 0 && (
-                  <span className="text-sm bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                  <span className="text-sm bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                     <Clock className="h-3 w-3 inline mr-1" /> Agora
                   </span>
                 )}
@@ -95,7 +95,7 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
         <Button 
           onClick={startReview} 
           disabled={loading || dueItemsCount === 0}
-          className="w-full bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500"
+          className="w-full bg-gradient-to-r from-[#9b87f5] to-[#a794f6] hover:from-[#8b77e5] hover:to-[#9784e6]"
         >
           {dueItemsCount > 0 ? "Iniciar Revisão" : "Nenhum Item para Revisar"}
         </Button>

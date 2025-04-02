@@ -1,45 +1,43 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Trophy, Clock, Info } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Brain, ExternalLink } from 'lucide-react';
 
-const AboutCard = () => {
+const AboutCard: React.FC = () => {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="bg-gradient-to-r from-[#D6BCFA] to-[#E9D8FD] text-purple-900">
         <CardTitle className="text-xl flex items-center gap-2">
-          <Info className="h-5 w-5" /> Sobre Repetição Espaçada
+          <Brain className="h-5 w-5" /> Como Funciona?
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4 text-sm">
-          <p>
-            <strong>Repetição Espaçada</strong> é uma técnica de aprendizado que incorpora intervalos crescentes 
-            entre revisões de material previamente aprendido para explorar o efeito psicológico do espaçamento.
-          </p>
-          <div className="flex items-start gap-2">
-            <Brain className="h-5 w-5 text-purple-500 mt-1 flex-shrink-0" />
-            <p>
-              O sistema agenda automaticamente revisões com base em quão bem você se lembra de cada item, 
-              mostrando conteúdo difícil com mais frequência e conteúdo fácil com menos frequência.
-            </p>
-          </div>
-          <div className="flex items-start gap-2">
-            <Trophy className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
-            <p>
-              Ganhe pontos para cada questão respondida corretamente. Quanto mais rápido você responder e 
-              melhor for sua recordação, mais pontos receberá.
-            </p>
-          </div>
-          <div className="flex items-start gap-2">
-            <Clock className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
-            <p>
-              Apenas alguns minutos de revisão por dia podem melhorar drasticamente sua retenção 
-              de longo prazo do material, em comparação com estudar tudo de uma vez.
-            </p>
-          </div>
-        </div>
+      
+      <CardContent className="pt-4 pb-0 flex-grow prose prose-sm max-w-none">
+        <p>
+          A <strong>Repetição Espaçada</strong> é uma técnica de estudo baseada em como o cérebro memoriza informações a longo prazo.
+        </p>
+        
+        <p>
+          Ao revisar os conteúdos em intervalos crescentes de tempo, você fortalece as conexões neurais e evita o esquecimento.
+        </p>
+        
+        <h3 className="text-lg font-medium mt-4 mb-2">Benefícios:</h3>
+        <ul className="space-y-1 list-disc pl-5">
+          <li>Memorização mais eficiente</li>
+          <li>Retenção de longo prazo</li>
+          <li>Estudo mais focado</li>
+          <li>Economia de tempo</li>
+        </ul>
       </CardContent>
+      
+      <CardFooter className="mt-auto pt-4">
+        <Button variant="outline" className="w-full" asChild>
+          <a href="https://pt.wikipedia.org/wiki/Repetição_espaçada" target="_blank" rel="noopener noreferrer">
+            Saiba Mais <ExternalLink className="ml-1 h-4 w-4" />
+          </a>
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

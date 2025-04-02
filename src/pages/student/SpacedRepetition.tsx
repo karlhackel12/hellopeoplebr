@@ -2,6 +2,7 @@
 import React from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { useSpacedRepetition } from './hooks/useSpacedRepetition';
+import { useSpacedRepetitionAllItems } from './hooks/spaced-repetition/useSpacedRepetitionAllItems';
 import SpacedRepetitionCard from './components/spaced-repetition/SpacedRepetitionCard';
 import AboutCard from './components/spaced-repetition/AboutCard';
 import SpacedRepetitionTabs from './components/spaced-repetition/SpacedRepetitionTabs';
@@ -10,13 +11,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const SpacedRepetitionPage: React.FC = () => {
   const { dueItems, userStats, totalPoints, isLoading } = useSpacedRepetition();
+  const { userId } = dueItems?.[0]?.user_id ? { userId: dueItems[0].user_id } : useSpacedRepetition();
+  const { allItems, isLoading: isLoadingAllItems } = useSpacedRepetitionAllItems(userId);
 
   return (
     <StudentLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Brain className="h-6 w-6" /> Spaced Repetition
+            <Brain className="h-6 w-6" /> Repetição Espaçada
           </h1>
         </div>
         
@@ -33,7 +36,7 @@ const SpacedRepetitionPage: React.FC = () => {
           <AboutCard />
         </div>
         
-        {isLoading ? (
+        {isLoading || isLoadingAllItems ? (
           <div className="rounded-lg border p-6">
             <Skeleton className="h-8 w-1/3 mb-6" />
             <div className="space-y-4">
@@ -45,7 +48,8 @@ const SpacedRepetitionPage: React.FC = () => {
         ) : (
           <SpacedRepetitionTabs 
             dueItems={dueItems} 
-            isLoading={isLoading} 
+            allItems={allItems}
+            isLoading={isLoading || isLoadingAllItems} 
           />
         )}
       </div>

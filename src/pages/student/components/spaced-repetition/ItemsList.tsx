@@ -1,72 +1,67 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, List } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Brain, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { format, isPast, isToday, parseISO } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
-type ItemsListProps = {
-  items: any[] | null;
+interface ItemsListProps {
+  items: any[];
+  emptyMessage: string;
   isLoading: boolean;
-  emptyTitle: string;
-  emptyDescription: string;
-  icon: 'calendar' | 'list';
-};
+}
 
-const ItemsList: React.FC<ItemsListProps> = ({ 
-  items, 
-  isLoading, 
-  emptyTitle, 
-  emptyDescription,
-  icon 
-}) => {
-  const IconComponent = icon === 'calendar' ? Calendar : List;
-
+const ItemsList: React.FC<ItemsListProps> = ({ items, emptyMessage, isLoading }) => {
   if (isLoading) {
-    return (
-      <div className="py-8 flex justify-center items-center">
-        <div className="animate-pulse space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex flex-col gap-2">
-              <div className="h-4 w-3/4 bg-slate-200 rounded"></div>
-              <div className="h-3 w-1/2 bg-slate-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <div className="p-4 text-center">Carregando...</div>;
   }
 
   if (!items || items.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-          <IconComponent className="h-6 w-6 text-slate-500" />
-        </div>
-        <h3 className="text-lg font-medium mb-1">{emptyTitle}</h3>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {emptyDescription}
-        </p>
+      <div className="p-6 text-center">
+        <Brain className="mx-auto h-12 w-12 text-muted-foreground/30 mb-3" />
+        <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
 
+  const getReviewStatus = (nextReviewAt: string) => {
+    if (!nextReviewAt) return null;
+    
+    const reviewDate = parseISO(nextReviewAt);
+    
+    if (isPast(reviewDate)) {
+      return <Badge className="bg-[#9b87f5]">Atrasado</Badge>;
+    }
+    
+    if (isToday(reviewDate)) {
+      return <Badge className="bg-[#9b87f5]">Hoje</Badge>;
+    }
+    
+    return (
+      <Badge variant="outline" className="border-[#9b87f5] text-[#9b87f5]">
+        {format(reviewDate, "d 'de' MMMM", { locale: pt })}
+      </Badge>
+    );
+  };
+
   return (
-    <div className="divide-y">
+    <div className="space-y-3 p-1">
       {items.map((item) => (
-        <div key={item.id} className="py-3 flex justify-between items-center">
-          <div>
-            <h3 className="font-medium">
-              {item.question?.question_text || item.lesson?.title || 'Item sem nome'}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {icon === 'calendar' ? 'Vencimento: ' : 'Próxima revisão: '}
-              {formatDistanceToNow(new Date(item.next_review_date), { addSuffix: true })}
-            </p>
-          </div>
-          <div className="text-sm">
-            Dificuldade: {Math.round(item.difficulty * 100) / 100}
-          </div>
-        </div>
+        <Card key={item.id} className="overflow-hidden">
+          <CardContent className="p-4 flex justify-between items-center">
+            <div className="flex-1">
+              <h3 className="font-medium mb-1">{item.question?.text || 'Questão sem texto'}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                {item.question?.options?.find((o: any) => o.is_correct)?.text || 'Sem resposta'}
+              </p>
+            </div>
+            <div className="ml-4">
+              {getReviewStatus(item.next_review_at)}
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
