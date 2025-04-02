@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Brain, Clock, Star, Trophy, Activity, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface SpacedRepetitionCardProps {
   dueItemsCount: number;
@@ -32,14 +31,14 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
   
   return (
     <Card className="relative overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-orange-500 via-orange-400 to-orange-300 text-white">
+      <CardHeader className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl mb-1 flex items-center gap-2">
               <Brain className="h-5 w-5" /> Repetição Espaçada
             </CardTitle>
-            <CardDescription className="text-white/90">
-              Memorize palavras e frases com eficiência
+            <CardDescription className="text-slate-100 opacity-90">
+              Lembre-se de mais com menos esforço
             </CardDescription>
           </div>
           <div className="bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
@@ -51,40 +50,49 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
       
       <CardContent className="pt-4">
         {loading ? (
-          <div className="py-4 space-y-4">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-4 w-full" />
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
+          <div className="py-8 flex justify-center items-center">
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="h-8 w-32 bg-slate-200 rounded mb-4"></div>
+              <div className="h-4 w-48 bg-slate-200 rounded"></div>
             </div>
           </div>
         ) : (
           <>
             <div className="mb-5">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">
-                  {dueItemsCount > 0 ? `${dueItemsCount} itens para revisar hoje` : "Nenhum item para revisar hoje"}
-                </span>
-                {dueItemsCount > 0 && (
-                  <span className="text-sm bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                    <Clock className="h-3 w-3 inline mr-1" /> Agora
-                  </span>
-                )}
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm text-muted-foreground">Pendentes para revisão</span>
+                <span className="text-sm font-medium">{dueItemsCount} itens</span>
+              </div>
+              <Progress 
+                value={dueItemsCount > 0 ? 100 : 0} 
+                className="h-2" 
+                indicatorClassName={dueItemsCount > 0 ? "bg-purple-500" : "bg-green-500"} 
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
+                <Trophy className="h-5 w-5 text-amber-500 mb-1" />
+                <div className="text-lg font-bold">{bestStreak}</div>
+                <div className="text-xs text-muted-foreground">Melhor Sequência</div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
-                  <Activity className="h-5 w-5 text-blue-500 mb-1" />
-                  <div className="text-lg font-bold">{totalReviews}</div>
-                  <div className="text-xs text-muted-foreground">Revisões Totais</div>
-                </div>
-                
-                <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
-                  <Trophy className="h-5 w-5 text-amber-500 mb-1" />
-                  <div className="text-lg font-bold">{bestStreak}</div>
-                  <div className="text-xs text-muted-foreground">Melhor Sequência</div>
-                </div>
+              <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
+                <Activity className="h-5 w-5 text-blue-500 mb-1" />
+                <div className="text-lg font-bold">{averageScore}</div>
+                <div className="text-xs text-muted-foreground">Pont. Média</div>
+              </div>
+              
+              <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
+                <Clock className="h-5 w-5 text-indigo-500 mb-1" />
+                <div className="text-lg font-bold">{totalReviews}</div>
+                <div className="text-xs text-muted-foreground">Total de Revisões</div>
+              </div>
+              
+              <div className="border rounded-lg p-3 flex flex-col items-center justify-center">
+                <Zap className="h-5 w-5 text-yellow-500 mb-1" />
+                <div className="text-lg font-bold">{totalPoints}</div>
+                <div className="text-xs text-muted-foreground">Total de Pontos</div>
               </div>
             </div>
           </>
@@ -94,10 +102,10 @@ const SpacedRepetitionCard: React.FC<SpacedRepetitionCardProps> = ({
       <CardFooter className="border-t bg-slate-50 px-6">
         <Button 
           onClick={startReview} 
-          disabled={loading || dueItemsCount === 0}
-          className="w-full bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500"
+          className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+          disabled={dueItemsCount === 0 || loading}
         >
-          {dueItemsCount > 0 ? "Iniciar Revisão" : "Nenhum Item para Revisar"}
+          {dueItemsCount > 0 ? `Iniciar Revisão (${dueItemsCount})` : "Nenhum Item Pendente"}
         </Button>
       </CardFooter>
     </Card>

@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
@@ -91,7 +90,10 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex flex-1">
         {isMobile && (
-          <MobileHeader pageTitle={pageTitle} />
+          <MobileHeader 
+            onMenuToggle={toggleMobileMenu}
+            pageTitle={pageTitle}
+          />
         )}
         
         <TeacherSidebar 

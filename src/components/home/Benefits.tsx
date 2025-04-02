@@ -89,11 +89,11 @@ const Benefits: React.FC = () => {
                 </li>
               </ul>
             </div>
-            <div className="md:w-1/2 w-full">
+            <div className="md:w-1/2">
               <div className="relative">
                 <h4 className="text-lg font-semibold mb-2 text-center">Curva do Esquecimento - Alunos de Inglês</h4>
                 
-                <div className="h-[320px] w-full">
+                <div className="h-[280px] w-full">
                   <ChartContainer 
                     config={chartConfig}
                     className="h-full w-full"
@@ -101,16 +101,16 @@ const Benefits: React.FC = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={forgettingCurveData}
-                        margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                         <XAxis 
                           dataKey="semana" 
-                          label={{ value: 'Semanas sem prática', position: 'bottom', offset: 0, dy: 20 }}
+                          label={{ value: 'Semanas sem prática', position: 'bottom', offset: 0 }}
                           tick={{ fontSize: 12 }}
                         />
                         <YAxis 
-                          label={{ value: 'Retenção de Memória (%)', angle: -90, position: 'insideLeft', dx: -15 }}
+                          label={{ value: 'Retenção de Memória (%)', angle: -90, position: 'insideLeft' }}
                           tick={{ fontSize: 12 }}
                           domain={[0, 100]}
                         />
@@ -129,7 +129,7 @@ const Benefits: React.FC = () => {
                   </ChartContainer>
                 </div>
                 
-                <div className="mt-4 flex justify-between text-xs text-muted-foreground px-2">
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground px-2">
                   <div>Aula</div>
                   <div className="relative">
                     <span>Perda rápida inicial</span>

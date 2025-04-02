@@ -1,9 +1,12 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ArrowRight, PlayCircle, Clock, BarChart } from 'lucide-react';
+
 const Hero: React.FC = () => {
-  return <section id="inicio" className="relative pt-24 pb-12 md:pt-32 lg:pt-40 md:pb-16 lg:pb-24 overflow-hidden">
+  return (
+    <section id="inicio" className="relative pt-24 pb-12 md:pt-32 lg:pt-40 md:pb-16 lg:pb-24 overflow-hidden">
       {/* Background decorations */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full">
         <div className="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-[#1E88E5]/5 rounded-full blur-3xl" />
@@ -41,14 +44,20 @@ const Hero: React.FC = () => {
             </a>
           </div>
           
-          
+          <p className="mt-4 sm:mt-6 text-xs sm:text-sm text-muted-foreground animate-fade-in animate-delay-300">
+            Sem cartão de crédito. Sem custos ocultos. 100% gratuito para professores.
+          </p>
         </div>
         
         {/* Hero Image - Platform Preview */}
         <div className="mt-8 sm:mt-10 md:mt-12 lg:mt-16 max-w-5xl mx-auto rounded-xl overflow-hidden shadow-xl border border-border/60 animate-scale-in animate-delay-400">
           <div className="aspect-[16/9] bg-gradient-to-br from-[#1E88E5]/5 to-background relative">
             <div className="absolute inset-0 flex items-center justify-center">
-              <img src="/lovable-uploads/b87f1c92-d9a0-49c1-b643-bc318ffcdbcc.png" alt="Professora sorridente em chamada de vídeo com alunos" className="w-full h-full object-cover" />
+              <img 
+                src="/lovable-uploads/b87f1c92-d9a0-49c1-b643-bc318ffcdbcc.png" 
+                alt="Professora sorridente em chamada de vídeo com alunos" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
@@ -114,7 +123,12 @@ const Hero: React.FC = () => {
       </div>
       
       {/* Scroll indicator */}
-      
-    </section>;
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 hidden md:flex items-center flex-col animate-pulse-light">
+        <p className="text-sm text-muted-foreground mb-2">Role para explorar</p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg>
+      </div>
+    </section>
+  );
 };
+
 export default Hero;
