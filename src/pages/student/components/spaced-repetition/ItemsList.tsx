@@ -46,6 +46,35 @@ const ItemsList: React.FC<ItemsListProps> = ({ items, emptyMessage, isLoading })
     );
   };
 
+  const getQuestionText = (item: any) => {
+    // Handle different data structures
+    if (item.question?.text) {
+      return item.question.text;
+    }
+    
+    if (item.question?.question_text) {
+      return item.question.question_text;
+    }
+    
+    return 'Questão sem texto';
+  };
+
+  const getAnswerText = (item: any) => {
+    // Handle different data structures for options
+    if (item.question?.options) {
+      const correctOption = item.question.options.find((o: any) => o.is_correct);
+      if (correctOption) {
+        return correctOption.option_text || correctOption.text || 'Sem resposta';
+      }
+    }
+    
+    return 'Sem resposta';
+  };
+
+  const getNextReviewDate = (item: any) => {
+    return item.next_review_at || item.next_review_date;
+  };
+
   return (
     <div className="space-y-3 p-1">
       {items.map((item) => (
@@ -53,16 +82,14 @@ const ItemsList: React.FC<ItemsListProps> = ({ items, emptyMessage, isLoading })
           <CardContent className="p-4 flex justify-between items-center">
             <div className="flex-1">
               <h3 className="font-medium mb-1">
-                {item.question?.text || item.question?.question_text || 'Questão sem texto'}
+                {getQuestionText(item)}
               </h3>
               <p className="text-sm text-muted-foreground line-clamp-1">
-                {item.question?.options?.find((o: any) => o.is_correct)?.text || 
-                 item.question?.options?.find((o: any) => o.is_correct)?.option_text || 
-                 'Sem resposta'}
+                {getAnswerText(item)}
               </p>
             </div>
             <div className="ml-4">
-              {getReviewStatus(item.next_review_at || item.next_review_date)}
+              {getReviewStatus(getNextReviewDate(item))}
             </div>
           </CardContent>
         </Card>
