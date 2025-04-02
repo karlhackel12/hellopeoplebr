@@ -20,37 +20,53 @@ import { useSpacedRepetitionDueItems } from './hooks/spaced-repetition/useSpaced
 import { useSpacedRepetitionUserStats } from './hooks/spaced-repetition/useSpacedRepetitionUserStats';
 import { useSpacedRepetitionPoints } from './hooks/spaced-repetition/useSpacedRepetitionPoints';
 import DashboardHeader from './components/dashboard/DashboardHeader';
-
 const Dashboard: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { userId } = useUser();
-  const { streak, isLoading: isLoadingStreak } = useStudentStreak();
-  const { stats, isLoading: isLoadingStats } = useStudentStats();
-  const { goals, isLoading: isLoadingGoals } = useDailyGoals();
-  const { dueAssignments, isLoading: isLoadingAssignments } = useStudentAssignments();
-  const { recentLessons, isLoading: isLoadingLessons } = useRecentLessons();
-  const { dueItems, isLoading: isLoadingDueItems } = useSpacedRepetitionDueItems(userId);
-  const { userStats } = useSpacedRepetitionUserStats(userId);
-  const { totalPoints } = useSpacedRepetitionPoints(userId);
-  
+  const {
+    userId
+  } = useUser();
+  const {
+    streak,
+    isLoading: isLoadingStreak
+  } = useStudentStreak();
+  const {
+    stats,
+    isLoading: isLoadingStats
+  } = useStudentStats();
+  const {
+    goals,
+    isLoading: isLoadingGoals
+  } = useDailyGoals();
+  const {
+    dueAssignments,
+    isLoading: isLoadingAssignments
+  } = useStudentAssignments();
+  const {
+    recentLessons,
+    isLoading: isLoadingLessons
+  } = useRecentLessons();
+  const {
+    dueItems,
+    isLoading: isLoadingDueItems
+  } = useSpacedRepetitionDueItems(userId);
+  const {
+    userStats
+  } = useSpacedRepetitionUserStats(userId);
+  const {
+    totalPoints
+  } = useSpacedRepetitionPoints(userId);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  
-  const isLoading = isLoadingStreak || isLoadingStats || isLoadingGoals || 
-                    isLoadingAssignments || isLoadingLessons || isLoadingDueItems;
-  
+  const isLoading = isLoadingStreak || isLoadingStats || isLoadingGoals || isLoadingAssignments || isLoadingLessons || isLoadingDueItems;
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
-
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  
-  return (
-    <>
+  return <>
       <DashboardHeader onMenuToggle={toggleMobileMenu} />
       <StudentLayout pageTitle="Painel" mobileMenuOpen={mobileMenuOpen} onMobileMenuClose={() => setMobileMenuOpen(false)}>
         <div className="space-y-6 pt-16 md:pt-0">
@@ -64,19 +80,11 @@ const Dashboard: React.FC = () => {
                 <div>
                   <h3 className="font-medium">Sequência Atual</h3>
                   <div className="text-2xl font-bold">
-                    {isLoadingStreak ? (
-                      <Skeleton className="h-8 w-16" />
-                    ) : (
-                      `${streak?.streakCount || 0} dias`
-                    )}
+                    {isLoadingStreak ? <Skeleton className="h-8 w-16" /> : `${streak?.streakCount || 0} dias`}
                   </div>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                className="bg-background border-primary/20 text-primary hover:bg-primary/20"
-                onClick={() => navigate('/student/lessons')}
-              >
+              <Button variant="outline" className="bg-background border-primary/20 text-primary hover:bg-primary/20" onClick={() => navigate('/student/lessons')}>
                 Continuar Sequência
               </Button>
             </CardContent>
@@ -91,11 +99,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-xl font-bold">
-                    {isLoadingStats ? (
-                      <Skeleton className="h-7 w-10 mx-auto" />
-                    ) : (
-                      stats?.lessonsCompleted || 0
-                    )}
+                    {isLoadingStats ? <Skeleton className="h-7 w-10 mx-auto" /> : stats?.lessonsCompleted || 0}
                   </div>
                   <div className="text-xs text-muted-foreground">Aulas Concluídas</div>
                 </div>
@@ -109,11 +113,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-xl font-bold">
-                    {isLoadingStats ? (
-                      <Skeleton className="h-7 w-16 mx-auto" />
-                    ) : (
-                      formatTime(stats?.totalMinutes || 0)
-                    )}
+                    {isLoadingStats ? <Skeleton className="h-7 w-16 mx-auto" /> : formatTime(stats?.totalMinutes || 0)}
                   </div>
                   <div className="text-xs text-muted-foreground">Tempo Total de Estudo</div>
                 </div>
@@ -132,25 +132,17 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3">
-                {isLoadingGoals ? (
-                  <>
+                {isLoadingGoals ? <>
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
-                  </>
-                ) : (
-                  goals?.map((goal, index) => (
-                    <div key={index}>
+                  </> : goals?.map((goal, index) => <div key={index}>
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm">{goal.label.includes('Voice') ? 'Prática de Voz' : 
-                                                   goal.label.includes('Vocabulary') ? 'Vocabulário' : 
-                                                   'Aulas'}</span>
+                        <span className="text-sm">{goal.label.includes('Voice') ? 'Prática de Voz' : goal.label.includes('Vocabulary') ? 'Vocabulário' : 'Aulas'}</span>
                         <span className="text-sm font-medium">{goal.current}/{goal.target} {goal.label.includes('Voice') ? 'minutos' : goal.label.includes('Vocabulary') ? 'palavras' : 'concluídas'}</span>
                       </div>
                       <Progress value={goal.percentage} className="h-2" />
-                    </div>
-                  ))
-                )}
+                    </div>)}
               </div>
             </CardContent>
           </Card>
@@ -159,30 +151,15 @@ const Dashboard: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Próximos Prazos</h2>
-              <Button 
-                variant="ghost" 
-                className="text-sm" 
-                onClick={() => navigate('/student/assignments')}
-              >
+              <Button variant="ghost" className="text-sm" onClick={() => navigate('/student/assignments')}>
                 Ver Todos
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
             
-            {isLoadingAssignments ? (
-              <Skeleton className="h-40 w-full" />
-            ) : dueAssignments && dueAssignments.length > 0 ? (
-              <div className="space-y-4">
-                {dueAssignments.map(assignment => (
-                  <AssignmentCard 
-                    key={assignment.id} 
-                    assignment={assignment}
-                    progress={assignment.progress}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-muted/30">
+            {isLoadingAssignments ? <Skeleton className="h-40 w-full" /> : dueAssignments && dueAssignments.length > 0 ? <div className="space-y-4">
+                {dueAssignments.map(assignment => <AssignmentCard key={assignment.id} assignment={assignment} progress={assignment.progress} />)}
+              </div> : <Card className="bg-muted/30">
                 <CardContent className="p-6 text-center">
                   <Check className="h-12 w-12 text-primary/30 mx-auto mb-3" />
                   <h3 className="text-lg font-medium mb-1">Tudo em dia!</h3>
@@ -190,65 +167,16 @@ const Dashboard: React.FC = () => {
                     Você não tem tarefas pendentes.
                   </p>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
           </div>
 
           {/* Spaced Repetition Card */}
-          <SpacedRepetitionCard 
-            dueItemsCount={dueItems?.length || 0}
-            totalReviews={userStats?.totalReviews || 0}
-            bestStreak={userStats?.bestStreak || 0}
-            averageScore={userStats?.averageScore || 0}
-            totalPoints={totalPoints || 0}
-            loading={isLoadingDueItems}
-          />
+          <SpacedRepetitionCard dueItemsCount={dueItems?.length || 0} totalReviews={userStats?.totalReviews || 0} bestStreak={userStats?.bestStreak || 0} averageScore={userStats?.averageScore || 0} totalPoints={totalPoints || 0} loading={isLoadingDueItems} />
 
           {/* Recent Lessons */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Aulas Recentes</h2>
-              <Button 
-                variant="ghost" 
-                className="text-sm"
-                onClick={() => navigate('/student/lessons')}
-              >
-                Ver Todas
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-            
-            {isLoadingLessons ? (
-              <div className="grid grid-cols-1 gap-4">
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-40 w-full" />
-              </div>
-            ) : recentLessons && recentLessons.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recentLessons.map(lesson => (
-                  <LessonCard 
-                    key={lesson.id} 
-                    lesson={lesson}
-                    progress={lesson.progress}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-muted/30">
-                <CardContent className="p-6 text-center">
-                  <BookOpen className="h-12 w-12 text-primary/30 mx-auto mb-3" />
-                  <h3 className="text-lg font-medium mb-1">Sem aulas ainda</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Você ainda não iniciou nenhuma aula.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          
         </div>
       </StudentLayout>
-    </>
-  );
+    </>;
 };
-
 export default Dashboard;
