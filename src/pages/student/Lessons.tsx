@@ -12,8 +12,13 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import AssignmentCard from '@/components/student/AssignmentCard';
 import GardenProgress from '@/components/ui/garden-progress';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const StudentLessons: React.FC = () => {
+  const isMobile = useIsMobile();
+  const [tabValue, setTabValue] = React.useState("all");
+  
   // Fetch student assignments (lessons and quizzes)
   const {
     data: assignments,
@@ -103,6 +108,12 @@ const StudentLessons: React.FC = () => {
     if (!progressData) return null;
     return progressData.get(lessonId);
   }
+  
+  // Handle tab/select change
+  const handleTabChange = (value: string) => {
+    setTabValue(value);
+  };
+  
   return <StudentLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -179,7 +190,7 @@ const StudentLessons: React.FC = () => {
             </CardContent>
             
             <CardFooter className="border-t bg-slate-50 px-6">
-              <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={isLoading || dueSoonAssignments.length === 0} onClick={() => document.getElementById('due-soon-tab')?.click()}>
+              <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={isLoading || dueSoonAssignments.length === 0} onClick={() => handleTabChange("due-soon")}>
                 {dueSoonAssignments.length > 0 ? `Iniciar Lições com Prazo Próximo (${dueSoonAssignments.length})` : "Nenhuma Lição com Prazo Próximo"}
               </Button>
             </CardFooter>
@@ -224,38 +235,87 @@ const StudentLessons: React.FC = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="all">
-          <TabsList className="w-full sm:w-auto flex flex-wrap">
-            <TabsTrigger value="all" className="flex items-center gap-1.5">
-              <List className="h-4 w-4" /> Todas as Lições
-            </TabsTrigger>
-            <TabsTrigger value="in-progress" className="flex items-center gap-1.5">
-              <Activity className="h-4 w-4" /> Em Progresso
-            </TabsTrigger>
-            <TabsTrigger id="due-soon-tab" value="due-soon" className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" /> Prazo Próximo
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4" /> Concluídas
-            </TabsTrigger>
-          </TabsList>
+        {isMobile ? (
+          // Select dropdown for mobile
+          <div className="mt-4">
+            <Select value={tabValue} onValueChange={handleTabChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue>
+                  {tabValue === "all" && (
+                    <span className="flex items-center gap-1.5">
+                      <List className="h-4 w-4" /> Todas as Lições
+                    </span>
+                  )}
+                  {tabValue === "in-progress" && (
+                    <span className="flex items-center gap-1.5">
+                      <Activity className="h-4 w-4" /> Em Progresso
+                    </span>
+                  )}
+                  {tabValue === "due-soon" && (
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4" /> Prazo Próximo
+                    </span>
+                  )}
+                  {tabValue === "completed" && (
+                    <span className="flex items-center gap-1.5">
+                      <Trophy className="h-4 w-4" /> Concluídas
+                    </span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="flex items-center gap-1.5">
+                  <List className="h-4 w-4 mr-2" /> Todas as Lições
+                </SelectItem>
+                <SelectItem value="in-progress" className="flex items-center gap-1.5">
+                  <Activity className="h-4 w-4 mr-2" /> Em Progresso
+                </SelectItem>
+                <SelectItem value="due-soon" className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 mr-2" /> Prazo Próximo
+                </SelectItem>
+                <SelectItem value="completed" className="flex items-center gap-1.5">
+                  <Trophy className="h-4 w-4 mr-2" /> Concluídas
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          // Tabs for desktop
+          <Tabs value={tabValue} onValueChange={handleTabChange}>
+            <TabsList className="w-full sm:w-auto flex flex-wrap">
+              <TabsTrigger value="all" className="flex items-center gap-1.5">
+                <List className="h-4 w-4" /> Todas as Lições
+              </TabsTrigger>
+              <TabsTrigger value="in-progress" className="flex items-center gap-1.5">
+                <Activity className="h-4 w-4" /> Em Progresso
+              </TabsTrigger>
+              <TabsTrigger value="due-soon" className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" /> Prazo Próximo
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="flex items-center gap-1.5">
+                <Trophy className="h-4 w-4" /> Concluídas
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
           
-          <TabsContent value="all" className="mt-6">
+        <div className="mt-6">
+          {tabValue === "all" && (
             <RenderAssignments assignments={assignments} isLoading={isLoading} getProgress={getLessonProgress} />
-          </TabsContent>
+          )}
           
-          <TabsContent value="in-progress" className="mt-6">
+          {tabValue === "in-progress" && (
             <RenderAssignments assignments={inProgressAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição em progresso" getProgress={getLessonProgress} />
-          </TabsContent>
+          )}
           
-          <TabsContent value="due-soon" className="mt-6">
+          {tabValue === "due-soon" && (
             <RenderAssignments assignments={dueSoonAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição com prazo próximo" getProgress={getLessonProgress} />
-          </TabsContent>
+          )}
           
-          <TabsContent value="completed" className="mt-6">
+          {tabValue === "completed" && (
             <RenderAssignments assignments={completedAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição concluída" getProgress={getLessonProgress} />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </StudentLayout>;
 };
