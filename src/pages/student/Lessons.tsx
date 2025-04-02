@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, BookOpen, Clock, Star, Trophy, Activity, Zap, ArrowRight, Calendar, List, Info } from 'lucide-react';
@@ -12,8 +13,12 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import AssignmentCard from '@/components/student/AssignmentCard';
 import GardenProgress from '@/components/ui/garden-progress';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const StudentLessons: React.FC = () => {
+  const isMobile = useIsMobile();
+  const [selectedTab, setSelectedTab] = useState("all");
+  
   // Fetch student assignments (lessons and quizzes)
   const {
     data: assignments,
@@ -103,12 +108,29 @@ const StudentLessons: React.FC = () => {
     if (!progressData) return null;
     return progressData.get(lessonId);
   }
-  return <StudentLayout>
+  
+  const handleSelectChange = (value: string) => {
+    setSelectedTab(value);
+    if (value === "due-soon") {
+      document.getElementById('due-soon-tab')?.click();
+    } else {
+      document.getElementById(`${value}-tab`)?.click();
+    }
+  };
+
+  // Define the tab options
+  const tabOptions = [
+    { id: "all", label: "Todas as Lições", icon: List },
+    { id: "in-progress", label: "Em Progresso", icon: Activity },
+    { id: "due-soon", label: "Prazo Próximo", icon: Calendar },
+    { id: "completed", label: "Concluídas", icon: Trophy },
+  ];
+  
+  return <StudentLayout pageTitle="Minhas Lições">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Minhas Lições</h1>
-            
           </div>
         </div>
 
@@ -179,7 +201,7 @@ const StudentLessons: React.FC = () => {
             </CardContent>
             
             <CardFooter className="border-t bg-slate-50 px-6">
-              <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={isLoading || dueSoonAssignments.length === 0} onClick={() => document.getElementById('due-soon-tab')?.click()}>
+              <Button className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" disabled={isLoading || dueSoonAssignments.length === 0} onClick={() => handleSelectChange("due-soon")}>
                 {dueSoonAssignments.length > 0 ? `Iniciar Lições com Prazo Próximo (${dueSoonAssignments.length})` : "Nenhuma Lição com Prazo Próximo"}
               </Button>
             </CardFooter>
@@ -224,38 +246,74 @@ const StudentLessons: React.FC = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="all">
-          <TabsList className="w-full sm:w-auto flex flex-wrap">
-            <TabsTrigger value="all" className="flex items-center gap-1.5">
-              <List className="h-4 w-4" /> Todas as Lições
-            </TabsTrigger>
-            <TabsTrigger value="in-progress" className="flex items-center gap-1.5">
-              <Activity className="h-4 w-4" /> Em Progresso
-            </TabsTrigger>
-            <TabsTrigger id="due-soon-tab" value="due-soon" className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" /> Prazo Próximo
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4" /> Concluídas
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-6">
-            <RenderAssignments assignments={assignments} isLoading={isLoading} getProgress={getLessonProgress} />
-          </TabsContent>
-          
-          <TabsContent value="in-progress" className="mt-6">
-            <RenderAssignments assignments={inProgressAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição em progresso" getProgress={getLessonProgress} />
-          </TabsContent>
-          
-          <TabsContent value="due-soon" className="mt-6">
-            <RenderAssignments assignments={dueSoonAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição com prazo próximo" getProgress={getLessonProgress} />
-          </TabsContent>
-          
-          <TabsContent value="completed" className="mt-6">
-            <RenderAssignments assignments={completedAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição concluída" getProgress={getLessonProgress} />
-          </TabsContent>
-        </Tabs>
+        {isMobile ? (
+          <div className="mb-6">
+            <Select value={selectedTab} onValueChange={handleSelectChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filtrar lições" />
+              </SelectTrigger>
+              <SelectContent>
+                {tabOptions.map(option => (
+                  <SelectItem key={option.id} value={option.id} className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <option.icon className="h-4 w-4" />
+                      <span>{option.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <Tabs defaultValue="all">
+            <TabsList className="w-full sm:w-auto flex flex-wrap">
+              {tabOptions.map(option => (
+                <TabsTrigger 
+                  key={option.id} 
+                  id={`${option.id}-tab`} 
+                  value={option.id} 
+                  className="flex items-center gap-1.5"
+                >
+                  <option.icon className="h-4 w-4" /> {option.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            <TabsContent value="all" className="mt-6">
+              <RenderAssignments assignments={assignments} isLoading={isLoading} getProgress={getLessonProgress} />
+            </TabsContent>
+            
+            <TabsContent value="in-progress" className="mt-6">
+              <RenderAssignments assignments={inProgressAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição em progresso" getProgress={getLessonProgress} />
+            </TabsContent>
+            
+            <TabsContent value="due-soon" className="mt-6">
+              <RenderAssignments assignments={dueSoonAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição com prazo próximo" getProgress={getLessonProgress} />
+            </TabsContent>
+            
+            <TabsContent value="completed" className="mt-6">
+              <RenderAssignments assignments={completedAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição concluída" getProgress={getLessonProgress} />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* For mobile, we still need to render the tab content based on selection */}
+        {isMobile && (
+          <div className="mt-2">
+            {selectedTab === "all" && (
+              <RenderAssignments assignments={assignments} isLoading={isLoading} getProgress={getLessonProgress} />
+            )}
+            {selectedTab === "in-progress" && (
+              <RenderAssignments assignments={inProgressAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição em progresso" getProgress={getLessonProgress} />
+            )}
+            {selectedTab === "due-soon" && (
+              <RenderAssignments assignments={dueSoonAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição com prazo próximo" getProgress={getLessonProgress} />
+            )}
+            {selectedTab === "completed" && (
+              <RenderAssignments assignments={completedAssignments} isLoading={isLoading} emptyMessage="Nenhuma lição concluída" getProgress={getLessonProgress} />
+            )}
+          </div>
+        )}
       </div>
     </StudentLayout>;
 };

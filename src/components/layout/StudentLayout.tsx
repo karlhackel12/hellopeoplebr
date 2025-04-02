@@ -19,33 +19,17 @@ interface StudentLayoutProps {
 
 const StudentLayout: React.FC<StudentLayoutProps> = ({ 
   children, 
-  pageTitle,
-  mobileMenuOpen: externalMobileMenuOpen,
-  onMobileMenuClose
+  pageTitle
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   
   // Set up analytics tracking for auth events
   useAuthWithAnalytics();
-  
-  const mobileMenuOpen = externalMobileMenuOpen !== undefined ? externalMobileMenuOpen : internalMobileMenuOpen;
-  const setMobileMenuOpen = (state: boolean) => {
-    if (externalMobileMenuOpen !== undefined && onMobileMenuClose) {
-      if (!state) onMobileMenuClose();
-    } else {
-      setInternalMobileMenuOpen(state);
-    }
-  };
-
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -102,10 +86,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -128,17 +108,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({
           <StudentSidebar 
             collapsed={sidebarCollapsed} 
             onToggle={toggleSidebar}
-            isOpen={mobileMenuOpen}
-            onClose={() => setMobileMenuOpen(false)}
           />
         )}
         
-        {!externalMobileMenuOpen && (
-          <MobileHeader 
-            onMenuToggle={toggleMobileMenu} 
-            pageTitle={pageTitle} 
-          />
-        )}
+        <MobileHeader pageTitle={pageTitle} />
         
         <main 
           className={`flex-grow transition-all duration-300 ${
@@ -151,26 +124,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({
         >
           <div className="w-full">{children}</div>
         </main>
-        
-        {isMobile && mobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div 
-              className="absolute inset-y-0 left-0 w-64 bg-background border-r border-border"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <StudentSidebar 
-                collapsed={false} 
-                onToggle={() => {}}
-                isOpen={true}
-                onClose={() => setMobileMenuOpen(false)}
-                isMobileView
-              />
-            </div>
-          </div>
-        )}
         
         <BottomNavigation />
       </div>
