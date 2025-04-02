@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Trophy } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 interface ReviewProgressProps {
   currentItemIndex: number;
@@ -9,28 +9,30 @@ interface ReviewProgressProps {
   points: number | null;
 }
 
-const ReviewProgress: React.FC<ReviewProgressProps> = ({ 
-  currentItemIndex, 
+const ReviewProgress: React.FC<ReviewProgressProps> = ({
+  currentItemIndex,
   totalItems,
   points
 }) => {
-  const progressValue = Math.min(100, (currentItemIndex / totalItems) * 100);
-  
   return (
-    <div className="mb-4">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium">
-          {currentItemIndex}/{totalItems} itens revisados
-        </span>
+    <>
+      <div className="mb-4 flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          Questão {currentItemIndex + 1} de {totalItems}
+        </div>
         {points !== null && (
-          <span className="text-sm font-medium flex items-center">
-            <Trophy className="h-4 w-4 text-[#9b87f5] mr-1" /> 
-            {points} pontos
-          </span>
+          <div className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-sm font-medium">
+            <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+            <span>+{points} pontos</span>
+          </div>
         )}
       </div>
-      <Progress value={progressValue} className="h-2 bg-gray-200" indicatorClassName="bg-[#9b87f5]" />
-    </div>
+      
+      <Progress 
+        value={(currentItemIndex / totalItems) * 100} 
+        className="h-2 mb-6" 
+      />
+    </>
   );
 };
 

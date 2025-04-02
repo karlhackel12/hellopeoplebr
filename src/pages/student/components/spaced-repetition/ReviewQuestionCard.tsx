@@ -1,12 +1,23 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Eye, Star, Check, X } from 'lucide-react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Timer, ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import RecallRatingSystem from './RecallRatingSystem';
 
+interface Option {
+  id: string;
+  option_text: string;
+  is_correct: boolean;
+}
+
+interface Question {
+  question_text: string;
+  options: Option[];
+}
+
 interface ReviewQuestionCardProps {
-  currentQuestion: any;
+  currentQuestion: Question | null;
   selectedOption: string | null;
   showingAnswer: boolean;
   showingRating: boolean;
@@ -34,108 +45,106 @@ const ReviewQuestionCard: React.FC<ReviewQuestionCardProps> = ({
   onRateRecall,
   onPrevious
 }) => {
-  if (!currentQuestion) return null;
-  
   return (
-    <Card className="overflow-hidden mt-6">
+    <Card className="mx-auto max-w-2xl">
       <CardContent className="p-6">
-        {/* Question */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-sm text-muted-foreground">
-              Questão {currentItemIndex + 1} de {totalItems}
+        {currentQuestion ? (
+          <div>
+            <h3 className="text-xl font-medium mb-6">{currentQuestion.question_text}</h3>
+            
+            <div className="space-y-3 my-6">
+              {currentQuestion.options?.map((option) => (
+                <Button
+                  key={option.id}
+                  variant={
+                    showingAnswer 
+                      ? option.is_correct 
+                        ? "outline" 
+                        : selectedOption === option.id 
+                          ? "outline" 
+                          : "ghost"
+                      : "outline"
+                  }
+                  className={`w-full justify-start text-left h-auto py-3 px-4 ${
+                    showingAnswer && (
+                      option.is_correct 
+                        ? "border-green-500 bg-green-50" 
+                        : selectedOption === option.id 
+                          ? "border-red-500 bg-red-50"
+                          : ""
+                    )
+                  }`}
+                  onClick={() => onSelectOption(option.id)}
+                  disabled={showingAnswer}
+                >
+                  {option.option_text}
+                  
+                  {showingAnswer && option.is_correct && (
+                    <Check className="ml-auto h-5 w-5 text-green-500" />
+                  )}
+                  
+                  {showingAnswer && !option.is_correct && selectedOption === option.id && (
+                    <X className="ml-auto h-5 w-5 text-red-500" />
+                  )}
+                </Button>
+              ))}
             </div>
-            {points !== null && (
-              <div className="flex items-center text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                <Star className="h-3.5 w-3.5 mr-1 fill-purple-500" /> +{points} pontos
+            
+            {showingRating && (
+              <RecallRatingSystem 
+                onRateRecall={onRateRecall} 
+                isSubmitting={isSubmitting} 
+              />
+            )}
+            
+            {!showingAnswer && !showingRating && (
+              <div className="flex justify-end">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Timer className="h-4 w-4" />
+                  <span>Time recorded for scoring</span>
+                </div>
               </div>
             )}
           </div>
-          
-          <h3 className="text-lg font-medium mb-4">{currentQuestion.text}</h3>
-          
-          {/* Options */}
-          <div className="space-y-3">
-            {currentQuestion.options?.map((option: any) => {
-              const isSelected = selectedOption === option.id;
-              const isCorrect = option.is_correct;
-              
-              let className = "border border-input p-4 rounded-lg relative transition-all";
-              
-              if (!showingAnswer) {
-                className += isSelected 
-                  ? " bg-primary/5 border-primary" 
-                  : " hover:bg-muted/50 cursor-pointer";
-              } else {
-                if (isCorrect) {
-                  className += " bg-green-50 border-green-200";
-                } else if (isSelected && !isCorrect) {
-                  className += " bg-red-50 border-red-200";
-                }
-              }
-              
-              return (
-                <div 
-                  key={option.id}
-                  className={className}
-                  onClick={() => !showingAnswer && onSelectOption(option.id)}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">{option.text}</div>
-                    
-                    {showingAnswer && isCorrect && (
-                      <div className="bg-green-100 rounded-full p-1">
-                        <Check className="h-4 w-4 text-green-600" />
-                      </div>
-                    )}
-                    
-                    {showingAnswer && isSelected && !isCorrect && (
-                      <div className="bg-red-100 rounded-full p-1">
-                        <X className="h-4 w-4 text-red-600" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        
-        {/* Rating System */}
-        {showingRating && (
-          <div className="mt-8">
-            <h4 className="font-medium mb-3">Como você avalia sua recordação?</h4>
-            <RecallRatingSystem onRate={onRateRecall} disabled={isSubmitting} />
+        ) : (
+          <div className="py-12 text-center">
+            <p>No question data available.</p>
           </div>
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-between border-t p-4 bg-slate-50">
-        <Button 
-          variant="outline" 
-          onClick={onPrevious}
-          disabled={currentItemIndex === 0 || isSubmitting}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-        </Button>
-        
-        {!showingAnswer && (
-          <Button 
-            onClick={onShowAnswer}
-            className="bg-gradient-to-r from-[#9b87f5] to-[#a794f6] hover:from-[#8b77e5] hover:to-[#9784e6]"
-          >
-            <Eye className="h-4 w-4 mr-1" /> Ver Resposta
-          </Button>
-        )}
-        
-        {showingAnswer && !showingRating && (
-          <Button 
-            onClick={() => onRateRecall(-1)} 
-            className="bg-gradient-to-r from-[#9b87f5] to-[#a794f6] hover:from-[#8b77e5] hover:to-[#9784e6]"
-          >
-            Avaliar Recordação <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        )}
+      <CardFooter className="bg-slate-50 border-t px-6 py-4">
+        <div className="flex justify-between items-center w-full">
+          {currentItemIndex > 0 ? (
+            <Button 
+              variant="outline" 
+              onClick={onPrevious}
+              disabled={showingRating || isSubmitting}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" /> Previous
+            </Button>
+          ) : (
+            <div></div>
+          )}
+          
+          {!showingAnswer && !showingRating && (
+            <Button 
+              variant="outline" 
+              onClick={onShowAnswer}
+            >
+              Show Answer
+            </Button>
+          )}
+          
+          {showingAnswer && !showingRating && (
+            <Button 
+              variant="default" 
+              onClick={() => onRateRecall(-1)}
+            >
+              Rate Recall <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

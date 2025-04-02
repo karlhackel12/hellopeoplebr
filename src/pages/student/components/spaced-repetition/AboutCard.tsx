@@ -1,38 +1,43 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Brain, Trophy, Clock, Info } from 'lucide-react';
 
-const AboutCard: React.FC = () => {
+const AboutCard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sobre a Repetição Espaçada</CardTitle>
-        <CardDescription>
-          Memorização eficiente com base em ciência cognitiva
-        </CardDescription>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Info className="h-5 w-5" /> Sobre Repetição Espaçada
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p>
-          A repetição espaçada é uma técnica de aprendizado que utiliza intervalos crescentes de tempo entre as revisões
-          para ajudar na memorização a longo prazo.
-        </p>
-        <p>
-          Os itens que você acerta com facilidade serão revisados com menos frequência, enquanto os itens difíceis 
-          aparecerão mais vezes até que você os domine.
-        </p>
-        <div className="flex justify-center mt-2">
-          <Button variant="outline" asChild>
-            <a 
-              href="https://en.wikipedia.org/wiki/Spaced_repetition" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2"
-            >
-              Saiba mais <ExternalLink size={16} />
-            </a>
-          </Button>
+      <CardContent>
+        <div className="space-y-4 text-sm">
+          <p>
+            <strong>Repetição Espaçada</strong> é uma técnica de aprendizado que incorpora intervalos crescentes 
+            entre revisões de material previamente aprendido para explorar o efeito psicológico do espaçamento.
+          </p>
+          <div className="flex items-start gap-2">
+            <Brain className="h-5 w-5 text-purple-500 mt-1 flex-shrink-0" />
+            <p>
+              O sistema agenda automaticamente revisões com base em quão bem você se lembra de cada item, 
+              mostrando conteúdo difícil com mais frequência e conteúdo fácil com menos frequência.
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <Trophy className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
+            <p>
+              Ganhe pontos para cada questão respondida corretamente. Quanto mais rápido você responder e 
+              melhor for sua recordação, mais pontos receberá.
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <Clock className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+            <p>
+              Apenas alguns minutos de revisão por dia podem melhorar drasticamente sua retenção 
+              de longo prazo do material, em comparação com estudar tudo de uma vez.
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>

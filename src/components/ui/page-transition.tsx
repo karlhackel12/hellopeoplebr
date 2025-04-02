@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
@@ -26,9 +26,7 @@ const PageTransition: React.FC<PageTransitionProps> = ({
         mountOnEnter
         unmountOnExit
       >
-        <div className="page-transition-wrapper">
-          {children}
-        </div>
+        {children}
       </CSSTransition>
     </TransitionGroup>
   );

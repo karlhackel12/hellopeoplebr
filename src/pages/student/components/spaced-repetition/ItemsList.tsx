@@ -1,79 +1,73 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Brain, Book } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar, List } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
-interface ItemsListProps {
-  items: any[];
-  emptyMessage: string;
+type ItemsListProps = {
+  items: any[] | null;
   isLoading: boolean;
-}
+  emptyTitle: string;
+  emptyDescription: string;
+  icon: 'calendar' | 'list';
+};
 
-const ItemsList: React.FC<ItemsListProps> = ({ items, emptyMessage, isLoading }) => {
+const ItemsList: React.FC<ItemsListProps> = ({ 
+  items, 
+  isLoading, 
+  emptyTitle, 
+  emptyDescription,
+  icon 
+}) => {
+  const IconComponent = icon === 'calendar' ? Calendar : List;
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="border rounded-lg p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <Skeleton className="h-6 w-24" />
+      <div className="py-8 flex justify-center items-center">
+        <div className="animate-pulse space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <div className="h-4 w-3/4 bg-slate-200 rounded"></div>
+              <div className="h-3 w-1/2 bg-slate-200 rounded"></div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
 
   if (!items || items.length === 0) {
     return (
-      <div className="text-center py-8 border rounded-lg">
-        <div className="flex justify-center mb-2">
-          <Brain className="h-12 w-12 text-muted-foreground/50" />
+      <div className="py-12 text-center">
+        <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+          <IconComponent className="h-6 w-6 text-slate-500" />
         </div>
-        <p className="text-muted-foreground">{emptyMessage}</p>
+        <h3 className="text-lg font-medium mb-1">{emptyTitle}</h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          {emptyDescription}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {items.map((item) => {
-        const questionText = item.question?.question_text || 'Conteúdo da lição';
-        const title = item.question ? 'Pergunta' : (item.lesson?.title || 'Lição');
-        const date = new Date(item.next_review_date);
-        const formattedDate = format(date, "dd 'de' MMMM", { locale: ptBR });
-        const isToday = new Date().toDateString() === date.toDateString();
-        const isPast = date < new Date() && !isToday;
-
-        return (
-          <div key={item.id} className="border rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  {item.question ? (
-                    <Brain className="h-4 w-4 text-purple-500" />
-                  ) : (
-                    <Book className="h-4 w-4 text-blue-500" />
-                  )}
-                  <span className="font-medium text-sm">{title}</span>
-                </div>
-                <p className="text-sm line-clamp-2">{questionText}</p>
-              </div>
-              
-              <Badge variant={isPast ? "destructive" : (isToday ? "default" : "secondary")}>
-                {isToday ? 'Hoje' : (isPast ? 'Atrasado' : formattedDate)}
-              </Badge>
-            </div>
+    <div className="divide-y">
+      {items.map((item) => (
+        <div key={item.id} className="py-3 flex justify-between items-center">
+          <div>
+            <h3 className="font-medium">
+              {item.question?.question_text || item.lesson?.title || 'Item sem nome'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {icon === 'calendar' ? 'Vencimento: ' : 'Próxima revisão: '}
+              {formatDistanceToNow(new Date(item.next_review_date), { addSuffix: true })}
+            </p>
           </div>
-        );
-      })}
+          <div className="text-sm">
+            Dificuldade: {Math.round(item.difficulty * 100) / 100}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
