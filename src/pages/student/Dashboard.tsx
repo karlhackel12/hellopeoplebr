@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,8 @@ import { useSpacedRepetitionDueItems } from './hooks/spaced-repetition/useSpaced
 import { useSpacedRepetitionUserStats } from './hooks/spaced-repetition/useSpacedRepetitionUserStats';
 import { useSpacedRepetitionPoints } from './hooks/spaced-repetition/useSpacedRepetitionPoints';
 import DashboardHeader from './components/dashboard/DashboardHeader';
+
 const Dashboard: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const {
     userId
   } = useUser();
@@ -63,12 +63,10 @@ const Dashboard: React.FC = () => {
     const mins = minutes % 60;
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+
   return <>
-      <DashboardHeader onMenuToggle={toggleMobileMenu} />
-      <StudentLayout pageTitle="Painel" mobileMenuOpen={mobileMenuOpen} onMobileMenuClose={() => setMobileMenuOpen(false)}>
+      <DashboardHeader />
+      <StudentLayout pageTitle="Painel">
         <div className="space-y-6 pt-16 md:pt-0">
           {/* Streak Banner */}
           <Card className="border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5">
@@ -179,4 +177,5 @@ const Dashboard: React.FC = () => {
       </StudentLayout>
     </>;
 };
+
 export default Dashboard;
