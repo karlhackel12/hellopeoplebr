@@ -26,7 +26,7 @@ const Hero: React.FC = () => {
           </h1>
           
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto animate-slide-up animate-delay-100">
-            Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas enquanto ganha renda adicional
+            Ajude seus alunos a alcançarem fluência mais rápido com prática personalizada entre as aulas
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 animate-slide-up animate-delay-200">

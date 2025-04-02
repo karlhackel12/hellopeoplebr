@@ -17,7 +17,7 @@ const CtaSection: React.FC = () => {
                   Transforme seu Ensino de Inglês Hoje
                 </h2>
                 <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-                  Zero custo. Zero risco. Comece a economizar tempo, melhorar os resultados dos seus alunos e aumentar sua renda mensal agora mesmo.
+                  Zero custo. Zero risco. Comece a economizar tempo e melhorar os resultados dos seus alunos agora mesmo.
                 </p>
                 <div className="flex flex-col sm:flex-row items-start gap-4">
                   <Link to="/register">
@@ -80,7 +80,7 @@ const CtaSection: React.FC = () => {
                     <div className="mb-4">
                       <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-[#36B37E]/30 mb-2 mx-auto"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1zm0 .3c.7.2 1.1.7 1.2 1.3l.8 4.1A1 1 0 0 1 11 18H7a1 1 0 0 1-1-.9l-.6-4.2A1 1 0 0 1 6.2 12M17 11h-3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1zm0 .3c.7.2 1.1.7 1.2 1.3l.8 4.1a1 1 0 0 1-1 1.3h-4a1 1 0 0 1-1-.9l-.6-4.2a1 1 0 0 1 .8-1.3" stroke="currentColor" fill="currentColor"></path></svg>
                       <p className="text-muted-foreground italic mb-4">
-                        Comecei a usar o HelloPeople há 3 meses. Meus alunos praticam mais, aprendem mais rápido e estou ganhando R$400 extras por mês. A plataforma realmente transformou meu método de ensino.
+                        Comecei a usar o HelloPeople há 3 meses. Meus alunos praticam mais e aprendem mais rápido. A plataforma realmente transformou meu método de ensino.
                       </p>
                     </div>
                     <div>

@@ -14,10 +14,6 @@ const Faq: React.FC = () => {
       answer: "Recomendamos o plano que melhor atenda ao número de alunos que você tem. Temos o plano Básico (R$29,90/mês) para até 10 alunos, o Profissional (R$49,90/mês) para até 20 alunos, e o Business (R$59,90/mês) para mais de 20 alunos."
     },
     {
-      question: "Como funciona o programa de indicação?",
-      answer: "Você recebe 15% de comissão sobre o valor da assinatura dos professores que você indicar. Por exemplo, se indicar um colega que assine o plano Profissional (R$49,90/mês), você ganha R$7,48 mensalmente por cada indicação. Não há limite para o número de professores que você pode indicar."
-    },
-    {
       question: "Quanto tempo precisarei dedicar como professor?",
       answer: "O HelloPeople foi projetado para economizar seu tempo, não consumir mais dele. Após a configuração inicial (cerca de 30 minutos), você gastará apenas 15-20 minutos por semana revisando o progresso dos alunos e ajustando as atividades conforme necessário."
     },
@@ -40,10 +36,6 @@ const Faq: React.FC = () => {
     {
       question: "Como a plataforma complementa minhas aulas existentes?",
       answer: "O HelloPeople não substitui suas aulas, mas as estende para além da sala de aula. Ele reforça o que você ensina através de prática consistente, permite acompanhar o progresso dos alunos, e identifica áreas que precisam de mais atenção nas próximas aulas."
-    },
-    {
-      question: "Como recebo minhas comissões de indicação?",
-      answer: "As comissões são calculadas automaticamente e transferidas para sua conta bancária no início de cada mês. Trabalhamos com Pix e transferência bancária para facilitar o recebimento de suas comissões."
     }
   ];
 

@@ -24,26 +24,6 @@ const Pricing: React.FC = () => {
           </div>
           
           <PricingPlans />
-          
-          {/* Referral Program */}
-          <div className="mt-10 sm:mt-12 md:mt-16 max-w-4xl mx-auto bg-white rounded-xl shadow-md border border-border overflow-hidden">
-            <div className="p-4 sm:p-6 md:p-8">
-              <h3 className="text-lg sm:text-xl font-bold font-display mb-3 sm:mb-4 text-center">
-                Programa de Indicação
-              </h3>
-              <p className="text-center text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
-                Indique outros professores e ganhe 15% de comissão sobre o valor da assinatura deles
-              </p>
-              <div className="bg-[#F5F7FA] p-4 sm:p-6 rounded-lg">
-                <h4 className="text-base sm:text-lg font-medium mb-2 text-center">Como funciona:</h4>
-                <ol className="space-y-1 sm:space-y-2 list-decimal pl-5 sm:pl-6 text-sm sm:text-base">
-                  <li>Compartilhe seu código de indicação com outros professores</li>
-                  <li>Quando eles assinarem usando seu código, você recebe 15% do valor mensalmente</li>
-                  <li>Não há limite para o número de indicações</li>
-                </ol>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
     </FormProvider>
