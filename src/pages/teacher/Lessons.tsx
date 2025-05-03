@@ -1,14 +1,23 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
-import LessonCard from '@/components/teacher/LessonCard';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, BookOpen } from 'lucide-react';
+import { PlusCircle, BookOpen, Eye, Edit, Trash2, UserPlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Table, 
+  TableHeader, 
+  TableBody, 
+  TableHead, 
+  TableRow, 
+  TableCell 
+} from '@/components/ui/table';
+import { formatDistanceToNow } from 'date-fns';
+import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 
 type Lesson = {
   id: string;
@@ -22,6 +31,7 @@ const Lessons: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { trackEvent } = useAnalytics();
 
   useEffect(() => {
     fetchLessons();
@@ -59,20 +69,84 @@ const Lessons: React.FC = () => {
     navigate('/teacher/lessons/create');
   };
 
+  const handleView = (lessonId: string, isPublished: boolean) => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'preview_lesson',
+      lesson_id: lessonId,
+      is_published: isPublished
+    });
+    
+    navigate(`/teacher/lessons/preview/${lessonId}`);
+  };
+  
+  const handleEdit = (lessonId: string, isPublished: boolean) => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'edit_lesson',
+      lesson_id: lessonId,
+      is_published: isPublished
+    });
+    
+    navigate(`/teacher/lessons/edit/${lessonId}`);
+  };
+  
+  const handleAssign = (lessonId: string, isPublished: boolean) => {
+    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
+      button: 'assign_lesson',
+      lesson_id: lessonId,
+      is_published: isPublished
+    });
+    
+    navigate('/teacher/assignments', { 
+      state: { 
+        initialTab: 'create',
+        preSelectedLessonId: lessonId 
+      } 
+    });
+  };
+  
+  const handleDelete = async (lessonId: string, isPublished: boolean) => {
+    const confirm = window.confirm('Tem certeza de que deseja excluir esta lição? Esta ação não pode ser desfeita.');
+    
+    if (confirm) {
+      try {
+        // Track deletion attempt
+        trackEvent(ANALYTICS_EVENTS.TEACHER.LESSON_DELETED, {
+          lesson_id: lessonId,
+          is_published: isPublished
+        });
+        
+        const { error } = await supabase.from('lessons').delete().eq('id', lessonId);
+        
+        if (error) throw error;
+        
+        toast.success('Lição excluída', {
+          description: 'A lição foi excluída com sucesso'
+        });
+        
+        fetchLessons();
+      } catch (error) {
+        console.error('Error deleting lesson:', error);
+        toast.error('Erro', {
+          description: 'Falha ao excluir lição'
+        });
+      }
+    }
+  };
+
   return (
-    <TeacherLayout pageTitle="My Lessons">
+    <TeacherLayout pageTitle="Minhas Lições">
       <div className="mb-8 animate-fade-in">
         <div className={`flex ${isMobile ? 'flex-col' : 'justify-between'} items-${isMobile ? 'start' : 'center'} mb-6 gap-4`}>
-          {!isMobile && <h1 className="text-3xl font-bold">My Lessons</h1>}
+          {!isMobile && <h1 className="text-3xl font-bold">Minhas Lições</h1>}
           <Button onClick={handleCreateLesson} className="gap-2">
             <PlusCircle className="h-4 w-4" />
-            Create Lesson
+            Criar Lição
           </Button>
         </div>
 
         {loading ? (
           <div className="flex justify-center my-12">
-            <p>Loading lessons...</p>
+            <p>Carregando lições...</p>
           </div>
         ) : lessons.length === 0 ? (
           <Card className="bg-muted/50">
@@ -80,16 +154,80 @@ const Lessons: React.FC = () => {
               <div className="rounded-full bg-muted p-3 mb-4">
                 <BookOpen className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-medium mb-2">No lessons created yet</h3>
-              <p className="text-muted-foreground text-center mb-4">Start creating your first lesson to help students learn.</p>
-              <Button onClick={handleCreateLesson}>Create Your First Lesson</Button>
+              <h3 className="text-xl font-medium mb-2">Nenhuma lição criada ainda</h3>
+              <p className="text-muted-foreground text-center mb-4">Comece criando sua primeira lição para ajudar os alunos a aprender.</p>
+              <Button onClick={handleCreateLesson}>Criar Sua Primeira Lição</Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {lessons.map((lesson) => (
-              <LessonCard key={lesson.id} lesson={lesson} onUpdate={fetchLessons} />
-            ))}
+          <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data de Criação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lessons.map((lesson) => (
+                  <TableRow key={lesson.id}>
+                    <TableCell className="font-medium">{lesson.title}</TableCell>
+                    <TableCell>
+                      <Badge variant={lesson.is_published ? "default" : "outline"} className={lesson.is_published ? "bg-primary/10" : ""}>
+                        {lesson.is_published ? "Publicada" : "Rascunho"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleView(lesson.id, lesson.is_published)}
+                          title="Visualizar"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        {lesson.is_published && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleAssign(lesson.id, lesson.is_published)}
+                            title="Atribuir"
+                          >
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEdit(lesson.id, lesson.is_published)}
+                          title="Editar"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleDelete(lesson.id, lesson.is_published)}
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

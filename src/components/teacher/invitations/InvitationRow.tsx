@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -35,23 +34,23 @@ const InvitationRow: React.FC<InvitationRowProps> = ({
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(invitation.invitation_code);
-      toast.success('Code copied to clipboard');
+      toast.success('Código copiado para a área de transferência');
     } catch (err) {
       console.error('Failed to copy code:', err);
-      toast.error('Failed to copy code');
+      toast.error('Falha ao copiar o código');
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pendente</Badge>;
       case 'accepted':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Accepted</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Aceito</Badge>;
       case 'expired':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Expired</Badge>;
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Expirado</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejeitado</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }

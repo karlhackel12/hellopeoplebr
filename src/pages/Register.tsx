@@ -1,13 +1,11 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
 import Logo from '@/components/ui/Logo';
-import { CheckCircle2, Users, Gift } from 'lucide-react';
+import { CheckCircle2, Users } from 'lucide-react';
 import { H1 } from '@/components/ui/typography';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import PricingPlans from '@/components/home/PricingPlans';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -15,7 +13,6 @@ const Register: React.FC = () => {
   const [invitationEmail, setInvitationEmail] = useState<string | null>(null);
   const [invitationCode, setInvitationCode] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<'student' | 'teacher'>('student');
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const methods = useForm();
   const isMobile = useIsMobile();
 
@@ -45,14 +42,8 @@ const Register: React.FC = () => {
     }
   }, []);
 
-  const handlePlanSelect = (plan: string) => {
-    setSelectedPlan(plan);
-  };
-
   const handleRoleChange = (role: 'student' | 'teacher') => {
     setSelectedRole(role);
-    // Reset the selected plan when switching roles
-    setSelectedPlan(null);
   };
 
   const studentBenefits = [
@@ -63,10 +54,10 @@ const Register: React.FC = () => {
   ];
 
   const teacherBenefits = [
-    "Gerencie alunos de acordo com seu plano escolhido",
+    "Gerencie alunos de forma ilimitada",
     "Crie materiais de aprendizado personalizados com IA",
     "Acompanhe o progresso dos alunos com análises detalhadas",
-    "Ganhe comissão de 15% indicando outros professores",
+    "Organize alunos em turmas e níveis diferentes",
   ];
 
   return (
@@ -117,15 +108,8 @@ const Register: React.FC = () => {
                   <Card>
                     <CardContent className="pt-3 sm:pt-4">
                       <p className="mb-3 sm:mb-4 text-sm sm:text-base text-muted-foreground">
-                        Escolha um plano abaixo que melhor atenda às suas necessidades:
+                        Como professor, você terá acesso a todas as ferramentas para criar lições, acompanhar o progresso dos alunos e personalizar o aprendizado.
                       </p>
-                      <div className="mb-3 sm:mb-4">
-                        <PricingPlans 
-                          onPlanSelect={handlePlanSelect} 
-                          selectedPlan={selectedPlan}
-                          compact={true}
-                        />
-                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -140,7 +124,6 @@ const Register: React.FC = () => {
                 isInvited: !!invitationCode
               }}
               selectedRole={selectedRole}
-              selectedPlan={selectedPlan}
             />
           </div>
         </div>
@@ -170,13 +153,7 @@ const Register: React.FC = () => {
                     <ul className="space-y-2 lg:space-y-3">
                       {teacherBenefits.map((benefit, index) => (
                         <li key={`teacher-${index}`} className="flex items-start">
-                          {index === 0 ? (
-                            <Users className="h-4 w-4 lg:h-5 lg:w-5 text-primary shrink-0 mt-0.5 mr-2 lg:mr-3" />
-                          ) : index === 3 ? (
-                            <Gift className="h-4 w-4 lg:h-5 lg:w-5 text-primary shrink-0 mt-0.5 mr-2 lg:mr-3" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4 lg:h-5 lg:w-5 text-primary shrink-0 mt-0.5 mr-2 lg:mr-3" />
-                          )}
+                          <CheckCircle2 className="h-4 w-4 lg:h-5 lg:w-5 text-primary shrink-0 mt-0.5 mr-2 lg:mr-3" />
                           <span className="text-sm lg:text-base">{benefit}</span>
                         </li>
                       ))}
@@ -188,7 +165,7 @@ const Register: React.FC = () => {
               <div className="bg-primary/10 rounded-lg p-3 lg:p-4 mt-4 lg:mt-6">
                 {selectedRole === 'teacher' ? (
                   <p className="text-xs lg:text-sm">
-                    "Nossos planos flexíveis atendem professores com turmas de todos os tamanhos, e com nosso programa de indicação, você pode ganhar 15% de comissão das assinaturas que indicar."
+                    "Nossa plataforma gratuita está disponível para todos os professores, independente do número de alunos. Use todas as funcionalidades sem limitações."
                   </p>
                 ) : (
                   <p className="text-xs lg:text-sm">

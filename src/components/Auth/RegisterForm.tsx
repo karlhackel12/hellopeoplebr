@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +14,7 @@ import InvitationCodeField from './FormFields/InvitationCodeField';
 import SubmitButton from './FormFields/SubmitButton';
 import FormFooter from './FormFields/FormFooter';
 import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface RegisterFormProps {
   invitationData?: InvitationData;
@@ -27,7 +27,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   selectedRole = 'student',
   selectedPlan
 }) => {
-  const [hasInvitation, setHasInvitation] = useState(!!invitationData?.isInvited);
+  // Se o usuário é estudante, sempre precisamos de um código de convite
+  const [hasInvitation, setHasInvitation] = useState(
+    !!invitationData?.isInvited || selectedRole === 'student'
+  );
   const [hasReferral, setHasReferral] = useState(false);
   const [initialValidationDone, setInitialValidationDone] = useState(false);
   
@@ -90,10 +93,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   }, [invitationData, form]);
 
-  const toggleHasInvitation = useCallback(() => {
-    setHasInvitation(!hasInvitation);
-  }, [hasInvitation]);
-
   const toggleHasReferral = useCallback(() => {
     setHasReferral(!hasReferral);
   }, [hasReferral]);
@@ -111,6 +110,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   const invitationCodeValue = form.watch('invitationCode') || '';
   const role = form.watch('role');
 
+  // Determinar se o email pode ser editado
+  // Para alunos com convite, só desabilitar se tiver email no convite
+  const emailFieldDisabled = !!invitationData?.email && (invitationData?.email?.length || 0) > 0;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -119,48 +122,35 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <EmailField 
           form={form} 
           isLoading={isLoading} 
-          isDisabled={!!invitationData?.email || (hasInvitation && invitationStatus?.valid)}
+          isDisabled={emailFieldDisabled}
         />
         
         <PasswordField form={form} isLoading={isLoading} isRegister={true} />
 
-        {!invitationData?.isInvited && role === 'student' && (
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="hasInvitation"
-              checked={hasInvitation}
-              onChange={toggleHasInvitation}
-              className="rounded border-gray-300 text-primary focus:ring-primary"
+        {role === 'student' && (
+          <>
+            {!invitationData?.isInvited && (
+              <Alert className="bg-primary/10 border-primary/20">
+                <AlertCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Estudantes precisam de um código de convite para se registrar.
+                  Peça ao seu professor o código de convite.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <InvitationCodeField
+              code={invitationData?.code || invitationCodeValue}
+              onChange={handleInvitationCodeChange}
+              isLoading={isLoading}
+              isCheckingCode={isCheckingCode}
+              invitationStatus={invitationStatus}
+              readOnly={!!invitationData?.isInvited}
             />
-            <label htmlFor="hasInvitation" className="text-sm cursor-pointer">
-              Tenho um código de convite
-            </label>
-          </div>
+          </>
         )}
 
-        {hasInvitation && !invitationData?.isInvited && (
-          <InvitationCodeField
-            code={invitationCodeValue}
-            onChange={handleInvitationCodeChange}
-            isLoading={isLoading}
-            isCheckingCode={isCheckingCode}
-            invitationStatus={invitationStatus}
-          />
-        )}
-
-        {invitationData?.isInvited && (
-          <InvitationCodeField
-            code={invitationData.code || ''}
-            onChange={() => {}}
-            isLoading={isLoading}
-            isCheckingCode={isCheckingCode}
-            invitationStatus={invitationStatus}
-            readOnly={true}
-          />
-        )}
-
-        {!invitationData?.isInvited && !hasInvitation && (
+        {!invitationData?.isInvited && (
           <RoleField form={form} />
         )}
 
@@ -169,10 +159,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
             <div className="text-sm">
               <p className="text-amber-800">
-                Você precisa selecionar um plano para continuar.
+                Plataforma Gratuita
               </p>
               <p className="text-amber-700 mt-1">
-                Use as abas acima para escolher entre os planos disponíveis.
+                Você terá acesso a todas as funcionalidades sem limitações.
               </p>
             </div>
           </div>
@@ -214,7 +204,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
               disabled={isLoading}
             />
             <p className="text-xs text-muted-foreground">
-              O professor que te indicou receberá 15% de comissão sobre sua assinatura.
+              O professor que te convidou poderá acompanhar seu progresso na plataforma.
             </p>
           </div>
         )}
@@ -222,7 +212,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <SubmitButton 
           isLoading={isLoading} 
           type="register" 
-          disabled={role === 'teacher' && !selectedPlan}
+          disabled={(role === 'student' && !invitationStatus?.valid) || (role === 'teacher' && !selectedPlan)}
         />
         <FormFooter type="register" />
       </form>

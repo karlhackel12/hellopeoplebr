@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { 
@@ -82,15 +81,15 @@ const StudentsList: React.FC<StudentsListProps> = ({
           <div className="rounded-full bg-muted p-3 mb-4">
             <UserPlus className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-medium mb-2">No students found</h3>
+          <h3 className="text-xl font-medium mb-2">Nenhum aluno encontrado</h3>
           <p className="text-muted-foreground text-center max-w-md mb-6">
-            You don't have any students yet. Send invitations to your students to get started.
+            Você ainda não tem alunos. Envie convites para seus alunos para começar.
           </p>
           <Button
             onClick={handleNavigateToInvite}
             variant="default"
           >
-            Invite Students
+            Convidar Alunos
           </Button>
         </CardContent>
       </Card>
@@ -103,7 +102,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
         <div className="relative w-full sm:w-64">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search students..."
+            placeholder="Buscar alunos..."
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -116,7 +115,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
           className="flex items-center gap-1 sm:self-start"
         >
-          <span>Name</span>
+          <span>Nome</span>
           <ArrowUpDown className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -125,7 +124,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
         {sortedStudents.length === 0 ? (
           <Card className="bg-muted/50">
             <CardContent className="flex flex-col items-center justify-center py-8">
-              <p className="text-muted-foreground">No matching students found</p>
+              <p className="text-muted-foreground">Nenhum aluno encontrado com esse termo</p>
             </CardContent>
           </Card>
         ) : (
@@ -157,7 +156,7 @@ const StudentsList: React.FC<StudentsListProps> = ({
                     
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-muted-foreground">Onboarding progress</span>
+                        <span className="text-xs text-muted-foreground">Progresso de introdução</span>
                         <span className="text-xs font-medium">{calculateProgress(student)}%</span>
                       </div>
                       <Progress value={calculateProgress(student)} className="h-2" />

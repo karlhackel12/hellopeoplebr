@@ -1,4 +1,3 @@
-
 import React from 'react';
 import InvitationRow, { StudentInvitation } from './InvitationRow';
 
@@ -25,11 +24,11 @@ const InvitationsTable: React.FC<InvitationsTableProps> = ({
             <tr>
               <th className="px-4 py-3 text-left">Email</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Invitation Code</th>
-              <th className="px-4 py-3 text-left">Created</th>
-              <th className="px-4 py-3 text-left">Expires</th>
-              <th className="px-4 py-3 text-left">Used By</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3 text-left">Código de Convite</th>
+              <th className="px-4 py-3 text-left">Criado em</th>
+              <th className="px-4 py-3 text-left">Expira em</th>
+              <th className="px-4 py-3 text-left">Utilizado por</th>
+              <th className="px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

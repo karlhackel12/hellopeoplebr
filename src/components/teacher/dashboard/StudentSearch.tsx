@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,17 +24,44 @@ const StudentSearch: React.FC = () => {
     
     setIsSearching(true);
     try {
+      // Obter ID do professor logado
+      const { data: authData } = await supabase.auth.getUser();
+      const teacherId = authData.user?.id;
+      
+      if (!teacherId) throw new Error("Não autenticado");
+      
+      // Buscar IDs dos alunos deste professor através dos convites
+      const { data: invitedStudents, error: invError } = await supabase
+        .from('student_invitations')
+        .select('user_id')
+        .eq('invited_by', teacherId)
+        .eq('status', 'accepted')
+        .not('user_id', 'is', null);
+        
+      if (invError) throw invError;
+      
+      const studentIds = invitedStudents
+        ?.filter(invitation => invitation.user_id)
+        .map(invitation => invitation.user_id) || [];
+      
+      if (studentIds.length === 0) {
+        setSearchResults([]);
+        return;
+      }
+      
+      // Buscar perfis dos alunos que correspondem ao termo de busca
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url')
-        .eq('role', 'student')
+        .in('id', studentIds)
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`)
         .limit(5);
       
       if (error) throw error;
       setSearchResults(data || []);
     } catch (error) {
-      console.error('Error searching students:', error);
+      console.error('Erro ao buscar alunos:', error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }

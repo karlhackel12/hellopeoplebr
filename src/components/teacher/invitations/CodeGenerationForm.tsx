@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addDays } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Share2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 const generateCodeSchema = z.object({
   note: z.string().optional(),
@@ -115,6 +115,23 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
     }
   };
 
+  const handleShareCode = async () => {
+    if (invitationCode && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Código de convite HelloPeople',
+          text: `Aqui está seu código de convite para a plataforma HelloPeople: ${invitationCode}. Use-o para se registrar em hellopeoplebr.com.`
+        });
+        toast.success('Compartilhamento iniciado');
+      } catch (err) {
+        console.error('Falha ao compartilhar:', err);
+        // Usuário pode ter cancelado o compartilhamento, então não mostramos erro
+      }
+    } else {
+      handleCopyCode();
+    }
+  };
+
   // Reset the generated code and form
   const handleGenerateAnother = () => {
     setInvitationCode(null);
@@ -123,39 +140,56 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
 
   if (invitationCode) {
     return (
-      <div className="space-y-6">
-        <div className="bg-muted p-6 rounded-lg text-center">
-          <Badge className="mb-2">Código de Convite</Badge>
-          <div className="text-2xl font-mono tracking-wider my-3">{invitationCode}</div>
-          <div className="flex justify-center gap-2 mt-4">
-            <Button 
-              onClick={handleCopyCode} 
-              variant="outline" 
-              className="flex items-center gap-2"
-            >
-              {copySuccess ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span>Copiado!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  <span>Copiar Código</span>
-                </>
+      <Card className="p-6 border-2 border-primary/20">
+        <div className="space-y-6">
+          <div className="bg-primary/10 p-6 rounded-lg text-center">
+            <Badge variant="default" className="mb-2 bg-primary text-white">Código de Convite</Badge>
+            <div className="text-3xl font-mono tracking-wider my-4 font-bold">{invitationCode}</div>
+            <div className="flex justify-center gap-2 mt-4">
+              <Button 
+                onClick={handleCopyCode} 
+                variant="outline" 
+                className="flex items-center gap-2"
+              >
+                {copySuccess ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span>Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    <span>Copiar Código</span>
+                  </>
+                )}
+              </Button>
+              {navigator.share && (
+                <Button 
+                  onClick={handleShareCode} 
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span>Compartilhar</span>
+                </Button>
               )}
-            </Button>
-            <Button onClick={handleGenerateAnother} variant="secondary">Gerar Outro</Button>
+              <Button onClick={handleGenerateAnother} variant="secondary">Gerar Outro</Button>
+            </div>
           </div>
+          
+          <Alert>
+            <AlertDescription>
+              <p className="font-medium">Próximos passos:</p>
+              <ol className="list-decimal pl-5 mt-2 space-y-1">
+                <li>Compartilhe este código com seu aluno via WhatsApp, SMS ou pessoalmente</li>
+                <li>O aluno deve acessar a plataforma e usar este código durante o registro</li>
+                <li>Assim que registrado, o aluno aparecerá automaticamente na sua lista</li>
+              </ol>
+              <p className="mt-2 text-sm text-muted-foreground">Este código expirará em 30 dias se não for usado.</p>
+            </AlertDescription>
+          </Alert>
         </div>
-        
-        <Alert>
-          <AlertDescription>
-            <p>Compartilhe este código com seu aluno. Ele deverá informá-lo ao criar sua conta.</p>
-            <p className="mt-2 text-sm text-muted-foreground">Este código expirará em 30 dias se não for usado.</p>
-          </AlertDescription>
-        </Alert>
-      </div>
+      </Card>
     );
   }
 
@@ -167,9 +201,9 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
           name="note"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Observação (Opcional)</FormLabel>
+              <FormLabel>Identificação (Opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="Apenas para fins de controle" {...field} />
+                <Input placeholder="Ex: 'Aluno da turma 301', 'João Silva'" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -180,15 +214,10 @@ const CodeGenerationForm: React.FC<CodeGenerationFormProps> = ({ onSuccess }) =>
           type="submit" 
           className="w-full"
           disabled={isGenerating}
+          size="lg"
         >
           {isGenerating ? 'Gerando...' : 'Gerar Código de Convite'}
         </Button>
-        
-        <Alert>
-          <AlertDescription>
-            Você precisará compartilhar manualmente este código com seu aluno. Ele deverá informá-lo durante o cadastro.
-          </AlertDescription>
-        </Alert>
       </form>
     </Form>
   );

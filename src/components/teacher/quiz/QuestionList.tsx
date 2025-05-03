@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -19,9 +18,9 @@ const QuestionList: React.FC<QuestionListProps> = ({
   if (questions.length === 0) {
     return (
       <div className="text-center py-12 border rounded-md bg-muted">
-        <p className="text-muted-foreground">No questions added yet</p>
+        <p className="text-muted-foreground">Nenhuma pergunta adicionada ainda</p>
         <Button variant="outline" onClick={() => {}} className="mt-4">
-          Add your first question
+          Adicione sua primeira pergunta
         </Button>
       </div>
     );
@@ -40,16 +39,16 @@ const QuestionList: React.FC<QuestionListProps> = ({
           <AccordionContent>
             <div className="pl-6 pr-2 pb-2">
               <div className="mb-2">
-                <span className="text-sm font-medium">Type:</span>{' '}
-                <span className="text-sm capitalize">{question.question_type.replace('_', ' ')}</span>
+                <span className="text-sm font-medium">Tipo:</span>{' '}
+                <span className="text-sm capitalize">{question.question_type.replace('_', ' ').replace('multiple choice', 'múltipla escolha').replace('true false', 'verdadeiro/falso')}</span>
               </div>
               <div className="mb-4">
-                <span className="text-sm font-medium">Points:</span>{' '}
+                <span className="text-sm font-medium">Pontos:</span>{' '}
                 <span className="text-sm">{question.points}</span>
               </div>
               
               <div className="mb-4">
-                <span className="text-sm font-medium">Options:</span>
+                <span className="text-sm font-medium">Opções:</span>
                 <ul className="mt-2 space-y-2">
                   {question.options?.map((option) => (
                     <li key={option.id} className="flex items-center">
@@ -63,7 +62,7 @@ const QuestionList: React.FC<QuestionListProps> = ({
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => onEditQuestion(question)} className="gap-1">
                   <PlusCircle className="h-4 w-4" />
-                  Edit
+                  Editar
                 </Button>
                 <Button
                   variant="ghost"
@@ -72,7 +71,7 @@ const QuestionList: React.FC<QuestionListProps> = ({
                   className="text-destructive gap-1"
                 >
                   <MinusCircle className="h-4 w-4" />
-                  Delete
+                  Excluir
                 </Button>
               </div>
             </div>

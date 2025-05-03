@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Clock, DollarSign, TrendingUp, Users } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 const forgettingCurveData = [
@@ -94,39 +93,46 @@ const Benefits: React.FC = () => {
                 <h4 className="text-lg font-semibold mb-2 text-center">Curva do Esquecimento - Alunos de Inglês</h4>
                 
                 <div className="h-[280px] w-full">
-                  <ChartContainer 
-                    config={chartConfig}
-                    className="h-full w-full"
+                  <LineChart
+                    width={415}
+                    height={280}
+                    data={forgettingCurveData}
+                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
                   >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={forgettingCurveData}
-                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis 
-                          dataKey="semana" 
-                          label={{ value: 'Semanas sem prática', position: 'bottom', offset: 0 }}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis 
-                          label={{ value: 'Retenção de Memória (%)', angle: -90, position: 'insideLeft' }}
-                          tick={{ fontSize: 12 }}
-                          domain={[0, 100]}
-                        />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Line 
-                          type="monotone" 
-                          dataKey="retencao" 
-                          name="Retenção de Memória"
-                          stroke="#FF5630" 
-                          strokeWidth={3}
-                          dot={{ r: 4 }}
-                          activeDot={{ r: 6, stroke: '#FF5630', strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis 
+                      dataKey="semana" 
+                      label={{ value: 'Semanas sem prática', position: 'bottom', offset: 0 }}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      label={{ value: 'Retenção de Memória (%)', angle: -90, position: 'insideLeft' }}
+                      tick={{ fontSize: 12 }}
+                      domain={[0, 100]}
+                    />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
+                              <p className="font-medium">{`${payload[0].value}% de retenção`}</p>
+                              <p className="text-xs text-gray-500">{`Semana ${payload[0].payload.semana}`}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="retencao" 
+                      name="Retenção de Memória"
+                      stroke="#FF5630" 
+                      strokeWidth={3}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6, stroke: '#FF5630', strokeWidth: 2 }}
+                    />
+                  </LineChart>
                 </div>
                 
                 <div className="mt-2 flex justify-between text-xs text-muted-foreground px-2">

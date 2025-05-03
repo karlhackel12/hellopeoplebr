@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
@@ -110,7 +109,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <p>Loading quiz data...</p>
+        <p>Carregando dados do questionário...</p>
       </div>
     );
   }
@@ -133,7 +132,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
       {quiz ? (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">Questions</h2>
+            <h2 className="text-2xl font-semibold">Perguntas</h2>
             {!addingQuestion && (
               <Button 
                 onClick={() => {
@@ -146,7 +145,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
                 className="gap-2"
               >
                 <PlusCircle className="h-4 w-4" />
-                Add Question
+                Adicionar Pergunta
               </Button>
             )}
           </div>
@@ -197,9 +196,9 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ lessonId }) => {
         </div>
       ) : (
         <div className="text-center py-12 border rounded-md bg-muted">
-          <p className="mb-4">Create a quiz for this lesson</p>
+          <p className="mb-4">Crie um questionário para esta lição</p>
           <Button onClick={handleSaveQuiz} disabled={!title}>
-            Create Quiz
+            Criar Questionário
           </Button>
         </div>
       )}

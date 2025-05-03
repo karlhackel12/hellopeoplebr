@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,22 +5,24 @@ import { toast } from 'sonner';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import AssignmentForm from '@/components/teacher/AssignmentForm';
 import AssignmentsList from '@/components/teacher/AssignmentsList';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus } from 'lucide-react';
 
 const Assignments = () => {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('create');
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const initialStudentId = location.state?.studentId;
   const studentName = location.state?.studentName;
   const initialTab = location.state?.initialTab;
   const isMobile = useIsMobile();
 
-  // Set initial tab based on navigation state
+  // Se vier de uma navegação para criar tarefa, abra o diálogo automaticamente
   useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
+    if (initialTab === 'create') {
+      setIsFormOpen(true);
     }
   }, [initialTab]);
 
@@ -152,8 +153,8 @@ const Assignments = () => {
   // Handle successful assignment creation
   const handleAssignmentSuccess = () => {
     refetchAssignments();
-    // Switch to the view tab after creating
-    setActiveTab('view');
+    setIsFormOpen(false);
+    toast.success('Tarefa criada com sucesso!');
   };
 
   const isLoading = loadingStudents || loadingLessons || loadingQuizzes;
@@ -161,21 +162,22 @@ const Assignments = () => {
   return (
     <TeacherLayout pageTitle="Tarefas">
       <div className="animate-fade-in">
-        {!isMobile && (
-          <h1 className="text-3xl font-bold mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>
             {studentName ? `Tarefas para ${studentName}` : 'Tarefas dos Alunos'}
           </h1>
-        )}
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`mb-6 ${isMobile ? 'w-full' : ''}`}>
-            <TabsTrigger value="create" className={isMobile ? 'flex-1' : ''}>Criar Tarefa</TabsTrigger>
-            <TabsTrigger value="view" className={isMobile ? 'flex-1' : ''}>Ver Tarefas</TabsTrigger>
-          </TabsList>
           
-          <TabsContent value="create" className="space-y-4">
-            <div className="bg-card rounded-lg p-4 sm:p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Atribuir Conteúdo ao Aluno</h2>
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className={`${isMobile ? 'px-3' : ''}`}>
+                <Plus className="h-4 w-4 mr-2" />
+                {isMobile ? 'Nova' : 'Nova Tarefa'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
+              <DialogHeader>
+                <DialogTitle>Atribuir Conteúdo ao Aluno</DialogTitle>
+              </DialogHeader>
               <AssignmentForm 
                 students={students}
                 lessons={lessons}
@@ -184,17 +186,15 @@ const Assignments = () => {
                 initialStudentId={initialStudentId}
                 isLoading={isLoading}
               />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="view">
-            <AssignmentsList 
-              assignments={assignments} 
-              loading={loadingAssignments} 
-              onUpdate={refetchAssignments} 
-            />
-          </TabsContent>
-        </Tabs>
+            </DialogContent>
+          </Dialog>
+        </div>
+        
+        <AssignmentsList 
+          assignments={assignments} 
+          loading={loadingAssignments} 
+          onUpdate={refetchAssignments} 
+        />
       </div>
     </TeacherLayout>
   );

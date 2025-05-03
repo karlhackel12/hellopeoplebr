@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
@@ -20,9 +19,9 @@ const LessonQuizPage = () => {
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Lesson
+            Voltar para Lição
           </Button>
-          <h1 className="text-2xl font-semibold">Lesson Quiz</h1>
+          <h1 className="text-2xl font-semibold">Questionário da Lição</h1>
         </div>
 
         {lessonId && <QuizEditor lessonId={lessonId} />}

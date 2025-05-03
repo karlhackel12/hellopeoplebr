@@ -1,52 +1,51 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2, KeyRound, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { useOnboarding } from '@/components/student/OnboardingContext';
-import { UploadCloud, User, Bell, Shield } from 'lucide-react';
 
-const profileFormSchema = z.object({
-  first_name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
-  }),
-  last_name: z.string().min(2, {
-    message: "Sobrenome deve ter pelo menos 2 caracteres.",
-  }),
-  email: z.string().email({
-    message: "Por favor, insira um endereço de e-mail válido.",
-  }).optional(),
-  avatar_url: z.string().optional(),
+const passwordSchema = z.object({
+  password: z.string()
+    .min(8, "A senha deve ter pelo menos 8 caracteres")
+    .max(72, "A senha não pode ter mais de 72 caracteres")
+    .regex(/[A-Z]/, "A senha deve conter pelo menos 1 letra maiúscula")
+    .regex(/[a-z]/, "A senha deve conter pelo menos 1 letra minúscula")
+    .regex(/[0-9]/, "A senha deve conter pelo menos 1 número"),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "As senhas não correspondem",
+  path: ["confirmPassword"],
 });
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+const phoneSchema = z.object({
+  phone: z.string()
+    .min(10, "O telefone deve ter pelo menos 10 dígitos")
+    .max(15, "O telefone deve ter no máximo 15 dígitos")
+    .regex(/^\+?[0-9\s\-\(\)]+$/, "Formato de telefone inválido"),
+});
 
 const StudentSettings: React.FC = () => {
-  const queryClient = useQueryClient();
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
   const { completeStep, saveProgress } = useOnboarding();
-  const [activeTab, setActiveTab] = useState('profile');
   
-  // Busca os dados do perfil do usuário
-  const { data: profile, isLoading: loadingProfile } = useQuery({
+  // Busca o perfil do usuário
+  const { data: profile } = useQuery({
     queryKey: ['student-profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) throw new Error('Usuário não autenticado');
       
-      // Busca dados do perfil
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -55,41 +54,66 @@ const StudentSettings: React.FC = () => {
       
       if (error) throw error;
       
-      // Busca email do usuário
-      const { data: authData } = await supabase.auth.getUser();
-      
-      return {
-        ...data,
-        email: authData.user?.email || '',
-      };
+      return data;
     }
   });
-  
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
+
+  // Formulário de senha
+  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
-      first_name: '',
-      last_name: '',
-      email: '',
-      avatar_url: '',
+      password: '',
+      confirmPassword: '',
     },
-    mode: "onChange",
   });
-  
-  // Atualiza os valores do formulário quando os dados do perfil são carregados
-  React.useEffect(() => {
-    if (profile) {
-      form.reset({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        email: profile.email || '',
-        avatar_url: profile.avatar_url || '',
-      });
+
+  // Formulário de telefone
+  const phoneForm = useForm<z.infer<typeof phoneSchema>>({
+    resolver: zodResolver(phoneSchema),
+    defaultValues: {
+      phone: '',
+    },
+  });
+
+  // Atualiza o formulário de telefone quando o perfil é carregado
+  useEffect(() => {
+    if (profile && profile.phone) {
+      phoneForm.setValue('phone', profile.phone);
     }
-  }, [profile, form]);
-  
-  const updateProfileMutation = useMutation({
-    mutationFn: async (values: ProfileFormValues) => {
+  }, [profile, phoneForm]);
+
+  // Envio do formulário de senha
+  const onPasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
+    try {
+      setIsUpdatingPassword(true);
+      
+      const { error } = await supabase.auth.updateUser({ 
+        password: values.password 
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Senha atualizada com sucesso');
+      passwordForm.reset();
+      
+      // Marca a etapa de completar o perfil como concluída
+      completeStep('Complete Profile');
+      saveProgress();
+    } catch (error: any) {
+      console.error('Erro ao atualizar senha:', error);
+      toast.error('Falha ao atualizar senha', {
+        description: error.message
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  // Envio do formulário de telefone
+  const onPhoneSubmit = async (values: z.infer<typeof phoneSchema>) => {
+    try {
+      setIsUpdatingPhone(true);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) throw new Error('Usuário não autenticado');
@@ -97,231 +121,165 @@ const StudentSettings: React.FC = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: values.first_name,
-          last_name: values.last_name,
-          avatar_url: values.avatar_url,
+          phone: values.phone,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
       
       if (error) throw error;
       
-      return true;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student-profile'] });
-      toast.success('Perfil atualizado com sucesso');
+      toast.success('Número de telefone atualizado com sucesso');
       
-      // Marca a etapa "Completar Perfil" como concluída
+      // Marca a etapa de completar o perfil como concluída
       completeStep('Complete Profile');
       saveProgress();
-    },
-    onError: (error) => {
-      console.error('Erro ao atualizar perfil:', error);
-      toast.error('Falha ao atualizar perfil');
+    } catch (error: any) {
+      console.error('Erro ao atualizar telefone:', error);
+      toast.error('Falha ao atualizar telefone', {
+        description: error.message
+      });
+    } finally {
+      setIsUpdatingPhone(false);
     }
-  });
-  
-  const onSubmit = (values: ProfileFormValues) => {
-    updateProfileMutation.mutate(values);
   };
-  
+
   return (
     <StudentLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-3xl mx-auto animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Configurações da Conta</h1>
           <p className="text-muted-foreground">
-            Gerencie suas configurações e preferências de conta
+            Gerencie a segurança e contato da sua conta
           </p>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full sm:w-auto grid-cols-2 sm:grid-cols-3">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Perfil</span>
-            </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Conta</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Notificações</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="profile" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações de Perfil</CardTitle>
-                <CardDescription>
-                  Atualize suas informações pessoais
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loadingProfile ? (
-                  <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-                    <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-                  </div>
-                ) : (
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      <div className="flex flex-col sm:flex-row gap-4 items-start">
-                        <div className="flex-shrink-0">
-                          <Avatar className="h-20 w-20">
-                            <AvatarImage src={profile?.avatar_url || ''} alt={profile?.first_name} />
-                            <AvatarFallback>
-                              {profile?.first_name?.charAt(0)}{profile?.last_name?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <h3 className="font-medium">Foto de Perfil</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Sua foto de perfil será visível para seus professores
-                          </p>
-                          <div className="mt-2">
-                            <Button type="button" variant="outline" className="gap-2">
-                              <UploadCloud className="h-4 w-4" />
-                              Carregar Imagem
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="first_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nome</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="last_name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Sobrenome</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>E-mail</FormLabel>
-                            <FormControl>
-                              <Input {...field} disabled />
-                            </FormControl>
-                            <FormDescription>
-                              Entre em contato com seu professor para atualizar seu endereço de e-mail
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex justify-end">
-                        <Button 
-                          type="submit" 
-                          disabled={!form.formState.isDirty || updateProfileMutation.isPending}
-                        >
-                          {updateProfileMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações de Aprendizado</CardTitle>
-                <CardDescription>
-                  Configure sua experiência de aprendizado
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Seu Papel</Label>
-                    <div className="flex items-center mt-1">
-                      <Badge variant="secondary">Estudante</Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="account" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Segurança da Conta</CardTitle>
-                <CardDescription>
-                  Gerencie as configurações de segurança da sua conta
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Senha Atual</Label>
-                    <Input type="password" id="current-password" />
-                  </div>
+        <div className="space-y-6">
+          {/* Atualização de Senha */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-muted-foreground" />
+                <CardTitle>Alterar Senha</CardTitle>
+              </div>
+              <CardDescription>
+                Atualize sua senha para manter sua conta segura
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nova Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Nova senha" 
+                            {...field} 
+                            autoComplete="new-password"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Mínimo de 8 caracteres, incluindo uma letra maiúscula e um número
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
-                    <Input type="password" id="new-password" />
-                  </div>
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Confirme sua nova senha" 
+                            {...field} 
+                            autoComplete="new-password"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                    <Input type="password" id="confirm-password" />
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      disabled={isUpdatingPassword || !passwordForm.formState.isDirty}
+                    >
+                      {isUpdatingPassword ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Atualizando...
+                        </span>
+                      ) : "Atualizar Senha"}
+                    </Button>
                   </div>
-                  
-                  <Button className="mt-4">Alterar Senha</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
           
-          <TabsContent value="notifications" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Preferências de Notificação</CardTitle>
-                <CardDescription>
-                  Controle como você recebe notificações
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    As configurações de notificação estarão disponíveis em atualizações futuras.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          {/* Atualização de Telefone */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Phone className="h-5 w-5 text-muted-foreground" />
+                <CardTitle>Número de Telefone</CardTitle>
+              </div>
+              <CardDescription>
+                Adicione ou atualize seu número de telefone para contato
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...phoneForm}>
+                <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
+                  <FormField
+                    control={phoneForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de Telefone</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="tel" 
+                            placeholder="+55 (11) 98765-4321" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Formato: +55 (DDD) NÚMERO
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit" 
+                      disabled={isUpdatingPhone || !phoneForm.formState.isDirty}
+                    >
+                      {isUpdatingPhone ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Atualizando...
+                        </span>
+                      ) : "Atualizar Telefone"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </StudentLayout>
   );

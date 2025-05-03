@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,13 +59,13 @@ const QuizSection: React.FC<QuizSectionProps> = ({
           
           {progress?.isCompleted && (
             <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-              <CheckCircle className="mr-1 h-3 w-3" /> Completed
+              <CheckCircle className="mr-1 h-3 w-3" /> Concluído
             </Badge>
           )}
           
           {progress?.inProgress && !progress?.isCompleted && (
             <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
-              In Progress
+              Em Progresso
             </Badge>
           )}
         </div>
@@ -77,22 +76,22 @@ const QuizSection: React.FC<QuizSectionProps> = ({
           <div className="flex flex-wrap gap-3 items-center text-sm text-muted-foreground">
             <div className="flex items-center">
               <BookOpen className="mr-1 h-4 w-4" />
-              {questions.length} questions
+              {questions.length} perguntas
             </div>
             
             <div className="flex items-center">
               <Clock className="mr-1 h-4 w-4" />
-              ~{estimatedTime} minutes
+              ~{estimatedTime} minutos
             </div>
             
             <div className="flex items-center">
               <Award className="mr-1 h-4 w-4" />
-              Pass: {passPercent}%
+              Aprovação: {passPercent}%
             </div>
             
             {progress?.attempts && progress.attempts > 0 && (
               <div>
-                {progress.attempts} attempt{progress.attempts !== 1 ? 's' : ''}
+                {progress.attempts} tentativa{progress.attempts !== 1 ? 's' : ''}
               </div>
             )}
           </div>
@@ -100,7 +99,7 @@ const QuizSection: React.FC<QuizSectionProps> = ({
           {progress?.bestScore !== undefined && (
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
-                <span>Your best score</span>
+                <span>Sua melhor pontuação</span>
                 <span className={isPassed ? 'text-green-600 font-medium' : 'text-amber-600'}>
                   {progress.bestScore}%
                 </span>
@@ -117,7 +116,7 @@ const QuizSection: React.FC<QuizSectionProps> = ({
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800">
-                You have a quiz in progress. Continue where you left off.
+                Você tem um questionário em andamento. Continue de onde parou.
               </p>
             </div>
           )}
@@ -131,11 +130,11 @@ const QuizSection: React.FC<QuizSectionProps> = ({
           aria-label={hasPreviouslyStarted ? "Continue Quiz" : "Start Quiz"}
         >
           {progress?.isCompleted ? (
-            <>Review Quiz Results</>
+            <>Revisar Resultados</>
           ) : hasPreviouslyStarted ? (
-            <>Continue Quiz</>
+            <>Continuar Questionário</>
           ) : (
-            <>Start Quiz</>
+            <>Iniciar Questionário</>
           )}
           <ArrowRight className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>

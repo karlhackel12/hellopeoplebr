@@ -1,14 +1,22 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 type FormFooterProps = {
   type: 'login' | 'register' | 'forgotPassword';
+  onRegisterClick?: () => void;
 };
 
-const FormFooter: React.FC<FormFooterProps> = ({ type }) => {
+const FormFooter: React.FC<FormFooterProps> = ({ type, onRegisterClick }) => {
   const navigate = useNavigate();
+  
+  const handleRegisterClick = () => {
+    if (onRegisterClick) {
+      onRegisterClick();
+    } else {
+      navigate('/register');
+    }
+  };
   
   return (
     <div className="text-center text-sm">
@@ -18,7 +26,7 @@ const FormFooter: React.FC<FormFooterProps> = ({ type }) => {
           <Button
             variant="link"
             className="p-0 h-auto font-medium"
-            onClick={() => navigate('/register')}
+            onClick={handleRegisterClick}
             type="button"
           >
             Cadastre-se

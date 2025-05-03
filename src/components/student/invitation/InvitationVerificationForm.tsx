@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -28,11 +27,11 @@ const InvitationVerificationForm: React.FC<InvitationVerificationFormProps> = ({
           name="invitationCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Invitation Code</FormLabel>
+              <FormLabel>Código de Convite</FormLabel>
               <FormControl>
                 <Input 
                   {...field} 
-                  placeholder="Enter 8-character code" 
+                  placeholder="Digite o código de 8 caracteres" 
                   className="uppercase"
                   disabled={isLoading}
                   maxLength={8}
@@ -59,10 +58,10 @@ const InvitationVerificationForm: React.FC<InvitationVerificationFormProps> = ({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Verifying...
+              Verificando...
             </>
           ) : (
-            'Verify Invitation'
+            'Verificar Convite'
           )}
         </Button>
       </form>

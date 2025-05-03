@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
@@ -150,12 +149,14 @@ const EditLesson: React.FC = () => {
         title_length: title.length
       });
       
-      toast.success('Lesson published successfully!');
+      toast.success('Lição publicada com sucesso!', {
+        description: 'Lembre-se de atribuir esta lição aos alunos específicos na página de Tarefas.'
+      });
       setShowPublishConfirm(false);
     } catch (error) {
       console.error('Error publishing lesson:', error);
-      toast.error('Failed to publish lesson', {
-        description: 'Please try again or contact support if the problem persists.'
+      toast.error('Falha ao publicar lição', {
+        description: 'Por favor, tente novamente ou entre em contato com o suporte se o problema persistir.'
       });
     } finally {
       setPublishing(false);
@@ -223,11 +224,11 @@ const EditLesson: React.FC = () => {
           <div>
             <Button variant="ghost" onClick={handleBack} className="mb-2 p-0 -ml-2">
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to lessons
+              Voltar para lições
             </Button>
-            <h1 className="text-2xl md:text-3xl font-bold">Edit Lesson</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Editar Lição</h1>
             <p className="text-muted-foreground mt-1">
-              Make changes to your lesson content
+              Faça alterações no conteúdo da sua lição
             </p>
           </div>
           
@@ -239,7 +240,7 @@ const EditLesson: React.FC = () => {
               className="gap-2"
             >
               <Eye className="h-4 w-4" />
-              <span className={isMobile ? "hidden" : ""}>Preview</span>
+              <span className={isMobile ? "hidden" : ""}>Visualizar</span>
             </Button>
             
             {isPublished ? (
@@ -250,7 +251,7 @@ const EditLesson: React.FC = () => {
                 className="gap-2"
               >
                 <CheckCircle className="h-4 w-4 text-primary" />
-                <span className={isMobile ? "hidden" : ""}>Published</span>
+                <span className={isMobile ? "hidden" : ""}>Publicada</span>
               </Button>
             ) : (
               <Button
@@ -260,7 +261,7 @@ const EditLesson: React.FC = () => {
                 className="gap-2"
               >
                 <FileText className="h-4 w-4" />
-                <span className={isMobile ? "hidden" : ""}>Publish</span>
+                <span className={isMobile ? "hidden" : ""}>Publicar</span>
               </Button>
             )}
           </div>
@@ -270,27 +271,27 @@ const EditLesson: React.FC = () => {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">Lesson Title</Label>
+                <Label htmlFor="title">Título da Lição</Label>
                 <Input 
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter lesson title"
+                  placeholder="Insira o título da lição"
                   className="mt-1"
                 />
               </div>
               
               <div>
-                <Label htmlFor="content">Lesson Content</Label>
+                <Label htmlFor="content">Conteúdo da Lição</Label>
                 <Textarea
                   id="content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Enter lesson content in Markdown format"
+                  placeholder="Insira o conteúdo da lição em formato Markdown"
                   className="mt-1 font-mono h-64"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Use Markdown for formatting your lesson content
+                  Use Markdown para formatar o conteúdo da sua lição
                 </p>
               </div>
               
@@ -302,7 +303,7 @@ const EditLesson: React.FC = () => {
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   <Save className="h-4 w-4" />
-                  Save Changes
+                  Salvar Alterações
                 </Button>
               </div>
             </div>
@@ -314,20 +315,20 @@ const EditLesson: React.FC = () => {
       <AlertDialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Publish Lesson</AlertDialogTitle>
+            <AlertDialogTitle>Publicar Lição</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to publish this lesson? Once published, it will be visible to students.
+              Tem certeza de que deseja publicar esta lição? Uma vez publicada, ela ficará visível para os alunos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handlePublish}
               disabled={publishing}
               className="gap-2"
             >
               {publishing && <Loader2 className="h-4 w-4 animate-spin" />}
-              Publish Lesson
+              Publicar Lição
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -337,20 +338,20 @@ const EditLesson: React.FC = () => {
       <AlertDialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unpublish Lesson</AlertDialogTitle>
+            <AlertDialogTitle>Despublicar Lição</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to unpublish this lesson? It will no longer be visible to students.
+              Tem certeza de que deseja despublicar esta lição? Ela não ficará mais visível para os alunos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleUnpublish}
               disabled={publishing}
               className="gap-2"
             >
               {publishing && <Loader2 className="h-4 w-4 animate-spin" />}
-              Unpublish Lesson
+              Despublicar Lição
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { RegisterFormValues } from '../types';
@@ -38,7 +37,7 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
     setInvitationStatus(null);
     
     try {
-      console.log("Validating invitation code:", code);
+      console.log("Validando código de convite:", code);
       
       // Use the database function to validate the invitation code
       const { data, error } = await supabase.rpc(
@@ -46,21 +45,21 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
         { code: code.toUpperCase() }
       );
       
-      console.log("Validation result:", data, error);
+      console.log("Resultado da validação:", data, error);
       
       if (error) {
-        console.error("Supabase function error:", error);
+        console.error("Erro na função do Supabase:", error);
         setInvitationStatus({ 
           valid: false, 
-          message: 'Error validating code: ' + error.message 
+          message: 'Erro ao validar código: ' + error.message 
         });
         return false;
       }
       
       // Check if we got a result and if the invitation is valid
       if (!data || data.length === 0 || !data[0].is_valid) {
-        const message = data && data[0] ? data[0].message : 'Invalid invitation code';
-        console.log("Invalid invitation:", message);
+        const message = data && data[0] ? data[0].message : 'Código de convite inválido';
+        console.log("Convite inválido:", message);
         setInvitationStatus({ 
           valid: false, 
           message: message
@@ -71,7 +70,7 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
       // Extract the validation result
       const validationResult = data[0];
       
-      // For code-based invitations, there might not be an email
+      // Para convites baseados em código, pode não haver um email
       if (validationResult.student_email && validationResult.student_email.trim() !== '') {
         form.setValue('email', validationResult.student_email, { 
           shouldValidate: true,
@@ -79,21 +78,22 @@ export const useInvitationCode = (form: UseFormReturn<any>) => {
         });
       }
       
-      const teacherName = validationResult.teacher_name || 'your teacher';
+      // Obter o nome do professor formatado
+      const teacherName = validationResult.teacher_name || 'seu professor';
       
-      console.log("Valid invitation from:", teacherName);
+      console.log("Convite válido de:", teacherName);
       setInvitationStatus({ 
         valid: true, 
-        message: `Valid invitation from ${teacherName}`, 
+        message: `Convite válido de ${teacherName}`, 
         teacherName 
       });
       
       return true;
     } catch (error) {
-      console.error('Error validating invitation code:', error);
+      console.error('Erro ao validar código de convite:', error);
       setInvitationStatus({ 
         valid: false, 
-        message: 'Error validating code' 
+        message: 'Erro ao validar código' 
       });
       return false;
     } finally {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,41 +41,41 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
     <Card className="mb-8">
       <CardHeader>
         <CardTitle>
-          {currentQuestion.id ? 'Edit Question' : 'Add New Question'}
+          {currentQuestion.id ? 'Editar Pergunta' : 'Adicionar Nova Pergunta'}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           <div>
-            <Label htmlFor="question-text">Question Text</Label>
+            <Label htmlFor="question-text">Texto da Pergunta</Label>
             <Textarea
               id="question-text"
               value={currentQuestion.question_text}
               onChange={(e) => onQuestionChange('question_text', e.target.value)}
-              placeholder="Enter your question"
+              placeholder="Digite sua pergunta"
               className="mt-1"
             />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="question-type">Question Type</Label>
+              <Label htmlFor="question-type">Tipo de Pergunta</Label>
               <Select
                 value={currentQuestion.question_type}
                 onValueChange={(value) => onQuestionChange('question_type', value)}
               >
                 <SelectTrigger id="question-type" className="mt-1">
-                  <SelectValue placeholder="Select question type" />
+                  <SelectValue placeholder="Selecione o tipo de pergunta" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-                  <SelectItem value="true_false">True/False</SelectItem>
+                  <SelectItem value="multiple_choice">Múltipla Escolha</SelectItem>
+                  <SelectItem value="true_false">Verdadeiro/Falso</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <Label htmlFor="points">Points</Label>
+              <Label htmlFor="points">Pontos</Label>
               <Input
                 id="points"
                 type="number"
@@ -90,7 +89,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           
           <div>
             <div className="flex justify-between items-center mb-2">
-              <Label>Answer Options</Label>
+              <Label>Opções de Resposta</Label>
               <Button
                 variant="outline"
                 size="sm"
@@ -98,7 +97,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                 className="gap-1"
               >
                 <Plus className="h-3 w-3" />
-                Add Option
+                Adicionar Opção
               </Button>
             </div>
             
@@ -108,7 +107,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                   <Input
                     value={option.option_text}
                     onChange={(e) => onOptionChange(index, 'option_text', e.target.value)}
-                    placeholder={`Option ${index + 1}`}
+                    placeholder={`Opção ${index + 1}`}
                   />
                 </div>
                 <Button
@@ -121,12 +120,12 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
                   {option.is_correct ? (
                     <>
                       <CheckCircle className="h-4 w-4" />
-                      Correct
+                      Correta
                     </>
                   ) : (
                     <>
                       <XCircle className="h-4 w-4" />
-                      Incorrect
+                      Incorreta
                     </>
                   )}
                 </Button>
@@ -146,7 +145,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
       </CardContent>
       <div className="flex justify-end gap-2 p-6 pt-0">
         <Button variant="outline" onClick={onCancel}>
-          Cancel
+          Cancelar
         </Button>
         <Button
           onClick={onSave}
@@ -156,7 +155,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             !currentQuestion.options?.some(o => o.option_text.trim() !== '')
           }
         >
-          {saving ? 'Saving...' : 'Save Question'}
+          {saving ? 'Salvando...' : 'Salvar Pergunta'}
         </Button>
       </div>
     </Card>

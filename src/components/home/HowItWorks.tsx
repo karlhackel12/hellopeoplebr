@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserPlus, PenLine, Users, CreditCard, CalendarCheck, Award, Mic, Repeat } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -27,7 +26,7 @@ const HowItWorks: React.FC = () => {
       number: 4,
       icon: <CreditCard className="h-8 w-8 text-[#1E88E5]" />,
       title: "Receba Comissões",
-      description: "Ganhe 40% de cada assinatura automaticamente todo mês (R$15,96/aluno)."
+      description: "Acompanhe o progresso dos seus alunos com análises personalizadas e detalhadas."
     },
   ];
 

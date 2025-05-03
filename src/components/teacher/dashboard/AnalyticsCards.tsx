@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -6,7 +5,6 @@ import {
   BookOpen, 
   ClipboardCheck, 
   Brain,
-  Mic,
   Award
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -22,11 +20,17 @@ const AnalyticsCards: React.FC = () => {
       
       if (!teacherId) throw new Error("Não autenticado");
       
-      // Get student count
-      const { count: studentsCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'student');
+      // Get student count - apenas alunos deste professor
+      const { data: invitedStudents, count: studentsCount } = await supabase
+        .from('student_invitations')
+        .select('user_id', { count: 'exact' })
+        .eq('invited_by', teacherId)
+        .eq('status', 'accepted')
+        .not('user_id', 'is', null);
+      
+      const studentIds = invitedStudents
+        ?.filter(invitation => invitation.user_id)
+        .map(invitation => invitation.user_id) || [];
       
       // Get lesson count
       const { count: lessonsCount } = await supabase
@@ -34,7 +38,7 @@ const AnalyticsCards: React.FC = () => {
         .select('*', { count: 'exact', head: true })
         .eq('created_by', teacherId);
       
-      // Get assignment completion rate
+      // Get assignment completion rate - apenas para os alunos deste professor
       const { data: assignments } = await supabase
         .from('student_assignments')
         .select('status')
@@ -46,33 +50,29 @@ const AnalyticsCards: React.FC = () => {
         ? Math.round((completedAssignments / totalAssignments) * 100) 
         : 0;
       
-      // Average quiz score - now using started_at instead of created_at
+      // Average quiz score - apenas para os alunos deste professor
       const { data: quizAttempts } = await supabase
         .from('user_quiz_attempts')
-        .select('score')
-        .order('started_at', { ascending: false });
+        .select('score, user_id')
+        .order('started_at', { ascending: false })
+        .in('user_id', studentIds.length > 0 ? studentIds : ['no-students']);
       
       const totalScore = quizAttempts?.reduce((sum, attempt) => sum + attempt.score, 0) || 0;
       const averageScore = quizAttempts && quizAttempts.length > 0 
         ? Math.round(totalScore / quizAttempts.length) 
         : 0;
       
-      // Voice practice sessions count
-      const { count: voiceSessionsCount } = await supabase
-        .from('voice_practice_sessions')
-        .select('*', { count: 'exact', head: true });
-      
-      // Spaced repetition items count
+      // Spaced repetition items count - apenas para os alunos deste professor
       const { count: spacedRepetitionCount } = await supabase
         .from('spaced_repetition_items')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .in('user_id', studentIds.length > 0 ? studentIds : ['no-students']);
       
       return {
         studentsCount: studentsCount || 0,
         lessonsCount: lessonsCount || 0,
         assignmentCompletionRate: completionRate,
         averageQuizScore: averageScore,
-        voiceSessionsCount: voiceSessionsCount || 0,
         spacedRepetitionCount: spacedRepetitionCount || 0
       };
     }
@@ -106,13 +106,6 @@ const AnalyticsCards: React.FC = () => {
       icon: Award,
       description: 'Pontuação média no quiz',
       color: 'bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400'
-    },
-    {
-      title: 'Sessões de Voz',
-      value: data?.voiceSessionsCount || 0,
-      icon: Mic,
-      description: 'Sessões de prática de voz',
-      color: 'bg-red-100 text-red-700 dark:bg-red-700/20 dark:text-red-400'
     },
     {
       title: 'Repetição Espaçada',

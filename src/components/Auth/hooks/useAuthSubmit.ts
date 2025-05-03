@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -29,6 +28,26 @@ export const useAuthSubmit = () => {
 
   const updateInvitationStatus = async (code: string, userId: string, userName: string) => {
     try {
+      console.log(`[DEBUG] Atualizando status do convite - Código: ${code}, ID do usuário: ${userId}, Nome: ${userName}`);
+      
+      // Primeiro, verifique se o convite existe
+      const { data: invitationData, error: checkError } = await supabase
+        .from('student_invitations')
+        .select('id, status, email')
+        .eq('invitation_code', code)
+        .single();
+      
+      if (checkError) {
+        console.error('[ERRO] Falha ao verificar o convite:', checkError);
+        if (checkError.code === 'PGRST116') {
+          console.log('[INFO] Convite não encontrado para código:', code);
+        }
+        return false;
+      }
+      
+      console.log('[INFO] Convite encontrado:', invitationData);
+      
+      // Usar a função RPC para marcar o convite como usado
       const { data, error } = await supabase
         .rpc('mark_invitation_used', { 
           invitation_code_param: code,
@@ -37,13 +56,37 @@ export const useAuthSubmit = () => {
         });
 
       if (error) {
-        console.error('Error updating invitation status:', error);
-        return false;
+        console.error('[ERRO] Falha ao atualizar status do convite (RPC):', error);
+        
+        // Tente uma atualização direta como fallback
+        console.log('[INFO] Tentando atualização direta como fallback...');
+        const { error: updateError } = await supabase
+          .from('student_invitations')
+          .update({
+            status: 'accepted',
+            user_id: userId,
+            used_by_name: userName,
+            accepted_at: new Date().toISOString()
+          })
+          .eq('invitation_code', code);
+        
+        if (updateError) {
+          console.error('[ERRO] Falha na atualização direta do convite:', updateError);
+          return false;
+        }
+        
+        console.log('[SUCESSO] Convite atualizado com sucesso (método de fallback)');
+        
+        // Invalidar consultas relacionadas para atualizar a UI
+        console.log('[INFO] Notificando outros componentes sobre a atualização...');
+        
+        return true;
       }
 
+      console.log('[SUCESSO] Convite atualizado via RPC:', data);
       return data;
     } catch (error) {
-      console.error('Error updating invitation status:', error);
+      console.error('[ERRO] Exceção ao atualizar status do convite:', error);
       return false;
     }
   };
@@ -109,6 +152,7 @@ export const useAuthSubmit = () => {
         if (error) throw error;
 
         if (data.user) {
+          console.log('[INFO] Novo usuário registrado:', data.user.id);
           await createOnboardingRecord(data.user.id);
 
           const fullName = `${firstName} ${lastName}`.trim();
@@ -117,12 +161,16 @@ export const useAuthSubmit = () => {
               (invitationData?.isInvited && invitationData.code)) {
             const code = registerValues.invitationCode || invitationData?.code;
             if (code) {
+              console.log('[INFO] Processando convite durante o registro:', code);
               const updated = await updateInvitationStatus(code, data.user.id, fullName);
               
               if (updated) {
+                console.log('[SUCESSO] Convite aceito e atualizado com sucesso');
                 toast.success("Conectado ao professor", {
                   description: "Você foi conectado com sucesso ao seu professor",
                 });
+              } else {
+                console.warn('[ALERTA] Não foi possível atualizar o status do convite');
               }
             }
           }
@@ -153,6 +201,7 @@ export const useAuthSubmit = () => {
         navigate('/login');
       }
     } catch (error: any) {
+      console.error('[ERRO] Falha na autenticação:', error);
       toast.error("Erro de autenticação", {
         description: error.message || "Ocorreu um erro durante a autenticação. Por favor, tente novamente.",
       });

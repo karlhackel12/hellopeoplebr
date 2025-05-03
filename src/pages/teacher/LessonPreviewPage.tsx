@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,15 +57,15 @@ const LessonPreviewPage: React.FC = () => {
             onClick={handleBack}
             className="mb-4"
           >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back to Lessons
+            <ArrowLeft className="h-4 w-4 mr-1" /> Voltar para Lições
           </Button>
           
-          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>Lesson Preview</h1>
+          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>Visualização da Lição</h1>
         </div>
         
         {loading ? (
           <div className="flex justify-center my-12">
-            <p>Loading lesson preview...</p>
+            <p>Carregando visualização da lição...</p>
           </div>
         ) : lesson ? (
           <LessonPreview 
@@ -76,9 +75,9 @@ const LessonPreviewPage: React.FC = () => {
           />
         ) : (
           <div className="bg-muted p-8 rounded-lg text-center">
-            <h3 className="text-xl font-medium mb-2">Lesson not found</h3>
-            <p className="text-muted-foreground mb-4">The requested lesson could not be found.</p>
-            <Button onClick={handleBack}>Back to Lessons</Button>
+            <h3 className="text-xl font-medium mb-2">Lição não encontrada</h3>
+            <p className="text-muted-foreground mb-4">A lição solicitada não pôde ser encontrada.</p>
+            <Button onClick={handleBack}>Voltar para Lições</Button>
           </div>
         )}
       </div>

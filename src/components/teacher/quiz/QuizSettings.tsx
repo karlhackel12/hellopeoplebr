@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,20 +33,20 @@ const QuizSettings: React.FC<QuizSettingsProps> = ({
 }) => {
   return (
     <div className="bg-muted p-6 rounded-lg mb-8">
-      <h2 className="text-2xl font-semibold mb-4">Quiz Settings</h2>
+      <h2 className="text-2xl font-semibold mb-4">Configurações do Questionário</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
-          <Label htmlFor="quiz-title">Quiz Title</Label>
+          <Label htmlFor="quiz-title">Título do Questionário</Label>
           <Input
             id="quiz-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter quiz title"
+            placeholder="Digite o título do questionário"
             className="mt-1"
           />
         </div>
         <div>
-          <Label htmlFor="pass-percent">Passing Percentage</Label>
+          <Label htmlFor="pass-percent">Percentual de Aprovação</Label>
           <Input
             id="pass-percent"
             type="number"
@@ -60,12 +59,12 @@ const QuizSettings: React.FC<QuizSettingsProps> = ({
         </div>
       </div>
       <div className="mb-6">
-        <Label htmlFor="quiz-description">Description (Optional)</Label>
+        <Label htmlFor="quiz-description">Descrição (Opcional)</Label>
         <Textarea
           id="quiz-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter quiz description"
+          placeholder="Digite a descrição do questionário"
           className="mt-1"
         />
       </div>
@@ -75,11 +74,11 @@ const QuizSettings: React.FC<QuizSettingsProps> = ({
           checked={isPublished}
           onCheckedChange={setIsPublished}
         />
-        <Label htmlFor="published">Publish Quiz</Label>
+        <Label htmlFor="published">Publicar Questionário</Label>
       </div>
       <Button onClick={onSave} disabled={saving || !title} className="gap-2">
         <Save className="h-4 w-4" />
-        {saving ? 'Saving...' : 'Save Quiz Settings'}
+        {saving ? 'Salvando...' : 'Salvar Configurações do Questionário'}
       </Button>
     </div>
   );

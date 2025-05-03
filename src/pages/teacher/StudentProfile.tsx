@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
@@ -24,6 +23,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { ptBR } from 'date-fns/locale';
 
 const StudentProfile: React.FC = () => {
   const { studentId } = useParams<{ studentId: string }>();
@@ -169,7 +169,7 @@ const StudentProfile: React.FC = () => {
       <TeacherLayout>
         <div className="p-6 space-y-6">
           <Button variant="ghost" onClick={handleGoBack} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Students
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Alunos
           </Button>
           <div className="flex items-center space-x-4">
             <Skeleton className="h-16 w-16 rounded-full" />
@@ -184,10 +184,10 @@ const StudentProfile: React.FC = () => {
   }
 
   return (
-    <TeacherLayout pageTitle="Student Profile">
+    <TeacherLayout pageTitle="Perfil do Aluno">
       <div className="space-y-6">
         <Button variant="ghost" onClick={handleGoBack} className="mb-4 -ml-2">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Students
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Alunos
         </Button>
         
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -206,7 +206,7 @@ const StudentProfile: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold">{student?.first_name} {student?.last_name}</h1>
             <p className="text-muted-foreground">
-              Joined {student && format(new Date(student.created_at), 'MMMM d, yyyy')}
+              Ingressou em {student && format(new Date(student.created_at), 'd MMMM, yyyy', { locale: ptBR })}
             </p>
           </div>
         </div>
@@ -223,13 +223,13 @@ const StudentProfile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <BookOpen className="mr-2 h-4 w-4 text-primary" />
-                  Lessons Progress
+                  Progresso das Lições
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold mb-2">{studentStats?.lessons.completionRate}%</div>
                 <div className="flex items-center text-sm text-muted-foreground mb-1">
-                  <span>{studentStats?.lessons.completed} of {studentStats?.lessons.total} completed</span>
+                  <span>{studentStats?.lessons.completed} de {studentStats?.lessons.total} concluídas</span>
                 </div>
                 <Progress value={studentStats?.lessons.completionRate} className="h-2" />
               </CardContent>
@@ -239,13 +239,13 @@ const StudentProfile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Award className="mr-2 h-4 w-4 text-primary" />
-                  Quiz Performance
+                  Desempenho em Questionários
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold mb-2">{studentStats?.quizzes.averageScore}%</div>
                 <div className="flex items-center text-sm text-muted-foreground mb-1">
-                  <span>{studentStats?.quizzes.passed} of {studentStats?.quizzes.total} quizzes passed</span>
+                  <span>{studentStats?.quizzes.passed} de {studentStats?.quizzes.total} questionários aprovados</span>
                 </div>
                 <Progress value={studentStats?.quizzes.averageScore} className="h-2" />
               </CardContent>
@@ -255,7 +255,7 @@ const StudentProfile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <ClipboardCheck className="mr-2 h-4 w-4 text-primary" />
-                  Assignments
+                  Tarefas
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -265,9 +265,9 @@ const StudentProfile: React.FC = () => {
                     : 0}%
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground mb-1">
-                  <span>{studentStats?.assignments.completed} of {studentStats?.assignments.total} completed</span>
+                  <span>{studentStats?.assignments.completed} de {studentStats?.assignments.total} concluídas</span>
                   {studentStats?.assignments.overdue > 0 && (
-                    <span className="ml-2 text-red-500">{studentStats?.assignments.overdue} overdue</span>
+                    <span className="ml-2 text-red-500">{studentStats?.assignments.overdue} atrasadas</span>
                   )}
                 </div>
                 <Progress 
@@ -283,13 +283,13 @@ const StudentProfile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Mic className="mr-2 h-4 w-4 text-primary" />
-                  Voice Practice
+                  Prática de Voz
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{studentStats?.voicePractice.sessionsCount}</div>
                 <div className="text-sm text-muted-foreground">
-                  Total sessions with {studentStats?.voicePractice.totalMinutes} minutes
+                  Total de sessões com {studentStats?.voicePractice.totalMinutes} minutos
                 </div>
               </CardContent>
             </Card>
@@ -298,13 +298,13 @@ const StudentProfile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Brain className="mr-2 h-4 w-4 text-primary" />
-                  Spaced Repetition
+                  Repetição Espaçada
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{studentStats?.spacedRepetition.reviewsCount}</div>
                 <div className="text-sm text-muted-foreground">
-                  Total reviews of {studentStats?.spacedRepetition.itemsCount} items
+                  Total de revisões de {studentStats?.spacedRepetition.itemsCount} itens
                 </div>
               </CardContent>
             </Card>
@@ -313,7 +313,7 @@ const StudentProfile: React.FC = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <Star className="mr-2 h-4 w-4 text-primary" />
-                  Overall Activity
+                  Atividade Geral
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -326,7 +326,7 @@ const StudentProfile: React.FC = () => {
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Total learning activities
+                  Total de atividades de aprendizagem
                 </div>
               </CardContent>
             </Card>
@@ -334,18 +334,18 @@ const StudentProfile: React.FC = () => {
         )}
         
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
+          <h2 className="text-xl font-semibold">Atividade Recente</h2>
           
           <Tabs defaultValue="assignments">
             <TabsList className="mb-4">
               <TabsTrigger value="assignments" className="flex items-center gap-1.5">
-                <ClipboardCheck className="h-4 w-4" /> Assignments
+                <ClipboardCheck className="h-4 w-4" /> Tarefas
               </TabsTrigger>
               <TabsTrigger value="quizzes" className="flex items-center gap-1.5">
-                <Award className="h-4 w-4" /> Quizzes
+                <Award className="h-4 w-4" /> Questionários
               </TabsTrigger>
               <TabsTrigger value="voice" className="flex items-center gap-1.5">
-                <Mic className="h-4 w-4" /> Voice Practice
+                <Mic className="h-4 w-4" /> Prática de Voz
               </TabsTrigger>
             </TabsList>
             
@@ -354,16 +354,16 @@ const StudentProfile: React.FC = () => {
                 <Skeleton className="h-40 w-full" />
               ) : recentActivity?.assignments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No assignment activity yet
+                  Nenhuma atividade de tarefa ainda
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Assignment</TableHead>
+                      <TableHead>Tarefa</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead>Completed</TableHead>
+                      <TableHead>Data de Entrega</TableHead>
+                      <TableHead>Concluído</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -379,15 +379,15 @@ const StudentProfile: React.FC = () => {
                                 : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                             }`}
                           >
-                            {assignment.status === 'completed' ? 'Completed' : 
-                             assignment.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                            {assignment.status === 'completed' ? 'Concluído' : 
+                             assignment.status === 'in_progress' ? 'Em Progresso' : 'Não Iniciada'}
                           </span>
                         </TableCell>
                         <TableCell>
-                          {assignment.due_date ? format(new Date(assignment.due_date), 'MMM d, yyyy') : 'No due date'}
+                          {assignment.due_date ? format(new Date(assignment.due_date), 'd MMMM, yyyy', { locale: ptBR }) : 'Sem data de entrega'}
                         </TableCell>
                         <TableCell>
-                          {assignment.completed_at ? format(new Date(assignment.completed_at), 'MMM d, yyyy') : '-'}
+                          {assignment.completed_at ? format(new Date(assignment.completed_at), 'd MMMM, yyyy', { locale: ptBR }) : '-'}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -401,22 +401,22 @@ const StudentProfile: React.FC = () => {
                 <Skeleton className="h-40 w-full" />
               ) : recentActivity?.quizzes.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No quiz activity yet
+                  Nenhuma atividade de questionário ainda
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Quiz</TableHead>
-                      <TableHead>Score</TableHead>
-                      <TableHead>Result</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Questionário</TableHead>
+                      <TableHead>Pontuação</TableHead>
+                      <TableHead>Resultado</TableHead>
+                      <TableHead>Data</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {recentActivity?.quizzes.map((quiz) => (
                       <TableRow key={quiz.id}>
-                        <TableCell className="font-medium">{quiz.quizzes?.title || 'Unnamed Quiz'}</TableCell>
+                        <TableCell className="font-medium">{quiz.quizzes?.title || 'Questionário sem nome'}</TableCell>
                         <TableCell>{quiz.score}%</TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -425,11 +425,11 @@ const StudentProfile: React.FC = () => {
                               : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                             }`}
                           >
-                            {quiz.passed ? 'Passed' : 'Failed'}
+                            {quiz.passed ? 'Aprovado' : 'Reprovado'}
                           </span>
                         </TableCell>
                         <TableCell>
-                          {format(new Date(quiz.started_at), 'MMM d, yyyy')}
+                          {format(new Date(quiz.started_at), 'd MMMM, yyyy', { locale: ptBR })}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -443,24 +443,24 @@ const StudentProfile: React.FC = () => {
                 <Skeleton className="h-40 w-full" />
               ) : recentActivity?.voiceSessions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No voice practice activity yet
+                  Nenhuma atividade de prática de voz ainda
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Topic</TableHead>
-                      <TableHead>Duration</TableHead>
+                      <TableHead>Tópico</TableHead>
+                      <TableHead>Duração</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Data</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {recentActivity?.voiceSessions.map((session) => (
                       <TableRow key={session.id}>
-                        <TableCell className="font-medium">{session.topic || 'General Practice'}</TableCell>
+                        <TableCell className="font-medium">{session.topic || 'Prática Geral'}</TableCell>
                         <TableCell>
-                          {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} minutes` : '-'}
+                          {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} minutos` : '-'}
                         </TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -469,11 +469,11 @@ const StudentProfile: React.FC = () => {
                               : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                             }`}
                           >
-                            {session.completed_at ? 'Completed' : 'In Progress'}
+                            {session.completed_at ? 'Concluído' : 'Em Progresso'}
                           </span>
                         </TableCell>
                         <TableCell>
-                          {format(new Date(session.started_at), 'MMM d, yyyy')}
+                          {format(new Date(session.started_at), 'd MMMM, yyyy', { locale: ptBR })}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -1,14 +1,9 @@
-
 import React, { useEffect } from 'react';
-import { Separator } from "@/components/ui/separator";
 import { useViewLesson } from './hooks/useViewLesson';
-import LessonHeader from './components/LessonHeader';
-import LessonContainer from './components/lesson/LessonContainer';
-import AssignmentAlert from './components/lesson/AssignmentAlert';
-import UnpublishedQuizAlert from './components/lesson/UnpublishedQuizAlert';
 import LessonLoadingState from './components/lesson/LessonLoadingState';
 import LessonErrorState from './components/lesson/LessonErrorState';
 import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
+import LessonQuizDuolingo from '@/components/student/LessonQuizDuolingo';
 
 const LessonView: React.FC = () => {
   const { trackEvent } = useAnalytics();
@@ -20,36 +15,23 @@ const LessonView: React.FC = () => {
     progressLoading,
     isUpdating,
     
-    currentTab,
-    setCurrentTab,
     currentSectionIndex,
     sections,
-    
-    goToSection,
-    goToPreviousSection,
-    goToNextSection,
+    handleMarkLessonComplete,
     handleBack,
     
     completedSections,
     isLessonComplete,
-    handleToggleSectionCompletion,
-    handleMarkLessonComplete,
     
     assignment,
     
     hasQuiz,
     isQuizAvailable,
-    hasUnpublishedQuiz,
     quiz,
     quizQuestions,
-    
-    totalPages,
-    isFirstPage,
-    isLastPage,
-    completionPercentage
   } = useViewLesson();
   
-  // Track lesson view and completion events
+  // Track lesson view event
   useEffect(() => {
     if (!lessonLoading && lesson) {
       trackEvent(ANALYTICS_EVENTS.STUDENT.LESSON_STARTED, {
@@ -61,48 +43,48 @@ const LessonView: React.FC = () => {
     }
   }, [lessonLoading, lesson, lessonId, assignment, hasQuiz, trackEvent]);
 
-  // Track tab changes
-  const handleTabChange = (tab: 'content' | 'quiz') => {
-    setCurrentTab(tab);
-    
-    trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
-      page: `lesson_${tab}`,
-      lesson_id: lessonId
-    });
-  };
-
-  // Enhanced section navigation with analytics
-  const handleGoToSection = (index: number) => {
-    trackEvent(ANALYTICS_EVENTS.UI.NAVIGATION, {
-      action: 'go_to_section',
-      section_index: index,
-      lesson_id: lessonId
-    });
-    
-    goToSection(index);
-  };
-
-  // Enhanced section completion toggle with analytics
-  const handleSectionCompletion = (sectionTitle: string) => {
-    trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
-      button: completedSections.includes(sectionTitle) ? 'mark_section_incomplete' : 'mark_section_complete',
-      section_id: sectionTitle,
-      lesson_id: lessonId
-    });
-    
-    handleToggleSectionCompletion(sectionTitle);
-  };
-
   // Enhanced lesson completion with analytics
-  const markLessonComplete = async () => {
+  const handleLessonComplete = async (unitId: string, success: boolean) => {
     trackEvent(ANALYTICS_EVENTS.STUDENT.LESSON_COMPLETED, {
       lesson_id: lessonId,
-      completion_percentage: completionPercentage,
-      completed_sections: completedSections.length,
-      total_sections: sections.length
+      success: success,
+      unit_id: unitId
     });
     
     await handleMarkLessonComplete();
+  };
+  
+  // Converter dados da lição para o formato necessário do caminho de aprendizado
+  const convertToPathwaySections = () => {
+    // Criar uma seção principal para a lição atual
+    const lessonSections = [{
+      id: 'main-section',
+      title: 'Lição Principal',
+      completed: isLessonComplete,
+      units: [
+        // Unidade para a lição
+        {
+          id: lessonId || 'lesson',
+          title: lesson?.title || 'Lição',
+          type: 'lesson',
+          status: isLessonComplete ? 'completed' : 'available',
+          progress: completedSections.length / (sections.length || 1) * 100,
+          content: lesson?.content,
+          questions: []
+        },
+        // Unidade para o quiz, se disponível
+        ...(isQuizAvailable ? [{
+          id: quiz?.id || 'quiz',
+          title: quiz?.title || 'Quiz da Lição',
+          type: 'quiz',
+          status: isLessonComplete ? 'available' : 'locked',
+          isQuizSuccessful: false,
+          questions: quizQuestions
+        }] : [])
+      ]
+    }];
+
+    return lessonSections;
   };
   
   // Show loading state
@@ -116,58 +98,14 @@ const LessonView: React.FC = () => {
   }
   
   return (
-    <div className="container mx-auto py-10">
-      <div className="space-y-6">
-        <LessonHeader 
-          title={lesson.title}
-          isCompleted={isLessonComplete}
-          onMarkComplete={markLessonComplete}
-          onBack={handleBack}
-          isUpdating={isUpdating}
-        />
-        
-        <Separator />
-
-        <AssignmentAlert assignment={assignment} />
-        
-        <UnpublishedQuizAlert hasUnpublishedQuiz={hasUnpublishedQuiz} />
-        
-        <LessonContainer 
-          currentTab={currentTab}
-          setCurrentTab={handleTabChange}
-          sections={sections}
-          currentSectionIndex={currentSectionIndex}
-          completedSections={completedSections}
-          goToSection={handleGoToSection}
-          onToggleSectionCompletion={handleSectionCompletion}
-          goToPreviousSection={() => {
-            trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
-              button: 'previous_section',
-              lesson_id: lessonId,
-              current_section: currentSectionIndex
-            });
-            goToPreviousSection();
-          }}
-          goToNextSection={() => {
-            trackEvent(ANALYTICS_EVENTS.UI.BUTTON_CLICKED, {
-              button: 'next_section',
-              lesson_id: lessonId,
-              current_section: currentSectionIndex
-            });
-            goToNextSection();
-          }}
-          isFirstPage={isFirstPage}
-          isLastPage={isLastPage}
-          completionPercentage={completionPercentage}
-          totalPages={totalPages}
-          hasQuiz={isQuizAvailable}
-          quizQuestions={quizQuestions || []}
-          quizId={quiz?.id || ''}
-          lessonId={lessonId}
-          quizTitle={quiz?.title || 'Quiz da Lição'}
-          quizPassPercent={quiz?.pass_percent || 70}
-        />
-      </div>
+    <div className="container mx-auto py-6">
+      <LessonQuizDuolingo
+        lessonId={lessonId || ''}
+        lessonTitle={lesson.title}
+        sections={convertToPathwaySections()}
+        onComplete={handleLessonComplete}
+        onBack={handleBack}
+      />
     </div>
   );
 };

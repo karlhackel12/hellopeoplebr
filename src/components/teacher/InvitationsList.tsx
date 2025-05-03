@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { StudentInvitation } from './invitations/InvitationRow';
 import { useInvitationActions } from './invitations/useInvitationActions';
@@ -29,10 +28,18 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
     isProcessing
   } = useInvitationActions(onUpdate);
 
-  // Call onUpdate when component mounts to ensure data is fresh
+  // Configurando um intervalo para atualizar a lista de convites
   useEffect(() => {
     console.log('InvitationsList mounted, fetching fresh data');
     onUpdate();
+    
+    // Atualiza a cada 15 segundos
+    const intervalId = setInterval(() => {
+      console.log('Auto-refresh interval triggered');
+      onUpdate();
+    }, 15000);
+    
+    return () => clearInterval(intervalId);
   }, [onUpdate]);
 
   // Show loading state when initially loading or during batch operations
@@ -51,23 +58,27 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
         <Alert className="bg-muted animate-pulse">
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
           <AlertDescription>
-            Processing your request...
+            Processando sua solicitação...
           </AlertDescription>
         </Alert>
       )}
       
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between mb-4">
+        <div className="text-sm text-muted-foreground">
+          {invitations.length} {invitations.length === 1 ? 'convite' : 'convites'} pendente{invitations.length !== 1 ? 's' : ''}
+        </div>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={() => {
             console.log('Manual refresh requested');
+            toast.info('Atualizando convites...');
             onUpdate();
           }}
           className="flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Refresh</span>
+          <span>Atualizar</span>
         </Button>
       </div>
       
