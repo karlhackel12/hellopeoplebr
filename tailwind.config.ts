@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +60,7 @@ export default {
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
+          DEFAULT: 'rgb(var(--color-secondary))',
           foreground: 'hsl(var(--secondary-foreground))'
         },
         destructive: {
@@ -83,6 +82,18 @@ export default {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
+        },
+        warning: {
+          DEFAULT: 'rgb(var(--color-warning))',
+          foreground: 'hsl(var(--foreground))'
+        },
+        success: {
+          DEFAULT: 'rgb(var(--color-success))',
+          foreground: 'hsl(var(--foreground))'
+        },
+        info: {
+          DEFAULT: 'rgb(var(--color-info))',
+          foreground: 'hsl(var(--foreground))'
         },
         neutral: {
           DEFAULT: 'rgb(var(--color-neutral))',

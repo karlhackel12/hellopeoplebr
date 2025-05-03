@@ -21,11 +21,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface StudentPerformance {
   id: string;
   name: string;
+  avatar: string | null;
   quizAvg: number;
   quizCount: number;
-  completionRate: number;
-  totalAssignments: number;
-  completedAssignments: number;
+  quizTotal: number;
+  completionRate?: number;
+  totalAssignments?: number;
+  completedAssignments?: number;
+  assignments?: Array<{
+    status: string;
+    completedAt: string | null;
+    lessonTitle: string;
+    assignedAt?: string | null;
+  }>;
   spacedRepItems?: number;
 }
 
@@ -91,7 +99,7 @@ const PerformanceChart: React.FC = () => {
       // Get quiz attempts only for teacher's students
       const { data: quizAttempts, error: quizError } = await supabase
         .from('user_quiz_attempts')
-        .select('quiz_id, score, user_id, lesson_id')
+        .select('quiz_id, score, user_id')
         .in('user_id', studentIds)
         .order('started_at', { ascending: false });
       
@@ -113,25 +121,9 @@ const PerformanceChart: React.FC = () => {
             avatar: studentAvatars[studentId] || null,
             quizAvg: 0,
             quizCount: 0,
-            quizTotal: 0,
-            lessonData: {}
+            quizTotal: 0
           };
         }
-        
-        // Acompanhar desempenho por lição
-        if (!studentPerformance[studentId].lessonData[attempt.lesson_id]) {
-          studentPerformance[studentId].lessonData[attempt.lesson_id] = {
-            scores: [],
-            attempts: 0,
-            avgScore: 0
-          };
-        }
-        
-        studentPerformance[studentId].lessonData[attempt.lesson_id].scores.push(attempt.score);
-        studentPerformance[studentId].lessonData[attempt.lesson_id].attempts += 1;
-        studentPerformance[studentId].lessonData[attempt.lesson_id].avgScore = 
-          studentPerformance[studentId].lessonData[attempt.lesson_id].scores.reduce((a: number, b: number) => a + b, 0) / 
-          studentPerformance[studentId].lessonData[attempt.lesson_id].attempts;
         
         studentPerformance[studentId].quizTotal += attempt.score;
         studentPerformance[studentId].quizCount += 1;
@@ -143,7 +135,7 @@ const PerformanceChart: React.FC = () => {
       // Obter dados de tarefas concluídas
       const { data: assignments, error: assignmentsError } = await supabase
         .from('student_assignments')
-        .select('status, student_id, completed_at, assigned_at, lesson:lesson_id(title)')
+        .select('status, student_id, completed_at, lesson:lesson_id(title)')
         .in('student_id', studentIds)
         .eq('assigned_by', teacherId);
         
@@ -167,8 +159,7 @@ const PerformanceChart: React.FC = () => {
             completionRate: 0,
             totalAssignments: 0,
             completedAssignments: 0,
-            assignments: [],
-            lessonData: {}
+            assignments: []
           };
         }
         
@@ -179,7 +170,6 @@ const PerformanceChart: React.FC = () => {
         studentPerformance[studentId].assignments.push({
           status: assignment.status,
           completedAt: assignment.completed_at,
-          assignedAt: assignment.assigned_at,
           lessonTitle: assignment.lesson?.title || 'Lição desconhecida'
         });
         
@@ -202,7 +192,7 @@ const PerformanceChart: React.FC = () => {
       // Obter dados de repetição espaçada
       const { data: spacedRepItems, error: spacedError } = await supabase
         .from('spaced_repetition_items')
-        .select('user_id, status, next_review_at')
+        .select('user_id, next_review_at')
         .in('user_id', studentIds);
         
       if (spacedError) {
@@ -452,7 +442,10 @@ const PerformanceChart: React.FC = () => {
                           <span className="text-sm">Quizzes completados</span>
                           <span className="text-sm font-medium">{selectedStudent.quizCount || 0}</span>
                         </div>
-                        <Progress value={selectedStudent.quizCount ? 100 : 0} className="h-2" />
+                        <Progress 
+                          value={selectedStudent.quizAvg} 
+                          className="h-2 mt-1"
+                        />
                       </div>
                       
                       <div>
@@ -462,7 +455,10 @@ const PerformanceChart: React.FC = () => {
                             {selectedStudent.completedAssignments || 0} de {selectedStudent.totalAssignments || 0}
                           </span>
                         </div>
-                        <Progress value={selectedStudent.completionRate || 0} className="h-2" />
+                        <Progress 
+                          value={selectedStudent.completionRate || 0} 
+                          className="h-2 mt-1"
+                        />
                       </div>
                     </div>
                   </CardContent>
@@ -475,28 +471,23 @@ const PerformanceChart: React.FC = () => {
                     <CardTitle>Desempenho em Lições e Quizzes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {Object.keys(selectedStudent.lessonData || {}).length > 0 ? (
-                      <div className="space-y-4">
-                        {Object.entries(selectedStudent.lessonData || {}).map(([lessonId, data]: [string, any]) => (
-                          <div key={lessonId} className="border rounded-md p-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <h4 className="font-medium">Lição {lessonId}</h4>
-                              <Badge>{data.attempts} tentativa(s)</Badge>
-                            </div>
-                            <div className="flex justify-between mb-1">
-                              <span className="text-sm">Nota média</span>
-                              <span className="text-sm font-medium">{Math.round(data.avgScore)}%</span>
-                            </div>
-                            <Progress value={data.avgScore} className="h-2" />
+                    {/* Comentar ou remover seções que usam lessonData */}
+                    {/* <div className="flex flex-col gap-2 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700">Desempenho por lição</h4>
+                      {Object.keys(student.lessonData).length > 0 ? (
+                        Object.entries(student.lessonData).map(([lessonId, data]) => (
+                          <div key={lessonId} className="flex flex-col gap-1">
+                            <p className="text-xs text-gray-600">{`Lição ${lessonId}`}</p>
+                            <Progress 
+                              value={data.avgScore} 
+                              className="h-2"
+                            />
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                        <p>Nenhum quiz foi concluído por este aluno ainda</p>
-                      </div>
-                    )}
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-500">Nenhuma tentativa registrada</p>
+                      )}
+                    </div> */}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -510,7 +501,7 @@ const PerformanceChart: React.FC = () => {
                     {selectedStudent.assignments && selectedStudent.assignments.length > 0 ? (
                       <div className="space-y-4">
                         {selectedStudent.assignments.map((assignment: any, index: number) => {
-                          const assignedDate = new Date(assignment.assignedAt);
+                          const assignedDate = assignment.assignedAt ? new Date(assignment.assignedAt) : new Date();
                           const completedDate = assignment.completedAt ? new Date(assignment.completedAt) : null;
                           const timeDiff = completedDate 
                             ? Math.round((completedDate.getTime() - assignedDate.getTime()) / (1000 * 60 * 60 * 24)) 
@@ -524,7 +515,9 @@ const PerformanceChart: React.FC = () => {
                                   <div className="flex items-center gap-2 mt-1">
                                     <Clock className="h-4 w-4 text-muted-foreground" />
                                     <span className="text-sm text-muted-foreground">
-                                      Atribuída em {assignedDate.toLocaleDateString()}
+                                      {assignment.assignedAt 
+                                        ? `Atribuída em ${assignedDate.toLocaleDateString()}`
+                                        : "Data de atribuição não disponível"}
                                     </span>
                                   </div>
                                 </div>

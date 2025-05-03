@@ -4,27 +4,37 @@
 
 @layer base {
   :root {
-    --color-primary: 54 179 126; /* #36B37E */
-    --color-danger: 255 86 48; /* #FF5630 */
-    --color-accent: 153 141 217; /* #998DD9 */
-    --color-neutral: 37 56 88; /* #253858 */
+    /* Cores principais */
+    --color-primary: 54 179 126; /* #36B37E - Verde principal para ações e elementos importantes */
+    --color-secondary: 61 112 178; /* #3D70B2 - Azul para elementos secundários e informações */
+    --color-accent: 153 141 217; /* #998DD9 - Roxo para destaques e elementos especiais */
+    --color-warning: 255 171 0; /* #FFAB00 - Laranja para avisos */
+    --color-danger: 255 86 48; /* #FF5630 - Vermelho para erros e ações destrutivas */
+    --color-success: 54 179 126; /* #36B37E - Verde para confirmações e sucesso */
+    --color-info: 61 112 178; /* #3D70B2 - Azul para informações */
+    --color-neutral: 37 56 88; /* #253858 - Cor neutra para textos principais */
 
+    /* Cores de fundo e texto */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Cores do tema - compatibilidade com componentes */
     --primary: 54 179 126;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 61 112 178; /* Atualizado para usar o azul como secundário */
+    --secondary-foreground: 210 40% 98%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 153 141 217;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 255 86 48;
     --destructive-foreground: 210 40% 98%;
+    
+    /* Bordas e inputs */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 54 179 126;
@@ -32,15 +42,18 @@
   }
 
   .dark {
+    /* Cores de fundo e texto */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
+    
+    /* Cores do tema - compatibilidade com componentes */
     --primary: 54 179 126;
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 61 112 178; /* Atualizado para usar o azul como secundário */
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
@@ -48,6 +61,8 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 255 86 48;
     --destructive-foreground: 210 40% 98%;
+    
+    /* Bordas e inputs */
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 54 179 126;
@@ -116,6 +131,89 @@
   
   .body-small {
     @apply text-sm font-sans;
+  }
+
+  /* Utilitários para as novas cores */
+  .bg-info {
+    background-color: rgb(var(--color-info));
+  }
+  
+  .text-info {
+    color: rgb(var(--color-info));
+  }
+  
+  .bg-success {
+    background-color: rgb(var(--color-success));
+  }
+  
+  .text-success {
+    color: rgb(var(--color-success));
+  }
+  
+  .bg-warning {
+    background-color: rgb(var(--color-warning));
+  }
+  
+  .text-warning {
+    color: rgb(var(--color-warning));
+  }
+  
+  /* Utilitários para botões com as novas cores */
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary/90;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-white hover:bg-accent/90;
+  }
+  
+  .btn-warning {
+    @apply bg-warning text-black hover:bg-warning/90;
+  }
+  
+  .btn-danger {
+    @apply bg-destructive text-white hover:bg-destructive/90;
+  }
+  
+  .btn-success {
+    @apply bg-success text-white hover:bg-success/90;
+  }
+  
+  .btn-info {
+    @apply bg-info text-white hover:bg-info/90;
+  }
+  
+  /* Utilitários para bordas */
+  .border-primary {
+    border-color: rgb(var(--color-primary));
+  }
+  
+  .border-secondary {
+    border-color: rgb(var(--color-secondary));
+  }
+  
+  .border-accent {
+    border-color: rgb(var(--color-accent));
+  }
+  
+  .border-warning {
+    border-color: rgb(var(--color-warning));
+  }
+  
+  .border-danger {
+    border-color: rgb(var(--color-danger));
+  }
+  
+  .border-success {
+    border-color: rgb(var(--color-success));
+  }
+  
+  .border-info {
+    border-color: rgb(var(--color-info));
   }
   
   .animate-delay-100 {

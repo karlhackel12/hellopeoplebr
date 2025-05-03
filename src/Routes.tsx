@@ -5,6 +5,7 @@ import CreateLesson from '@/pages/teacher/CreateLesson';
 import EditLesson from '@/pages/teacher/EditLesson';
 import NotFound from '@/pages/NotFound';
 import { StudentRoutes } from './routes/studentRoutes';
+import { DesignSystemRoutes } from './routes/designSystem';
 import LandscapeFooter from './components/layout/LandscapeFooter';
 import { useIsMobile } from './hooks/use-mobile';
 
@@ -28,6 +29,9 @@ export default function AppRoutes() {
           
           {/* Student routes */}
           <Route path="/student/*" element={<StudentRoutes />} />
+          
+          {/* Design System */}
+          <Route path="/design/*" element={<DesignSystemRoutes />} />
           
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
