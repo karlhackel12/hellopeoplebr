@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
 import Lessons from '@/pages/teacher/Lessons';
@@ -8,6 +9,7 @@ import { StudentRoutes } from './routes/studentRoutes';
 import { DesignSystemRoutes } from './routes/designSystem';
 import LandscapeFooter from './components/layout/LandscapeFooter';
 import { useIsMobile } from './hooks/use-mobile';
+import Students from '@/pages/teacher/Students';
 
 export default function AppRoutes() {
   const isMobile = useIsMobile();
@@ -26,6 +28,7 @@ export default function AppRoutes() {
           <Route path="/teacher/lessons" element={<Lessons />} />
           <Route path="/teacher/lessons/create" element={<CreateLesson />} />
           <Route path="/teacher/lessons/edit/:id" element={<EditLesson />} />
+          <Route path="/teacher/students" element={<Students />} />
           
           {/* Student routes */}
           <Route path="/student/*" element={<StudentRoutes />} />

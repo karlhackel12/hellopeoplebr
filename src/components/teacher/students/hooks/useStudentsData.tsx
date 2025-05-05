@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,7 +31,7 @@ export const useStudentsData = () => {
         // Get students who were invited by this teacher
         const { data: invitedStudents, error: invitationsError } = await supabase
           .from('student_invitations')
-          .select('id, user_id, email, status, invitation_code')
+          .select('id, user_id, email, status, invitation_code, used_by_name, accepted_at')
           .eq('invited_by', teacherId);
 
         if (invitationsError) {
@@ -57,73 +58,103 @@ export const useStudentsData = () => {
         const acceptedInvitations = invitedStudents
           ?.filter(invitation => invitation.status === 'accepted') || [];
           
-        const studentUserIds = acceptedInvitations
-          .filter(invitation => invitation.user_id)
-          .map(invitation => invitation.user_id as string);
-
         // Log for debugging
         console.log(`Encontrados ${acceptedInvitations.length} convites aceitos`);
-        console.log(`Destes, ${studentUserIds.length} têm IDs de usuários válidos`);
         
-        if (studentUserIds.length > 0) {
-          console.log('IDs dos alunos aceitos:', studentUserIds);
-        }
+        // Separate invitations into those with user_id and those without
+        const invitationsWithUserId = acceptedInvitations
+          .filter(invitation => invitation.user_id)
+          .map(invitation => invitation.user_id as string);
+          
+        console.log(`Destes, ${invitationsWithUserId.length} têm IDs de usuários válidos`);
+        
+        // Array to hold all student profiles (both real and virtual)
+        let enrichedProfiles = [];
+        
+        // If there are invitations with user_id, fetch their profiles
+        if (invitationsWithUserId.length > 0) {
+          console.log('IDs dos alunos aceitos:', invitationsWithUserId);
+          
+          // Fetch student profiles based on the user_ids from invitations
+          const { data: studentProfiles, error } = await supabase
+            .from('profiles')
+            .select(`
+              id,
+              first_name,
+              last_name,
+              avatar_url,
+              created_at,
+              email,
+              phone
+            `)
+            .eq('role', 'student')
+            .in('id', invitationsWithUserId);
 
-        // If there are no invited students, return empty array
-        if (studentUserIds.length === 0) {
-          console.log('Nenhum aluno ativo encontrado.');
-          return [];
-        }
-
-        // Fetch student profiles based on the user_ids from invitations
-        const { data: studentProfiles, error } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            first_name,
-            last_name,
-            avatar_url,
-            created_at,
-            email,
-            phone
-          `)
-          .eq('role', 'student')
-          .in('id', studentUserIds);
-
-        if (error) {
-          console.error('Erro ao buscar perfis dos alunos:', error);
-          if (error.code === 'PGRST301') {
-            toast.error('Permissão negada', {
-              description: 'Você não tem permissão para visualizar dados dos alunos'
-            });
-          } else {
-            toast.error('Falha ao carregar alunos', {
-              description: error.message
-            });
+          if (error) {
+            console.error('Erro ao buscar perfis dos alunos:', error);
+            if (error.code === 'PGRST301') {
+              toast.error('Permissão negada', {
+                description: 'Você não tem permissão para visualizar dados dos alunos'
+              });
+            } else {
+              toast.error('Falha ao carregar alunos', {
+                description: error.message
+              });
+            }
+            throw error;
           }
-          throw error;
-        }
 
-        console.log(`Encontrados ${studentProfiles?.length || 0} perfis de alunos dos convites aceitos`);
-        
-        if (studentProfiles && studentProfiles.length > 0) {
-          console.log('Perfis encontrados:', studentProfiles.map(profile => ({
-            id: profile.id,
-            name: `${profile.first_name} ${profile.last_name}`,
-            email: profile.email
-          })));
+          console.log(`Encontrados ${studentProfiles?.length || 0} perfis de alunos dos convites aceitos`);
+          
+          if (studentProfiles && studentProfiles.length > 0) {
+            // Enriquecer os perfis dos alunos com dados dos convites
+            const realProfiles = studentProfiles.map(profile => {
+              const invitation = acceptedInvitations.find(inv => inv.user_id === profile.id);
+              return {
+                ...profile,
+                invitation_code: invitation?.invitation_code,
+                invitation_email: invitation?.email,
+                invitation_status: invitation?.status,
+                is_virtual: false
+              };
+            });
+            
+            enrichedProfiles = [...enrichedProfiles, ...realProfiles];
+          }
         }
         
-        // Enriquecer os perfis dos alunos com dados dos convites
-        const enrichedProfiles = studentProfiles?.map(profile => {
-          const invitation = acceptedInvitations.find(inv => inv.user_id === profile.id);
-          return {
-            ...profile,
-            invitation_code: invitation?.invitation_code,
-            invitation_email: invitation?.email,
-            invitation_status: invitation?.status
-          };
-        }) || [];
+        // Create virtual profiles for invitations without user_id
+        const invitationsWithoutUserId = acceptedInvitations.filter(invitation => !invitation.user_id);
+        console.log(`Encontrados ${invitationsWithoutUserId.length} convites aceitos sem usuário associado`);
+        
+        if (invitationsWithoutUserId.length > 0) {
+          const virtualProfiles = invitationsWithoutUserId.map(invitation => {
+            // Create a "virtual" profile based on the invitation data
+            return {
+              id: invitation.id, // Use invitation ID as profile ID
+              first_name: invitation.used_by_name ? invitation.used_by_name.split(' ')[0] : 'Aluno',
+              last_name: invitation.used_by_name && invitation.used_by_name.split(' ').length > 1 
+                ? invitation.used_by_name.split(' ').slice(1).join(' ') 
+                : 'Convidado',
+              email: invitation.email,
+              created_at: invitation.accepted_at || invitation.created_at,
+              avatar_url: null,
+              invitation_code: invitation.invitation_code,
+              invitation_email: invitation.email,
+              invitation_status: invitation.status,
+              is_virtual: true // Flag to indicate this is a virtual profile
+            };
+          });
+          
+          console.log(`Criados ${virtualProfiles.length} perfis virtuais de alunos`);
+          enrichedProfiles = [...enrichedProfiles, ...virtualProfiles];
+        }
+        
+        if (enrichedProfiles.length === 0) {
+          console.log('Nenhum aluno ativo encontrado.');
+        } else {
+          console.log(`Total de ${enrichedProfiles.length} alunos encontrados (reais + virtuais)`);
+        }
         
         return enrichedProfiles;
       } catch (error: any) {
