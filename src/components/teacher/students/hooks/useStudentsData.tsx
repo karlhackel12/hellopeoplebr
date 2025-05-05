@@ -84,8 +84,7 @@ export const useStudentsData = () => {
               last_name,
               avatar_url,
               created_at,
-              email,
-              phone
+              email
             `)
             .eq('role', 'student')
             .in('id', invitationsWithUserId);
@@ -137,7 +136,7 @@ export const useStudentsData = () => {
                 ? invitation.used_by_name.split(' ').slice(1).join(' ') 
                 : 'Convidado',
               email: invitation.email,
-              created_at: invitation.accepted_at || invitation.created_at,
+              created_at: invitation.accepted_at || new Date().toISOString(),
               avatar_url: null,
               invitation_code: invitation.invitation_code,
               invitation_email: invitation.email,

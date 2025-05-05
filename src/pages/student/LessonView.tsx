@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useViewLesson } from './hooks/useViewLesson';
 import LessonLoadingState from './components/lesson/LessonLoadingState';
@@ -29,6 +30,11 @@ const LessonView: React.FC = () => {
     isQuizAvailable,
     quiz,
     quizQuestions,
+    
+    // Duolingo specific props
+    viewMode,
+    setViewMode,
+    convertQuizQuestionsToDuolingoFormat
   } = useViewLesson();
   
   // Track lesson view event
@@ -66,7 +72,7 @@ const LessonView: React.FC = () => {
         {
           id: lessonId || 'lesson',
           title: lesson?.title || 'Lição',
-          type: 'lesson',
+          type: 'lesson' as const,
           status: isLessonComplete ? 'completed' : 'available',
           progress: completedSections.length / (sections.length || 1) * 100,
           content: lesson?.content,
@@ -76,10 +82,10 @@ const LessonView: React.FC = () => {
         ...(isQuizAvailable ? [{
           id: quiz?.id || 'quiz',
           title: quiz?.title || 'Quiz da Lição',
-          type: 'quiz',
+          type: 'quiz' as const,
           status: isLessonComplete ? 'available' : 'locked',
           isQuizSuccessful: false,
-          questions: quizQuestions
+          questions: quizQuestions || []
         }] : [])
       ]
     }];

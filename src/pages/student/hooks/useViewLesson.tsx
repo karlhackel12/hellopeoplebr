@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +35,7 @@ export const useViewLesson = () => {
   const [currentTab, setCurrentTab] = useState<'content' | 'quiz'>('content');
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [sections, setSections] = useState<Array<{id: string, title: string, content: string}>>([]);
+  const [viewMode, setViewMode] = useState<'standard' | 'duolingo'>('standard');
   
   // Extract sections from lesson content
   useEffect(() => {
@@ -150,6 +152,17 @@ export const useViewLesson = () => {
     ? Math.round((currentSectionIndex) / (totalPages - 1) * 100) 
     : 0;
 
+  // Convert quiz questions to Duolingo format
+  const convertQuizQuestionsToDuolingoFormat = (quizQuestions: any[]) => {
+    return quizQuestions.map(q => ({
+      id: q.id,
+      type: 'multiple_choice' as 'multiple_choice' | 'fill_blank' | 'arrange' | 'listen',
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.correct_answer
+    }));
+  };
+
   return {
     // Lesson data
     lessonId,
@@ -192,6 +205,11 @@ export const useViewLesson = () => {
     totalPages,
     isFirstPage,
     isLastPage,
-    completionPercentage
+    completionPercentage,
+    
+    // Duolingo view options
+    viewMode,
+    setViewMode,
+    convertQuizQuestionsToDuolingoFormat
   };
 };

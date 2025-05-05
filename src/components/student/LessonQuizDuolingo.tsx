@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,7 +97,7 @@ const LessonQuizDuolingo: React.FC<LessonQuizDuolingoProps> = ({
   const convertQuestions = (questions: any[] = []) => {
     return questions.map(q => ({
       id: q.id || Math.random().toString(),
-      type: 'multiple_choice',
+      type: 'multiple_choice' as 'multiple_choice' | 'fill_blank' | 'arrange' | 'listen',
       question: q.question,
       options: q.options || q.answers || [],
       correctAnswer: q.correct_answer || q.correctAnswer
@@ -183,4 +184,4 @@ const LessonQuizDuolingo: React.FC<LessonQuizDuolingoProps> = ({
   );
 };
 
-export default LessonQuizDuolingo; 
+export default LessonQuizDuolingo;

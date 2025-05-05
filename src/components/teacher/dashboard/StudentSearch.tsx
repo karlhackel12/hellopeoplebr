@@ -65,10 +65,11 @@ const StudentSearch: React.FC = () => {
         if (error) throw error;
         
         if (realProfiles && realProfiles.length > 0) {
-          allResults = [...allResults, ...realProfiles.map(profile => ({
+          const profilesWithVirtualFlag = realProfiles.map(profile => ({
             ...profile,
             is_virtual: false
-          }))];
+          }));
+          allResults = [...allResults, ...profilesWithVirtualFlag];
         }
       }
       

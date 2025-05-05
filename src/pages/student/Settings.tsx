@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,13 +34,25 @@ const phoneSchema = z.object({
     .regex(/^\+?[0-9\s\-\(\)]+$/, "Formato de telefone inválido"),
 });
 
+interface ExtendedProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string;
+  created_at: string; 
+  updated_at: string;
+  role: 'student' | 'teacher';
+  phone?: string;
+  email?: string;
+}
+
 const StudentSettings: React.FC = () => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
   const { completeStep, saveProgress } = useOnboarding();
   
   // Busca o perfil do usuário
-  const { data: profile } = useQuery({
+  const { data: profile } = useQuery<ExtendedProfile>({
     queryKey: ['student-profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -48,13 +61,13 @@ const StudentSettings: React.FC = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, phone')
         .eq('id', user.id)
         .single();
       
       if (error) throw error;
       
-      return data;
+      return data as ExtendedProfile;
     }
   });
 
