@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,13 +45,37 @@ const StudentSearch: React.FC = () => {
       // Get all student profiles to match by email as well
       const { data: allStudentProfiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url, email')
-        .eq('role', 'student');
+        .select('id, first_name, last_name, avatar_url');
         
       if (profilesError) throw profilesError;
       
+      // Get users table for emails (since email is not in profiles)
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('id, email');
+        
+      if (usersError) {
+        console.error('Erro ao buscar emails dos usuários:', usersError);
+      }
+      
+      // Create a map of user IDs to emails
+      const userEmailMap = new Map();
+      if (Array.isArray(usersData)) {
+        usersData.forEach(user => {
+          if (user.id && user.email) {
+            userEmailMap.set(user.id, user.email);
+          }
+        });
+      }
+      
       // Type guard to ensure allStudentProfiles is an array
       const validProfiles = Array.isArray(allStudentProfiles) ? allStudentProfiles : [];
+      
+      // Enrich profiles with emails from users table
+      const enrichedProfiles = validProfiles.map(profile => ({
+        ...profile,
+        email: userEmailMap.get(profile.id) || null
+      }));
       
       let allResults: Student[] = [];
       
@@ -60,11 +83,11 @@ const StudentSearch: React.FC = () => {
       if (invitations && invitations.length > 0) {
         for (const invitation of invitations) {
           // Try to match by user_id first
-          let matchingProfile = validProfiles.find(p => p.id === invitation.user_id);
+          let matchingProfile = enrichedProfiles.find(p => p.id === invitation.user_id);
           
           // If no match by user_id, try to match by email
           if (!matchingProfile && invitation.email) {
-            matchingProfile = validProfiles.find(
+            matchingProfile = enrichedProfiles.find(
               p => p.email?.toLowerCase() === invitation.email?.toLowerCase()
             );
           }

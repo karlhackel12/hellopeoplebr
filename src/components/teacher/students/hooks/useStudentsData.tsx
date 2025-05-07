@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -70,8 +69,7 @@ export const useStudentsData = () => {
             first_name,
             last_name,
             avatar_url,
-            created_at,
-            email
+            created_at
           `)
           .eq('role', 'student');
           
@@ -80,26 +78,51 @@ export const useStudentsData = () => {
           throw allProfilesError;
         }
         
+        // Get emails from the users table
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, email');
+          
+        if (usersError) {
+          console.error('Erro ao buscar emails dos usuários:', usersError);
+        }
+        
+        // Create a map of user IDs to emails
+        const userEmailMap = new Map();
+        if (Array.isArray(usersData)) {
+          usersData.forEach(user => {
+            if (user.id && user.email) {
+              userEmailMap.set(user.id, user.email);
+            }
+          });
+        }
+        
         // Type guard to ensure allStudentProfiles is an array
         const validProfiles = Array.isArray(allStudentProfiles) ? allStudentProfiles : [];
+        
+        // Enrich profiles with emails from users table
+        const enrichedProfiles = validProfiles.map(profile => ({
+          ...profile,
+          email: userEmailMap.get(profile.id) || null
+        }));
         
         console.log(`Encontrados ${validProfiles.length || 0} perfis de alunos no sistema`);
         
         // Array to hold all student profiles (both real and virtual)
-        let enrichedProfiles = [];
+        let finalProfiles = [];
         
         // Process accepted invitations to find matching profiles either by user_id or email
         if (acceptedInvitations.length > 0) {
           // For each accepted invitation, try to find a matching profile
           const processedProfiles = acceptedInvitations.map(invitation => {
             // First try to match by user_id
-            let matchingProfile = validProfiles.find(profile => 
+            let matchingProfile = enrichedProfiles.find(profile => 
               profile.id === invitation.user_id
             );
             
             // If no match by user_id, try to match by email
             if (!matchingProfile && invitation.email) {
-              matchingProfile = validProfiles.find(profile => 
+              matchingProfile = enrichedProfiles.find(profile => 
                 profile.email?.toLowerCase() === invitation.email?.toLowerCase()
               );
             }
@@ -139,21 +162,21 @@ export const useStudentsData = () => {
             }
           });
           
-          enrichedProfiles = processedProfiles;
+          finalProfiles = processedProfiles;
         }
         
-        if (enrichedProfiles.length === 0) {
+        if (finalProfiles.length === 0) {
           console.log('Nenhum aluno ativo encontrado.');
         } else {
-          console.log(`Total de ${enrichedProfiles.length} alunos encontrados (reais + virtuais)`);
+          console.log(`Total de ${finalProfiles.length} alunos encontrados (reais + virtuais)`);
           
           // Log how many are virtual vs real
-          const virtualCount = enrichedProfiles.filter(p => p.is_virtual).length;
-          const realCount = enrichedProfiles.length - virtualCount;
+          const virtualCount = finalProfiles.filter(p => p.is_virtual).length;
+          const realCount = finalProfiles.length - virtualCount;
           console.log(`${realCount} alunos com contas reais, ${virtualCount} alunos com contas virtuais`);
         }
         
-        return enrichedProfiles;
+        return finalProfiles;
       } catch (error: any) {
         console.error('Falha ao buscar alunos:', error);
         
