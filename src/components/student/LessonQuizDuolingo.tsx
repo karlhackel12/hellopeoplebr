@@ -26,6 +26,14 @@ interface LessonSection {
   completed: boolean;
 }
 
+interface Question {
+  id: string;
+  type: 'multiple_choice' | 'fill_blank' | 'arrange' | 'listen';
+  question: string;
+  options: string[];
+  correctAnswer: string;
+}
+
 interface LessonQuizDuolingoProps {
   lessonId: string;
   lessonTitle: string;
@@ -94,10 +102,10 @@ const LessonQuizDuolingo: React.FC<LessonQuizDuolingoProps> = ({
   };
   
   // Converter as questões do formato atual para o formato Duolingo
-  const convertQuestions = (questions: any[] = []) => {
+  const convertQuestions = (questions: any[] = []): Question[] => {
     return questions.map(q => ({
       id: q.id || Math.random().toString(),
-      type: 'multiple_choice' as 'multiple_choice' | 'fill_blank' | 'arrange' | 'listen',
+      type: 'multiple_choice',
       question: q.question,
       options: q.options || q.answers || [],
       correctAnswer: q.correct_answer || q.correctAnswer

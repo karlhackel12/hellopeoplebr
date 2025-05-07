@@ -27,6 +27,8 @@ interface LessonSection {
 const LessonView: React.FC = () => {
   const { trackEvent } = useAnalytics();
   
+  const lessonContext = useViewLesson();
+  
   const {
     lesson,
     lessonId,
@@ -53,7 +55,7 @@ const LessonView: React.FC = () => {
     viewMode,
     setViewMode,
     convertQuizQuestionsToDuolingoFormat
-  } = useViewLesson();
+  } = lessonContext;
   
   // Track lesson view event
   useEffect(() => {

@@ -51,17 +51,20 @@ const StudentSearch: React.FC = () => {
         
       if (profilesError) throw profilesError;
       
+      // Type guard to ensure allStudentProfiles is an array
+      const validProfiles = Array.isArray(allStudentProfiles) ? allStudentProfiles : [];
+      
       let allResults: Student[] = [];
       
       // Process invitations and find matching profiles
       if (invitations && invitations.length > 0) {
         for (const invitation of invitations) {
           // Try to match by user_id first
-          let matchingProfile = allStudentProfiles?.find(p => p.id === invitation.user_id);
+          let matchingProfile = validProfiles.find(p => p.id === invitation.user_id);
           
           // If no match by user_id, try to match by email
           if (!matchingProfile && invitation.email) {
-            matchingProfile = allStudentProfiles?.find(
+            matchingProfile = validProfiles.find(
               p => p.email?.toLowerCase() === invitation.email?.toLowerCase()
             );
           }
@@ -69,7 +72,11 @@ const StudentSearch: React.FC = () => {
           if (matchingProfile) {
             // We have a real profile that matches this invitation
             const student: Student = {
-              ...matchingProfile,
+              id: matchingProfile.id,
+              first_name: matchingProfile.first_name,
+              last_name: matchingProfile.last_name,
+              email: matchingProfile.email,
+              avatar_url: matchingProfile.avatar_url,
               is_virtual: false
             };
             

@@ -18,8 +18,6 @@ interface ExtendedProfile {
   created_at: string;
   updated_at: string;
   role: 'student' | 'teacher';
-  // Add optional phone
-  phone?: string | null;
 }
 
 const Settings = () => {
@@ -78,7 +76,6 @@ const Settings = () => {
         .update({
           first_name: firstName,
           last_name: lastName,
-          // No phone field update, as it doesn't exist in the database
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);

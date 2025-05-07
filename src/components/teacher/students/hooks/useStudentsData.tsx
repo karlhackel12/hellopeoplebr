@@ -80,7 +80,10 @@ export const useStudentsData = () => {
           throw allProfilesError;
         }
         
-        console.log(`Encontrados ${allStudentProfiles?.length || 0} perfis de alunos no sistema`);
+        // Type guard to ensure allStudentProfiles is an array
+        const validProfiles = Array.isArray(allStudentProfiles) ? allStudentProfiles : [];
+        
+        console.log(`Encontrados ${validProfiles.length || 0} perfis de alunos no sistema`);
         
         // Array to hold all student profiles (both real and virtual)
         let enrichedProfiles = [];
@@ -90,13 +93,13 @@ export const useStudentsData = () => {
           // For each accepted invitation, try to find a matching profile
           const processedProfiles = acceptedInvitations.map(invitation => {
             // First try to match by user_id
-            let matchingProfile = allStudentProfiles?.find(profile => 
+            let matchingProfile = validProfiles.find(profile => 
               profile.id === invitation.user_id
             );
             
             // If no match by user_id, try to match by email
             if (!matchingProfile && invitation.email) {
-              matchingProfile = allStudentProfiles?.find(profile => 
+              matchingProfile = validProfiles.find(profile => 
                 profile.email?.toLowerCase() === invitation.email?.toLowerCase()
               );
             }
@@ -105,7 +108,12 @@ export const useStudentsData = () => {
               // We found a matching real profile (either by id or email)
               console.log(`Perfil encontrado para convite: ${invitation.email || invitation.id}`);
               return {
-                ...matchingProfile,
+                id: matchingProfile.id,
+                first_name: matchingProfile.first_name,
+                last_name: matchingProfile.last_name,
+                avatar_url: matchingProfile.avatar_url,
+                email: matchingProfile.email,
+                created_at: matchingProfile.created_at,
                 invitation_code: invitation.invitation_code,
                 invitation_email: invitation.email,
                 invitation_status: invitation.status,
