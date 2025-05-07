@@ -2,18 +2,31 @@ import React from 'react';
 import { Clock, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-
-const forgettingCurveData = [
-  { semana: 0, retencao: 100 },
-  { semana: 1, retencao: 60 },
-  { semana: 2, retencao: 37 },
-  { semana: 3, retencao: 22 },
-  { semana: 4, retencao: 13 },
-  { semana: 5, retencao: 8 },
-  { semana: 6, retencao: 5 },
-  { semana: 7, retencao: 3 },
-];
-
+const forgettingCurveData = [{
+  semana: 0,
+  retencao: 100
+}, {
+  semana: 1,
+  retencao: 60
+}, {
+  semana: 2,
+  retencao: 37
+}, {
+  semana: 3,
+  retencao: 22
+}, {
+  semana: 4,
+  retencao: 13
+}, {
+  semana: 5,
+  retencao: 8
+}, {
+  semana: 6,
+  retencao: 5
+}, {
+  semana: 7,
+  retencao: 3
+}];
 const Benefits: React.FC = () => {
   const benefits = [{
     icon: <Clock className="h-12 w-12 text-[#1E88E5]" />,
@@ -32,16 +45,13 @@ const Benefits: React.FC = () => {
     title: "Retenha mais Alunos",
     description: "Aumente o engajamento e retenção dos alunos através de atividades gamificadas e feedback constante"
   }];
-
   const chartConfig = {
     retencao: {
       label: "Retenção de Memória",
-      color: "#FF5630",
-    },
+      color: "#FF5630"
+    }
   };
-
-  return (
-    <section id="beneficios" className="py-20 md:py-28 bg-[#F5F7FA]">
+  return <section id="beneficios" className="py-20 bg-[#F5F7FA] md:py-[50px]">
       <div className="container px-6 md:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 font-display">
@@ -53,22 +63,20 @@ const Benefits: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-6 max-w-6xl mx-auto">
-          {benefits.map((benefit, index) => (
-            <div key={index} className="relative bg-white border border-border/60 rounded-xl p-8 transition-all duration-300 hover:shadow-md group">
+          {benefits.map((benefit, index) => <div key={index} className="relative bg-white border border-border/60 rounded-xl p-8 transition-all duration-300 hover:shadow-md group">
               <div className="relative">
                 <div className="mb-5 flex justify-center">{benefit.icon}</div>
                 <h3 className="text-xl font-semibold mb-3 text-center font-display">{benefit.title}</h3>
                 <p className="text-muted-foreground text-center">{benefit.description}</p>
               </div>
-            </div>
-          ))}
+            </div>)}
         </div>
         
         <div className="mt-16 max-w-4xl mx-auto bg-white border border-border/60 rounded-xl p-8 shadow-sm">
           <h3 className="text-2xl font-bold mb-4 text-center font-display">
             A Curva do Esquecimento
           </h3>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 px-[26px]">
             <div className="md:w-1/2">
               <p className="text-muted-foreground mb-6">
                 Estudos mostram que 80% do que é aprendido é esquecido após uma semana sem prática consistente. Nossa plataforma combate isso com:
@@ -89,67 +97,11 @@ const Benefits: React.FC = () => {
               </ul>
             </div>
             <div className="md:w-1/2">
-              <div className="relative">
-                <h4 className="text-lg font-semibold mb-2 text-center">Curva do Esquecimento - Alunos de Inglês</h4>
-                
-                <div className="h-[280px] w-full">
-                  <LineChart
-                    width={415}
-                    height={280}
-                    data={forgettingCurveData}
-                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis 
-                      dataKey="semana" 
-                      label={{ value: 'Semanas sem prática', position: 'bottom', offset: 0 }}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis 
-                      label={{ value: 'Retenção de Memória (%)', angle: -90, position: 'insideLeft' }}
-                      tick={{ fontSize: 12 }}
-                      domain={[0, 100]}
-                    />
-                    <Tooltip 
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-                              <p className="font-medium">{`${payload[0].value}% de retenção`}</p>
-                              <p className="text-xs text-gray-500">{`Semana ${payload[0].payload.semana}`}</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="retencao" 
-                      name="Retenção de Memória"
-                      stroke="#FF5630" 
-                      strokeWidth={3}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6, stroke: '#FF5630', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </div>
-                
-                <div className="mt-2 flex justify-between text-xs text-muted-foreground px-2">
-                  <div>Aula</div>
-                  <div className="relative">
-                    <span>Perda rápida inicial</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute -top-5 -right-7 transform rotate-45"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-                  </div>
-                  <div>Sem prática contínua</div>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Benefits;
