@@ -74,8 +74,7 @@ export const useStudentsData = () => {
         // Log for debugging
         console.log(`Found ${acceptedInvitations.length} accepted invitations`);
         
-        // Get all students (role = 'student') profiles regardless of invitation status
-        // This will help us match by email later
+        // Get all students (role = 'student') profiles
         const { data: profilesData, error: allProfilesError } = await supabase
           .from('profiles')
           .select(`
@@ -83,8 +82,7 @@ export const useStudentsData = () => {
             first_name,
             last_name,
             avatar_url,
-            created_at,
-            email
+            created_at
           `)
           .eq('role', 'student');
           
@@ -100,7 +98,7 @@ export const useStudentsData = () => {
         // Array to hold all student profiles (both real and virtual)
         let finalProfiles: StudentProfile[] = [];
         
-        // Process accepted invitations to find matching profiles either by user_id or email
+        // Process accepted invitations to find matching profiles by user_id
         if (acceptedInvitations.length > 0) {
           // For each accepted invitation, try to find a matching profile
           const processedProfiles = acceptedInvitations.map(invitation => {
@@ -109,22 +107,15 @@ export const useStudentsData = () => {
               profile.id === invitation.user_id
             );
             
-            // If no match by user_id, try to match by email
-            if (!matchingProfile && invitation.email) {
-              matchingProfile = allStudentProfiles.find(profile => 
-                profile.email?.toLowerCase() === invitation.email?.toLowerCase()
-              );
-            }
-            
             if (matchingProfile) {
-              // We found a matching real profile (either by id or email)
+              // We found a matching real profile
               console.log(`Profile found for invitation: ${invitation.email || invitation.id}`);
               return {
                 id: matchingProfile.id,
                 first_name: matchingProfile.first_name,
                 last_name: matchingProfile.last_name,
                 avatar_url: matchingProfile.avatar_url,
-                email: matchingProfile.email,
+                email: invitation.email, // Use email from invitation
                 created_at: matchingProfile.created_at,
                 invitation_code: invitation.invitation_code,
                 invitation_email: invitation.email,

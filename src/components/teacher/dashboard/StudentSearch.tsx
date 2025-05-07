@@ -47,10 +47,10 @@ const StudentSearch: React.FC = () => {
         
       if (invError) throw invError;
       
-      // Get all student profiles to match by email as well
+      // Get all student profiles, but don't rely on email field yet
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, avatar_url, email')
+        .select('id, first_name, last_name, avatar_url')
         .eq('role', 'student');
         
       if (profilesError) throw profilesError;
@@ -65,21 +65,14 @@ const StudentSearch: React.FC = () => {
           // Try to match by user_id first
           let matchingProfile = allStudentProfiles.find(p => p.id === invitation.user_id);
           
-          // If no match by user_id, try to match by email
-          if (!matchingProfile && invitation.email) {
-            matchingProfile = allStudentProfiles.find(
-              p => p.email?.toLowerCase() === invitation.email?.toLowerCase()
-            );
-          }
-          
           if (matchingProfile) {
             // We have a real profile that matches this invitation
             const student: Student = {
               id: matchingProfile.id,
               first_name: matchingProfile.first_name,
               last_name: matchingProfile.last_name,
-              email: matchingProfile.email,
               avatar_url: matchingProfile.avatar_url,
+              email: invitation.email, // Use email from invitation instead of profile
               is_virtual: false
             };
             
