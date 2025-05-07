@@ -83,7 +83,8 @@ export const useStudentsData = () => {
             first_name,
             last_name,
             avatar_url,
-            created_at
+            created_at,
+            email
           `)
           .eq('role', 'student');
           
@@ -93,31 +94,6 @@ export const useStudentsData = () => {
         }
         
         const allStudentProfiles = profilesData || [];
-        
-        // Get emails from the users table
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, email');
-          
-        if (usersError) {
-          console.error('Error fetching user emails:', usersError);
-        }
-        
-        // Create a map of user IDs to emails
-        const userEmailMap = new Map();
-        if (Array.isArray(usersData)) {
-          usersData.forEach(user => {
-            if (user.id && user.email) {
-              userEmailMap.set(user.id, user.email);
-            }
-          });
-        }
-        
-        // Enrich profiles with emails from users table
-        const enrichedProfiles = allStudentProfiles.map(profile => ({
-          ...profile,
-          email: userEmailMap.get(profile.id) || null
-        }));
         
         console.log(`Found ${allStudentProfiles.length || 0} student profiles in the system`);
         
@@ -129,13 +105,13 @@ export const useStudentsData = () => {
           // For each accepted invitation, try to find a matching profile
           const processedProfiles = acceptedInvitations.map(invitation => {
             // First try to match by user_id
-            let matchingProfile = enrichedProfiles.find(profile => 
+            let matchingProfile = allStudentProfiles.find(profile => 
               profile.id === invitation.user_id
             );
             
             // If no match by user_id, try to match by email
             if (!matchingProfile && invitation.email) {
-              matchingProfile = enrichedProfiles.find(profile => 
+              matchingProfile = allStudentProfiles.find(profile => 
                 profile.email?.toLowerCase() === invitation.email?.toLowerCase()
               );
             }
@@ -263,6 +239,7 @@ export const useStudentsData = () => {
     loadingStudents,
     studentsError,
     isRefetchingStudents,
-    refetchStudents
+    refetchStudents,
+    forceRefresh
   };
 };
