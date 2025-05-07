@@ -6,6 +6,24 @@ import LessonErrorState from './components/lesson/LessonErrorState';
 import { useAnalytics, ANALYTICS_EVENTS } from '@/hooks/useAnalytics';
 import LessonQuizDuolingo from '@/components/student/LessonQuizDuolingo';
 
+interface LessonUnit {
+  id: string;
+  title: string;
+  type: "lesson" | "quiz";
+  status: "completed" | "locked" | "available" | "in_progress";
+  content?: any;
+  questions?: any[];
+  progress?: number;
+  isQuizSuccessful?: boolean;
+}
+
+interface LessonSection {
+  id: string;
+  title: string;
+  completed: boolean;
+  units: LessonUnit[];
+}
+
 const LessonView: React.FC = () => {
   const { trackEvent } = useAnalytics();
   
@@ -63,7 +81,7 @@ const LessonView: React.FC = () => {
   // Converter dados da lição para o formato necessário do caminho de aprendizado
   const convertToPathwaySections = () => {
     // Criar uma seção principal para a lição atual
-    const lessonSections = [{
+    const lessonSections: LessonSection[] = [{
       id: 'main-section',
       title: 'Lição Principal',
       completed: isLessonComplete,
@@ -72,21 +90,21 @@ const LessonView: React.FC = () => {
         {
           id: lessonId || 'lesson',
           title: lesson?.title || 'Lição',
-          type: 'lesson' as const,
+          type: 'lesson',
           status: isLessonComplete ? 'completed' : 'available',
           progress: completedSections.length / (sections.length || 1) * 100,
           content: lesson?.content,
           questions: []
-        },
+        } as LessonUnit,
         // Unidade para o quiz, se disponível
         ...(isQuizAvailable ? [{
           id: quiz?.id || 'quiz',
           title: quiz?.title || 'Quiz da Lição',
-          type: 'quiz' as const,
+          type: 'quiz',
           status: isLessonComplete ? 'available' : 'locked',
           isQuizSuccessful: false,
           questions: quizQuestions || []
-        }] : [])
+        } as LessonUnit] : [])
       ]
     }];
 

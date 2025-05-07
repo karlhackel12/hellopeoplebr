@@ -43,56 +43,66 @@ const StudentSearch: React.FC = () => {
         
       if (invError) throw invError;
       
-      // Separar convites com e sem user_id
-      const invitationsWithUserId = invitations
-        ?.filter(invitation => invitation.user_id)
-        .map(invitation => invitation.user_id) || [];
-      
-      const invitationsWithoutUserId = invitations
-        ?.filter(invitation => !invitation.user_id) || [];
+      // Get all student profiles to match by email as well
+      const { data: allStudentProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url, email')
+        .eq('role', 'student');
+        
+      if (profilesError) throw profilesError;
       
       let allResults: Student[] = [];
       
-      // Buscar perfis dos alunos com user_id
-      if (invitationsWithUserId.length > 0) {
-        const { data: realProfiles, error } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, avatar_url, email')
-          .in('id', invitationsWithUserId)
-          .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
-          .limit(5);
-        
-        if (error) throw error;
-        
-        if (realProfiles && realProfiles.length > 0) {
-          const profilesWithVirtualFlag = realProfiles.map(profile => ({
-            ...profile,
-            is_virtual: false
-          }));
-          allResults = [...allResults, ...profilesWithVirtualFlag];
+      // Process invitations and find matching profiles
+      if (invitations && invitations.length > 0) {
+        for (const invitation of invitations) {
+          // Try to match by user_id first
+          let matchingProfile = allStudentProfiles?.find(p => p.id === invitation.user_id);
+          
+          // If no match by user_id, try to match by email
+          if (!matchingProfile && invitation.email) {
+            matchingProfile = allStudentProfiles?.find(
+              p => p.email?.toLowerCase() === invitation.email?.toLowerCase()
+            );
+          }
+          
+          if (matchingProfile) {
+            // We have a real profile that matches this invitation
+            const student: Student = {
+              ...matchingProfile,
+              is_virtual: false
+            };
+            
+            // Check if this student matches the search term
+            const fullName = `${student.first_name} ${student.last_name}`.toLowerCase();
+            const email = student.email?.toLowerCase() || '';
+            const searchLower = searchTerm.toLowerCase();
+            
+            if (fullName.includes(searchLower) || email.includes(searchLower)) {
+              allResults.push(student);
+            }
+          } else {
+            // No match, create a virtual profile
+            const virtualStudent: Student = {
+              id: invitation.id,
+              first_name: invitation.used_by_name ? invitation.used_by_name.split(' ')[0] : 'Aluno',
+              last_name: invitation.used_by_name && invitation.used_by_name.split(' ').length > 1 
+                ? invitation.used_by_name.split(' ').slice(1).join(' ') 
+                : 'Convidado',
+              email: invitation.email,
+              is_virtual: true
+            };
+            
+            // Check if this virtual student matches the search term
+            const fullName = `${virtualStudent.first_name} ${virtualStudent.last_name}`.toLowerCase();
+            const email = virtualStudent.email?.toLowerCase() || '';
+            const searchLower = searchTerm.toLowerCase();
+            
+            if (fullName.includes(searchLower) || email.includes(searchLower)) {
+              allResults.push(virtualStudent);
+            }
+          }
         }
-      }
-      
-      // Adicionar "perfis virtuais" dos convites sem user_id que correspondem ao termo de busca
-      const virtualProfiles = invitationsWithoutUserId
-        .filter(inv => {
-          const name = inv.used_by_name?.toLowerCase() || '';
-          const email = inv.email?.toLowerCase() || '';
-          const searchLower = searchTerm.toLowerCase();
-          return name.includes(searchLower) || email.includes(searchLower);
-        })
-        .map(inv => ({
-          id: inv.id,
-          first_name: inv.used_by_name ? inv.used_by_name.split(' ')[0] : 'Aluno',
-          last_name: inv.used_by_name && inv.used_by_name.split(' ').length > 1 
-            ? inv.used_by_name.split(' ').slice(1).join(' ') 
-            : 'Convidado',
-          email: inv.email,
-          is_virtual: true
-        }));
-      
-      if (virtualProfiles.length > 0) {
-        allResults = [...allResults, ...virtualProfiles];
       }
       
       setSearchResults(allResults);
