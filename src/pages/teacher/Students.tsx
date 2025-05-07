@@ -10,6 +10,7 @@ import { useInvitationsData } from '@/components/teacher/students/hooks/useInvit
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Students = () => {
   const queryClient = useQueryClient();
@@ -20,7 +21,6 @@ const Students = () => {
     students, 
     loadingStudents, 
     studentsError, 
-    refetchStudents, 
     isRefetchingStudents,
     forceRefresh: forceRefreshStudents 
   } = useStudentsData();
@@ -35,9 +35,9 @@ const Students = () => {
     forceRefresh: forceRefreshInvitations
   } = useInvitationsData(queryClient);
 
-  // Função para atualizar manualmente todos os dados
+  // Function to manually refresh all data
   const handleManualRefresh = () => {
-    console.log('Atualizando manualmente todos os dados de alunos e convites...');
+    toast.info('Atualizando dados de alunos e convites...');
     forceRefreshStudents();
     forceRefreshInvitations();
   };

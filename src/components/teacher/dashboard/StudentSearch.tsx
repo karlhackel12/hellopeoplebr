@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, User, Mail } from 'lucide-react';
+import { Search, User, Mail, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, checkProfileStatus } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ type Student = {
   avatar_url?: string;
   email?: string;
   is_virtual?: boolean;
+  profile_status?: 'complete' | 'pending' | 'missing';
 };
 
 const StudentSearch: React.FC = () => {
@@ -64,8 +65,15 @@ const StudentSearch: React.FC = () => {
         for (const invitation of invitations) {
           // Try to match by user_id first
           let matchingProfile = allStudentProfiles.find(p => p.id === invitation.user_id);
+          let profileStatus: 'complete' | 'pending' | 'missing' = 'missing';
           
           if (matchingProfile) {
+            // Check if profile is complete
+            const statusCheck = await checkProfileStatus(invitation.user_id);
+            profileStatus = statusCheck.exists 
+              ? (statusCheck.needsUpdate ? 'pending' : 'complete') 
+              : 'missing';
+            
             // We have a real profile that matches this invitation
             const student: Student = {
               id: matchingProfile.id,
@@ -73,7 +81,8 @@ const StudentSearch: React.FC = () => {
               last_name: matchingProfile.last_name,
               avatar_url: matchingProfile.avatar_url,
               email: invitation.email, // Use email from invitation instead of profile
-              is_virtual: false
+              is_virtual: false,
+              profile_status: profileStatus
             };
             
             // Check if this student matches the search term
@@ -93,7 +102,8 @@ const StudentSearch: React.FC = () => {
                 ? invitation.used_by_name.split(' ').slice(1).join(' ') 
                 : 'Convidado',
               email: invitation.email,
-              is_virtual: true
+              is_virtual: true,
+              profile_status: 'pending'
             };
             
             // Check if this virtual student matches the search term
@@ -128,6 +138,38 @@ const StudentSearch: React.FC = () => {
   
   const viewStudentProfile = (studentId: string, isVirtual: boolean = false) => {
     navigate(`/teacher/students/profile/${studentId}${isVirtual ? '?virtual=true' : ''}`);
+  };
+
+  const getStatusBadge = (student: Student) => {
+    if (student.is_virtual) {
+      return (
+        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+          Pendente
+        </Badge>
+      );
+    } 
+    
+    switch (student.profile_status) {
+      case 'complete':
+        return (
+          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+            <Check className="h-3 w-3 mr-1" /> Ativo
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+            Incompleto
+          </Badge>
+        );
+      case 'missing':
+      default:
+        return (
+          <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+            Problema
+          </Badge>
+        );
+    }
   };
   
   return (
@@ -175,11 +217,7 @@ const StudentSearch: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span>{student.first_name} {student.last_name}</span>
-                      {student.is_virtual && (
-                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                          Pendente
-                        </Badge>
-                      )}
+                      {getStatusBadge(student)}
                     </div>
                     {student.email && (
                       <span className="text-xs text-muted-foreground">{student.email}</span>

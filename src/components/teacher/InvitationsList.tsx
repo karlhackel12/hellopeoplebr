@@ -29,6 +29,11 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
     isProcessing
   } = useInvitationActions(onUpdate);
 
+  const handleManualRefresh = () => {
+    toast.info('Atualizando convites...');
+    onUpdate();
+  };
+
   // Show loading state when initially loading or during batch operations
   if (loading) {
     return <LoadingInvitations />;
@@ -57,11 +62,7 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => {
-            console.log('Manual refresh requested');
-            toast.info('Atualizando convites...');
-            onUpdate();
-          }}
+          onClick={handleManualRefresh}
           className="flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
