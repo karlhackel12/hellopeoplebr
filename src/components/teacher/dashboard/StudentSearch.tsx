@@ -6,6 +6,7 @@ import { Search, User, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 type Student = {
   id: string;
@@ -27,13 +28,16 @@ const StudentSearch: React.FC = () => {
     
     setIsSearching(true);
     try {
-      // Obter ID do professor logado
-      const { data: authData } = await supabase.auth.getUser();
-      const teacherId = authData.user?.id;
+      // Get logged in teacher ID
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData.user) {
+        toast.error("Authentication error", { description: "Please log in again" });
+        throw new Error("Not authenticated");
+      }
       
-      if (!teacherId) throw new Error("Não autenticado");
+      const teacherId = authData.user.id;
       
-      // Buscar convites deste professor (tanto aceitos com user_id quanto sem)
+      // Get invitations from this teacher (both accepted with user_id and without)
       const { data: invitations, error: invError } = await supabase
         .from('student_invitations')
         .select('id, user_id, email, invitation_code, status, used_by_name')
@@ -43,11 +47,13 @@ const StudentSearch: React.FC = () => {
       if (invError) throw invError;
       
       // Get all student profiles to match by email as well
-      const { data: allStudentProfiles, error: profilesError } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url');
         
       if (profilesError) throw profilesError;
+      
+      const allStudentProfiles = profilesData || [];
       
       // Get users table for emails (since email is not in profiles)
       const { data: usersData, error: usersError } = await supabase
@@ -55,7 +61,7 @@ const StudentSearch: React.FC = () => {
         .select('id, email');
         
       if (usersError) {
-        console.error('Erro ao buscar emails dos usuários:', usersError);
+        console.error('Error fetching user emails:', usersError);
       }
       
       // Create a map of user IDs to emails
@@ -68,11 +74,8 @@ const StudentSearch: React.FC = () => {
         });
       }
       
-      // Type guard to ensure allStudentProfiles is an array
-      const validProfiles = Array.isArray(allStudentProfiles) ? allStudentProfiles : [];
-      
       // Enrich profiles with emails from users table
-      const enrichedProfiles = validProfiles.map(profile => ({
+      const enrichedProfiles = allStudentProfiles.map(profile => ({
         ...profile,
         email: userEmailMap.get(profile.id) || null
       }));
@@ -137,8 +140,11 @@ const StudentSearch: React.FC = () => {
       
       setSearchResults(allResults);
     } catch (error) {
-      console.error('Erro ao buscar alunos:', error);
+      console.error('Error searching students:', error);
       setSearchResults([]);
+      toast.error('Failed to search students', {
+        description: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
     } finally {
       setIsSearching(false);
     }

@@ -5,13 +5,14 @@ import { useLessonData } from './useLessonData';
 import { useLessonProgress } from './useLessonProgress';
 import { extractSections } from '@/utils/markdownUtils';
 import { useToast } from '@/hooks/use-toast';
+import { useViewLesson as useViewLessonData } from './lesson/useViewLesson';
 
 export const useViewLesson = () => {
   const { lessonId = '' } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Adicione este estado para controlar o modo de visualização
+  // Control view mode state
   const [viewMode, setViewMode] = useState<'standard' | 'duolingo'>('standard');
   
   // Fetch lesson data
@@ -24,6 +25,9 @@ export const useViewLesson = () => {
     isQuizAvailable,
     hasUnpublishedQuiz
   } = useLessonData(lessonId);
+  
+  // Track lesson view status
+  const { isUpdatingViewStatus } = useViewLessonData(lessonId, lessonLoading);
   
   // Lesson progress management
   const { 
@@ -152,14 +156,14 @@ export const useViewLesson = () => {
     }));
   };
   
-  // Adicione função para verificar se o formato Duolingo deve ser usado
+  // Check if the format Duolingo should be used
   const shouldUseDuolingoStyle = () => {
-    // Verificar se o usuário tem configuração para usar estilo Duolingo
-    // ou se a lição específica está marcada para usar este estilo
-    return true; // Por padrão, ative para todas as lições
+    // Check if user has configuration to use Duolingo style
+    // or if the specific lesson is marked to use this style
+    return true; // Default to enable for all lessons
   };
   
-  // Use efeito para determinar o modo de visualização ao carregar a lição
+  // Use effect to determine the view mode when loading the lesson
   useEffect(() => {
     if (shouldUseDuolingoStyle()) {
       setViewMode('duolingo');
@@ -211,4 +215,4 @@ export const useViewLesson = () => {
     duolingoQuizQuestions,
     convertQuizQuestionsToDuolingoFormat
   };
-}; 
+};

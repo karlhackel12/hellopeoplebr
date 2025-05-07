@@ -1,7 +1,21 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEffect, useCallback } from 'react';
+
+type StudentProfile = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_url?: string | null;
+  email?: string | null;
+  created_at?: string;
+  invitation_code?: string;
+  invitation_email?: string;
+  invitation_status?: string;
+  is_virtual: boolean;
+};
 
 export const useStudentsData = () => {
   // Fetch student profile data using React Query
@@ -18,14 +32,14 @@ export const useStudentsData = () => {
         // First check if user is authenticated
         const { data: authData, error: authError } = await supabase.auth.getUser();
         if (authError || !authData.user) {
-          console.error('Erro de autenticação:', authError);
-          throw new Error('É necessário autenticação para acessar os dados');
+          console.error('Authentication error:', authError);
+          throw new Error('Authentication required to access data');
         }
 
         // Get the current teacher's ID
         const teacherId = authData.user.id;
 
-        console.log('Buscando dados de alunos ativos para o professor:', teacherId);
+        console.log('Fetching active student data for teacher:', teacherId);
 
         // Get students who were invited by this teacher
         const { data: invitedStudents, error: invitationsError } = await supabase
@@ -34,18 +48,18 @@ export const useStudentsData = () => {
           .eq('invited_by', teacherId);
 
         if (invitationsError) {
-          console.error('Erro ao buscar convites de alunos:', invitationsError);
+          console.error('Error fetching student invitations:', invitationsError);
           if (invitationsError.code === 'PGRST301') {
-            toast.error('Permissão negada', {
-              description: 'Você não tem permissão para visualizar convites de alunos'
+            toast.error('Permission denied', {
+              description: 'You do not have permission to view student invitations'
             });
           }
           throw invitationsError;
         }
 
-        console.log('Convites encontrados:', invitedStudents?.length || 0);
+        console.log('Invitations found:', invitedStudents?.length || 0);
         if (invitedStudents && invitedStudents.length > 0) {
-          console.log('Detalhes dos convites:', invitedStudents.map(inv => ({
+          console.log('Invitation details:', invitedStudents.map(inv => ({
             code: inv.invitation_code,
             email: inv.email,
             status: inv.status,
@@ -58,11 +72,11 @@ export const useStudentsData = () => {
           ?.filter(invitation => invitation.status === 'accepted') || [];
           
         // Log for debugging
-        console.log(`Encontrados ${acceptedInvitations.length} convites aceitos`);
+        console.log(`Found ${acceptedInvitations.length} accepted invitations`);
         
         // Get all students (role = 'student') profiles regardless of invitation status
         // This will help us match by email later
-        const { data: allStudentProfiles, error: allProfilesError } = await supabase
+        const { data: profilesData, error: allProfilesError } = await supabase
           .from('profiles')
           .select(`
             id,
@@ -74,9 +88,11 @@ export const useStudentsData = () => {
           .eq('role', 'student');
           
         if (allProfilesError) {
-          console.error('Erro ao buscar todos os perfis de alunos:', allProfilesError);
+          console.error('Error fetching student profiles:', allProfilesError);
           throw allProfilesError;
         }
+        
+        const allStudentProfiles = profilesData || [];
         
         // Get emails from the users table
         const { data: usersData, error: usersError } = await supabase
@@ -84,7 +100,7 @@ export const useStudentsData = () => {
           .select('id, email');
           
         if (usersError) {
-          console.error('Erro ao buscar emails dos usuários:', usersError);
+          console.error('Error fetching user emails:', usersError);
         }
         
         // Create a map of user IDs to emails
@@ -97,19 +113,16 @@ export const useStudentsData = () => {
           });
         }
         
-        // Type guard to ensure allStudentProfiles is an array
-        const validProfiles = Array.isArray(allStudentProfiles) ? allStudentProfiles : [];
-        
         // Enrich profiles with emails from users table
-        const enrichedProfiles = validProfiles.map(profile => ({
+        const enrichedProfiles = allStudentProfiles.map(profile => ({
           ...profile,
           email: userEmailMap.get(profile.id) || null
         }));
         
-        console.log(`Encontrados ${validProfiles.length || 0} perfis de alunos no sistema`);
+        console.log(`Found ${allStudentProfiles.length || 0} student profiles in the system`);
         
         // Array to hold all student profiles (both real and virtual)
-        let finalProfiles = [];
+        let finalProfiles: StudentProfile[] = [];
         
         // Process accepted invitations to find matching profiles either by user_id or email
         if (acceptedInvitations.length > 0) {
@@ -129,7 +142,7 @@ export const useStudentsData = () => {
             
             if (matchingProfile) {
               // We found a matching real profile (either by id or email)
-              console.log(`Perfil encontrado para convite: ${invitation.email || invitation.id}`);
+              console.log(`Profile found for invitation: ${invitation.email || invitation.id}`);
               return {
                 id: matchingProfile.id,
                 first_name: matchingProfile.first_name,
@@ -141,10 +154,10 @@ export const useStudentsData = () => {
                 invitation_email: invitation.email,
                 invitation_status: invitation.status,
                 is_virtual: false
-              };
+              } as StudentProfile;
             } else {
               // No matching profile found, create a virtual one
-              console.log(`Nenhum perfil encontrado para convite: ${invitation.email || invitation.id}`);
+              console.log(`No profile found for invitation: ${invitation.email || invitation.id}`);
               return {
                 id: invitation.id, // Use invitation ID as profile ID
                 first_name: invitation.used_by_name ? invitation.used_by_name.split(' ')[0] : 'Aluno',
@@ -158,7 +171,7 @@ export const useStudentsData = () => {
                 invitation_email: invitation.email,
                 invitation_status: invitation.status,
                 is_virtual: true // Flag to indicate this is a virtual profile
-              };
+              } as StudentProfile;
             }
           });
           
@@ -166,27 +179,27 @@ export const useStudentsData = () => {
         }
         
         if (finalProfiles.length === 0) {
-          console.log('Nenhum aluno ativo encontrado.');
+          console.log('No active students found.');
         } else {
-          console.log(`Total de ${finalProfiles.length} alunos encontrados (reais + virtuais)`);
+          console.log(`Total of ${finalProfiles.length} students found (real + virtual)`);
           
           // Log how many are virtual vs real
           const virtualCount = finalProfiles.filter(p => p.is_virtual).length;
           const realCount = finalProfiles.length - virtualCount;
-          console.log(`${realCount} alunos com contas reais, ${virtualCount} alunos com contas virtuais`);
+          console.log(`${realCount} students with real accounts, ${virtualCount} students with virtual accounts`);
         }
         
         return finalProfiles;
       } catch (error: any) {
-        console.error('Falha ao buscar alunos:', error);
+        console.error('Failed to fetch students:', error);
         
-        if (error.message.includes('autenticação') || error.message.includes('authentication')) {
-          toast.error('Erro de autenticação', {
-            description: 'Por favor, faça login novamente para continuar'
+        if (error.message.includes('authentication') || error.message.includes('Authentication')) {
+          toast.error('Authentication error', {
+            description: 'Please log in again to continue'
           });
         } else {
-          toast.error('Erro ao carregar alunos', {
-            description: error.message || 'Ocorreu um erro inesperado'
+          toast.error('Error loading students', {
+            description: error.message || 'An unexpected error occurred'
           });
         }
         
@@ -250,7 +263,6 @@ export const useStudentsData = () => {
     loadingStudents,
     studentsError,
     isRefetchingStudents,
-    refetchStudents,
-    forceRefresh
+    refetchStudents
   };
 };
