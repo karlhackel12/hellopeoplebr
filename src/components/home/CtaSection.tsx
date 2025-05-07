@@ -1,18 +1,15 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageSquare } from 'lucide-react';
-
 const CtaSection: React.FC = () => {
-  return (
-    <section className="py-20 md:py-24 bg-gradient-to-br from-[#1E88E5]/10 to-[#26A69A]/5">
+  return <section className="py-20 md:py-24 bg-gradient-to-br from-[#1E88E5]/10 to-[#26A69A]/5">
       <div className="container px-6 md:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="bg-white rounded-xl shadow-xl overflow-hidden">
             <div className="grid md:grid-cols-5 gap-0">
               {/* Left side content - 3/5 width */}
-              <div className="md:col-span-3 p-8 md:p-12">
+              <div className="md:col-span-3 p-8 md:p-12 mx-0 px-[13px]">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6 font-display">
                   Transforme seu Ensino de Inglês Hoje
                 </h2>
@@ -106,8 +103,6 @@ const CtaSection: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default CtaSection;
