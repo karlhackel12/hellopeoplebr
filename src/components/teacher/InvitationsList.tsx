@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React from 'react';
 import { StudentInvitation } from './invitations/InvitationRow';
 import { useInvitationActions } from './invitations/useInvitationActions';
 import InvitationsTable from './invitations/InvitationsTable';
@@ -27,20 +28,6 @@ const InvitationsList: React.FC<InvitationsListProps> = ({
     deleteInvitation,
     isProcessing
   } = useInvitationActions(onUpdate);
-
-  // Configurando um intervalo para atualizar a lista de convites
-  useEffect(() => {
-    console.log('InvitationsList mounted, fetching fresh data');
-    onUpdate();
-    
-    // Atualiza a cada 15 segundos
-    const intervalId = setInterval(() => {
-      console.log('Auto-refresh interval triggered');
-      onUpdate();
-    }, 15000);
-    
-    return () => clearInterval(intervalId);
-  }, [onUpdate]);
 
   // Show loading state when initially loading or during batch operations
   if (loading) {

@@ -2,11 +2,11 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Award, BookOpen, Brain, ClipboardCheck, Clock, Mic, Star, User } from 'lucide-react';
+import { ArrowLeft, Award, BookOpen, Brain, ClipboardCheck, Clock, Mic, Star, User, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -24,144 +24,283 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const StudentProfile: React.FC = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
+  const isVirtual = new URLSearchParams(window.location.search).get('virtual') === 'true';
 
-  const { data: student, isLoading: loadingStudent } = useQuery({
-    queryKey: ['student-profile', studentId],
+  // Student profile data
+  const { 
+    data: student, 
+    isLoading: loadingStudent,
+    refetch: refetchStudent
+  } = useQuery({
+    queryKey: ['student-profile', studentId, isVirtual],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', studentId)
-        .single();
-      
-      if (error) throw error;
-      return data;
+      try {
+        // For virtual students, we need to get data from student_invitations
+        if (isVirtual && studentId) {
+          const { data: invitationData, error: invitationError } = await supabase
+            .from('student_invitations')
+            .select('*')
+            .eq('id', studentId)
+            .single();
+            
+          if (invitationError) throw invitationError;
+          
+          // Create a virtual profile from invitation data
+          return {
+            id: invitationData.id,
+            first_name: invitationData.used_by_name ? invitationData.used_by_name.split(' ')[0] : 'Aluno',
+            last_name: invitationData.used_by_name && invitationData.used_by_name.split(' ').length > 1 
+              ? invitationData.used_by_name.split(' ').slice(1).join(' ') 
+              : 'Convidado',
+            email: invitationData.email,
+            created_at: invitationData.accepted_at || invitationData.created_at,
+            avatar_url: null,
+            is_virtual: true
+          };
+        }
+        
+        // For real students, get from profiles
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', studentId)
+          .single();
+          
+        if (error) throw error;
+        
+        // We also need to get their email from invitations
+        const { data: invitationData } = await supabase
+          .from('student_invitations')
+          .select('email')
+          .eq('user_id', studentId)
+          .single();
+          
+        return {
+          ...data,
+          email: invitationData?.email,
+          is_virtual: false
+        };
+      } catch (error) {
+        console.error('Error fetching student profile:', error);
+        toast.error('Failed to load student profile');
+        return null;
+      }
     },
     enabled: !!studentId
   });
 
-  const { data: studentStats, isLoading: loadingStats } = useQuery({
+  // Student stats
+  const { 
+    data: studentStats, 
+    isLoading: loadingStats,
+    refetch: refetchStats
+  } = useQuery({
     queryKey: ['student-stats', studentId],
     queryFn: async () => {
-      // Lessons progress
-      const { data: lessonProgress } = await supabase
-        .from('user_lesson_progress')
-        .select('*')
-        .eq('user_id', studentId);
-      
-      const completedLessons = lessonProgress?.filter(l => l.completed).length || 0;
-      const totalLessons = lessonProgress?.length || 0;
-      
-      // Quiz attempts
-      const { data: quizAttempts } = await supabase
-        .from('user_quiz_attempts')
-        .select('*')
-        .eq('user_id', studentId);
-      
-      const averageScore = quizAttempts && quizAttempts.length > 0
-        ? Math.round(
-            quizAttempts.reduce((sum, a) => sum + a.score, 0) / quizAttempts.length
-          )
-        : 0;
-      
-      // Voice sessions
-      const { data: voiceSessions } = await supabase
-        .from('voice_practice_sessions')
-        .select('*')
-        .eq('user_id', studentId);
-      
-      // Spaced repetition
-      const { data: spacedItems } = await supabase
-        .from('spaced_repetition_items')
-        .select('*')
-        .eq('user_id', studentId);
-      
-      const { data: spacedStats } = await supabase
-        .from('spaced_repetition_stats')
-        .select('*')
-        .eq('user_id', studentId);
-      
-      // Assignments
-      const { data: assignments } = await supabase
-        .from('student_assignments')
-        .select('*')
-        .eq('student_id', studentId);
-      
-      return {
-        lessons: {
-          total: totalLessons,
-          completed: completedLessons,
-          completionRate: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
-        },
-        quizzes: {
-          total: quizAttempts?.length || 0,
-          passed: quizAttempts?.filter(q => q.passed).length || 0,
-          averageScore
-        },
-        voicePractice: {
-          sessionsCount: voiceSessions?.length || 0,
-          totalMinutes: Math.round((voiceSessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0) / 60)
-        },
-        spacedRepetition: {
-          itemsCount: spacedItems?.length || 0,
-          reviewsCount: spacedStats?.length || 0
-        },
-        assignments: {
-          total: assignments?.length || 0,
-          completed: assignments?.filter(a => a.status === 'completed').length || 0,
-          overdue: assignments?.filter(a => 
-            a.status !== 'completed' && 
-            a.due_date && 
-            new Date(a.due_date) < new Date()
-          ).length || 0
+      try {
+        // For virtual students, we return zeroed stats
+        if (isVirtual) {
+          return {
+            lessons: {
+              total: 0,
+              completed: 0,
+              completionRate: 0
+            },
+            quizzes: {
+              total: 0,
+              passed: 0,
+              averageScore: 0
+            },
+            voicePractice: {
+              sessionsCount: 0,
+              totalMinutes: 0
+            },
+            spacedRepetition: {
+              itemsCount: 0,
+              reviewsCount: 0
+            },
+            assignments: {
+              total: 0,
+              completed: 0,
+              overdue: 0
+            }
+          };
         }
-      };
+        
+        // Lessons progress
+        const { data: lessonProgress, error: lessonError } = await supabase
+          .from('user_lesson_progress')
+          .select('*')
+          .eq('user_id', studentId);
+          
+        if (lessonError) throw lessonError;
+        
+        const completedLessons = lessonProgress?.filter(l => l.completed).length || 0;
+        const totalLessons = lessonProgress?.length || 0;
+        
+        // Quiz attempts
+        const { data: quizAttempts, error: quizError } = await supabase
+          .from('user_quiz_attempts')
+          .select('*')
+          .eq('user_id', studentId);
+          
+        if (quizError) throw quizError;
+        
+        const averageScore = quizAttempts && quizAttempts.length > 0
+          ? Math.round(
+              quizAttempts.reduce((sum, a) => sum + a.score, 0) / quizAttempts.length
+            )
+          : 0;
+        
+        // Voice sessions
+        const { data: voiceSessions, error: voiceError } = await supabase
+          .from('voice_practice_sessions')
+          .select('*')
+          .eq('user_id', studentId);
+          
+        if (voiceError) throw voiceError;
+        
+        // Spaced repetition
+        const { data: spacedItems, error: spacedItemsError } = await supabase
+          .from('spaced_repetition_items')
+          .select('*')
+          .eq('user_id', studentId);
+          
+        if (spacedItemsError) throw spacedItemsError;
+        
+        const { data: spacedStats, error: spacedStatsError } = await supabase
+          .from('spaced_repetition_stats')
+          .select('*')
+          .eq('user_id', studentId);
+          
+        if (spacedStatsError) throw spacedStatsError;
+        
+        // Assignments
+        const { data: assignments, error: assignmentsError } = await supabase
+          .from('student_assignments')
+          .select('*')
+          .eq('student_id', studentId);
+          
+        if (assignmentsError) throw assignmentsError;
+        
+        return {
+          lessons: {
+            total: totalLessons,
+            completed: completedLessons,
+            completionRate: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+          },
+          quizzes: {
+            total: quizAttempts?.length || 0,
+            passed: quizAttempts?.filter(q => q.passed).length || 0,
+            averageScore
+          },
+          voicePractice: {
+            sessionsCount: voiceSessions?.length || 0,
+            totalMinutes: Math.round((voiceSessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0) / 60)
+          },
+          spacedRepetition: {
+            itemsCount: spacedItems?.length || 0,
+            reviewsCount: spacedStats?.length || 0
+          },
+          assignments: {
+            total: assignments?.length || 0,
+            completed: assignments?.filter(a => a.status === 'completed').length || 0,
+            overdue: assignments?.filter(a => 
+              a.status !== 'completed' && 
+              a.due_date && 
+              new Date(a.due_date) < new Date()
+            ).length || 0
+          }
+        };
+      } catch (error) {
+        console.error('Error fetching student stats:', error);
+        toast.error('Failed to load student statistics');
+        return null;
+      }
     },
     enabled: !!studentId
   });
 
-  const { data: recentActivity, isLoading: loadingActivity } = useQuery({
+  // Student recent activity
+  const { 
+    data: recentActivity, 
+    isLoading: loadingActivity,
+    refetch: refetchActivity
+  } = useQuery({
     queryKey: ['student-activity', studentId],
     queryFn: async () => {
-      // Get recent assignments
-      const { data: assignments } = await supabase
-        .from('student_assignments')
-        .select('*, lessons(title)')
-        .eq('student_id', studentId)
-        .order('updated_at', { ascending: false })
-        .limit(5);
-      
-      // Get recent quizzes
-      const { data: quizzes } = await supabase
-        .from('user_quiz_attempts')
-        .select('*, quizzes(title)')
-        .eq('user_id', studentId)
-        .order('started_at', { ascending: false })
-        .limit(5);
-      
-      // Get recent voice sessions
-      const { data: voiceSessions } = await supabase
-        .from('voice_practice_sessions')
-        .select('*')
-        .eq('user_id', studentId)
-        .order('started_at', { ascending: false })
-        .limit(5);
-      
-      return {
-        assignments: assignments || [],
-        quizzes: quizzes || [],
-        voiceSessions: voiceSessions || []
-      };
+      try {
+        // For virtual students, return empty activity
+        if (isVirtual) {
+          return {
+            assignments: [],
+            quizzes: [],
+            voiceSessions: []
+          };
+        }
+        
+        // Get recent assignments
+        const { data: assignments, error: assignmentsError } = await supabase
+          .from('student_assignments')
+          .select('*, lessons(title)')
+          .eq('student_id', studentId)
+          .order('updated_at', { ascending: false })
+          .limit(5);
+          
+        if (assignmentsError) throw assignmentsError;
+        
+        // Get recent quizzes
+        const { data: quizzes, error: quizzesError } = await supabase
+          .from('user_quiz_attempts')
+          .select('*, quizzes(title)')
+          .eq('user_id', studentId)
+          .order('started_at', { ascending: false })
+          .limit(5);
+          
+        if (quizzesError) throw quizzesError;
+        
+        // Get recent voice sessions
+        const { data: voiceSessions, error: voiceError } = await supabase
+          .from('voice_practice_sessions')
+          .select('*')
+          .eq('user_id', studentId)
+          .order('started_at', { ascending: false })
+          .limit(5);
+          
+        if (voiceError) throw voiceError;
+        
+        return {
+          assignments: assignments || [],
+          quizzes: quizzes || [],
+          voiceSessions: voiceSessions || []
+        };
+      } catch (error) {
+        console.error('Error fetching student activity:', error);
+        toast.error('Failed to load recent activity');
+        return {
+          assignments: [],
+          quizzes: [],
+          voiceSessions: []
+        };
+      }
     },
     enabled: !!studentId
   });
 
   const handleGoBack = () => {
     navigate('/teacher/students');
+  };
+  
+  const handleRefreshData = () => {
+    toast.info('Atualizando dados do aluno...');
+    refetchStudent();
+    refetchStats();
+    refetchActivity();
   };
 
   if (loadingStudent) {
@@ -183,12 +322,45 @@ const StudentProfile: React.FC = () => {
     );
   }
 
+  if (!student) {
+    return (
+      <TeacherLayout pageTitle="Perfil do Aluno">
+        <div className="space-y-6">
+          <Button variant="ghost" onClick={handleGoBack} className="mb-4 -ml-2">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Alunos
+          </Button>
+          
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center p-8">
+              <User className="h-16 w-16 text-muted-foreground mb-4" />
+              <h2 className="text-xl font-bold mb-2">Aluno não encontrado</h2>
+              <p className="text-muted-foreground mb-4">Não foi possível encontrar os dados deste aluno</p>
+              <Button onClick={handleGoBack}>Voltar para Lista de Alunos</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </TeacherLayout>
+    );
+  }
+
   return (
     <TeacherLayout pageTitle="Perfil do Aluno">
       <div className="space-y-6">
-        <Button variant="ghost" onClick={handleGoBack} className="mb-4 -ml-2">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Alunos
-        </Button>
+        <div className="flex justify-between items-center">
+          <Button variant="ghost" onClick={handleGoBack} className="-ml-2">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Alunos
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefreshData}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Atualizar dados
+          </Button>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           {student?.avatar_url ? (
@@ -205,9 +377,14 @@ const StudentProfile: React.FC = () => {
           
           <div>
             <h1 className="text-2xl font-bold">{student?.first_name} {student?.last_name}</h1>
-            <p className="text-muted-foreground">
-              Ingressou em {student && format(new Date(student.created_at), 'd MMMM, yyyy', { locale: ptBR })}
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+              {student.email && (
+                <p className="text-muted-foreground">{student.email}</p>
+              )}
+              <p className="text-muted-foreground">
+                Ingressou em {student && format(new Date(student.created_at), 'd MMMM, yyyy', { locale: ptBR })}
+              </p>
+            </div>
           </div>
         </div>
         
@@ -217,6 +394,12 @@ const StudentProfile: React.FC = () => {
               <Skeleton key={i} className="h-32" />
             ))}
           </div>
+        ) : !studentStats ? (
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-center text-muted-foreground">Não foi possível carregar as estatísticas do aluno</p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Card>
@@ -352,7 +535,7 @@ const StudentProfile: React.FC = () => {
             <TabsContent value="assignments">
               {loadingActivity ? (
                 <Skeleton className="h-40 w-full" />
-              ) : recentActivity?.assignments.length === 0 ? (
+              ) : !recentActivity || recentActivity.assignments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhuma atividade de tarefa ainda
                 </div>
@@ -399,7 +582,7 @@ const StudentProfile: React.FC = () => {
             <TabsContent value="quizzes">
               {loadingActivity ? (
                 <Skeleton className="h-40 w-full" />
-              ) : recentActivity?.quizzes.length === 0 ? (
+              ) : !recentActivity || recentActivity.quizzes.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhuma atividade de questionário ainda
                 </div>
@@ -441,7 +624,7 @@ const StudentProfile: React.FC = () => {
             <TabsContent value="voice">
               {loadingActivity ? (
                 <Skeleton className="h-40 w-full" />
-              ) : recentActivity?.voiceSessions.length === 0 ? (
+              ) : !recentActivity || recentActivity.voiceSessions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhuma atividade de prática de voz ainda
                 </div>

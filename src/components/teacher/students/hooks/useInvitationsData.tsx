@@ -1,7 +1,8 @@
+
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 export const useInvitationsData = (queryClient: any) => {
   // Fetch invitation data
@@ -91,14 +92,13 @@ export const useInvitationsData = (queryClient: any) => {
         return [];
       }
     },
-    staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: true, // Auto-refetch when window focus returns
-    refetchInterval: 10000 // Refetch every 10 seconds
+    // Removed refetchInterval as requested
   });
 
-  // Força o refetch dos dados com delay para garantir consistência
+  // Força o refetch dos dados manualmente
   const forceRefresh = useCallback(() => {
-    console.log('Forçando atualização dos dados de convites...');
+    console.log('Forçando atualização manual dos dados de convites...');
     
     // Invalidate caches
     queryClient.invalidateQueries({ queryKey: ['student-invitations'] });
@@ -106,45 +106,7 @@ export const useInvitationsData = (queryClient: any) => {
     
     // Immediate refetch
     refetchInvitations();
-    
-    // Schedule delayed refetch to ensure DB consistency
-    setTimeout(() => {
-      console.log('Executando refetch secundário após delay...');
-      refetchInvitations();
-      queryClient.refetchQueries({ queryKey: ['students-profiles'] });
-    }, 1000);
-    
-    // One final refetch after a longer delay
-    setTimeout(() => {
-      console.log('Verificação final de consistência de dados...');
-      refetchInvitations();
-      queryClient.refetchQueries({ queryKey: ['students-profiles'] });
-    }, 3000);
   }, [queryClient, refetchInvitations]);
-
-  // Configurar um listener para mudanças na tabela de convites
-  useEffect(() => {
-    console.log('Configurando listener para tabela student_invitations');
-    
-    const subscription = supabase
-      .channel('student_invitations_changes')
-      .on('postgres_changes', {
-        event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
-        schema: 'public',
-        table: 'student_invitations'
-      }, (payload) => {
-        console.log('Mudança detectada na tabela de convites:', payload);
-        // Force refresh data
-        forceRefresh();
-      })
-      .subscribe();
-
-    // Cleanup subscription on component unmount
-    return () => {
-      console.log('Removendo listener de convites');
-      subscription.unsubscribe();
-    };
-  }, [forceRefresh]);
 
   // Handler for successful invitation or deletion
   const handleInvitationUpdate = useCallback(() => {

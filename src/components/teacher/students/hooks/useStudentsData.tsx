@@ -1,8 +1,8 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 
 type StudentProfile = {
   id: string;
@@ -39,7 +39,7 @@ export const useStudentsData = () => {
         // Get the current teacher's ID
         const teacherId = authData.user.id;
 
-        console.log('Fetching active student data for teacher:', teacherId);
+        console.log('Fetching student data for teacher:', teacherId);
 
         // Get students who were invited by this teacher
         const { data: invitedStudents, error: invitationsError } = await supabase
@@ -58,15 +58,7 @@ export const useStudentsData = () => {
         }
 
         console.log('Invitations found:', invitedStudents?.length || 0);
-        if (invitedStudents && invitedStudents.length > 0) {
-          console.log('Invitation details:', invitedStudents.map(inv => ({
-            code: inv.invitation_code,
-            email: inv.email,
-            status: inv.status,
-            user_id: inv.user_id
-          })));
-        }
-
+        
         // Extract the user_ids from invitations where students have accepted
         const acceptedInvitations = invitedStudents
           ?.filter(invitation => invitation.status === 'accepted') || [];
@@ -173,57 +165,15 @@ export const useStudentsData = () => {
         return [];
       }
     },
-    staleTime: 0, // Always consider data stale
     refetchOnWindowFocus: true, // Refetch on window focus
-    refetchInterval: 15000 // Refetch every 15 seconds
+    // Removed refetchInterval as requested
   });
 
   // Função para forçar atualização dos dados
   const forceRefresh = useCallback(() => {
-    console.log('Forçando atualização dos dados de alunos...');
+    console.log('Forçando atualização manual dos dados de alunos...');
     refetchStudents();
-    
-    // Programar uma segunda atualização para garantir que os dados estejam consistentes
-    setTimeout(() => {
-      console.log('Executando atualização secundária dos dados de alunos...');
-      refetchStudents();
-    }, 2000);
   }, [refetchStudents]);
-
-  // Configurar um listener para mudanças nas tabelas relevantes
-  useEffect(() => {
-    // Listener para a tabela de convites
-    const invitationsSubscription = supabase
-      .channel('invitations_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'student_invitations'
-      }, (payload) => {
-        console.log('Mudança detectada na tabela de convites:', payload);
-        forceRefresh();
-      })
-      .subscribe();
-
-    // Listener para a tabela de perfis
-    const profilesSubscription = supabase
-      .channel('profiles_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'profiles',
-        filter: 'role=eq.student'
-      }, (payload) => {
-        console.log('Mudança detectada na tabela de perfis (alunos):', payload);
-        forceRefresh();
-      })
-      .subscribe();
-
-    return () => {
-      invitationsSubscription.unsubscribe();
-      profilesSubscription.unsubscribe();
-    };
-  }, [forceRefresh]);
 
   return {
     students,

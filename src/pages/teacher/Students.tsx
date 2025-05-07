@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import TeacherLayout from '@/components/layout/TeacherLayout';
 import StudentsTabs from '@/components/teacher/students/StudentsTabs';
@@ -35,13 +35,6 @@ const Students = () => {
     forceRefresh: forceRefreshInvitations
   } = useInvitationsData(queryClient);
 
-  // Refresh data on component mount to ensure fresh data
-  useEffect(() => {
-    console.log('Página de alunos montada - carregando dados recentes...');
-    forceRefreshStudents();
-    forceRefreshInvitations();
-  }, [forceRefreshStudents, forceRefreshInvitations]);
-
   // Função para atualizar manualmente todos os dados
   const handleManualRefresh = () => {
     console.log('Atualizando manualmente todos os dados de alunos e convites...');
@@ -68,9 +61,9 @@ const Students = () => {
             size="sm" 
             onClick={handleManualRefresh}
             disabled={isLoading || isRefreshing}
-            className="ml-auto"
+            className="ml-auto flex items-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Atualizando...' : 'Atualizar dados'}
           </Button>
         </div>
