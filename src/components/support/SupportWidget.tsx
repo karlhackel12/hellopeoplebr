@@ -72,7 +72,7 @@ export const SupportWidget: React.FC = () => {
       }
       
       toast.success('Mensagem enviada!', {
-        description: 'Nossa equipe responderá em breve.',
+        description: 'Enviamos uma confirmação para seu email e nossa equipe responderá em breve.',
       });
       
       // Reset form
@@ -86,10 +86,20 @@ export const SupportWidget: React.FC = () => {
       // Close widget after successful submission
       setIsOpen(false);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting support form:', error);
+
+      // Melhoria no tratamento de erros com mensagens mais específicas
+      let errorMessage = 'Por favor, tente novamente mais tarde.';
+      
+      if (error.message?.includes('domínio não verificado')) {
+        errorMessage = 'Nosso sistema de email está em manutenção. Por favor, tente novamente mais tarde.';
+      } else if (error.message?.includes('limite de envios')) {
+        errorMessage = 'Estamos processando muitas mensagens. Por favor, tente novamente em alguns minutos.';
+      }
+      
       toast.error('Erro ao enviar mensagem', {
-        description: 'Por favor, tente novamente mais tarde.',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
