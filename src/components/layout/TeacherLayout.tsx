@@ -1,3 +1,4 @@
+
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isTeacher } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import LandscapeFooter from './LandscapeFooter';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
+import { SupportWidget } from '@/components/support/SupportWidget';
 
 interface TeacherLayoutProps {
   children: ReactNode;
@@ -119,6 +121,8 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children, pageTitle }) =>
       <div className={`${isMobile ? 'fixed bottom-16 left-0 right-0' : ''}`}>
         <LandscapeFooter />
       </div>
+
+      <SupportWidget />
     </div>
   );
 };

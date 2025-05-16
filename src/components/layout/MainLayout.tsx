@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import LandscapeFooter from './LandscapeFooter';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
+import { SupportWidget } from '@/components/support/SupportWidget';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -27,6 +28,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, hideFooter = false })
           <LandscapeFooter />
         </div>
       )}
+      <SupportWidget />
     </div>
   );
 };

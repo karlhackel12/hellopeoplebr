@@ -9,6 +9,7 @@ import MobileHeader from './MobileHeader';
 import LandscapeFooter from './LandscapeFooter';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
+import { SupportWidget } from '@/components/support/SupportWidget';
 
 interface StudentLayoutProps {
   children: ReactNode;
@@ -178,6 +179,8 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({
       <div className={`${isMobile ? 'fixed bottom-16 left-0 right-0' : ''}`}>
         <LandscapeFooter />
       </div>
+
+      <SupportWidget />
     </div>
   );
 };
