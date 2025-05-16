@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MessageSquareHelp, X, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
@@ -106,7 +105,7 @@ export const SupportWidget: React.FC = () => {
         {isOpen ? (
           <X className="h-6 w-6" />
         ) : (
-          <MessageSquareHelp className="h-6 w-6" />
+          <MessageSquare className="h-6 w-6" />
         )}
       </Button>
 
