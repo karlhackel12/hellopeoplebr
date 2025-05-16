@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -6,6 +7,7 @@ import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthWithAnalytics } from '@/hooks/useAuthWithAnalytics';
+import { useAuth } from '@/hooks/use-auth';
 
 import {
   Form,
@@ -34,7 +36,8 @@ type SupportFormValues = z.infer<typeof supportFormSchema>;
 export const SupportWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuthWithAnalytics();
+  const { user } = useAuth(); // Use the regular auth hook to get user data
+  useAuthWithAnalytics(); // Keep for tracking but don't destructure
   const { trackEvent } = useAnalytics();
   
   const form = useForm<SupportFormValues>({
