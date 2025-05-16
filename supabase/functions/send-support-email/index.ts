@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 1. Send the support email to the HelloPeople team
     const supportEmailResponse = await resend.emails.send({
-      from: "HelloPeople Suporte <suporte@hellopeoplebr.com>",
+      from: "HelloPeople Suporte <suporte@updates.hellopeoplebr.com>",
       to: ["ajuda@hellopeoplebr.com"],
       subject: `Suporte: ${subject}`,
       reply_to: email,
@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 2. Send a confirmation email to the user
     const userEmailResponse = await resend.emails.send({
-      from: "HelloPeople Suporte <suporte@hellopeoplebr.com>",
+      from: "HelloPeople Suporte <suporte@updates.hellopeoplebr.com>",
       to: [email],
       subject: "Recebemos sua mensagem | HelloPeople",
       html: `
