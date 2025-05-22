@@ -1,12 +1,13 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useBugsterTracker } from '@/hooks/useBugsterTracker';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const { logError, setUser } = useBugsterTracker();
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -17,6 +18,12 @@ const Dashboard: React.FC = () => {
           navigate('/login');
           return;
         }
+
+        // Registra o usuário no Bugster para rastreamento
+        setUser(user.id, {
+          email: user.email,
+          last_sign_in: user.last_sign_in_at
+        });
 
         // Get user's profile to check their role
         const { data: profile, error } = await supabase
@@ -37,6 +44,11 @@ const Dashboard: React.FC = () => {
         }
       } catch (error) {
         console.error('Error checking user role:', error);
+        // Registra o erro no Bugster
+        logError(error, { 
+          component: 'Dashboard', 
+          action: 'checkUserRole' 
+        });
         toast.error('Something went wrong. Please try again.');
         navigate('/');
       } finally {
@@ -45,7 +57,7 @@ const Dashboard: React.FC = () => {
     };
 
     checkUserRole();
-  }, [navigate]);
+  }, [navigate, logError, setUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
