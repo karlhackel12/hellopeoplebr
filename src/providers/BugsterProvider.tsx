@@ -40,10 +40,14 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
           instance = new BugsterTracker({
             apiKey: "bugster_xeXxZuTROPArSb4dv5wGg5iD57yFvijitjZhIbHQazAGkU9YSpMP",
             endpoint: "https://i.bugster.app",
-            // Removed the release property that was causing the error
-            debug: true,
+            // Removed the debug property that was causing the TypeScript error
           });
           console.log('Instância do Bugster criada:', instance);
+          console.log('Métodos disponíveis:', Object.keys(instance));
+          console.log('É uma função?', typeof instance === 'function');
+          console.log('É um objeto?', typeof instance === 'object');
+          console.log('Tem captureException?', !!instance.captureException);
+          console.log('Tem captureMessage?', !!instance.captureMessage);
         } catch (error) {
           console.error('Erro ao inicializar Bugster com BugsterTracker:', error);
           
@@ -64,6 +68,7 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
         // Check if we created the wrapper successfully
         if (bugsterWrapper) {
           console.log('Bugster wrapper criado com sucesso', bugsterWrapper);
+          console.log('Wrapper métodos:', Object.keys(bugsterWrapper));
           setBugster(bugsterWrapper);
           
           // Test the connection after the instance is available
