@@ -99,6 +99,16 @@ Para verificar se o Bugster está inicializado e conectado corretamente:
 1. Verifique se os eventos de teste aparecem no dashboard do Bugster após alguns minutos.
 2. Se não aparecerem, verifique as configurações de filtro no dashboard.
 
+## Implementação Atual e Compatibilidade de Versões
+
+Nossa implementação atual:
+
+1. **Inicialização**: Usamos o construtor do Bugster diretamente `new BugsterTracker()` em vez do método estático `BugsterTracker.init()` mencionado na documentação.
+2. **Verificação de métodos**: Implementamos verificações defensivas para cada método do SDK antes de usá-lo, com fallbacks para logging no console.
+3. **Tratamento de erros**: Adicionamos tratamento robusto de erros para garantir que problemas com o SDK não afetem a aplicação.
+
+Isso resolve problemas de compatibilidade entre diferentes versões da API do Bugster.
+
 ## Problemas comuns e soluções
 
 **P: O que fazer quando o Bugster não está capturando erros?**
@@ -108,7 +118,7 @@ R: Verifique se o BugsterProvider está corretamente configurado no App.tsx e se
 R: Pode haver problemas de rede ou CORS. Verifique no console do navegador se há erros relacionados a requisições bloqueadas.
 
 **P: Como depurar problemas de conexão?**
-R: Ative o modo de depuração no BugsterProvider e observe os logs no console do navegador. Use o botão "Verificar SDK no Console" para inspecionar detalhes adicionais.
+R: Use o componente BugsterTest em modo de desenvolvimento e clique em "Verificar SDK no Console" para inspecionar detalhes adicionais.
 
-**P: O SDK não está funcionando após a atualização do Bugster?**
-R: A API do Bugster pode ter mudado. Verifique a documentação mais recente e certifique-se de que os métodos que estamos usando ainda são suportados na versão atual.
+**P: Métodos do SDK não estão disponíveis?**
+R: Nossa implementação verifica se os métodos existem antes de usá-los. Se métodos estiverem faltando, isso pode indicar uma incompatibilidade de versão ou inicialização incorreta.

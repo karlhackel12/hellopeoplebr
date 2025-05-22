@@ -39,12 +39,20 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
         return false;
       }
 
-      // Usando uma função segura que sabemos que existe no objeto
-      await bugster.test && bugster.test();
-      console.log('Conexão com Bugster testada com sucesso');
-      setIsConnected(true);
-      setConnectionError(null);
-      return true;
+      // Verificamos se o bugster tem métodos que podemos chamar
+      if (typeof bugster.captureMessage === 'function') {
+        // Enviamos uma mensagem de teste
+        bugster.captureMessage('Teste de conexão Bugster');
+        console.log('Conexão com Bugster testada com sucesso');
+        setIsConnected(true);
+        setConnectionError(null);
+        return true;
+      } else {
+        console.warn('Método de teste não disponível no objeto Bugster');
+        setIsConnected(false);
+        setConnectionError('API do Bugster não tem os métodos esperados');
+        return false;
+      }
     } catch (error) {
       console.error('Falha ao conectar com o servidor Bugster:', error);
       setIsConnected(false);
@@ -65,8 +73,8 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
       }
       
       try {
-        // Inicializamos o Bugster e armazenamos a instância retornada
-        const bugsterInstance = BugsterTracker.init({
+        // Inicializamos o Bugster diretamente (sem método init)
+        const bugsterInstance = new BugsterTracker({
           apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
           endpoint: "https://i.bugster.app",
           environment: process.env.NODE_ENV || 'development',
