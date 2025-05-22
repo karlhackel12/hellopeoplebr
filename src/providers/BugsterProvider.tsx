@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 // Import BugsterTracker directly to avoid TypeScript errors
 import { BugsterTracker } from '@bugster/bugster-js';
@@ -167,9 +168,10 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
         try {
           console.log('Inicializando Bugster via BugsterTracker constructor');
           instance = new BugsterTracker({
-            apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
+            apiKey: "bugster_xeXxZuTROPArSb4dv5wGg5iD57yFvijitjZhIbHQazAGkU9YSpMP",
             endpoint: "https://i.bugster.app",
-            environment: process.env.NODE_ENV || 'development',
+            // Removendo a propriedade environment que causava o erro
+            // environment: process.env.NODE_ENV || 'development',
             release: '1.0.0',
             debug: true,
           });
