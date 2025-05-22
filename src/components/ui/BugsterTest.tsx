@@ -84,6 +84,24 @@ export const BugsterTest: React.FC = () => {
     return 'Inicializando...';
   };
 
+  const logSDKStatus = () => {
+    console.log("Bugster SDK status:", {
+      isInitialized: !!bugster,
+      isConnected,
+      connectionError,
+      methods: bugster ? Object.keys(bugster).filter(k => typeof bugster[k] === 'function') : []
+    });
+
+    setTestResults(prev => [
+      ...prev,
+      {
+        message: 'Status do SDK registrado no console',
+        type: 'info',
+        timestamp: new Date().toISOString()
+      }
+    ]);
+  };
+
   return (
     <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
       <h2 className="text-lg font-medium">Teste do Bugster SDK</h2>
@@ -98,6 +116,9 @@ export const BugsterTest: React.FC = () => {
           </Button>
           <Button onClick={handleTestMessage} variant="outline">
             Testar Mensagem
+          </Button>
+          <Button onClick={logSDKStatus} variant="secondary">
+            Verificar SDK no Console
           </Button>
         </div>
 

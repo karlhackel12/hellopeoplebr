@@ -91,7 +91,7 @@ Se você receber a mensagem "SDK Not Active" no dashboard do Bugster, verifique:
 Para verificar se o Bugster está inicializado e conectado corretamente:
 
 1. Acesse a página inicial em modo de desenvolvimento para ver o componente de teste do Bugster.
-2. Verifique o console do navegador para mensagens de erro ou logs do Bugster.
+2. Verifique o console do navegador para mensagens de erro ou logs do Bugster usando o botão "Verificar SDK no Console".
 3. Use os botões de teste para verificar se os erros e mensagens estão sendo enviados.
 
 ### Verificar no dashboard
@@ -102,10 +102,13 @@ Para verificar se o Bugster está inicializado e conectado corretamente:
 ## Problemas comuns e soluções
 
 **P: O que fazer quando o Bugster não está capturando erros?**
-R: Verifique se o BugsterProvider está corretamente configurado no App.tsx e se você está usando o hook useBugsterTracker corretamente.
+R: Verifique se o BugsterProvider está corretamente configurado no App.tsx e se você está usando o hook useBugsterTracker corretamente. Confira o console para qualquer erro.
 
 **P: Por que o SDK mostra como inicializado mas não envia dados?**
 R: Pode haver problemas de rede ou CORS. Verifique no console do navegador se há erros relacionados a requisições bloqueadas.
 
 **P: Como depurar problemas de conexão?**
-R: Ative o modo de depuração no BugsterProvider e observe os logs no console do navegador.
+R: Ative o modo de depuração no BugsterProvider e observe os logs no console do navegador. Use o botão "Verificar SDK no Console" para inspecionar detalhes adicionais.
+
+**P: O SDK não está funcionando após a atualização do Bugster?**
+R: A API do Bugster pode ter mudado. Verifique a documentação mais recente e certifique-se de que os métodos que estamos usando ainda são suportados na versão atual.
