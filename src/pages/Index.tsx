@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import Hero from '@/components/home/Hero';
@@ -10,9 +9,11 @@ import Testimonials from '@/components/home/Testimonials';
 import Faq from '@/components/home/Faq';
 import CtaSection from '@/components/home/CtaSection';
 import { FormProvider, useForm } from 'react-hook-form';
+import { BugsterTest } from '@/components/ui/BugsterTest';
 
 const Index: React.FC = () => {
   const methods = useForm();
+  const isDevelopment = process.env.NODE_ENV === 'development';
   
   // Add smooth scrolling for anchor links
   useEffect(() => {
@@ -52,6 +53,11 @@ const Index: React.FC = () => {
     <FormProvider {...methods}>
       <MainLayout>
         <div className="w-full overflow-hidden">
+          {isDevelopment && (
+            <div className="container mx-auto py-4 mt-4">
+              <BugsterTest />
+            </div>
+          )}
           <Hero />
           <Benefits />
           <Features />

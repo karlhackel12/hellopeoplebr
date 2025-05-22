@@ -73,7 +73,38 @@ Veja o arquivo `src/pages/Dashboard.tsx` para um exemplo de como o Bugster foi i
 
 Você pode acessar o dashboard do Bugster para visualizar e analisar os erros em: [https://bugster.app](https://bugster.app)
 
-## Perguntas frequentes
+## Solução de problemas
+
+### SDK Não Ativo
+
+Se você receber a mensagem "SDK Not Active" no dashboard do Bugster, verifique:
+
+1. **Conexão de rede**: Certifique-se de que sua aplicação tenha acesso à internet.
+2. **Bloqueadores de conteúdo**: Desative bloqueadores de conteúdo ou adicione o domínio do Bugster à lista de exceções.
+3. **CORS**: Verifique se não há problemas de CORS impedindo a comunicação com o servidor Bugster.
+4. **API Key**: Confirme que a chave de API está correta no `BugsterProvider`.
+5. **Firewall**: Verifique se o firewall ou proxy não está bloqueando as requisições para o endpoint do Bugster.
+
+### Verificar manualmente a inicialização
+
+Para verificar se o Bugster está inicializado e conectado corretamente:
+
+1. Acesse a página inicial em modo de desenvolvimento para ver o componente de teste do Bugster.
+2. Verifique o console do navegador para mensagens de erro ou logs do Bugster.
+3. Use os botões de teste para verificar se os erros e mensagens estão sendo enviados.
+
+### Verificar no dashboard
+
+1. Verifique se os eventos de teste aparecem no dashboard do Bugster após alguns minutos.
+2. Se não aparecerem, verifique as configurações de filtro no dashboard.
+
+## Problemas comuns e soluções
 
 **P: O que fazer quando o Bugster não está capturando erros?**
-R: Verifique se o BugsterProvider está corretamente configurado no App.tsx e se você está usando o hook useBugsterTracker corretamente. 
+R: Verifique se o BugsterProvider está corretamente configurado no App.tsx e se você está usando o hook useBugsterTracker corretamente.
+
+**P: Por que o SDK mostra como inicializado mas não envia dados?**
+R: Pode haver problemas de rede ou CORS. Verifique no console do navegador se há erros relacionados a requisições bloqueadas.
+
+**P: Como depurar problemas de conexão?**
+R: Ative o modo de depuração no BugsterProvider e observe os logs no console do navegador. 
