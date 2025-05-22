@@ -1,4 +1,3 @@
-
 # Bugster SDK - Monitoramento de Erros
 
 Este documento explica como usar o Bugster SDK integrado neste projeto para monitoramento de erros e diagnóstico de problemas.
@@ -103,11 +102,32 @@ Para verificar se o Bugster está inicializado e conectado corretamente:
 
 Nossa implementação atual:
 
-1. **Inicialização**: Usamos o construtor do Bugster diretamente `new BugsterTracker()` em vez do método estático `BugsterTracker.init()` mencionado na documentação.
-2. **Verificação de métodos**: Implementamos verificações defensivas para cada método do SDK antes de usá-lo, com fallbacks para logging no console.
-3. **Tratamento de erros**: Adicionamos tratamento robusto de erros para garantir que problemas com o SDK não afetem a aplicação.
+1. **Wrapper de métodos**: Criamos um wrapper em torno da instância do Bugster que garante que todos os métodos necessários estejam disponíveis, mesmo que a API do Bugster não os forneça diretamente.
 
-Isso resolve problemas de compatibilidade entre diferentes versões da API do Bugster.
+2. **Inicialização com múltiplas tentativas**: Usamos uma abordagem de múltiplas tentativas para inicializar o Bugster, testando diferentes métodos de inicialização para garantir compatibilidade com diferentes versões da biblioteca.
+
+3. **Fallbacks inteligentes**: Implementamos fallbacks para cada método do SDK, tentando métodos alternativos ou registrando em console quando os métodos nativos não estão disponíveis.
+
+4. **Tratamento de erros**: Adicionamos tratamento robusto de erros para garantir que problemas com o SDK não afetem a aplicação.
+
+### Problema do Construtor "zb is not a constructor"
+
+Resolvemos um problema específico onde o método de inicialização do Bugster não estava funcionando corretamente. O erro "zb is not a constructor" ocorre quando tentamos inicializar o Bugster como um construtor, mas o pacote não expõe corretamente a classe construtora.
+
+Nossa solução tenta vários métodos de inicialização na seguinte ordem:
+1. Usando `BugsterSDK.init()` se disponível
+2. Usando `new BugsterSDK.BugsterTracker()` se disponível
+3. Usando `new BugsterSDK()` se o próprio módulo for um construtor
+4. Usando `new BugsterSDK.default()` se disponível como export padrão
+
+### Problema de métodos não disponíveis
+
+Também resolvemos o problema dos métodos não disponíveis (`captureException`, `captureMessage`, etc.) criando um wrapper que:
+
+1. Implementa os métodos necessários independentemente da implementação do Bugster
+2. Tenta usar os métodos nativos da instância Bugster quando disponíveis
+3. Fornece alternativas quando os métodos nativos não existem (por exemplo, usar captureMessage para registrar exceções)
+4. Garante que as chamadas de API nunca falhem, mesmo se o Bugster não funcionar corretamente
 
 ## Problemas comuns e soluções
 
@@ -121,4 +141,7 @@ R: Pode haver problemas de rede ou CORS. Verifique no console do navegador se h�
 R: Use o componente BugsterTest em modo de desenvolvimento e clique em "Verificar SDK no Console" para inspecionar detalhes adicionais.
 
 **P: Métodos do SDK não estão disponíveis?**
-R: Nossa implementação verifica se os métodos existem antes de usá-los. Se métodos estiverem faltando, isso pode indicar uma incompatibilidade de versão ou inicialização incorreta.
+R: Nossa implementação de wrapper resolve esse problema, fornecendo versões alternativas dos métodos quando os originais não estão disponíveis. O componente BugsterTest mostra quais métodos estão disponíveis.
+
+**P: Erro "zb is not a constructor"?**
+R: Este erro indica um problema na forma como o SDK do Bugster está sendo inicializado. Nossa implementação atual resolve esse problema testando diferentes métodos de inicialização.

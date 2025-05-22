@@ -1,4 +1,3 @@
-
 import { useBugster } from "@/providers/BugsterProvider";
 import { useCallback } from "react";
 
@@ -16,7 +15,7 @@ import { useCallback } from "react";
  * }
  */
 export const useBugsterTracker = () => {
-  const { bugster } = useBugster();
+  const { bugster, isConnected, connectionError } = useBugster();
 
   const logError = useCallback((error: Error | unknown, context?: Record<string, any>) => {
     if (!bugster) {
@@ -24,24 +23,11 @@ export const useBugsterTracker = () => {
       return;
     }
 
-    try {
-      if (error instanceof Error) {
-        // Tentamos usar o método de captura de exceções se disponível
-        if (typeof bugster.captureException === 'function') {
-          bugster.captureException(error, context);
-        } else {
-          console.error("Método captureException não disponível", error);
-        }
-      } else {
-        // Tentamos usar o método de captura de mensagens se disponível
-        if (typeof bugster.captureMessage === 'function') {
-          bugster.captureMessage(String(error), context);
-        } else {
-          console.error("Método captureMessage não disponível", error);
-        }
-      }
-    } catch (captureError) {
-      console.error("Erro ao capturar exceção com Bugster:", captureError, error);
+    // O método captureException já está garantido pelo wrapper
+    if (error instanceof Error) {
+      bugster.captureException?.(error, context);
+    } else {
+      bugster.captureMessage?.(String(error), context);
     }
   }, [bugster]);
 
@@ -51,16 +37,8 @@ export const useBugsterTracker = () => {
       return;
     }
 
-    try {
-      // Tentamos usar o método de captura de mensagens se disponível
-      if (typeof bugster.captureMessage === 'function') {
-        bugster.captureMessage(message, context);
-      } else {
-        console.warn("Método captureMessage não disponível", message);
-      }
-    } catch (captureError) {
-      console.error("Erro ao capturar mensagem com Bugster:", captureError, message);
-    }
+    // O método captureMessage já está garantido pelo wrapper
+    bugster.captureMessage?.(message, context);
   }, [bugster]);
 
   const setUser = useCallback((userId: string, userData?: Record<string, any>) => {
@@ -69,22 +47,16 @@ export const useBugsterTracker = () => {
       return;
     }
 
-    try {
-      // Tentamos usar o método de definição de usuário se disponível
-      if (typeof bugster.setUser === 'function') {
-        bugster.setUser(userId, userData);
-      } else {
-        console.warn("Método setUser não disponível", userId);
-      }
-    } catch (userError) {
-      console.error("Erro ao definir usuário no Bugster:", userError, userId);
-    }
+    // O método setUser já está garantido pelo wrapper
+    bugster.setUser?.(userId, userData);
   }, [bugster]);
 
   return {
     bugster,
     logError,
     logMessage,
-    setUser
+    setUser,
+    isConnected,
+    connectionError
   };
 };

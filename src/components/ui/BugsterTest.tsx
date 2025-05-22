@@ -1,12 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useBugsterTracker } from '@/hooks/useBugsterTracker';
 import { useBugster } from '@/providers/BugsterProvider';
 import { Button } from './button';
 
 export const BugsterTest: React.FC = () => {
-  const { logError, logMessage, bugster } = useBugsterTracker();
-  const { isConnected, connectionError } = useBugster();
+  const { logError, logMessage, bugster, isConnected, connectionError } = useBugsterTracker();
   const [testResults, setTestResults] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -89,7 +87,11 @@ export const BugsterTest: React.FC = () => {
       isInitialized: !!bugster,
       isConnected,
       connectionError,
-      methods: bugster ? Object.keys(bugster).filter(k => typeof bugster[k] === 'function') : []
+      wrapper: bugster ? {
+        hasCaptureException: !!bugster.captureException,
+        hasCaptureMessage: !!bugster.captureMessage,
+        hasSetUser: !!bugster.setUser
+      } : null
     });
 
     setTestResults(prev => [
@@ -102,6 +104,22 @@ export const BugsterTest: React.FC = () => {
     ]);
   };
 
+  const checkMethods = () => {
+    const methods = {
+      captureException: bugster?.captureException ? "✅" : "❌",
+      captureMessage: bugster?.captureMessage ? "✅" : "❌",
+      setUser: bugster?.setUser ? "✅" : "❌"
+    };
+
+    return (
+      <div className="text-xs mt-2 font-mono bg-gray-100 p-2 rounded">
+        <div>captureException: {methods.captureException}</div>
+        <div>captureMessage: {methods.captureMessage}</div>
+        <div>setUser: {methods.setUser}</div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
       <h2 className="text-lg font-medium">Teste do Bugster SDK</h2>
@@ -110,6 +128,12 @@ export const BugsterTest: React.FC = () => {
         <p className={getStatusColor()}>
           Status: {getStatusText()}
         </p>
+        {bugster && (
+          <div>
+            <p className="text-sm font-medium">Métodos disponíveis:</p>
+            {checkMethods()}
+          </div>
+        )}
         <div className="flex flex-col gap-2">
           <Button onClick={handleTestError} variant="destructive">
             Testar Erro
