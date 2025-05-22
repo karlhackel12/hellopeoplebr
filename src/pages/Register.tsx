@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthForm from '@/components/Auth/AuthForm';
@@ -15,6 +16,9 @@ const Register: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<'student' | 'teacher'>('student');
   const methods = useForm();
   const isMobile = useIsMobile();
+
+  // Added defaultPlan state to ensure teachers can register
+  const [defaultPlan, setDefaultPlan] = useState<string>("free");
 
   useEffect(() => {
     // Check if user is coming from invitation page
@@ -124,6 +128,7 @@ const Register: React.FC = () => {
                 isInvited: !!invitationCode
               }}
               selectedRole={selectedRole}
+              selectedPlan={selectedRole === 'teacher' ? defaultPlan : null}
             />
           </div>
         </div>

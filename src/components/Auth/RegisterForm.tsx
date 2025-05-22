@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -114,6 +115,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   // Para alunos com convite, só desabilitar se tiver email no convite
   const emailFieldDisabled = !!invitationData?.email && (invitationData?.email?.length || 0) > 0;
 
+  // Modificado: ajustamos a condição de desabilitar o botão para professores
+  const isSubmitDisabled = (role === 'student' && !invitationStatus?.valid) || 
+                          (role === 'teacher' && !selectedPlan && !form.watch('planId'));
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -154,7 +159,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           <RoleField form={form} />
         )}
 
-        {role === 'teacher' && !selectedPlan && (
+        {role === 'teacher' && (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
             <div className="text-sm">
@@ -212,7 +217,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <SubmitButton 
           isLoading={isLoading} 
           type="register" 
-          disabled={(role === 'student' && !invitationStatus?.valid) || (role === 'teacher' && !selectedPlan)}
+          disabled={isSubmitDisabled}
         />
         <FormFooter type="register" />
       </form>

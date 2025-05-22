@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-// Importar corretamente o Bugster
-import * as BugsterSDK from '@bugster/bugster-js';
+// Import BugsterTracker directly to avoid TypeScript errors
+import { BugsterTracker } from '@bugster/bugster-js';
 
 // Criar uma interface mínima para o objeto Bugster
 interface BugsterInstance {
@@ -9,7 +9,7 @@ interface BugsterInstance {
   setUser?: (userId: string, userData?: Record<string, any>) => void;
 }
 
-// Criar manualmente os métodos se não estiverem disponíveis
+// Create manualmente os métodos se não estiverem disponíveis
 const createBugsterWrapper = (instance: any): BugsterInstance => {
   const wrapper: BugsterInstance = {};
   
@@ -158,58 +158,27 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
       }
       
       try {
-        // Verificamos o formato correto do SDK
-        console.log('Formato do SDK Bugster:', BugsterSDK);
+        // Verificamos o formato do SDK Bugster
+        console.log('Formato do SDK Bugster:', BugsterTracker);
         
-        // Tentamos diferentes métodos de inicialização
         let instance = null;
         
-        // Verificamos se o Bugster é um objeto com método init
-        if (typeof BugsterSDK.init === 'function') {
-          console.log('Inicializando Bugster via método init');
-          instance = BugsterSDK.init({
-            apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
-            endpoint: "https://i.bugster.app",
-            environment: process.env.NODE_ENV || 'development',
-            release: '1.0.0',
-            debug: true,
-          });
-        } 
-        // Verificamos se o BugsterSDK tem um BugsterTracker que é um construtor
-        else if (BugsterSDK.BugsterTracker && typeof BugsterSDK.BugsterTracker === 'function') {
+        // Tentamos inicializar usando o construtor do BugsterTracker
+        try {
           console.log('Inicializando Bugster via BugsterTracker constructor');
-          instance = new BugsterSDK.BugsterTracker({
+          instance = new BugsterTracker({
             apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
             endpoint: "https://i.bugster.app",
             environment: process.env.NODE_ENV || 'development',
             release: '1.0.0',
             debug: true,
           });
-        }
-        // Verificamos se o próprio BugsterSDK é um construtor
-        else if (typeof BugsterSDK === 'function') {
-          console.log('Inicializando Bugster via construtor direto');
-          instance = new (BugsterSDK as any)({
-            apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
-            endpoint: "https://i.bugster.app",
-            environment: process.env.NODE_ENV || 'development',
-            release: '1.0.0',
-            debug: true,
-          });
-        }
-        // Verificamos se o BugsterSDK é um objeto com método default que é um construtor
-        else if (BugsterSDK.default && typeof BugsterSDK.default === 'function') {
-          console.log('Inicializando Bugster via default constructor');
-          instance = new BugsterSDK.default({
-            apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
-            endpoint: "https://i.bugster.app",
-            environment: process.env.NODE_ENV || 'development',
-            release: '1.0.0',
-            debug: true,
-          });
-        } else {
-          // Se tudo falhar, criar uma implementação fake para não quebrar a aplicação
-          console.warn('Formato do SDK Bugster não reconhecido. Criando implementação fake.');
+          console.log('Instância do Bugster criada:', instance);
+        } catch (error) {
+          console.error('Erro ao inicializar Bugster com BugsterTracker:', error);
+          
+          // Se falhar, tentamos criar uma implementação fake para não quebrar a aplicação
+          console.warn('Criando implementação fake do Bugster como fallback');
           instance = {
             _isFake: true,
             _events: []
