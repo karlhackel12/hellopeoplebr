@@ -1,3 +1,4 @@
+
 # Bugster SDK - Monitoramento de Erros
 
 Este documento explica como usar o Bugster SDK integrado neste projeto para monitoramento de erros e diagnóstico de problemas.
@@ -107,4 +108,4 @@ R: Verifique se o BugsterProvider está corretamente configurado no App.tsx e se
 R: Pode haver problemas de rede ou CORS. Verifique no console do navegador se há erros relacionados a requisições bloqueadas.
 
 **P: Como depurar problemas de conexão?**
-R: Ative o modo de depuração no BugsterProvider e observe os logs no console do navegador. 
+R: Ative o modo de depuração no BugsterProvider e observe os logs no console do navegador.

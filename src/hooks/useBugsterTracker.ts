@@ -1,3 +1,4 @@
+
 import { useBugster } from "@/providers/BugsterProvider";
 import { useCallback } from "react";
 
@@ -54,4 +55,4 @@ export const useBugsterTracker = () => {
     logMessage,
     setUser
   };
-}; 
+};

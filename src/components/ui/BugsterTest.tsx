@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useBugsterTracker } from '@/hooks/useBugsterTracker';
 import { useBugster } from '@/providers/BugsterProvider';
@@ -129,4 +130,4 @@ export const BugsterTest: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};

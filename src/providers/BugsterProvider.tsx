@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { BugsterTracker } from '@bugster/bugster-js';
+import BugsterTracker from '@bugster/bugster-js';
 
 interface BugsterContextType {
-  bugster: BugsterTracker | null;
+  bugster: typeof BugsterTracker | null;
   isConnected: boolean;
   connectionError: string | null;
 }
@@ -20,9 +21,9 @@ interface BugsterProviderProps {
 }
 
 export const BugsterProvider = ({ children }: BugsterProviderProps) => {
-  const [bugster, setBugster] = useState<BugsterTracker | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [bugster, setBugster] = useState<typeof BugsterTracker | null>(null);
 
   // Verifica se a rede está disponível
   const checkNetworkStatus = () => {
@@ -30,10 +31,10 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
   };
 
   // Testa a conexão com o servidor Bugster
-  const testConnection = async (instance: BugsterTracker) => {
+  const testConnection = async () => {
     try {
       // Força uma conexão e verifica se há resposta
-      await instance.captureMessage('Teste de conexão Bugster', { 
+      await BugsterTracker.captureMessage('Teste de conexão Bugster', { 
         test: true,
         timestamp: new Date().toISOString()
       });
@@ -60,24 +61,26 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
       }
       
       try {
-        // Cria uma nova instância do Bugster
-        const bugsterInstance = new BugsterTracker({
+        // Inicializa o Bugster usando o método correto conforme documentação
+        BugsterTracker.init({
           apiKey: "bugster_YrA0QUtFB5bjHv63fHhiFTH2SIJvMbszFt0O74my2iqH8btdQ4Gx",
           endpoint: "https://i.bugster.app",
           environment: process.env.NODE_ENV || 'development',
           release: '1.0.0', // Adicione a versão do seu app aqui
           debug: true, // Ative o modo debug para ver os logs no console
+          onInitialized: async () => {
+            console.log('Bugster inicializado com sucesso');
+            const connected = await testConnection();
+            if (connected) {
+              setBugster(BugsterTracker);
+              console.log('Bugster conectado ao servidor');
+            }
+          },
+          onError: (error) => {
+            console.error('Erro ao inicializar Bugster:', error);
+            setConnectionError(error instanceof Error ? error.message : 'Erro desconhecido');
+          }
         });
-        
-        // Testa a conexão com o servidor
-        const connected = await testConnection(bugsterInstance);
-        
-        if (connected) {
-          console.log('Bugster inicializado com sucesso e conectado ao servidor');
-          setBugster(bugsterInstance);
-        } else {
-          console.error('Bugster inicializado, mas não conectado ao servidor');
-        }
       } catch (error) {
         console.error('Erro ao inicializar Bugster:', error);
         setConnectionError(error instanceof Error ? error.message : 'Erro desconhecido');
@@ -113,4 +116,4 @@ export const BugsterProvider = ({ children }: BugsterProviderProps) => {
       {children}
     </BugsterContext.Provider>
   );
-}; 
+};
