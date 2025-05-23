@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trophy, Zap, ChevronLeft, BookOpen } from 'lucide-react';
+import { Trophy, Zap, ChevronLeft, BookOpen, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LearningPathway from './LearningPathway';
 import DuolingoStyleLesson from './DuolingoStyleLesson';
@@ -54,6 +53,7 @@ const LessonQuizDuolingo: React.FC<LessonQuizDuolingoProps> = ({
   const [currentUnit, setCurrentUnit] = useState<LessonUnit | null>(null);
   const [viewMode, setViewMode] = useState<'pathway' | 'lesson'>('pathway');
   const [confetti, setConfetti] = useState(false);
+  const [conversionError, setConversionError] = useState<string | null>(null);
   
   // Encontrar a unidade disponível baseada no ID ou a primeira disponível
   useEffect(() => {
@@ -99,18 +99,129 @@ const LessonQuizDuolingo: React.FC<LessonQuizDuolingoProps> = ({
   
   const handleBackToPathway = () => {
     setViewMode('pathway');
+    setConversionError(null);
   };
   
-  // Converter as questões do formato atual para o formato Duolingo
+  // Fixed converter function with proper error handling and debugging
   const convertQuestions = (questions: any[] = []): Question[] => {
-    return questions.map(q => ({
-      id: q.id || Math.random().toString(),
-      type: 'multiple_choice',
-      question: q.question,
-      options: q.options || q.answers || [],
-      correctAnswer: q.correct_answer || q.correctAnswer
-    }));
+    console.log('LessonQuizDuolingo: Converting questions:', questions);
+    setConversionError(null);
+    
+    if (!Array.isArray(questions) || questions.length === 0) {
+      console.warn('LessonQuizDuolingo: No questions provided or invalid format');
+      setConversionError('Nenhuma questão disponível para este quiz.');
+      return [];
+    }
+    
+    try {
+      const convertedQuestions = questions.map((q, index) => {
+        console.log(`LessonQuizDuolingo: Converting question ${index}:`, q);
+        
+        // Validate question structure
+        if (!q || typeof q !== 'object') {
+          console.error(`LessonQuizDuolingo: Invalid question at index ${index}:`, q);
+          throw new Error(`Questão ${index + 1} tem formato inválido`);
+        }
+        
+        // Extract question text
+        const questionText = q.question_text || q.question || '';
+        if (!questionText) {
+          console.error(`LessonQuizDuolingo: Missing question text at index ${index}:`, q);
+          throw new Error(`Questão ${index + 1} não tem texto`);
+        }
+        
+        // Extract and validate options
+        const rawOptions = q.options || [];
+        if (!Array.isArray(rawOptions) || rawOptions.length === 0) {
+          console.error(`LessonQuizDuolingo: Invalid options at index ${index}:`, rawOptions);
+          throw new Error(`Questão ${index + 1} não tem opções válidas`);
+        }
+        
+        // Convert options to string array and find correct answer
+        const optionsArray: string[] = [];
+        let correctAnswer = '';
+        
+        rawOptions.forEach((option, optIndex) => {
+          const optionText = option.option_text || option.text || option;
+          if (typeof optionText === 'string' && optionText.trim()) {
+            optionsArray.push(optionText);
+            
+            // Check if this is the correct answer
+            if (option.is_correct === true) {
+              correctAnswer = optionText;
+            }
+          } else {
+            console.warn(`LessonQuizDuolingo: Invalid option at question ${index}, option ${optIndex}:`, option);
+          }
+        });
+        
+        // Fallback: if no correct answer found, use the first option
+        if (!correctAnswer && optionsArray.length > 0) {
+          correctAnswer = optionsArray[0];
+          console.warn(`LessonQuizDuolingo: No correct answer found for question ${index}, using first option as fallback`);
+        }
+        
+        if (optionsArray.length < 2) {
+          throw new Error(`Questão ${index + 1} precisa ter pelo menos 2 opções`);
+        }
+        
+        const convertedQuestion: Question = {
+          id: q.id || `question-${index}`,
+          type: 'multiple_choice',
+          question: questionText,
+          options: optionsArray,
+          correctAnswer: correctAnswer
+        };
+        
+        console.log(`LessonQuizDuolingo: Successfully converted question ${index}:`, convertedQuestion);
+        return convertedQuestion;
+      });
+      
+      console.log('LessonQuizDuolingo: All questions converted successfully:', convertedQuestions);
+      return convertedQuestions;
+      
+    } catch (error) {
+      console.error('LessonQuizDuolingo: Error converting questions:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao converter questões';
+      setConversionError(errorMessage);
+      return [];
+    }
   };
+  
+  // Error state component
+  const QuizErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
+    <Card className="border-red-200 bg-red-50">
+      <CardContent className="p-6 text-center">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-red-800 mb-2">Erro no Quiz</h3>
+        <p className="text-red-700 mb-4">{error}</p>
+        <div className="space-x-2">
+          <Button onClick={onRetry} variant="outline">
+            Tentar Novamente
+          </Button>
+          <Button onClick={handleBackToPathway} variant="default">
+            Voltar ao Caminho
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+  
+  // Empty state component
+  const QuizEmptyState = () => (
+    <Card>
+      <CardContent className="p-6 text-center">
+        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Nenhuma Questão Disponível</h3>
+        <p className="text-muted-foreground mb-4">
+          Este quiz ainda não possui questões configuradas.
+        </p>
+        <Button onClick={handleBackToPathway} variant="default">
+          Voltar ao Caminho
+        </Button>
+      </CardContent>
+    </Card>
+  );
   
   return (
     <div className="container max-w-4xl mx-auto">
@@ -169,12 +280,34 @@ const LessonQuizDuolingo: React.FC<LessonQuizDuolingoProps> = ({
             <h2 className="text-xl font-semibold">{currentUnit?.title}</h2>
           </div>
           
-          {currentUnit && (
-            <DuolingoStyleLesson
-              lessonTitle={currentUnit.title}
-              questions={convertQuestions(currentUnit.questions || [])}
-              onComplete={() => handleLessonComplete(true)}
+          {conversionError ? (
+            <QuizErrorState 
+              error={conversionError} 
+              onRetry={() => {
+                setConversionError(null);
+                // Force re-conversion by updating the view
+                setViewMode('pathway');
+                setTimeout(() => setViewMode('lesson'), 100);
+              }} 
             />
+          ) : currentUnit ? (
+            (() => {
+              const convertedQuestions = convertQuestions(currentUnit.questions || []);
+              
+              if (convertedQuestions.length === 0 && !conversionError) {
+                return <QuizEmptyState />;
+              }
+              
+              return (
+                <DuolingoStyleLesson
+                  lessonTitle={currentUnit.title}
+                  questions={convertedQuestions}
+                  onComplete={() => handleLessonComplete(true)}
+                />
+              );
+            })()
+          ) : (
+            <QuizEmptyState />
           )}
         </div>
       )}

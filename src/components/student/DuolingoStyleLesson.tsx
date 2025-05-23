@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Heart, CheckCircle } from 'lucide-react';
+import { Check, X, ArrowRight, Heart, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -31,8 +32,50 @@ const DuolingoStyleLesson: React.FC<DuolingoStyleLessonProps> = ({
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   
+  console.log('DuolingoStyleLesson: Rendering with questions:', questions);
+  
+  // Early return for empty questions
+  if (!questions || questions.length === 0) {
+    console.warn('DuolingoStyleLesson: No questions provided');
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+        <div className="text-center py-8">
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Nenhuma Questão Disponível</h3>
+          <p className="text-muted-foreground mb-4">
+            Este quiz não possui questões configuradas.
+          </p>
+          <Button onClick={onComplete} variant="outline">
+            Voltar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex) / questions.length) * 100;
+  
+  // Validate current question
+  if (!currentQuestion) {
+    console.error('DuolingoStyleLesson: Current question is undefined at index:', currentQuestionIndex);
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+        <div className="text-center py-8">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Erro na Questão</h3>
+          <p className="text-muted-foreground mb-4">
+            Não foi possível carregar a questão atual.
+          </p>
+          <Button onClick={onComplete} variant="outline">
+            Voltar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  console.log('DuolingoStyleLesson: Current question:', currentQuestion);
   
   const checkAnswer = () => {
     let correct = false;
@@ -42,6 +85,12 @@ const DuolingoStyleLesson: React.FC<DuolingoStyleLessonProps> = ({
     } else {
       correct = selectedAnswer === currentQuestion.correctAnswer;
     }
+    
+    console.log('DuolingoStyleLesson: Checking answer:', {
+      selected: selectedAnswer,
+      correct: currentQuestion.correctAnswer,
+      isCorrect: correct
+    });
     
     setIsCorrect(correct);
     setShowFeedback(true);
@@ -97,13 +146,32 @@ const DuolingoStyleLesson: React.FC<DuolingoStyleLessonProps> = ({
   };
   
   const renderMultipleChoice = () => {
+    // Validate question data
+    if (!currentQuestion.question) {
+      console.error('DuolingoStyleLesson: Question text is missing:', currentQuestion);
+      return (
+        <div className="text-center py-8">
+          <p className="text-red-500">Erro: Texto da questão não encontrado</p>
+        </div>
+      );
+    }
+    
+    if (!currentQuestion.options || !Array.isArray(currentQuestion.options) || currentQuestion.options.length === 0) {
+      console.error('DuolingoStyleLesson: Question options are invalid:', currentQuestion);
+      return (
+        <div className="text-center py-8">
+          <p className="text-red-500">Erro: Opções da questão não encontradas</p>
+        </div>
+      );
+    }
+    
     return (
       <>
         <h3 className="text-lg font-medium mb-6">{currentQuestion.question}</h3>
         <div className="grid grid-cols-1 gap-3 w-full max-w-md mx-auto">
-          {currentQuestion.options?.map((option) => (
+          {currentQuestion.options.map((option, index) => (
             <motion.button
-              key={option}
+              key={`${currentQuestionIndex}-${index}`}
               className={cn(
                 "p-4 rounded-xl border text-left transition-all",
                 selectedAnswer === option ? "border-primary bg-primary/5" : "border-gray-200",
@@ -209,4 +277,4 @@ const DuolingoStyleLesson: React.FC<DuolingoStyleLessonProps> = ({
   );
 };
 
-export default DuolingoStyleLesson; 
+export default DuolingoStyleLesson;
