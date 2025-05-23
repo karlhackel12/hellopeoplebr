@@ -1,7 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { useBugsterTracker } from '@/hooks/useBugsterTracker';
 import { useBugster } from '@/providers/BugsterProvider';
 import { Button } from './button';
+
 export const BugsterTest: React.FC = () => {
   const {
     logError,
@@ -10,11 +12,13 @@ export const BugsterTest: React.FC = () => {
     isConnected,
     connectionError
   } = useBugsterTracker();
+
   const [testResults, setTestResults] = useState<{
     message: string;
     type: 'success' | 'error' | 'info';
     timestamp: string;
   }[]>([]);
+
   useEffect(() => {
     // Enviar mensagem ao carregar o componente
     if (bugster) {
@@ -30,6 +34,7 @@ export const BugsterTest: React.FC = () => {
       }]);
     }
   }, [logMessage, bugster]);
+
   const handleTestError = () => {
     try {
       // Forçar um erro para testar
@@ -47,6 +52,7 @@ export const BugsterTest: React.FC = () => {
       }]);
     }
   };
+
   const handleTestMessage = () => {
     logMessage('Mensagem de teste do Bugster', {
       component: 'BugsterTest',
@@ -59,16 +65,19 @@ export const BugsterTest: React.FC = () => {
       timestamp: new Date().toISOString()
     }]);
   };
+
   const getStatusColor = () => {
     if (isConnected) return 'text-green-600';
     if (connectionError) return 'text-red-600';
     return 'text-yellow-600';
   };
+
   const getStatusText = () => {
     if (isConnected) return 'Conectado';
     if (connectionError) return `Desconectado: ${connectionError}`;
     return 'Inicializando...';
   };
+
   const logSDKStatus = () => {
     console.log("Bugster SDK status:", {
       isInitialized: !!bugster,
@@ -86,17 +95,59 @@ export const BugsterTest: React.FC = () => {
       timestamp: new Date().toISOString()
     }]);
   };
+
   const checkMethods = () => {
     const methods = {
       captureException: bugster?.captureException ? "✅" : "❌",
       captureMessage: bugster?.captureMessage ? "✅" : "❌",
       setUser: bugster?.setUser ? "✅" : "❌"
     };
-    return <div className="text-xs mt-2 font-mono bg-gray-100 p-2 rounded">
+    return (
+      <div className="text-xs mt-2 font-mono bg-gray-100 p-2 rounded">
         <div>captureException: {methods.captureException}</div>
         <div>captureMessage: {methods.captureMessage}</div>
         <div>setUser: {methods.setUser}</div>
-      </div>;
+      </div>
+    );
   };
-  return;
+
+  return (
+    <div className="p-4 border rounded-lg bg-white shadow-sm">
+      <h2 className="text-lg font-semibold mb-4">Bugster Test Component</h2>
+      
+      <div className="mb-4">
+        <div className={`font-medium ${getStatusColor()}`}>
+          Status: {getStatusText()}
+        </div>
+        {checkMethods()}
+      </div>
+
+      <div className="space-y-2 mb-4">
+        <Button onClick={handleTestMessage} className="mr-2">
+          Testar Mensagem
+        </Button>
+        <Button onClick={handleTestError} variant="destructive" className="mr-2">
+          Testar Erro
+        </Button>
+        <Button onClick={logSDKStatus} variant="outline">
+          Log Status
+        </Button>
+      </div>
+
+      <div className="mt-4">
+        <h3 className="font-medium mb-2">Resultados dos Testes:</h3>
+        <div className="space-y-1 max-h-32 overflow-y-auto">
+          {testResults.map((result, index) => (
+            <div key={index} className={`text-xs p-2 rounded ${
+              result.type === 'success' ? 'bg-green-100 text-green-800' :
+              result.type === 'error' ? 'bg-red-100 text-red-800' :
+              'bg-blue-100 text-blue-800'
+            }`}>
+              <span className="font-mono">{result.timestamp}</span>: {result.message}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
