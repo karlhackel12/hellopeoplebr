@@ -12,6 +12,7 @@ interface LessonNavigationProps {
   hasQuiz: boolean;
   currentTab: 'content' | 'quiz';
   setCurrentTab: (tab: 'content' | 'quiz') => void;
+  isReviewMode?: boolean;
 }
 
 const LessonNavigation: React.FC<LessonNavigationProps> = ({
@@ -21,7 +22,8 @@ const LessonNavigation: React.FC<LessonNavigationProps> = ({
   completedSections,
   hasQuiz,
   currentTab,
-  setCurrentTab
+  setCurrentTab,
+  isReviewMode = false
 }) => {
   // Log quiz visibility for debugging
   console.log('Navigation rendering with hasQuiz:', hasQuiz);

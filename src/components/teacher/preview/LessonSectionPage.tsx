@@ -11,6 +11,7 @@ interface LessonSectionPageProps {
   content: string;
   isCompleted: boolean;
   onToggleComplete: () => void;
+  showToggle?: boolean;
 }
 
 const LessonSectionPage: React.FC<LessonSectionPageProps> = ({
@@ -18,7 +19,8 @@ const LessonSectionPage: React.FC<LessonSectionPageProps> = ({
   title,
   content,
   isCompleted,
-  onToggleComplete
+  onToggleComplete,
+  showToggle = true
 }) => {
   const isMobile = useIsMobile();
   
@@ -26,21 +28,23 @@ const LessonSectionPage: React.FC<LessonSectionPageProps> = ({
     <div id={id} className="animate-fade-in">
       <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'items-center justify-between'} mb-4`}>
         <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold`}>{title}</h2>
-        <Button
-          variant="ghost"
-          size={isMobile ? "sm" : "sm"}
-          className={`flex items-center gap-2 ${isMobile ? 'self-start' : ''}`}
-          onClick={onToggleComplete}
-        >
-          <CheckCircle 
-            className={`h-4 w-4 ${
-              isCompleted 
-                ? 'text-green-500 fill-green-500' 
-                : 'text-muted-foreground'
-            }`} 
-          />
-          {isCompleted ? 'Completed' : 'Mark Complete'}
-        </Button>
+        {showToggle && (
+          <Button
+            variant="ghost"
+            size={isMobile ? "sm" : "sm"}
+            className={`flex items-center gap-2 ${isMobile ? 'self-start' : ''}`}
+            onClick={onToggleComplete}
+          >
+            <CheckCircle 
+              className={`h-4 w-4 ${
+                isCompleted 
+                  ? 'text-green-500 fill-green-500' 
+                  : 'text-muted-foreground'
+              }`} 
+            />
+            {isCompleted ? 'Completed' : 'Mark Complete'}
+          </Button>
+        )}
       </div>
       
       <div 

@@ -13,6 +13,7 @@ interface LessonHorizontalNavigatorProps {
   isFirstPage: boolean;
   isLastPage: boolean;
   completionPercentage: number;
+  isReviewMode?: boolean;
 }
 
 const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
@@ -22,7 +23,8 @@ const LessonHorizontalNavigator: React.FC<LessonHorizontalNavigatorProps> = ({
   onNext,
   isFirstPage,
   isLastPage,
-  completionPercentage
+  completionPercentage,
+  isReviewMode = false
 }) => {
   const isMobile = useIsMobile();
   

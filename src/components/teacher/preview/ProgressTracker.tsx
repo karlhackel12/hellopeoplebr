@@ -10,13 +10,15 @@ interface ProgressTrackerProps {
   totalSections?: number;
   customLabel?: string;
   className?: string;
+  isReviewMode?: boolean;
 }
 
 const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   completedSections,
   totalSections = 7,
   customLabel,
-  className
+  className,
+  isReviewMode = false
 }) => {
   const percentComplete = totalSections > 0 ? Math.round(completedSections.length / totalSections * 100) : 0;
   
