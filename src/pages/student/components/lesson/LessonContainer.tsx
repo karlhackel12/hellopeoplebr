@@ -3,6 +3,7 @@ import React from 'react';
 import LessonNavigation from './LessonNavigation';
 import LessonContent from './LessonContent';
 import QuizSection from './QuizSection';
+import QuizReviewSection from './QuizReviewSection';
 
 interface LessonContainerProps {
   currentTab: 'content' | 'quiz';
@@ -24,6 +25,10 @@ interface LessonContainerProps {
   lessonId: string;
   quizTitle: string;
   quizPassPercent: number;
+  isReviewMode?: boolean;
+  isLessonComplete?: boolean;
+  userQuizAnswers?: Record<string, string>;
+  finalQuizScore?: number;
 }
 
 const LessonContainer: React.FC<LessonContainerProps> = ({
@@ -45,7 +50,11 @@ const LessonContainer: React.FC<LessonContainerProps> = ({
   quizId,
   lessonId,
   quizTitle,
-  quizPassPercent
+  quizPassPercent,
+  isReviewMode = false,
+  isLessonComplete = false,
+  userQuizAnswers = {},
+  finalQuizScore
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -59,6 +68,7 @@ const LessonContainer: React.FC<LessonContainerProps> = ({
           hasQuiz={hasQuiz}
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
+          isReviewMode={isReviewMode}
         />
       </div>
       
@@ -77,15 +87,28 @@ const LessonContainer: React.FC<LessonContainerProps> = ({
             isLastPage={isLastPage}
             completionPercentage={completionPercentage}
             totalPages={totalPages}
+            isReviewMode={isReviewMode}
+            isLessonComplete={isLessonComplete}
           />
         ) : (
-          <QuizSection 
-            questions={quizQuestions}
-            quizId={quizId}
-            lessonId={lessonId}
-            title={quizTitle}
-            passPercent={quizPassPercent}
-          />
+          // Show quiz review if in review mode, otherwise show interactive quiz
+          isReviewMode ? (
+            <QuizReviewSection
+              questions={quizQuestions}
+              title={quizTitle}
+              passPercent={quizPassPercent}
+              userAnswers={userQuizAnswers}
+              finalScore={finalQuizScore}
+            />
+          ) : (
+            <QuizSection 
+              questions={quizQuestions}
+              quizId={quizId}
+              lessonId={lessonId}
+              title={quizTitle}
+              passPercent={quizPassPercent}
+            />
+          )
         )}
       </div>
     </div>

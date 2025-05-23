@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,7 @@ export const useViewLesson = () => {
   
   // Control view mode state
   const [viewMode, setViewMode] = useState<'standard' | 'duolingo'>('standard');
+  const [isReviewMode, setIsReviewMode] = useState(false);
   
   // Fetch lesson data with error handling
   const { 
@@ -67,6 +69,14 @@ export const useViewLesson = () => {
     }
   }, [lesson?.content]);
 
+  // Check if lesson is completed and set review mode
+  useEffect(() => {
+    if (lessonProgress?.completed) {
+      console.log('useViewLesson: Lesson is completed, enabling review mode');
+      setIsReviewMode(true);
+    }
+  }, [lessonProgress?.completed]);
+
   // Handle lesson loading errors
   useEffect(() => {
     if (hasErrors && !lessonLoading) {
@@ -81,8 +91,8 @@ export const useViewLesson = () => {
 
   // Handle section completion toggling
   const handleToggleSectionCompletion = async (sectionTitle: string) => {
-    if (!lesson) {
-      console.warn('useViewLesson: Attempted to toggle section completion without lesson');
+    if (!lesson || isReviewMode) {
+      console.warn('useViewLesson: Cannot toggle section completion in review mode or without lesson');
       return;
     }
     
@@ -119,8 +129,8 @@ export const useViewLesson = () => {
   
   // Handle marking the entire lesson as complete
   const handleMarkLessonComplete = async () => {
-    if (!lesson) {
-      console.warn('useViewLesson: Attempted to mark lesson complete without lesson');
+    if (!lesson || isReviewMode) {
+      console.warn('useViewLesson: Cannot mark lesson complete in review mode or without lesson');
       return;
     }
     
@@ -249,6 +259,9 @@ export const useViewLesson = () => {
     // Quiz availability
     hasQuiz,
     isQuizAvailable,
+    
+    // Review mode
+    isReviewMode,
     
     // Duolingo specific props
     viewMode,
