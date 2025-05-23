@@ -12,10 +12,12 @@ export const useViewLesson = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  console.log('useViewLesson: Hook initialized with lessonId:', lessonId);
+  
   // Control view mode state
   const [viewMode, setViewMode] = useState<'standard' | 'duolingo'>('standard');
   
-  // Fetch lesson data
+  // Fetch lesson data with error handling
   const { 
     lesson, 
     lessonLoading, 
@@ -23,8 +25,17 @@ export const useViewLesson = () => {
     quizQuestions,
     hasQuiz,
     isQuizAvailable,
-    hasUnpublishedQuiz
+    hasUnpublishedQuiz,
+    hasErrors
   } = useLessonData(lessonId);
+  
+  console.log('useViewLesson: Lesson data status:', {
+    lessonLoading,
+    hasLesson: !!lesson,
+    hasErrors,
+    hasQuiz,
+    isQuizAvailable
+  });
   
   // Track lesson view status
   const { isUpdatingViewStatus } = useViewLessonData(lessonId, lessonLoading);
@@ -46,16 +57,37 @@ export const useViewLesson = () => {
   // Extract sections from lesson content
   useEffect(() => {
     if (lesson?.content) {
+      console.log('useViewLesson: Extracting sections from lesson content');
       const extractedSections = extractSections(lesson.content);
       setSections(extractedSections);
+      console.log('useViewLesson: Extracted sections:', extractedSections.length);
+    } else {
+      console.log('useViewLesson: No lesson content to extract sections from');
+      setSections([]);
     }
   }, [lesson?.content]);
 
+  // Handle lesson loading errors
+  useEffect(() => {
+    if (hasErrors && !lessonLoading) {
+      console.error('useViewLesson: Lesson loading failed');
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar lição',
+        description: 'Não foi possível carregar a lição. Tente novamente.',
+      });
+    }
+  }, [hasErrors, lessonLoading, toast]);
+
   // Handle section completion toggling
   const handleToggleSectionCompletion = async (sectionTitle: string) => {
-    if (!lesson) return;
+    if (!lesson) {
+      console.warn('useViewLesson: Attempted to toggle section completion without lesson');
+      return;
+    }
     
     try {
+      console.log('useViewLesson: Toggling section completion:', sectionTitle);
       const completedSections = lessonProgress?.completed_sections || [];
       let updatedSections: string[];
       
@@ -76,6 +108,7 @@ export const useViewLesson = () => {
           : "Section marked as complete",
       });
     } catch (error) {
+      console.error('useViewLesson: Error updating section progress:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -86,9 +119,13 @@ export const useViewLesson = () => {
   
   // Handle marking the entire lesson as complete
   const handleMarkLessonComplete = async () => {
-    if (!lesson) return;
+    if (!lesson) {
+      console.warn('useViewLesson: Attempted to mark lesson complete without lesson');
+      return;
+    }
     
     try {
+      console.log('useViewLesson: Marking lesson as complete');
       // We'll keep the existing completed sections
       const completedSections = lessonProgress?.completed_sections || [];
       
@@ -101,6 +138,7 @@ export const useViewLesson = () => {
         description: "Lesson marked as complete!",
       });
     } catch (error) {
+      console.error('useViewLesson: Error marking lesson complete:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -113,7 +151,6 @@ export const useViewLesson = () => {
   const goToPreviousSection = () => {
     if (currentSectionIndex > 0) {
       setCurrentSectionIndex(currentSectionIndex - 1);
-    
     }
   };
   
@@ -132,6 +169,7 @@ export const useViewLesson = () => {
   };
   
   const handleBack = () => {
+    console.log('useViewLesson: Navigating back to lessons list');
     navigate('/student/lessons');
   };
 
@@ -147,6 +185,7 @@ export const useViewLesson = () => {
 
   // Convert quiz questions to Duolingo format
   const convertQuizQuestionsToDuolingoFormat = (quizQuestions: any[]) => {
+    console.log('useViewLesson: Converting quiz questions to Duolingo format');
     return quizQuestions.map(q => ({
       id: q.id,
       type: 'multiple_choice' as 'multiple_choice' | 'fill_blank' | 'arrange' | 'listen',
@@ -171,6 +210,8 @@ export const useViewLesson = () => {
   }, [lesson]);
   
   const duolingoQuizQuestions = quizQuestions ? convertQuizQuestionsToDuolingoFormat(quizQuestions) : [];
+
+  console.log('useViewLesson: Returning hook data with lesson:', !!lesson);
 
   return {
     // Lesson data

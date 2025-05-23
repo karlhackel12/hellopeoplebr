@@ -1,8 +1,12 @@
+
 import React from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import StudentLayout from '@/components/layout/StudentLayout';
 import LessonView from '@/pages/student/LessonView';
 import SpacedRepetitionPage from '@/pages/student/SpacedRepetition';
+import StudentDashboard from '@/pages/student/Dashboard';
+import LessonsList from '@/pages/student/Lessons';
+import StudentSettings from '@/pages/student/Settings';
 
 // Implementação simples do StudentProtectedRoute para evitar erros
 const StudentProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -10,10 +14,7 @@ const StudentProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const StudentDashboard = () => <div>Painel do Estudante</div>;
-const LessonsList = () => <div>Lista de Lições</div>;
 const QuizView = () => <div>Visualização de Quiz</div>;
-const StudentSettings = () => <div>Configurações do Estudante</div>;
 
 export const StudentRoutes = () => {
   return (
